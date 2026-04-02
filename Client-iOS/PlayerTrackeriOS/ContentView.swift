@@ -198,28 +198,44 @@ struct ContentView: View {
                 .font(.headline)
 
             if let players = model.gameState?.players, !players.isEmpty {
-                VStack(spacing: 10) {
-                    ForEach(Array(players.enumerated()), id: \.element.id) { index, player in
-                        HStack(spacing: 12) {
-                            Text("\(index + 1).")
-                                .font(.subheadline.monospacedDigit())
-                                .foregroundStyle(.secondary)
+                VStack(spacing: 8) {
+                    ForEach(players) { player in
+                        HStack(alignment: .top, spacing: 10) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(player.name)
-                                    .fontWeight(player.id == model.gameState?.currentTurnId ? .semibold : .regular)
-                                Text(player.ownerName)
-                                    .font(.footnote)
+                                    .font(.subheadline.weight(player.id == model.gameState?.currentTurnId ? .semibold : .regular))
+                                Text("\(player.ownerName) • Init \(player.initiative)")
+                                    .font(.caption.monospacedDigit())
                                     .foregroundStyle(.secondary)
                             }
-                            Spacer()
-                            Text("Init \(player.initiative)")
-                                .font(.subheadline.monospacedDigit())
-                                .foregroundStyle(.secondary)
+
+                            Spacer(minLength: 8)
+
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text(encounterStatsText(for: player))
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(encounterStatsStyle(for: player).foreground)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(
+                                        Capsule()
+                                            .fill(encounterStatsStyle(for: player).background)
+                                    )
+
+                                if !player.conditions.isEmpty {
+                                    Text(conditionSummary(for: player))
+                                        .font(.caption)
+                                        .foregroundStyle(.primary)
+                                        .multilineTextAlignment(.trailing)
+                                        .lineLimit(2)
+                                }
+                            }
                         }
-                        .padding()
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(player.id == model.gameState?.currentTurnId ? Color.accentColor.opacity(0.12) : Color(uiColor: .secondarySystemGroupedBackground))
+                                .fill(player.id == model.gameState?.currentTurnId ? Color.yellow.opacity(0.28) : Color(uiColor: .secondarySystemGroupedBackground))
                         )
                     }
                 }
@@ -363,6 +379,71 @@ struct ContentView: View {
 
     private func statValueText(for stat: StatEntryDTO) -> String {
         stat.key == "TempHP" ? "\(stat.current)" : "\(stat.current)/\(stat.max)"
+    }
+
+    private func encounterStatsText(for player: PlayerViewDTO) -> String {
+        let visibleStats = visibleEncounterStats(for: player)
+
+        if player.ownerId == model.ownerId || player.revealStats {
+            return visibleStats
+                .map { stat in
+                    stat.key == "TempHP" ? "\(stat.key) \(stat.current)" : "\(stat.key) \(stat.current)/\(stat.max)"
+                }
+                .joined(separator: " • ")
+        }
+
+        let trackedStats = visibleStats.filter { $0.key != "TempHP" }
+        guard let primary = trackedStats.first else { return "—" }
+        let isDead = primary.current <= 0
+        let ratio = primary.max > 0 ? Double(primary.current) / Double(primary.max) : 0
+        return healthStatusLabel(ratio: ratio, isDead: isDead)
+    }
+
+    private func encounterStatsStyle(for player: PlayerViewDTO) -> (foreground: Color, background: Color) {
+        let visibleStats = visibleEncounterStats(for: player)
+        let trackedStats = visibleStats.filter { $0.key != "TempHP" }
+        guard let primary = trackedStats.first else {
+            return (.secondary, Color(uiColor: .tertiarySystemGroupedBackground))
+        }
+
+        let isDead = primary.current <= 0
+        let ratio = primary.max > 0 ? Double(primary.current) / Double(primary.max) : 0
+
+        if isDead {
+            return (.white, Color(red: 0.29, green: 0.29, blue: 0.29))
+        }
+        if ratio >= 1 {
+            return (Color(red: 0.06, green: 0.23, blue: 0.37), Color(red: 0.81, green: 0.91, blue: 1.0))
+        } else if ratio > 0.75 {
+            return (Color(red: 0.07, green: 0.29, blue: 0.11), Color(red: 0.84, green: 0.96, blue: 0.84))
+        } else if ratio > 0.5 {
+            return (Color(red: 0.37, green: 0.29, blue: 0.0), Color(red: 1.0, green: 0.95, blue: 0.70))
+        } else if ratio > 0.25 {
+            return (Color(red: 0.42, green: 0.23, blue: 0.0), Color(red: 1.0, green: 0.84, blue: 0.70))
+        }
+        return (Color(red: 0.35, green: 0.04, blue: 0.04), Color(red: 1.0, green: 0.76, blue: 0.76))
+    }
+
+    private func visibleEncounterStats(for player: PlayerViewDTO) -> [StatEntryDTO] {
+        let stats = displayStats(for: player)
+        let orderedStats = stats.filter { $0.key != "TempHP" || $0.current > 0 }
+        return orderedStats.isEmpty ? stats : orderedStats
+    }
+
+    private func healthStatusLabel(ratio: Double, isDead: Bool) -> String {
+        if isDead {
+            return "Dead"
+        }
+        if ratio >= 1 {
+            return "Full"
+        } else if ratio > 0.75 {
+            return "Slight Damage"
+        } else if ratio > 0.5 {
+            return "Some Damage"
+        } else if ratio > 0.25 {
+            return "Bloodied"
+        }
+        return "Heavily Blooded"
     }
 
     private var isShowingModal: Bool {
