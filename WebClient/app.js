@@ -1,0 +1,1972 @@
+// Shared state
+let lastStateJson = null;
+const REFRESH_INTERVAL_MS = 5000;
+let skipRefresh = false;
+
+const { QR_CODE_SIZE, updateRulesetIcon } = window.PlayerTrackerShared || {
+  QR_CODE_SIZE: 96,
+  updateRulesetIcon: () => {}
+};
+const AUTO_SAVE_DELAY_MS = 600;
+const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
+
+function slugifyConditionName(name) {
+  return (name || '').trim().replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+const EMPTY_CONDITION_SET = {
+  id: 'none',
+  label: '',
+  rulesBaseUrl: '',
+  conditions: []
+};
+
+function computeAbbreviationFromName(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return '';
+  if (trimmed.length <= 4) return trimmed.toUpperCase();
+  return trimmed.slice(0, 4).toUpperCase();
+}
+
+function normalizeConditionEntry(entry, baseUrl) {
+  if (!entry || typeof entry.name !== 'string') {
+    return null;
+  }
+
+  const trimmedName = entry.name.trim();
+  if (!trimmedName) {
+    return null;
+  }
+
+  const rawAbbreviation =
+    (typeof entry.abbreviation === 'string' && entry.abbreviation.trim()) ||
+    (typeof entry.abbrev === 'string' && entry.abbrev.trim()) ||
+    '';
+
+  const abbreviation = rawAbbreviation || computeAbbreviationFromName(trimmedName);
+  const explicitLink =
+    typeof entry.description === 'string' && entry.description.trim()
+      ? entry.description.trim()
+      : null;
+
+  const normalizedBase =
+    typeof baseUrl === 'string' && baseUrl.trim().length > 0 ? baseUrl.trim() : null;
+
+  const fallbackLink = normalizedBase
+    ? `${normalizedBase}#TOC-${slugifyConditionName(trimmedName)}`
+    : null;
+
+  return {
+    name: trimmedName,
+    abbreviation,
+    link: explicitLink || fallbackLink
+  };
+}
+
+function normalizePlayerName(name) {
+  return (name || '').trim().toLowerCase();
+}
+
+function createConditionLink(url) {
+  if (!url) return null;
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.target = '_blank';
+  anchor.rel = 'noopener';
+  anchor.classList.add('condition-link');
+  anchor.textContent = '↗';
+  anchor.title = 'Open rule text in a new tab';
+  return anchor;
+}
+
+// Detect whether this client is "admin" (local machine)
+function isAdminHost() {
+  const host = window.location.hostname;
+  return host === 'localhost' || host === '127.0.0.1';
+}
+
+function isDisplayPath() {
+  const path = window.location.pathname || '';
+  return path === '/display.html' || path.endsWith('/display.html');
+}
+
+const shouldRedirectToDisplay =
+  isAdminHost() &&
+  !isDisplayPath() &&
+  (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html'));
+
+if (shouldRedirectToDisplay) {
+  window.location.replace('/display.html');
+}
+
+// Render a QR code for a given URL into #qr-container
+function renderQrCode(url) {
+  const container = document.getElementById('qr-container');
+  if (!container || typeof QRCode === 'undefined') return;
+
+  // Clear any previous QR
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
+  new QRCode(container, {
+    text: url,
+    width: QR_CODE_SIZE,
+    height: QR_CODE_SIZE
+  });
+}
+
+// Fetch the server IP and show "Connect to http://IP:8080" + QR
+async function showServerIP(ipDisplayElement) {
+  if (!ipDisplayElement) return;
+
+  try {
+    const res = await fetch('/server-ip');
+    if (!res.ok) return;
+
+    const json = await res.json();
+    const ip = json.ip;
+
+    if (ip && ip !== 'unknown') {
+      const url = `http://${ip}:8080`;
+      ipDisplayElement.textContent = url;
+      renderQrCode(url);
+    }
+  } catch (err) {
+    console.error('Failed to fetch server IP:', err);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('player-form');
+  const statusDiv = document.getElementById('status');
+  const playersBody = document.getElementById('players-body');
+
+  const adminToolbar = document.getElementById('admin-toolbar');
+  const clearBtn = document.getElementById('clear');
+
+  const ipDisplay = document.getElementById('ip-display');
+  const qrContainer = document.getElementById('qr-container'); // if you have it
+
+  const ownerInput = document.getElementById('owner-name');
+  const playerNameDisplay = document.getElementById('player-name-display');
+  const playerNameEdit = document.getElementById('player-name-edit');
+  const playerNameInput = document.getElementById('player-name-input');
+  const playerNameEditBtn = document.getElementById('edit-player-name');
+  const playerNameSaveBtn = document.getElementById('player-name-save');
+  const playerNameCancelBtn = document.getElementById('player-name-cancel');
+  const nameInput = document.getElementById('name');
+  const numberInput = document.getElementById('initiative'); // initiative
+  const statsFields = document.getElementById('stats-fields');
+  const currentStatsInputs = document.getElementById('current-stats-inputs');
+  const revealStatsInput = document.getElementById('reveal-stats');
+  const roundInfo = document.getElementById('round-info');
+  const currentActor = document.getElementById('current-actor');
+  const healthHeading = document.getElementById('health-heading');
+
+  const turnCompleteBtn = document.getElementById('turn-complete');
+  const conditionGrid = document.getElementById('conditions-grid');
+  const selectedConditionsWrap = document.getElementById('selected-conditions');
+  const conditionFilterInput = document.getElementById('condition-filter');
+  const conditionsCharacter = document.getElementById('conditions-character');
+  const campaignNameLabel = document.getElementById('campaign-name');
+  const rulesetLink = document.getElementById('ruleset-link');
+  const rulesetLicense = document.getElementById('ruleset-license');
+  const rulesetLicenseWrap = document.getElementById('ruleset-license-wrap');
+  const rulesetIcon = document.getElementById('ruleset-icon');
+  const characterList = document.getElementById('character-list');
+  const addCharacterBtn = document.getElementById('character-add');
+  const removeCharacterBtn = document.getElementById('character-remove');
+  const addForm = document.getElementById('add-character-form');
+  const addNameInput = document.getElementById('add-name');
+  const addInitiativeInput = document.getElementById('add-initiative');
+  const addStatsFields = document.getElementById('add-stats-fields');
+  const addCurrentStats = document.getElementById('add-current-stats');
+  const addSaveBtn = document.getElementById('add-save');
+  const addCancelBtn = document.getElementById('add-cancel');
+  const detailsToggle = document.getElementById('details-toggle');
+  const detailsPanel = document.getElementById('details-panel');
+  const detailPanel = document.querySelector('.detail-panel');
+  const conditionsSection = document.querySelector('.conditions-section');
+  const conditionsToggle = document.getElementById('conditions-toggle');
+  const conditionsPanel = document.getElementById('conditions-panel');
+  const playerListSection = document.querySelector('.player-list');
+  const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
+  const characterDrawerTitle = document.getElementById('character-drawer-title');
+  const characterListActions = document.querySelector('.character-list-actions');
+
+  let selectedConditions = new Set();
+  let conditionsDirty = false;
+  let lastConditionsSignatureFromState = null;
+  let conditionLibrary = [];
+  let conditionLookup = new Map();
+  let conditionLibraryLabel = '';
+  let myCharacters = [];
+  let selectedCharacterId = null;
+  let formDirty = false;
+  let currentTurnId = null;
+  let lastTurnId = null;
+  let isEditingForm = false;
+  let currentCampaignName = '';
+  let currentRulesetId = '';
+  let encounterState = 'new';
+  let statKeys = ['HP'];
+  let allowNegativeHealth = false;
+  let supportsTempHp = false;
+  let ownerId = localStorage.getItem('playerId') || '';
+  let statInputs = new Map();
+  let addStatInputs = new Map();
+  let autoSaveTimer = null;
+  const perCharacterSaveTimers = new Map();
+  let isCreatingCharacter = false;
+  let conditionsPanelOpen = false;
+
+  function updateRulesetLink(labelText, baseUrl) {
+    if (!rulesetLink) return;
+    rulesetLink.textContent = labelText || '';
+    if (baseUrl) {
+      rulesetLink.href = baseUrl;
+      rulesetLink.removeAttribute('aria-disabled');
+    } else {
+      rulesetLink.removeAttribute('href');
+      rulesetLink.setAttribute('aria-disabled', 'true');
+    }
+  }
+
+  function updateRulesetLicense(licenseUrl) {
+    if (!rulesetLicense || !rulesetLicenseWrap) return;
+    if (licenseUrl) {
+      rulesetLicense.href = licenseUrl;
+      rulesetLicenseWrap.style.display = 'inline';
+    } else {
+      rulesetLicense.removeAttribute('href');
+      rulesetLicenseWrap.style.display = 'none';
+    }
+  }
+
+  function setRulesetIcon(iconUrl, labelText) {
+    updateRulesetIcon(rulesetIcon, iconUrl, labelText);
+  }
+
+  const displayOnly = isDisplayPath();
+  const viewMode = new URLSearchParams(window.location.search).get('view');
+  const hideTurnTable = !displayOnly && viewMode === 'B';
+  if (playerTable) {
+    playerTable.style.display = hideTurnTable ? 'none' : '';
+  }
+  if (characterListActions) {
+    characterListActions.style.display = 'flex';
+    characterListActions.style.flexWrap = 'nowrap';
+    characterListActions.style.justifyContent = 'flex-start';
+    characterListActions.style.alignItems = 'center';
+    characterListActions.style.gap = '0.5rem';
+    characterListActions.querySelectorAll('button').forEach((button) => {
+      button.style.width = 'auto';
+      button.style.flex = '0 0 auto';
+    });
+  }
+
+  function setConditionsPanelOpen(open) {
+    if (!conditionsToggle || !conditionsPanel) return;
+    conditionsPanelOpen = open;
+    if (open && detailsToggle && detailsPanel) {
+      detailsPanel.classList.remove('details-panel-open');
+      detailsPanel.classList.add('details-panel-collapsed');
+      detailsToggle.setAttribute('aria-expanded', 'false');
+      detailsPanel.setAttribute('aria-hidden', 'true');
+    }
+    conditionsPanel.classList.toggle('conditions-panel-open', open);
+    conditionsPanel.classList.toggle('conditions-panel-collapsed', !open);
+    conditionsToggle.setAttribute('aria-expanded', open.toString());
+    conditionsPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function updateConditionsAvailability() {
+    if (!conditionsSection) return;
+    const hasCharacter = Boolean(selectedCharacterId) || isCreatingCharacter;
+    conditionsSection.classList.toggle('conditions-hidden', !hasCharacter);
+    if (hasCharacter) {
+      setConditionsPanelOpen(conditionsPanelOpen);
+    }
+  }
+
+  function updatePlayerNameDisplay() {
+    if (!playerNameInput) return;
+    const ownerName = getOwnerName();
+    playerNameInput.value = ownerName ? ownerName : 'Player';
+    playerNameInput.classList.toggle('player-name-placeholder', !ownerName);
+    document.body.classList.toggle('no-player-name', !ownerName);
+    if (characterDrawerTitle) {
+      characterDrawerTitle.textContent = ownerName
+        ? `${ownerName}'s Characters`
+        : 'My Characters';
+    }
+    updateConditionsAvailability();
+    updateWindowTitle();
+  }
+
+  function updateWindowTitle() {
+    const campaignName = currentCampaignName ? currentCampaignName.trim() : '';
+    const ownerName = getOwnerName();
+    if (!campaignName) {
+      document.title = 'Turn Track';
+      return;
+    }
+    if (displayOnly) {
+      document.title = campaignName;
+      return;
+    }
+    document.title = `${campaignName} - ${ownerName || 'Player'}`;
+  }
+
+  // Admin UI: show/hide toolbar & IP banner/QR
+  if (displayOnly) {
+    if (adminToolbar) adminToolbar.style.display = 'none';
+    if (detailPanel) detailPanel.style.display = 'none';
+    if (playerNameDisplay) playerNameDisplay.style.display = 'none';
+    if (playerNameEdit) playerNameEdit.style.display = 'none';
+    document.body.classList.add('display-only');
+    showServerIP(ipDisplay);
+  } else {
+    if (adminToolbar) adminToolbar.style.display = 'none';
+    if (ipDisplay) ipDisplay.textContent = '';
+    if (qrContainer) qrContainer.innerHTML = '';
+  }
+
+  // Restore last-used owner name
+  const savedOwner =
+    localStorage.getItem('ownerName') || localStorage.getItem('playerName');
+  if (savedOwner && ownerInput) {
+    ownerInput.value = savedOwner;
+    localStorage.setItem('ownerName', savedOwner);
+  }
+  updatePlayerNameDisplay();
+  if (playerNameInput && savedOwner) {
+    playerNameInput.value = savedOwner;
+  }
+
+  if (nameInput) {
+    nameInput.addEventListener('input', () => {
+      formDirty = true;
+      updateDraftFromForm();
+      scheduleAutoSave('name');
+    });
+  }
+
+  if (numberInput) {
+    numberInput.addEventListener('input', () => {
+      formDirty = true;
+      scheduleAutoSave('initiative');
+    });
+  }
+
+  if (revealStatsInput) {
+    revealStatsInput.addEventListener('change', () => {
+      formDirty = true;
+      updateDraftFromForm();
+      scheduleAutoSave('reveal-stats');
+    });
+  }
+
+  if (form) {
+    form.addEventListener('focusin', () => {
+      isEditingForm = true;
+    });
+    form.addEventListener('focusout', () => {
+      if (!form.contains(document.activeElement)) {
+        isEditingForm = false;
+      }
+    });
+  }
+
+  if (detailsToggle && detailsPanel) {
+    detailsToggle.addEventListener('click', () => {
+      const isOpen = detailsPanel.classList.contains('details-panel-open');
+      if (!isOpen && conditionsToggle && conditionsPanel) {
+        setConditionsPanelOpen(false);
+      }
+      detailsPanel.classList.toggle('details-panel-open', !isOpen);
+      detailsPanel.classList.toggle('details-panel-collapsed', isOpen);
+      detailsToggle.setAttribute('aria-expanded', (!isOpen).toString());
+      detailsPanel.setAttribute('aria-hidden', isOpen.toString());
+    });
+  }
+
+  if (conditionsToggle && conditionsPanel) {
+    conditionsToggle.addEventListener('click', () => {
+      const isOpen = conditionsPanel.classList.contains('conditions-panel-open');
+      setConditionsPanelOpen(!isOpen);
+    });
+  }
+
+  function abbreviationForCondition(name) {
+    const entry = conditionLookup.get(name);
+    if (entry && entry.abbreviation) {
+      return entry.abbreviation;
+    }
+    return computeAbbreviationFromName(name);
+  }
+
+  function buildStatsFields() {
+    statInputs.clear();
+    if (statsFields) statsFields.innerHTML = '';
+    if (currentStatsInputs) currentStatsInputs.innerHTML = '';
+    if (healthHeading) {
+      healthHeading.textContent = statKeys.length === 1 ? statKeys[0] : 'Stats';
+    }
+
+    statKeys.forEach((key) => {
+      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const maxId = `max-stat-${normalizedKey}`;
+      const currentId = `current-stat-${normalizedKey}`;
+      const isTempHp = key === 'TempHP';
+
+      if (statsFields && !isTempHp) {
+        const label = document.createElement('label');
+        label.textContent = `Max ${key}`;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = maxId;
+        input.min = '0';
+        label.appendChild(input);
+        statsFields.appendChild(label);
+        statInputs.set(key, { maxInput: input, currentInput: null });
+      }
+
+      if (currentStatsInputs) {
+        const currentInput = document.createElement('input');
+        currentInput.type = 'number';
+        currentInput.id = currentId;
+        if (key === 'TempHP' || !allowNegativeHealth) {
+          currentInput.min = '0';
+        }
+        currentStatsInputs.appendChild(currentInput);
+        const entry = statInputs.get(key) || {};
+        entry.currentInput = currentInput;
+        statInputs.set(key, entry);
+      }
+    });
+
+    statInputs.forEach((entry, key) => {
+      if (entry.maxInput) {
+        entry.maxInput.addEventListener('input', () => {
+          formDirty = true;
+          updateDraftFromForm();
+          scheduleAutoSave(`max-${key}`);
+        });
+      }
+    });
+
+    buildAddStatsFields();
+  }
+
+  function buildAddStatsFields() {
+    addStatInputs.clear();
+    if (addStatsFields) addStatsFields.innerHTML = '';
+    if (addCurrentStats) addCurrentStats.innerHTML = '';
+
+    statKeys.forEach((key) => {
+      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const maxId = `add-max-stat-${normalizedKey}`;
+      const currentId = `add-current-stat-${normalizedKey}`;
+      const isTempHp = key === 'TempHP';
+
+      if (addStatsFields && !isTempHp) {
+        const label = document.createElement('label');
+        label.textContent = `Max ${key}`;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = maxId;
+        input.min = '0';
+        label.appendChild(input);
+        addStatsFields.appendChild(label);
+        addStatInputs.set(key, { maxInput: input, currentInput: null });
+      }
+
+      if (addCurrentStats) {
+        const label = document.createElement('label');
+        label.textContent = `Current ${key}`;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.id = currentId;
+        if (key === 'TempHP' || !allowNegativeHealth) {
+          input.min = '0';
+        }
+        label.appendChild(input);
+        addCurrentStats.appendChild(label);
+        const entry = addStatInputs.get(key) || {};
+        entry.currentInput = input;
+        addStatInputs.set(key, entry);
+      }
+    });
+  }
+
+  function healthStatusLabel(ratio, isDead) {
+    if (isDead) {
+      return 'Dead';
+    }
+    if (ratio === 1) {
+      return 'Full';
+    } else if (ratio > 0.75) {
+      return 'Slight Damage';
+    } else if (ratio > 0.5) {
+      return 'Some Damage';
+    } else if (ratio > 0.25) {
+      return 'Bloodied';
+    }
+    return 'Heavily Blooded';
+  }
+
+  function draftKeyForOwner(ownerName) {
+    const normalized = normalizePlayerName(ownerName);
+    const campaignKey = currentCampaignName ? currentCampaignName : 'default';
+    return `${LOCAL_DRAFT_PREFIX}${normalized}:${campaignKey}`;
+  }
+
+  function loadDrafts(ownerName) {
+    if (!ownerName) return {};
+    try {
+      const raw = localStorage.getItem(draftKeyForOwner(ownerName));
+      return raw ? JSON.parse(raw) : {};
+    } catch (err) {
+      console.warn('Failed to load drafts:', err);
+      return {};
+    }
+  }
+
+  function saveDrafts(ownerName, drafts) {
+    if (!ownerName) return;
+    try {
+      localStorage.setItem(draftKeyForOwner(ownerName), JSON.stringify(drafts));
+    } catch (err) {
+      console.warn('Failed to save drafts:', err);
+    }
+  }
+
+  function updateDraftFromForm() {
+    const ownerName = getOwnerName();
+    if (!ownerName) return;
+    const draftKey = selectedCharacterId || (nameInput ? nameInput.value.trim() : '');
+    if (!draftKey) return;
+    const drafts = loadDrafts(ownerName);
+    const stats = {};
+    statInputs.forEach((entry, key) => {
+      const currentRaw = entry.currentInput ? entry.currentInput.value.trim() : '';
+      const maxRaw = entry.maxInput ? entry.maxInput.value.trim() : '';
+      const currentVal = currentRaw === '' ? null : Number(currentRaw);
+      const maxVal = maxRaw === '' ? null : Number(maxRaw);
+      stats[key] = {
+        current: Number.isFinite(currentVal) ? currentVal : null,
+        max: Number.isFinite(maxVal) ? maxVal : null
+      };
+    });
+    drafts[draftKey] = {
+      id: selectedCharacterId,
+      name: nameInput ? nameInput.value.trim() : '',
+      stats,
+      revealStats: revealStatsInput ? revealStatsInput.checked : null
+    };
+    saveDrafts(ownerName, drafts);
+  }
+
+  function applyDraftToForm(character) {
+    const ownerName = getOwnerName();
+    if (!ownerName || !character) return;
+    const drafts = loadDrafts(ownerName);
+    const draft = drafts[character.id] || drafts[character.name];
+    if (!draft) return;
+    if (draft.name && nameInput) {
+      nameInput.value = draft.name;
+    }
+    if (draft.stats) {
+      statInputs.forEach((entry, key) => {
+        const statDraft = draft.stats[key];
+        if (!statDraft) return;
+        if (entry.currentInput && Number.isFinite(statDraft.current)) {
+          entry.currentInput.value = statDraft.current;
+        }
+        if (entry.maxInput && Number.isFinite(statDraft.max) && statDraft.max > 0) {
+          entry.maxInput.value = statDraft.max;
+        }
+      });
+    }
+    if (revealStatsInput && typeof draft.revealStats === 'boolean') {
+      revealStatsInput.checked = draft.revealStats;
+    }
+  }
+
+  function scheduleAutoSave(source) {
+    if (displayOnly || isCreatingCharacter) return;
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+      saveCharacter({ showStatus: false, source });
+    }, AUTO_SAVE_DELAY_MS);
+  }
+
+  function applyDraftsToCharacters(ownerName, characters) {
+    if (!ownerName || !Array.isArray(characters)) return;
+    const drafts = loadDrafts(ownerName);
+    characters.forEach((character) => {
+      const draft = drafts[character.id] || drafts[character.name];
+      if (!draft) return;
+      if (draft.name) {
+        character.name = draft.name;
+      }
+      if (draft.stats && Array.isArray(character.stats)) {
+        character.stats = character.stats.map((stat) => {
+          const statDraft = draft.stats[stat.key];
+          if (!statDraft) return stat;
+          const nextCurrent = Number.isFinite(statDraft.current) ? statDraft.current : stat.current;
+          const nextMax =
+            Number.isFinite(statDraft.max) && statDraft.max > 0 ? statDraft.max : stat.max;
+          return {
+            ...stat,
+            current: nextCurrent,
+            max: nextMax
+          };
+        });
+      }
+      if (typeof draft.revealStats === 'boolean') {
+        character.revealStats = draft.revealStats;
+      }
+    });
+  }
+
+  function updateDraftForCharacter(character) {
+    const ownerName = getOwnerName();
+    if (!ownerName || !character) return;
+    const drafts = loadDrafts(ownerName);
+    const draftKey = character.id || character.name;
+    const stats = {};
+    if (Array.isArray(character.stats)) {
+      character.stats.forEach((stat) => {
+        stats[stat.key] = {
+          current: Number.isFinite(stat.current) ? stat.current : null,
+          max: Number.isFinite(stat.max) ? stat.max : null
+        };
+      });
+    }
+    drafts[draftKey] = {
+      id: character.id,
+      name: character.name,
+      stats,
+      revealStats: typeof character.revealStats === 'boolean' ? character.revealStats : null
+    };
+    saveDrafts(ownerName, drafts);
+  }
+
+  function scheduleCharacterSave(character) {
+    if (!character) return;
+    const timerKey = character.id || character.name;
+    if (!timerKey) return;
+    if (perCharacterSaveTimers.has(timerKey)) {
+      clearTimeout(perCharacterSaveTimers.get(timerKey));
+    }
+    const timer = setTimeout(() => {
+      saveCharacterEntry(character);
+      perCharacterSaveTimers.delete(timerKey);
+    }, AUTO_SAVE_DELAY_MS);
+    perCharacterSaveTimers.set(timerKey, timer);
+  }
+
+  async function saveCharacterEntry(character) {
+    if (!character) return;
+    try {
+      await ensureOwnerId();
+      const payload = {
+        id: character.id,
+        ownerId,
+        ownerName: character.ownerName,
+        name: character.name,
+        initiative: character.initiative,
+        stats: Array.isArray(character.stats) ? character.stats : [],
+        revealStats: character.revealStats,
+        conditions: Array.isArray(character.conditions) ? character.conditions : []
+      };
+      if (currentCampaignName) {
+        payload.campaignName = currentCampaignName;
+      }
+      const characterRes = await fetch('/characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!characterRes.ok) {
+        throw new Error('Server returned ' + characterRes.status);
+      }
+      updateDraftForCharacter(character);
+      lastStateJson = null;
+      await loadState();
+    } catch (err) {
+      console.error('Failed to auto-save character:', err);
+    }
+  }
+
+  async function deleteMyCharacter(character) {
+    if (!character?.id) return;
+    try {
+      const res = await fetch(`/characters/${character.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      myCharacters = myCharacters.filter((entry) => entry.id !== character.id);
+      if (selectedCharacterId === character.id) {
+        clearCharacterSelection();
+      }
+      renderCharacterList();
+      updateConditionsAvailability();
+      lastStateJson = null;
+      await loadState();
+    } catch (err) {
+      console.error('Failed to remove character:', err);
+      if (statusDiv) {
+        statusDiv.textContent = 'Failed to remove character.';
+      }
+    }
+  }
+
+  function setConditionLibraryFromSet(conditionSet) {
+    const baseUrl =
+      typeof conditionSet?.rulesBaseUrl === 'string' && conditionSet.rulesBaseUrl.trim()
+        ? conditionSet.rulesBaseUrl.trim()
+        : null;
+
+    const normalizedEntries = (conditionSet?.conditions ?? [])
+      .map((entry) => normalizeConditionEntry(entry, baseUrl))
+      .filter(Boolean);
+
+    if (Array.isArray(conditionSet?.stats) && conditionSet.stats.length > 0) {
+      statKeys = conditionSet.stats;
+    } else {
+      statKeys = ['HP'];
+    }
+    supportsTempHp = Boolean(conditionSet?.supportsTempHp);
+    if (supportsTempHp && !statKeys.includes('TempHP')) {
+      statKeys = ['TempHP', ...statKeys];
+    }
+    allowNegativeHealth = Boolean(conditionSet?.allowNegativeHealth);
+    buildStatsFields();
+
+    if (normalizedEntries.length === 0) {
+      conditionLibrary = [];
+      conditionLookup = new Map();
+      conditionLibraryLabel = '';
+      updateRulesetLink('', null);
+      setRulesetIcon(null, '');
+      updateRulesetLicense(null);
+      document.body.classList.add('no-conditions');
+      renderConditionGrid(conditionFilterInput ? conditionFilterInput.value : '');
+      return;
+    }
+
+    conditionLibrary = normalizedEntries;
+    conditionLookup = new Map(normalizedEntries.map((entry) => [entry.name, entry]));
+    conditionLibraryLabel = conditionSet?.label || '';
+
+    updateRulesetLink(conditionLibraryLabel, baseUrl);
+    setRulesetIcon(conditionSet?.icon || null, conditionLibraryLabel);
+    updateRulesetLicense(conditionSet?.license || null);
+
+    document.body.classList.remove('no-conditions');
+    renderConditionGrid(conditionFilterInput ? conditionFilterInput.value : '');
+  }
+
+  function getOwnerName() {
+    return ownerInput ? ownerInput.value.trim() : '';
+  }
+
+  function generateUuid() {
+    if (crypto && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+      const rand = Math.random() * 16 | 0;
+      const value = char === 'x' ? rand : (rand & 0x3) | 0x8;
+      return value.toString(16);
+    });
+  }
+
+  function isValidUuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value
+    );
+  }
+
+  async function ensureOwnerId() {
+    const hadStoredId = Boolean(localStorage.getItem('playerId'));
+    if (!ownerId || !isValidUuid(ownerId)) {
+      ownerId = generateUuid();
+    }
+    let attempts = 0;
+    while (attempts < 5) {
+      try {
+        const campaignQuery = currentCampaignName
+          ? `?campaign=${encodeURIComponent(currentCampaignName)}`
+          : '';
+        const res = await fetch(
+          `/players/${encodeURIComponent(ownerId)}/characters${campaignQuery}`
+        );
+        if (!res.ok) break;
+        const existing = await res.json();
+        const savedName = localStorage.getItem('ownerName') || '';
+        if (Array.isArray(existing) && existing.length > 0 && !savedName && !hadStoredId) {
+          ownerId = generateUuid();
+          attempts += 1;
+          continue;
+        }
+      } catch {
+        break;
+      }
+      break;
+    }
+    localStorage.setItem('playerId', ownerId);
+  }
+
+  function renderCharacterList() {
+    if (!characterList) return;
+    characterList.innerHTML = '';
+
+    if (myCharacters.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'subtitle';
+      empty.textContent = 'No characters yet.';
+      characterList.appendChild(empty);
+      if (removeCharacterBtn) {
+        removeCharacterBtn.disabled = true;
+        removeCharacterBtn.setAttribute('aria-disabled', 'true');
+      }
+      return;
+    }
+
+    myCharacters.forEach((character) => {
+      const item = document.createElement('div');
+      item.className = 'character-item';
+      if (character.id === selectedCharacterId) {
+        item.classList.add('active');
+      }
+      if (character.id === currentTurnId) {
+        item.classList.add('current-turn');
+      }
+
+      const row = document.createElement('div');
+      row.className = 'character-row';
+
+      const nameWrap = document.createElement('div');
+      const name = document.createElement('div');
+      name.className = 'character-name';
+      name.textContent = character.name;
+      const meta = document.createElement('div');
+      meta.className = 'character-meta';
+      meta.textContent = `Init ${character.initiative}`;
+      nameWrap.appendChild(name);
+      nameWrap.appendChild(meta);
+      row.appendChild(nameWrap);
+
+      const statsWrap = document.createElement('div');
+      statsWrap.className = 'character-stats';
+      const stats = Array.isArray(character.stats) ? character.stats : [];
+      const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
+
+      statKeys.forEach((key) => {
+        const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
+        const line = document.createElement('div');
+        line.className = 'character-stat-line';
+        const label = document.createElement('span');
+        label.className = 'character-stat-label';
+        label.textContent = key;
+
+        const minus = document.createElement('button');
+        minus.type = 'button';
+        minus.className = 'hp-adjust';
+        minus.textContent = '−';
+        minus.addEventListener('click', (event) => {
+          event.stopPropagation();
+          adjustCharacterStat(character, key, -1);
+        });
+
+        const value = document.createElement('span');
+        value.className = 'character-hp-value';
+        const currentVal = Number.isFinite(stat.current) ? stat.current : 0;
+        const maxVal = Number.isFinite(stat.max) ? stat.max : 0;
+        value.textContent = key === 'TempHP' ? `${currentVal}` : `${currentVal}/${maxVal}`;
+
+        const plus = document.createElement('button');
+        plus.type = 'button';
+        plus.className = 'hp-adjust';
+        plus.textContent = '+';
+        plus.addEventListener('click', (event) => {
+          event.stopPropagation();
+          adjustCharacterStat(character, key, 1);
+        });
+
+        line.appendChild(label);
+        line.appendChild(minus);
+        line.appendChild(value);
+        line.appendChild(plus);
+        statsWrap.appendChild(line);
+      });
+
+      row.appendChild(statsWrap);
+
+      item.appendChild(row);
+
+      item.addEventListener('click', () => {
+        selectCharacter(character.id);
+      });
+
+      characterList.appendChild(item);
+    });
+
+    if (removeCharacterBtn) {
+      const canRemove = Boolean(selectedCharacterId);
+      removeCharacterBtn.disabled = !canRemove;
+      removeCharacterBtn.setAttribute('aria-disabled', (!canRemove).toString());
+    }
+  }
+
+  function syncMyCharacterStatsFromState(players) {
+    if (displayOnly) return;
+    if (typeof ownerId === 'undefined' || !ownerId || !Array.isArray(players)) return;
+    const byId = new Map(
+      players
+        .filter((player) => player.ownerId && player.ownerId === ownerId)
+        .map((player) => [player.id, player])
+    );
+    if (byId.size === 0) return;
+    let updated = false;
+    myCharacters = myCharacters.map((character) => {
+      const match = byId.get(character.id);
+      if (!match || !Array.isArray(match.stats)) return character;
+      updated = true;
+      return { ...character, stats: match.stats };
+    });
+    if (updated) {
+      renderCharacterList();
+    }
+  }
+
+  function updateTurnCompleteVisibility() {
+    const myTurnMatch =
+      currentTurnId && myCharacters.some((character) => character.id === currentTurnId);
+
+    if (!turnCompleteBtn) return;
+    if (displayOnly) {
+      turnCompleteBtn.style.display = 'none';
+      return;
+    }
+    if (encounterState === 'new') {
+      turnCompleteBtn.textContent = 'New Encounter';
+      turnCompleteBtn.style.display = '';
+      turnCompleteBtn.disabled = true;
+      turnCompleteBtn.setAttribute('aria-disabled', 'true');
+      return;
+    }
+    if (encounterState === 'suspended') {
+      turnCompleteBtn.textContent = 'Encounter Suspended';
+      turnCompleteBtn.style.display = '';
+      turnCompleteBtn.disabled = true;
+      turnCompleteBtn.setAttribute('aria-disabled', 'true');
+      return;
+    }
+    turnCompleteBtn.textContent = 'Turn Complete';
+    const enabled = Boolean(myTurnMatch);
+    turnCompleteBtn.disabled = !enabled;
+    turnCompleteBtn.setAttribute('aria-disabled', (!enabled).toString());
+    turnCompleteBtn.style.display = enabled ? '' : 'none';
+  }
+
+  function clampCurrentHp(value, maxValue) {
+    let clamped = allowNegativeHealth ? value : Math.max(0, value);
+    if (Number.isFinite(maxValue)) {
+      clamped = Math.min(clamped, maxValue);
+    }
+    return clamped;
+  }
+
+  function clampCurrentForKey(statKey, value, maxValue) {
+    if (statKey === 'TempHP') {
+      return Math.max(0, value);
+    }
+    return clampCurrentHp(value, maxValue);
+  }
+
+  function adjustCharacterStat(character, statKey, delta) {
+    if (!character) return;
+    if (!Array.isArray(character.stats)) {
+      character.stats = [];
+    }
+    const existing = character.stats.find((stat) => stat.key === statKey) || {
+      key: statKey,
+      current: 0,
+      max: 0
+    };
+    const nextStats = character.stats.map((stat) => ({ ...stat }));
+    const statIndex = nextStats.findIndex((stat) => stat.key === statKey);
+    const tempIndex = nextStats.findIndex((stat) => stat.key === 'TempHP');
+
+    if (supportsTempHp && statKey === 'HP' && delta < 0 && tempIndex >= 0) {
+      const tempStat = nextStats[tempIndex];
+      let damage = Math.abs(delta);
+      const absorbed = Math.min(Math.max(0, tempStat.current), damage);
+      tempStat.current = clampCurrentForKey('TempHP', tempStat.current - absorbed, tempStat.max);
+      damage -= absorbed;
+
+      const hpStat = statIndex >= 0 ? nextStats[statIndex] : { ...existing };
+      hpStat.current = clampCurrentForKey('HP', hpStat.current - damage, hpStat.max);
+
+      if (statIndex >= 0) {
+        nextStats[statIndex] = hpStat;
+      } else {
+        nextStats.push(hpStat);
+      }
+      nextStats[tempIndex] = tempStat;
+    } else {
+      const nextCurrent = clampCurrentForKey(statKey, existing.current + delta, existing.max);
+      const nextStat = { ...existing, current: nextCurrent };
+      if (statIndex >= 0) {
+        nextStats[statIndex] = nextStat;
+      } else {
+        nextStats.push(nextStat);
+      }
+    }
+
+    character.stats = nextStats;
+    if (selectedCharacterId === character.id) {
+      const entry = statInputs.get(statKey);
+      const updated = character.stats.find((stat) => stat.key === statKey);
+      if (entry?.currentInput && updated) {
+        entry.currentInput.value = updated.current;
+      }
+      if (supportsTempHp && statKey === 'HP') {
+        const tempEntry = statInputs.get('TempHP');
+        const updatedTemp = character.stats.find((stat) => stat.key === 'TempHP');
+        if (tempEntry?.currentInput && updatedTemp) {
+          tempEntry.currentInput.value = updatedTemp.current;
+        }
+      }
+    }
+    renderCharacterList();
+    updateDraftForCharacter(character);
+    scheduleCharacterSave(character);
+    skipRefresh = true;
+  }
+
+  function selectCharacter(id) {
+    const found = myCharacters.find((character) => character.id === id);
+    if (!found) return;
+
+    selectedCharacterId = found.id;
+    isCreatingCharacter = false;
+    localStorage.setItem('selectedCharacterId', selectedCharacterId);
+    nameInput.value = found.name;
+    numberInput.value = found.initiative;
+    if (Array.isArray(found.stats)) {
+      const statsByKey = new Map(found.stats.map((stat) => [stat.key, stat]));
+      statInputs.forEach((entry, key) => {
+        const stat = statsByKey.get(key);
+        if (entry.currentInput) {
+          entry.currentInput.value = Number.isFinite(stat?.current) ? stat.current : '';
+        }
+        if (entry.maxInput) {
+          entry.maxInput.value = Number.isFinite(stat?.max) ? stat.max : '';
+        }
+      });
+    }
+    if (revealStatsInput) {
+      revealStatsInput.checked = Boolean(found.revealStats);
+    }
+    applyDraftToForm(found);
+    applySelectedConditions(found.conditions || []);
+    formDirty = false;
+    renderCharacterList();
+    updateConditionsAvailability();
+    if (conditionsCharacter) {
+      conditionsCharacter.textContent = found.name || 'this character';
+    }
+  }
+
+  function clearCharacterSelection() {
+    selectedCharacterId = null;
+    localStorage.removeItem('selectedCharacterId');
+    nameInput.value = '';
+    numberInput.value = '';
+    statInputs.forEach((entry) => {
+      if (entry.currentInput) entry.currentInput.value = '';
+      if (entry.maxInput) entry.maxInput.value = '';
+    });
+    if (revealStatsInput) revealStatsInput.checked = false;
+    applySelectedConditions([]);
+    formDirty = false;
+    renderCharacterList();
+    updateConditionsAvailability();
+    if (conditionsCharacter) {
+      conditionsCharacter.textContent = 'this character';
+    }
+  }
+
+  function clearAddForm() {
+    if (addNameInput) addNameInput.value = '';
+    if (addInitiativeInput) addInitiativeInput.value = '0';
+    addStatInputs.forEach((entry) => {
+      if (entry.maxInput) entry.maxInput.value = '';
+      if (entry.currentInput) entry.currentInput.value = '';
+    });
+  }
+
+  function showAddForm() {
+    if (!addForm) return;
+    addForm.classList.remove('details-panel-collapsed');
+    addForm.classList.add('details-panel-open');
+    addForm.setAttribute('aria-hidden', 'false');
+    isCreatingCharacter = true;
+    clearCharacterSelection();
+    clearAddForm();
+    updateConditionsAvailability();
+    if (conditionsCharacter) {
+      conditionsCharacter.textContent = addNameInput ? addNameInput.value.trim() || 'this character' : 'this character';
+    }
+  }
+
+  function hideAddForm() {
+    if (!addForm) return;
+    addForm.classList.add('details-panel-collapsed');
+    addForm.classList.remove('details-panel-open');
+    addForm.setAttribute('aria-hidden', 'true');
+    isCreatingCharacter = false;
+    clearAddForm();
+    applySelectedConditions([]);
+    updateConditionsAvailability();
+    if (conditionsCharacter) {
+      conditionsCharacter.textContent = 'this character';
+    }
+  }
+
+  async function loadCharactersForOwner(ownerName) {
+    if (!ownerName) {
+      myCharacters = [];
+      selectedCharacterId = null;
+      renderCharacterList();
+      updateConditionsAvailability();
+      return;
+    }
+
+    try {
+      await ensureOwnerId();
+      const campaignQuery = currentCampaignName
+        ? `?campaign=${encodeURIComponent(currentCampaignName)}`
+        : '';
+      const res = await fetch(
+        `/players/${encodeURIComponent(ownerId)}/characters${campaignQuery}`
+      );
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      myCharacters = await res.json();
+      applyDraftsToCharacters(ownerName, myCharacters);
+      const savedCharacterId = localStorage.getItem('selectedCharacterId');
+      if (savedCharacterId && myCharacters.some((c) => c.id === savedCharacterId)) {
+        selectedCharacterId = savedCharacterId;
+        selectCharacter(savedCharacterId);
+      } else if (myCharacters.length > 0) {
+        selectCharacter(myCharacters[0].id);
+      } else {
+        clearCharacterSelection();
+      }
+      updateTurnCompleteVisibility();
+    } catch (err) {
+      console.error('Failed to load characters:', err);
+    }
+  }
+
+  async function loadCampaign() {
+    try {
+      const res = await fetch('/campaign');
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      const campaign = await res.json();
+      currentCampaignName = campaign.name || '';
+      currentRulesetId = campaign.rulesetId || '';
+      localStorage.setItem('campaignName', currentCampaignName);
+      if (campaignNameLabel) {
+        campaignNameLabel.textContent = currentCampaignName || 'Campaign';
+      }
+      updateRulesetLink(campaign.rulesetLabel || '', null);
+      updateWindowTitle();
+    } catch (err) {
+      console.error('Failed to load campaign:', err);
+      currentCampaignName = localStorage.getItem('campaignName') || '';
+      if (campaignNameLabel) {
+        campaignNameLabel.textContent = currentCampaignName || 'Campaign';
+      }
+      updateWindowTitle();
+    }
+
+    await loadConditionLibraryFromServer();
+    await loadCharactersForOwner(getOwnerName());
+  }
+
+  async function loadConditionLibraryFromServer() {
+    if (conditionGrid) {
+      conditionGrid.innerHTML = '';
+      const loading = document.createElement('div');
+      loading.className = 'subtitle';
+      loading.textContent = 'Loading conditions...';
+      conditionGrid.appendChild(loading);
+    }
+
+    try {
+      const res = await fetch('/conditions-library');
+      if (!res.ok) {
+        throw new Error('Server returned ' + res.status);
+      }
+      const json = await res.json();
+      setConditionLibraryFromSet(json);
+    } catch (err) {
+      console.warn('Unable to load condition library from server. No conditions available.', err);
+      setConditionLibraryFromSet(EMPTY_CONDITION_SET);
+    }
+
+    updateSelectedConditionsDisplay();
+  }
+
+  function conditionsSignature(source) {
+    const arr = Array.isArray(source) ? source.slice() : Array.from(source);
+    return JSON.stringify(arr.sort());
+  }
+
+  function updateSelectedConditionsDisplay() {
+    if (!selectedConditionsWrap) return;
+    selectedConditionsWrap.innerHTML = '';
+    if (selectedConditions.size === 0) {
+      const pill = document.createElement('span');
+      pill.className = 'selected-pill';
+      pill.textContent = 'No conditions';
+      selectedConditionsWrap.appendChild(pill);
+      return;
+    }
+
+    for (const conditionName of Array.from(selectedConditions).sort()) {
+      const pill = document.createElement('span');
+      pill.className = 'selected-pill';
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = conditionName;
+      pill.appendChild(nameSpan);
+
+      const entry = conditionLookup.get(conditionName);
+      const link = createConditionLink(entry?.link);
+      if (link) {
+        pill.appendChild(link);
+      }
+
+      selectedConditionsWrap.appendChild(pill);
+    }
+  }
+
+  function renderConditionGrid(filterText = '') {
+    if (!conditionGrid) return;
+    const normalizedFilter = filterText.trim().toLowerCase();
+    conditionGrid.innerHTML = '';
+
+    if (conditionLibrary.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'subtitle';
+      emptyState.textContent = 'No conditions available.';
+      conditionGrid.appendChild(emptyState);
+      return;
+    }
+
+    const filtered = conditionLibrary.filter((condition) =>
+      condition.name.toLowerCase().includes(normalizedFilter)
+    );
+
+    if (filtered.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'subtitle';
+      empty.textContent = 'No matching conditions.';
+      conditionGrid.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach((condition) => {
+      const checkboxId = `cond-${condition.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      const wrapper = document.createElement('label');
+      wrapper.setAttribute('for', checkboxId);
+      wrapper.classList.add('condition-cell');
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = checkboxId;
+      checkbox.value = condition.name;
+      checkbox.checked = selectedConditions.has(condition.name);
+      if (checkbox.checked) {
+        wrapper.classList.add('selected');
+      }
+
+      checkbox.addEventListener('change', (event) => {
+        if (event.target.checked) {
+          selectedConditions.add(condition.name);
+          wrapper.classList.add('selected');
+        } else {
+          selectedConditions.delete(condition.name);
+          wrapper.classList.remove('selected');
+        }
+        conditionsDirty = true;
+        formDirty = true;
+        lastConditionsSignatureFromState = null;
+        updateSelectedConditionsDisplay();
+        if (!isCreatingCharacter) {
+          scheduleAutoSave('conditions');
+        }
+      });
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = condition.name;
+
+      wrapper.appendChild(checkbox);
+
+      const nameContainer = document.createElement('div');
+      nameContainer.classList.add('condition-name-cell');
+      nameContainer.appendChild(nameSpan);
+
+      const link = createConditionLink(condition.link);
+      if (link) {
+        link.addEventListener('click', (event) => {
+          event.stopPropagation();
+        });
+        nameContainer.appendChild(link);
+      }
+
+      wrapper.appendChild(nameContainer);
+      conditionGrid.appendChild(wrapper);
+    });
+  }
+
+  function applySelectedConditions(nextList) {
+    selectedConditions = new Set(nextList);
+    conditionsDirty = false;
+    lastConditionsSignatureFromState = conditionsSignature(nextList);
+    updateSelectedConditionsDisplay();
+    renderConditionGrid(conditionFilterInput ? conditionFilterInput.value : '');
+  }
+
+  function syncConditionsFromState(players) {
+    if (!conditionGrid || conditionsDirty) return;
+    if (!selectedCharacterId) return;
+
+    const match = players.find((player) => player.id === selectedCharacterId);
+    if (!match) return;
+
+    const serverConditions = Array.isArray(match.conditions) ? match.conditions : [];
+    const signature = conditionsSignature(serverConditions);
+    if (signature === lastConditionsSignatureFromState) return;
+
+    applySelectedConditions(serverConditions);
+  }
+
+  if (conditionFilterInput) {
+    conditionFilterInput.addEventListener('input', (event) => {
+      renderConditionGrid(event.target.value || '');
+    });
+  }
+
+  if (ownerInput) {
+    ownerInput.addEventListener('change', async () => {
+      const ownerName = getOwnerName();
+      localStorage.setItem('ownerName', ownerName);
+      updatePlayerNameDisplay();
+      if (playerNameInput) playerNameInput.value = ownerName;
+      await loadCharactersForOwner(ownerName);
+    });
+  }
+
+  function showPlayerNameEdit(show) {
+    if (!playerNameDisplay || !playerNameEdit) return;
+    playerNameDisplay.classList.toggle('editing', show);
+    playerNameEdit.classList.toggle('visible', show);
+    if (playerNameInput) {
+      playerNameInput.readOnly = !show;
+    }
+  }
+
+  if (playerNameEditBtn && playerNameInput) {
+    playerNameEditBtn.addEventListener('click', () => {
+      const ownerName = getOwnerName();
+      playerNameInput.value = ownerName;
+      playerNameInput.classList.remove('player-name-placeholder');
+      showPlayerNameEdit(true);
+      playerNameInput.focus();
+    });
+  }
+
+  if (playerNameCancelBtn && playerNameInput) {
+    playerNameCancelBtn.addEventListener('click', () => {
+      playerNameInput.value = getOwnerName();
+      updatePlayerNameDisplay();
+      showPlayerNameEdit(false);
+      updateWindowTitle();
+    });
+  }
+
+  if (playerNameSaveBtn && playerNameInput) {
+    playerNameSaveBtn.addEventListener('click', async () => {
+      const newName = playerNameInput.value.trim();
+      if (!newName) return;
+      await ensureOwnerId();
+      try {
+        const res = await fetch(`/players/${encodeURIComponent(ownerId)}/rename`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: newName })
+        });
+        if (!res.ok) {
+          throw new Error('Server returned ' + res.status);
+        }
+      } catch (err) {
+        console.error('Failed to rename player:', err);
+      }
+      ownerInput.value = newName;
+      localStorage.setItem('ownerName', newName);
+      updatePlayerNameDisplay();
+      showPlayerNameEdit(false);
+      await loadCharactersForOwner(newName);
+    });
+  }
+
+  if (playerNameInput) {
+    playerNameInput.addEventListener('input', () => {
+      updateWindowTitle();
+    });
+  }
+
+  if (addCharacterBtn) {
+    if (!displayOnly) {
+      addCharacterBtn.addEventListener('click', () => {
+        showAddForm();
+        if (conditionsToggle && conditionsPanel) {
+          setConditionsPanelOpen(false);
+        }
+      });
+    } else {
+      addCharacterBtn.style.display = 'none';
+    }
+  }
+
+  if (removeCharacterBtn) {
+    if (!displayOnly) {
+      removeCharacterBtn.addEventListener('click', () => {
+        const selected = myCharacters.find((character) => character.id === selectedCharacterId);
+        if (!selected) return;
+        const confirmed = confirm(`Remove ${selected.name} from the tracker?`);
+        if (!confirmed) return;
+        deleteMyCharacter(selected);
+      });
+    } else {
+      removeCharacterBtn.style.display = 'none';
+    }
+  }
+
+  updateSelectedConditionsDisplay();
+
+  async function handleAddCharacterSubmit() {
+    const ownerName = getOwnerName();
+    const name = addNameInput ? addNameInput.value.trim() : '';
+    const initiativeStr = addInitiativeInput ? addInitiativeInput.value.trim() : '';
+    if (!ownerName || !name || initiativeStr === '') {
+      statusDiv.textContent = 'Player, character, and initiative are required.';
+      return;
+    }
+    const initiative = Number(initiativeStr);
+    if (!Number.isFinite(initiative)) {
+      statusDiv.textContent = 'Initiative must be a valid number.';
+      return;
+    }
+
+    const statsPayload = [];
+    for (const key of statKeys) {
+      const entry = addStatInputs.get(key);
+      const maxStr = entry?.maxInput ? entry.maxInput.value.trim() : '';
+      const currentStr = entry?.currentInput ? entry.currentInput.value.trim() : '';
+      const isTempHp = key === 'TempHP';
+      if (!isTempHp && maxStr === '') {
+        statusDiv.textContent = `Max ${key} is required.`;
+        return;
+      }
+      const maxVal = isTempHp ? 0 : Number(maxStr);
+      const requiresPositiveMax = !isTempHp;
+      if (!isTempHp && (!Number.isFinite(maxVal) || (requiresPositiveMax ? maxVal <= 0 : maxVal < 0))) {
+        statusDiv.textContent = requiresPositiveMax
+          ? `Max ${key} must be greater than 0.`
+          : `Max ${key} must be 0 or greater.`;
+        return;
+      }
+      const currentVal = currentStr === '' ? (isTempHp ? 0 : maxVal) : Number(currentStr);
+      if (!Number.isFinite(currentVal)) {
+        statusDiv.textContent = `${key} current value must be a valid number.`;
+        return;
+      }
+      const allowsNegative = key !== 'TempHP' && allowNegativeHealth;
+      if ((!isTempHp && currentVal > maxVal) || (!allowsNegative && currentVal < 0)) {
+        statusDiv.textContent = allowsNegative
+          ? `${key} current must be less than or equal to Max.`
+          : `${key} current must be between 0 and Max.`;
+        return;
+      }
+      statsPayload.push({ key, current: currentVal, max: isTempHp ? 0 : maxVal });
+    }
+
+    try {
+      await ensureOwnerId();
+      const conditionList = Array.from(selectedConditions);
+      const payload = {
+        ownerId,
+        ownerName,
+        name,
+        initiative,
+        stats: statsPayload,
+        revealStats: revealStatsInput ? revealStatsInput.checked : null,
+        conditions: conditionList
+      };
+      if (currentCampaignName) {
+        payload.campaignName = currentCampaignName;
+      }
+      const characterRes = await fetch('/characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!characterRes.ok) {
+        throw new Error('Server returned ' + characterRes.status);
+      }
+
+      const savedCharacter = await characterRes.json();
+      selectedCharacterId = savedCharacter.id;
+      localStorage.setItem('selectedCharacterId', selectedCharacterId);
+      hideAddForm();
+      await loadCharactersForOwner(ownerName);
+      await loadState();
+    } catch (err) {
+      statusDiv.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  async function initApp() {
+    await loadCampaign();
+    await loadState();
+    setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
+  }
+
+  initApp();
+
+  // --- Load state (round + current turn + players) -------------------------
+
+  function loadStateTimer() {
+    if (skipRefresh) {
+      skipRefresh = false;
+      return;
+    }
+    loadState();
+  }
+
+  async function loadState() {
+    try {
+      const res = await fetch('/state');
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+
+      const state = await res.json();
+      const players = state.players || [];
+      const round = state.round || 1;
+      encounterState = state.encounterState || 'new';
+      const currentTurnName = state.currentTurnName || null;
+      currentTurnId = state.currentTurnId || null;
+      const turnChanged = currentTurnId !== lastTurnId;
+
+      // Build a normalized snapshot for no-blink detection
+      const normalized = {
+        round,
+        currentTurnName,
+        currentTurnId,
+        players,
+        encounterState
+      };
+      const currentJson = JSON.stringify(normalized);
+
+      if (currentJson === lastStateJson) {
+        // No change → no DOM update → no blinking
+        // Still need to update "Turn Complete" visibility, because it
+        // depends on local saved name (but that rarely changes)
+      } else {
+        lastStateJson = currentJson;
+
+        // Update round info text
+        roundInfo.textContent = `Round ${round}`;
+        if (currentActor) {
+          if (hideTurnTable && currentTurnId) {
+            const current = players.find((player) => player.id === currentTurnId);
+            if (current) {
+              currentActor.textContent = `Acting: ${current.name}`;
+              const isMineTurn =
+                ownerInput && ownerInput.value.trim() &&
+                current.ownerName &&
+                current.ownerName.toLowerCase() === ownerInput.value.trim().toLowerCase();
+              currentActor.classList.toggle('current-actor-mine', Boolean(isMineTurn));
+            } else {
+              currentActor.textContent = '';
+              currentActor.classList.remove('current-actor-mine');
+            }
+          } else {
+            currentActor.textContent = '';
+            currentActor.classList.remove('current-actor-mine');
+          }
+        }
+
+        // Rebuild table
+        playersBody.innerHTML = '';
+
+        if (players.length === 0) {
+          const tr = document.createElement('tr');
+          const td = document.createElement('td');
+          const hasConditions = conditionLibrary.length > 0;
+          td.colSpan = hasConditions ? 4 : 3;
+          td.textContent = '(no players yet)';
+          tr.appendChild(td);
+          playersBody.appendChild(tr);
+        } else {
+          for (const p of players) {
+            const tr = document.createElement('tr');
+            tr.classList.add('player-row');
+
+            const initTd = document.createElement('td');
+            const nameTd = document.createElement('td');
+            const hpTd = document.createElement('td');
+            const conditionsTd = document.createElement('td');
+            conditionsTd.classList.add('conditions-cell');
+
+            initTd.textContent = p.initiative ?? '';
+            if (p.ownerName && p.ownerName.toLowerCase() === 'referee') {
+              initTd.classList.add('init-referee');
+            }
+            nameTd.innerHTML = '';
+            const nameLine = document.createElement('div');
+            nameLine.textContent = p.name;
+            nameTd.appendChild(nameLine);
+            if (p.ownerName) {
+              const ownerLine = document.createElement('div');
+              ownerLine.classList.add('player-owner');
+              ownerLine.textContent = `(${p.ownerName})`;
+              nameTd.appendChild(ownerLine);
+            }
+
+            const isMine =
+              ownerInput && ownerInput.value.trim() &&
+              p.ownerName &&
+              p.ownerName.toLowerCase() === ownerInput.value.trim().toLowerCase();
+            if (isMine) {
+              initTd.classList.add('init-mine');
+            }
+
+            const stats = Array.isArray(p.stats) ? p.stats : [];
+            const orderedStats = statKeys
+              .map((key) => stats.find((stat) => stat.key === key))
+              .filter(Boolean);
+            const statusInfo = (() => {
+              const source = (orderedStats.length > 0 ? orderedStats : stats)
+                .filter((stat) => stat.key !== 'TempHP');
+              if (source.length === 0) return null;
+              const totals = source.reduce(
+                (acc, stat) => {
+                  if (Number.isFinite(stat.current)) acc.current += stat.current;
+                  if (Number.isFinite(stat.max)) acc.max += stat.max;
+                  return acc;
+                },
+                { current: 0, max: 0 }
+              );
+              if (totals.max <= 0) return null;
+              return {
+                ratio: totals.current / totals.max,
+                isDead: totals.current <= 0
+              };
+            })();
+
+            if (statusInfo) {
+              hpTd.classList.add('hp-cell');
+              if (statusInfo.isDead) {
+                hpTd.classList.add('hp-dead');
+              } else if (statusInfo.ratio === 1) {
+                hpTd.classList.add('hp-blue');
+              } else if (statusInfo.ratio > 0.75) {
+                hpTd.classList.add('hp-green');
+              } else if (statusInfo.ratio > 0.5) {
+                hpTd.classList.add('hp-yellow');
+              } else if (statusInfo.ratio > 0.25) {
+                hpTd.classList.add('hp-orange');
+              } else {
+                hpTd.classList.add('hp-red');
+              }
+
+              hpTd.innerHTML = '';
+              const canReveal = isMine || p.revealStats;
+              if (!canReveal) {
+                const statusLabel = healthStatusLabel(statusInfo.ratio, statusInfo.isDead);
+                const statusLine = document.createElement('div');
+                statusLine.textContent = statusLabel;
+                hpTd.appendChild(statusLine);
+              }
+              if (canReveal) {
+                const valueLine = document.createElement('div');
+                const displayStats = orderedStats.length > 0 ? orderedStats : stats;
+                const visibleStats = displayStats.filter(
+                  (stat) => stat.key !== 'TempHP' || Number(stat.current) > 0
+                );
+                valueLine.textContent = (visibleStats.length > 0 ? visibleStats : displayStats)
+                  .map((stat) =>
+                    stat.key === 'TempHP'
+                      ? `${stat.key} ${stat.current}`
+                      : `${stat.key} ${stat.current}/${stat.max}`
+                  )
+                  .join(' • ');
+                hpTd.appendChild(valueLine);
+              }
+            } else {
+              hpTd.textContent = '—';
+            }
+
+            if (Array.isArray(p.conditions) && p.conditions.length > 0) {
+              const list = document.createElement('div');
+              list.classList.add('player-conditions');
+
+              p.conditions.forEach((conditionName) => {
+                const entry = conditionLookup.get(conditionName);
+                const badge = document.createElement(entry && entry.link ? 'a' : 'span');
+                badge.classList.add('condition-badge');
+                badge.textContent = abbreviationForCondition(conditionName);
+                badge.title = conditionName;
+                if (entry && entry.link) {
+                  badge.href = entry.link;
+                  badge.target = '_blank';
+                  badge.rel = 'noopener';
+                }
+                list.appendChild(badge);
+              });
+
+              conditionsTd.appendChild(list);
+            } else {
+              conditionsTd.textContent = '—';
+            }
+
+            if (currentTurnId && p.id === currentTurnId) {
+              tr.classList.add('current-turn');
+            }
+
+            tr.appendChild(initTd);
+            tr.appendChild(nameTd);
+            tr.appendChild(hpTd);
+            tr.appendChild(conditionsTd);
+            playersBody.appendChild(tr);
+          }
+        }
+
+        syncMyCharacterStatsFromState(players);
+        syncConditionsFromState(players);
+
+        if (currentTurnId && turnChanged && !formDirty && !isEditingForm) {
+          if (myCharacters.some((character) => character.id === currentTurnId)) {
+            if (selectedCharacterId !== currentTurnId) {
+              selectCharacter(currentTurnId);
+            }
+          }
+        }
+
+        renderCharacterList();
+        lastTurnId = currentTurnId;
+      }
+
+      // Turn Complete button visibility
+      updateTurnCompleteVisibility();
+    } catch (err) {
+      statusDiv.textContent = 'Error loading state: ' + err.message;
+    }
+  }
+
+  // --- Save player (add/update this client's entry) ------------------------
+
+  async function saveCharacter({ showStatus = true } = {}) {
+    const ownerName = getOwnerName();
+    const name = nameInput.value.trim();
+    const initiativeStr = numberInput.value.trim();
+    if (!ownerName || !name || initiativeStr === '') {
+      statusDiv.textContent = 'Player, character, and initiative are required.';
+      return;
+    }
+
+    const initiative = Number(initiativeStr);
+    if (!Number.isFinite(initiative)) {
+      statusDiv.textContent = 'Initiative must be a valid number.';
+      return;
+    }
+
+    const statsPayload = [];
+    for (const key of statKeys) {
+      const entry = statInputs.get(key);
+      const maxStr = entry?.maxInput ? entry.maxInput.value.trim() : '';
+      const currentStr = entry?.currentInput ? entry.currentInput.value.trim() : '';
+      const isTempHp = key === 'TempHP';
+      if (!isTempHp && maxStr === '') {
+        statusDiv.textContent = `Max ${key} is required.`;
+        return;
+      }
+      const maxVal = isTempHp ? 0 : Number(maxStr);
+      const requiresPositiveMax = !isTempHp;
+      if (!isTempHp && (!Number.isFinite(maxVal) || (requiresPositiveMax ? maxVal <= 0 : maxVal < 0))) {
+        statusDiv.textContent = requiresPositiveMax
+          ? `Max ${key} must be greater than 0.`
+          : `Max ${key} must be 0 or greater.`;
+        return;
+      }
+      const currentVal = currentStr === '' ? (isTempHp ? 0 : maxVal) : Number(currentStr);
+      if (!Number.isFinite(currentVal)) {
+        statusDiv.textContent = `${key} current value must be a valid number.`;
+        return;
+      }
+      const allowsNegative = key !== 'TempHP' && allowNegativeHealth;
+      if ((!isTempHp && currentVal > maxVal) || (!allowsNegative && currentVal < 0)) {
+        statusDiv.textContent = allowsNegative
+          ? `${key} current must be less than or equal to Max.`
+          : `${key} current must be between 0 and Max.`;
+        return;
+      }
+      if (entry?.currentInput) {
+        entry.currentInput.value = currentVal;
+      }
+      statsPayload.push({ key, current: currentVal, max: isTempHp ? 0 : maxVal });
+    }
+
+    if (showStatus) {
+      statusDiv.textContent = 'Saving...';
+    }
+
+    // Remember last-used owner name on this device
+    localStorage.setItem('ownerName', ownerName);
+
+    try {
+      await ensureOwnerId();
+      const conditionList = Array.from(selectedConditions);
+      const payload = {
+        id: selectedCharacterId,
+        ownerId,
+        ownerName,
+        name,
+        initiative,
+        stats: statsPayload,
+        revealStats: revealStatsInput ? revealStatsInput.checked : null,
+        conditions: conditionList
+      };
+      if (currentCampaignName) {
+        payload.campaignName = currentCampaignName;
+      }
+      const characterRes = await fetch('/characters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!characterRes.ok) {
+        throw new Error('Server returned ' + characterRes.status);
+      }
+
+      const savedCharacter = await characterRes.json();
+      selectedCharacterId = savedCharacter.id;
+      localStorage.setItem('selectedCharacterId', selectedCharacterId);
+
+      conditionsDirty = false;
+      lastConditionsSignatureFromState = conditionsSignature(conditionList);
+      formDirty = false;
+
+      updateDraftFromForm();
+      if (showStatus) {
+        statusDiv.textContent = `Saved ${name} (${initiative}) — ${conditionList.length} condition${conditionList.length === 1 ? '' : 's'}.`;
+      } else {
+        statusDiv.textContent = '';
+      }
+      isCreatingCharacter = false;
+      updateConditionsAvailability();
+
+      lastStateJson = null; // force redraw so table reflects latest
+      await loadCharactersForOwner(ownerName);
+      await loadState();
+    } catch (err) {
+      statusDiv.textContent = 'Error: ' + err.message;
+    }
+  }
+
+  async function handleSave(event) {
+    event.preventDefault();
+    await saveCharacter({ showStatus: true });
+  }
+
+  // --- Clear all players (admin-only) --------------------------------------
+
+  async function handleClear() {
+    if (!displayOnly) {
+      statusDiv.textContent = 'Clear is only available on localhost.';
+      return;
+    }
+
+    const sure = confirm('Really clear the entire player list?');
+    if (!sure) return;
+
+    try {
+      const res = await fetch('/users', { method: 'DELETE' });
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+
+      statusDiv.textContent = 'All players cleared.';
+      lastStateJson = null;
+      await loadState();
+    } catch (err) {
+      statusDiv.textContent = 'Error clearing players: ' + err.message;
+    }
+  }
+
+  // --- Turn complete (advance to next player) ------------------------------
+
+  async function handleTurnComplete() {
+    try {
+      const res = await fetch('/turn-complete', { method: 'POST' });
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+
+      lastStateJson = null;
+      await loadState();
+    } catch (err) {
+      statusDiv.textContent = 'Error advancing turn: ' + err.message;
+    }
+  }
+
+  // --- Wire up events + timers ---------------------------------------------
+
+  if (!displayOnly) {
+    form.addEventListener('submit', handleSave);
+  }
+  if (addSaveBtn) {
+    addSaveBtn.addEventListener('click', () => {
+      handleAddCharacterSubmit();
+    });
+  }
+  if (addNameInput) {
+    addNameInput.addEventListener('input', () => {
+      if (conditionsCharacter && isCreatingCharacter) {
+        conditionsCharacter.textContent = addNameInput.value.trim() || 'this character';
+      }
+    });
+  }
+  if (addCancelBtn) {
+    addCancelBtn.addEventListener('click', () => {
+      hideAddForm();
+    });
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', handleClear);
+  }
+
+  if (turnCompleteBtn) {
+    turnCompleteBtn.addEventListener('click', handleTurnComplete);
+  }
+
+  // Initial load + auto-refresh
+  
+});

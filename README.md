@@ -15,17 +15,16 @@ The current working architecture is a Vapor service running on a Mac and serving
 
 ## What the server does
 
-- hosts the web UI from `~/Sites/PlayerTracker`
+- hosts the web UI from the checked-in `WebClient/` directory
 - serves player, referee, display-only, and campaign-selector pages
 - tracks campaigns, encounter state, initiative, character stats, conditions, visibility, and reveal-on-turn behavior
-- loads rulesets from `~/Sites/PlayerTracker/rulesets`
+- loads rulesets from `WebClient/rulesets`
 - starts on port `8080`
 
 ## Requirements
 
 - macOS
 - Swift 6.2
-- a local web root at `~/Sites/PlayerTracker`
 - Xcode if you want to run the iOS app
 
 ## Run the server
@@ -52,6 +51,8 @@ On startup, the service currently opens the local display view in a browser on t
   main server entry point, routes, and in-memory game state
 - `Sources/PlayerTracker/RuleSetLibrary.swift`
   ruleset model and loader
+- `WebClient/`
+  checked-in browser client and rulesets
 - `PlayerTrackeriOS/`
   native iOS player app
 - `InitiativeTrackerP2P/`
@@ -59,6 +60,5 @@ On startup, the service currently opens the local display view in a browser on t
 
 ## Notes
 
-- The web assets are not stored in this repository root; the server serves them from `~/Sites/PlayerTracker`.
-- Rulesets are expected in `~/Sites/PlayerTracker/rulesets`.
+- The server prefers the checked-in `WebClient/` directory and falls back to `~/Sites/PlayerTracker` only if needed.
 - This repository is currently optimized for local-network table play rather than internet-hosted multiplayer.

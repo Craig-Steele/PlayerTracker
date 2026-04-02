@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign - Referee</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="referee-page">
+  <div id="header-bar">
+    <div id="header-bar-left">
+      <div class="campaign-header">
+        <img id="ruleset-icon" class="ruleset-icon" alt="" />
+        <div class="campaign-text">
+          <h1 id="campaign-name">Campaign</h1>
+          <div class="ruleset-meta">
+            <a id="ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
+            <span id="ruleset-license-wrap" class="ruleset-license-wrap">
+              (<a id="ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="header-bar-right">
+      <div id="player-name-display" class="player-name-display">
+        <span id="player-name-text">Referee</span>
+        <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name" disabled>✎</button>
+      </div>
+      <div id="admin-link" class="admin-nav"><a href="campaignselector.html">Campaign Selector</a></div>
+    </div>
+  </div>
+
+  <div class="container referee-container">
+    <section class="player-list">
+      <div class="encounter-controls">
+        <button type="button" id="encounter-new">New Encounter</button>
+        <button type="button" id="encounter-start">Start Encounter</button>
+        <button type="button" id="encounter-suspend">Suspend Encounter</button>
+      </div>
+      <div class="round-row">
+        <div id="round-info" class="subtitle"></div>
+        <button id="turn-complete">Turn Complete</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Character</th>
+            <th id="health-heading">HP</th>
+            <th class="conditions-col">Conditions</th>
+            <th class="act-col">Act</th>
+          </tr>
+        </thead>
+        <tbody id="players-body"></tbody>
+      </table>
+      <div id="status" class="subtitle"></div>
+    </section>
+
+    <section class="detail-panel referee-panel">
+      <div class="character-drawer referee-drawer">
+        <div class="character-drawer-header">
+          <div class="character-drawer-title">All Characters</div>
+          <button type="button" id="ref-add-button">Add</button>
+        </div>
+        <label class="ref-filter">
+          <input type="checkbox" id="ref-hide-pcs" checked />
+          Show NPCs only
+        </label>
+        <form id="referee-form" class="details-panel-collapsed" aria-hidden="true">
+          <label>
+            Character
+            <input type="text" id="ref-name" required />
+          </label>
+          <label>
+            Quantity
+            <input type="number" id="ref-quantity" min="1" value="1" required />
+          </label>
+          <label>
+            Initiative
+            <input type="number" id="ref-initiative" value="0" required />
+          </label>
+          <div id="ref-stats-fields"></div>
+          <div id="ref-add-current-stats" class="add-current-stats"></div>
+          <label class="reveal-health-toggle">
+            <input type="checkbox" id="ref-visible" />
+            Start revealed
+          </label>
+          <div class="add-form-actions">
+            <button type="submit">Save</button>
+            <button type="button" id="ref-add-cancel" class="secondary">Cancel</button>
+          </div>
+        </form>
+        <div id="referee-character-list" class="character-list"></div>
+      </div>
+
+      <div class="referee-block">
+        <div id="ref-editor-empty" class="subtitle">Select a character to edit details.</div>
+        <form id="ref-editor" class="ref-editor hidden">
+          <div class="details-toggles referee-toggles">
+            <button type="button" id="ref-details-toggle" class="details-toggle" aria-expanded="false">
+              Details
+            </button>
+            <button type="button" id="ref-conditions-toggle" class="details-toggle conditions-toggle" aria-expanded="false">
+              Conditions
+            </button>
+            <button type="button" id="ref-reveal-now" class="details-toggle" aria-expanded="false">
+              Reveal Immediately
+            </button>
+            <button type="button" id="ref-reveal-turn" class="details-toggle" aria-expanded="false">
+              Reveal On Turn
+            </button>
+            <button type="button" id="ref-hide-character" class="details-toggle" aria-expanded="false">
+              Hide
+            </button>
+          </div>
+          <div id="ref-details-panel" class="details-panel-collapsed" aria-hidden="true">
+            <label>
+              Character
+              <input type="text" id="ref-edit-name" required />
+            </label>
+            <label>
+              Initiative
+              <input type="number" id="ref-edit-initiative" required />
+            </label>
+            <div id="ref-edit-stats"></div>
+            <div id="ref-edit-current-stats" class="ref-current-stats"></div>
+          </div>
+          <div id="ref-conditions-panel" class="conditions-panel-collapsed" aria-hidden="true">
+            <input type="search" id="ref-condition-filter" placeholder="Filter list…" />
+            <div id="ref-conditions-grid" class="conditions-grid"></div>
+            <div id="ref-selected-conditions" class="selected-conditions"></div>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="shared.js"></script>
+  <script src="referee.js"></script>
+</body>
+</html>

@@ -106,6 +106,25 @@ private func launchDisplayPage() {
     }
 }
 
+private func repositoryWebClientDirectory() -> URL {
+    let sourceURL = URL(fileURLWithPath: #filePath)
+    return sourceURL
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .appendingPathComponent("WebClient", isDirectory: true)
+}
+
+private func availableWebClientDirectory() -> URL {
+    let repositoryDirectory = repositoryWebClientDirectory()
+    if FileManager.default.fileExists(atPath: repositoryDirectory.path) {
+        return repositoryDirectory
+    }
+
+    let homeDir = FileManager.default.homeDirectoryForCurrentUser
+    return homeDir.appendingPathComponent("Sites/PlayerTracker", isDirectory: true)
+}
+
 // Concurrency-safe store for your character list
 actor UserStore {
     private var storage: [UUID: CharacterState] = [:]
@@ -1072,8 +1091,7 @@ struct Run {
     static func main() async throws {
         let app = try await Application.make(.detect())
         do {
-            let homeDir = FileManager.default.homeDirectoryForCurrentUser
-            let sitesDir = homeDir.appendingPathComponent("Sites/PlayerTracker").path + "/"
+            let sitesDir = availableWebClientDirectory().path + "/"
 
             print("Serving static files from:", sitesDir)
 

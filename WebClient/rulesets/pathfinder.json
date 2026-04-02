@@ -1,0 +1,193 @@
+{
+  "id": "pathfinder",
+  "label": "Pathfinder (1st)",
+  "stats": ["HP"],
+  "standardDie": "1d20",
+  "icon": "pathfinder.jpg",
+  "supportsTempHp": true,
+  "allowNegativeHealth": true,
+  "license": "https://www.d20pfsrd.com/extras/legal/",
+  "rulesBaseUrl": "https://www.d20pfsrd.com/",
+  "conditions": [
+    {
+      "name": "Bleed",
+      "abbreviation": "BLE",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Bleed"
+    },
+    {
+      "name": "Blinded",
+      "abbreviation": "BLI",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Blinded"
+    },
+    {
+      "name": "Blown Away",
+      "abbreviation": "BLOW",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Blown-Away"
+    },
+    {
+      "name": "Checked",
+      "abbreviation": "CHK",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Checked"
+    },
+    {
+      "name": "Confused",
+      "abbreviation": "CONF",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Confused"
+    },
+    {
+      "name": "Cowering",
+      "abbreviation": "COW",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Cowering"
+    },
+    {
+      "name": "Dazed",
+      "abbreviation": "DAZ",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dazed"
+    },
+    {
+      "name": "Dazzled",
+      "abbreviation": "DAZZ",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dazzled"
+    },
+    {
+      "name": "Dead",
+      "abbreviation": "DED",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dead"
+    },
+    {
+      "name": "Deafened",
+      "abbreviation": "DEAF",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Deafened"
+    },
+    {
+      "name": "Disabled",
+      "abbreviation": "DIS",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Disabled"
+    },
+    {
+      "name": "Drained",
+      "abbreviation": "DRN",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Drained"
+    },
+    {
+      "name": "Dying",
+      "abbreviation": "DYN",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dying"
+    },
+    {
+      "name": "Energy Drained",
+      "abbreviation": "EN-D",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Energy-Drained"
+    },
+    {
+      "name": "Entangled",
+      "abbreviation": "ENT",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Entangled"
+    },
+    {
+      "name": "Exhausted",
+      "abbreviation": "EXH",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Exhausted"
+    },
+    {
+      "name": "Fascinated",
+      "abbreviation": "FASC",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Fascinated"
+    },
+    {
+      "name": "Fatigued",
+      "abbreviation": "FAT",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Fatigued"
+    },
+    {
+      "name": "Flat-Footed",
+      "abbreviation": "FF",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Flat-Footed"
+    },
+    {
+      "name": "Frightened",
+      "abbreviation": "FRI",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Frightened"
+    },
+    {
+      "name": "Grappled",
+      "abbreviation": "GRP",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Grappled"
+    },
+    {
+      "name": "Helpless",
+      "abbreviation": "HELP",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Helpless"
+    },
+    {
+      "name": "Incorporeal",
+      "abbreviation": "INC",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Incorporeal"
+    },
+    {
+      "name": "Invisible",
+      "abbreviation": "INV",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Invisible"
+    },
+    {
+      "name": "Nauseated",
+      "abbreviation": "NAU",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Nauseated"
+    },
+    {
+      "name": "Panicked",
+      "abbreviation": "PAN",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Panicked"
+    },
+    {
+      "name": "Paralyzed",
+      "abbreviation": "PAR",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Paralyzed"
+    },
+    {
+      "name": "Petrified",
+      "abbreviation": "PET",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Petrified"
+    },
+    {
+      "name": "Pinned",
+      "abbreviation": "PIN",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Pinned"
+    },
+    {
+      "name": "Prone",
+      "abbreviation": "PRN",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Prone"
+    },
+    {
+      "name": "Shaken",
+      "abbreviation": "SHA",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Shaken"
+    },
+    {
+      "name": "Sickened",
+      "abbreviation": "SIC",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Sickened"
+    },
+    {
+      "name": "Stable",
+      "abbreviation": "STB",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Stable"
+    },
+    {
+      "name": "Staggered",
+      "abbreviation": "STAG",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Staggered"
+    },
+    {
+      "name": "Stunned",
+      "abbreviation": "STUN",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Stunned"
+    },
+    {
+      "name": "Unconscious",
+      "abbreviation": "UNC",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Unconscious"
+    }
+  ]
+}

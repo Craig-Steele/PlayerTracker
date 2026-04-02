@@ -55,7 +55,7 @@ enum RuleSetLibraryLoader {
     }
 
     private static func availableLibraries() -> [RuleSetLibrary] {
-        guard let source = homeConditionsDirectory() else {
+        guard let source = availableConditionsDirectory() else {
             return []
         }
 
@@ -112,6 +112,20 @@ enum RuleSetLibraryLoader {
     private static func homeConditionsDirectory() -> URL? {
         let homeDir = FileManager.default.homeDirectoryForCurrentUser
         return homeDir.appendingPathComponent("Sites/PlayerTracker/rulesets")
+    }
+
+    private static func repositoryConditionsDirectory() -> URL? {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+        let repositoryRoot = sourceURL
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let directory = repositoryRoot.appendingPathComponent("WebClient/rulesets", isDirectory: true)
+        return FileManager.default.fileExists(atPath: directory.path) ? directory : nil
+    }
+
+    private static func availableConditionsDirectory() -> URL? {
+        repositoryConditionsDirectory() ?? homeConditionsDirectory()
     }
 
     private static func emptyLibrary() -> RuleSetLibrary {

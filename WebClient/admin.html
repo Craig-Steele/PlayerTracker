@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign Selector</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+  <div id="header-bar">
+  <div id="header-bar-left">
+    <h1>Campaign Selector</h1>
+  </div>
+    <div id="header-bar-right">
+      <div class="admin-nav"><a href="index.html">Back to Players</a></div>
+    </div>
+  </div>
+
+  <div class="container admin-container">
+    <section class="detail-panel admin-panel">
+      <p class="subtitle">Choose the active campaign and ruleset for all connected clients.</p>
+      <form id="campaign-form">
+        <label>
+          Campaign Name
+          <input type="text" id="campaign-name" required />
+        </label>
+        <label>
+          Ruleset
+          <select id="ruleset-select" required></select>
+        </label>
+        <button type="submit">Save Campaign</button>
+      </form>
+      <div id="campaign-summary" class="subtitle"></div>
+      <div id="campaign-status"></div>
+    </section>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
