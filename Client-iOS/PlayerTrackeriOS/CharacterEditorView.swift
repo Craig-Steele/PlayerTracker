@@ -8,6 +8,7 @@ struct CharacterEditorView: View {
     let onDelete: (() -> Void)?
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showingDeleteConfirmation = false
 
     var body: some View {
         NavigationStack {
@@ -53,16 +54,24 @@ struct CharacterEditorView: View {
                     }
                 }
 
-                if let onDelete {
+                if onDelete != nil {
                     Section {
                         Button("Delete Character", role: .destructive) {
-                            onDelete()
-                            dismiss()
+                            showingDeleteConfirmation = true
                         }
                     }
                 }
             }
             .navigationTitle(draft.id == nil ? "New Character" : "Edit Character")
+            .alert("Delete Character?", isPresented: $showingDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    onDelete?()
+                    dismiss()
+                }
+            } message: {
+                Text("This will remove \(draft.name.isEmpty ? "this character" : draft.name) from the tracker.")
+            }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
