@@ -24,26 +24,6 @@ struct ContentView: View {
                 .padding()
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape.fill")
-                            .foregroundStyle(.primary)
-                    }
-                    .disabled(isShowingModal)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        editorDraft = CharacterDraft.new(ruleSet: model.ruleSet)
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundStyle(.primary)
-                    }
-                    .disabled(isShowingModal)
-                }
-            }
             .sheet(isPresented: $showingSettings) {
                 SettingsView(
                     serverURL: model.normalizedServerURL,
@@ -126,6 +106,9 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(model.campaign?.name ?? "No campaign connected")
                         .font(.title3.weight(.semibold))
+                    Text("Player: \(playerDisplayName)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                     if let round = model.gameState?.round {
                         Text("Round \(round)")
                             .font(.subheadline.weight(.semibold))
@@ -152,8 +135,32 @@ struct ContentView: View {
                                 EmptyView()
                             }
                         }
-                        .frame(width: 96, height: 96)
+                        .frame(width: 72, height: 72)
                         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
+
+                    HStack(spacing: 10) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape.fill")
+                                .foregroundStyle(.primary)
+                                .frame(width: 18, height: 18)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(isShowingModal)
+
+                        Button {
+                            editorDraft = CharacterDraft.new(ruleSet: model.ruleSet)
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .foregroundStyle(.primary)
+                                .frame(width: 18, height: 18)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(isShowingModal)
                     }
                 }
             }
@@ -174,9 +181,6 @@ struct ContentView: View {
 
     private var myCharactersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(charactersSectionTitle)
-                .font(.headline)
-
             if model.myCharacters.isEmpty {
                 emptyCard(message: "No characters yet. Tap + to add one.")
             } else {
@@ -261,6 +265,7 @@ struct ContentView: View {
                         .frame(width: 34, height: 34)
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.small)
             }
             .padding(.vertical, 10)
             .padding(.horizontal, 12)
@@ -321,9 +326,10 @@ struct ContentView: View {
             Image(systemName: systemName)
                 .font(.headline.weight(.bold))
                 .frame(maxWidth: .infinity)
-                .frame(height: 34)
+                .frame(height: 26)
         }
         .buttonStyle(.bordered)
+        .controlSize(.small)
     }
 
     private func displayStats(for character: PlayerViewDTO) -> [StatEntryDTO] {
@@ -348,10 +354,9 @@ struct ContentView: View {
             || showingPlayerIdentitySheet
     }
 
-    private var charactersSectionTitle: String {
+    private var playerDisplayName: String {
         let trimmedName = model.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return "My Characters" }
-        return "\(trimmedName)'s Characters"
+        return trimmedName.isEmpty ? "Not set" : trimmedName
     }
 
     private var serverBaseURL: URL? {
