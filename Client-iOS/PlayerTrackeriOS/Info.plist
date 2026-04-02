@@ -25,6 +25,8 @@
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Roll For Initiative uses the camera to scan the game's QR code and connect to the local server.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>PlayerTracker connects to your local game host to sync initiative and character state.</string>
 	<key>UIApplicationSceneManifest</key>

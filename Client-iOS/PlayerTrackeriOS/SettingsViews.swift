@@ -1,3 +1,4 @@
+import AVFoundation
 import SwiftUI
 
 struct ConnectionSheetView: View {
@@ -7,6 +8,8 @@ struct ConnectionSheetView: View {
     let onConnect: () -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @State private var showingQRScanner = false
+    @State private var scannerError: String?
 
     var body: some View {
         NavigationStack {
@@ -19,10 +22,17 @@ struct ConnectionSheetView: View {
                     Button("Connect") {
                         onConnect()
                     }
+                    Button("Scan QR Code") {
+                        showingQRScanner = true
+                    }
                 }
 
                 Section {
-                    if let errorMessage {
+                    if let scannerError {
+                        Text(scannerError)
+                            .foregroundStyle(.red)
+                            .font(.footnote)
+                    } else if let errorMessage {
                         Text(errorMessage)
                             .foregroundStyle(.red)
                             .font(.footnote)
@@ -41,8 +51,46 @@ struct ConnectionSheetView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingQRScanner) {
+                QRScannerSheetView(
+                    onCodeScanned: { scannedValue in
+                        let trimmedValue = scannedValue.trimmingCharacters(in: .whitespacesAndNewlines)
+                        if let normalizedURL = normalizeServerURL(from: trimmedValue) {
+                            serverURLString = normalizedURL
+                            scannerError = nil
+                            showingQRScanner = false
+                        } else {
+                            scannerError = "The QR code did not contain a valid server URL."
+                        }
+                    },
+                    onError: { message in
+                        scannerError = message
+                        showingQRScanner = false
+                    }
+                )
+            }
         }
         .interactiveDismissDisabled(serverURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    }
+
+    private func normalizeServerURL(from scannedValue: String) -> String? {
+        guard !scannedValue.isEmpty else { return nil }
+        guard var components = URLComponents(string: scannedValue),
+              let scheme = components.scheme,
+              let host = components.host
+        else {
+            return nil
+        }
+
+        components.path = ""
+        components.query = nil
+        components.fragment = nil
+
+        var serverComponents = URLComponents()
+        serverComponents.scheme = scheme
+        serverComponents.host = host
+        serverComponents.port = components.port
+        return serverComponents.string
     }
 }
 
@@ -118,5 +166,180 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
         }
+    }
+}
+
+struct QRScannerSheetView: View {
+    let onCodeScanned: (String) -> Void
+    let onError: (String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                QRScannerView(
+                    onCodeScanned: { code in
+                        onCodeScanned(code)
+                    },
+                    onError: { message in
+                        onError(message)
+                    }
+                )
+                .ignoresSafeArea()
+
+                VStack {
+                    Spacer()
+                    Text("Scan the QR code shown on the display page.")
+                        .font(.footnote)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .padding(.bottom, 24)
+                }
+            }
+            .background(Color.black)
+            .navigationTitle("Scan Server QR")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct QRScannerView: UIViewControllerRepresentable {
+    let onCodeScanned: (String) -> Void
+    let onError: (String) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onCodeScanned: onCodeScanned, onError: onError)
+    }
+
+    func makeUIViewController(context: Context) -> ScannerViewController {
+        let controller = ScannerViewController()
+        controller.delegate = context.coordinator
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: ScannerViewController, context: Context) {}
+
+    final class Coordinator: NSObject, ScannerViewControllerDelegate {
+        private var hasScannedCode = false
+        let onCodeScanned: (String) -> Void
+        let onError: (String) -> Void
+
+        init(
+            onCodeScanned: @escaping (String) -> Void,
+            onError: @escaping (String) -> Void
+        ) {
+            self.onCodeScanned = onCodeScanned
+            self.onError = onError
+        }
+
+        func scannerViewController(_ controller: ScannerViewController, didScan code: String) {
+            guard !hasScannedCode else { return }
+            hasScannedCode = true
+            onCodeScanned(code)
+        }
+
+        func scannerViewController(_ controller: ScannerViewController, didFail message: String) {
+            onError(message)
+        }
+    }
+}
+
+protocol ScannerViewControllerDelegate: AnyObject {
+    func scannerViewController(_ controller: ScannerViewController, didScan code: String)
+    func scannerViewController(_ controller: ScannerViewController, didFail message: String)
+}
+
+final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObjectsDelegate {
+    weak var delegate: ScannerViewControllerDelegate?
+
+    private let captureSession = AVCaptureSession()
+    private var previewLayer: AVCaptureVideoPreviewLayer?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+        configureCaptureSession()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        previewLayer?.frame = view.bounds
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if !captureSession.isRunning {
+            captureSession.startRunning()
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if captureSession.isRunning {
+            captureSession.stopRunning()
+        }
+    }
+
+    private func configureCaptureSession() {
+        guard let videoCaptureDevice = AVCaptureDevice.default(for: .video) else {
+            delegate?.scannerViewController(self, didFail: "This device does not have a camera available.")
+            return
+        }
+
+        do {
+            let videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
+            if captureSession.canAddInput(videoInput) {
+                captureSession.addInput(videoInput)
+            } else {
+                delegate?.scannerViewController(self, didFail: "Unable to read from the camera.")
+                return
+            }
+        } catch {
+            delegate?.scannerViewController(self, didFail: "Unable to access the camera.")
+            return
+        }
+
+        let metadataOutput = AVCaptureMetadataOutput()
+        if captureSession.canAddOutput(metadataOutput) {
+            captureSession.addOutput(metadataOutput)
+            metadataOutput.setMetadataObjectsDelegate(self, queue: .main)
+            metadataOutput.metadataObjectTypes = [.qr]
+        } else {
+            delegate?.scannerViewController(self, didFail: "Unable to scan QR codes on this device.")
+            return
+        }
+
+        let previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        previewLayer.videoGravity = .resizeAspectFill
+        previewLayer.frame = view.layer.bounds
+        view.layer.addSublayer(previewLayer)
+        self.previewLayer = previewLayer
+    }
+
+    func metadataOutput(
+        _ output: AVCaptureMetadataOutput,
+        didOutput metadataObjects: [AVMetadataObject],
+        from connection: AVCaptureConnection
+    ) {
+        guard let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
+              metadataObject.type == .qr,
+              let stringValue = metadataObject.stringValue
+        else {
+            return
+        }
+
+        if captureSession.isRunning {
+            captureSession.stopRunning()
+        }
+        delegate?.scannerViewController(self, didScan: stringValue)
     }
 }
