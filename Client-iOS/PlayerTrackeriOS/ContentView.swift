@@ -31,6 +31,7 @@ struct ContentView: View {
                         showingSettings = true
                     } label: {
                         Image(systemName: "gearshape.fill")
+                            .foregroundStyle(.primary)
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -38,6 +39,7 @@ struct ContentView: View {
                         editorDraft = CharacterDraft.new(ruleSet: model.ruleSet)
                     } label: {
                         Image(systemName: "plus.circle.fill")
+                            .foregroundStyle(.primary)
                     }
                 }
             }
@@ -127,11 +129,11 @@ struct ContentView: View {
                     }
                     Text(currentTurnSubtitle)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(model.isMyTurn ? .red : .primary)
                     if let nextTurnSubtitle {
                         Text(nextTurnSubtitle)
                             .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.primary)
                     }
                 }
                 Spacer()
