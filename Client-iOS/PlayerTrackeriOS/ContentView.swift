@@ -24,7 +24,6 @@ struct ContentView: View {
                 .padding()
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .navigationTitle("PlayerTracker")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
