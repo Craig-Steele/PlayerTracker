@@ -1,0 +1,37 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../../../../../../Sites/PlayerTracker"
+		}
+	],
+	"settings": {
+		"swift.swiftEnvironmentVariables": {}
+	},
+	"launch": {
+		"configurations": [
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:PlayerTracker}",
+				"name": "Debug PlayerTracker (PlayerTracker)",
+				"target": "PlayerTracker",
+				"configuration": "debug",
+				"preLaunchTask": "swift: Build Debug PlayerTracker (PlayerTracker)"
+			},
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:PlayerTracker}",
+				"name": "Release PlayerTracker (PlayerTracker)",
+				"target": "PlayerTracker",
+				"configuration": "release",
+				"preLaunchTask": "swift: Build Release PlayerTracker (PlayerTracker)"
+			}
+		]
+	}
+}
