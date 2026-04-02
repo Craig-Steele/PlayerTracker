@@ -262,6 +262,12 @@ struct ContentView: View {
                 }
                 .buttonStyle(.bordered)
             }
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(uiColor: .tertiarySystemGroupedBackground))
+            )
 
             HStack {
                 Button("Edit") {
