@@ -1153,24 +1153,9 @@ th, td {
 }
 
 .player-conditions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-}
-
-.condition-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  padding: 0.05rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  background: #f2f5f7;
-  border: 1px solid #d4dde4;
-  text-decoration: none;
-  color: inherit;
+  display: block;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .hp-cell {
@@ -1214,8 +1199,7 @@ th, td {
   font-weight: 600;
 }
 
-.condition-link:hover,
-.condition-badge.condition-link:hover {
+.condition-link:hover {
   text-decoration: underline;
 }
 
@@ -1227,11 +1211,6 @@ th, td {
 .hidden-character {
   background-color: #f1f1f1;
   color: #666;
-}
-
-.hidden-character .condition-badge {
-  background: #e6e6e6;
-  border-color: #d0d0d0;
 }
 
 .admin-only {

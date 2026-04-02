@@ -489,18 +489,20 @@ window.addEventListener('DOMContentLoaded', () => {
       if (Array.isArray(p.conditions) && p.conditions.length > 0) {
         const list = document.createElement('div');
         list.classList.add('player-conditions');
-        p.conditions.forEach((conditionName) => {
-          const entry = conditionLookup.get(conditionName);
-          const badge = document.createElement(entry && entry.link ? 'a' : 'span');
-          badge.classList.add('condition-badge');
-          badge.textContent = entry?.abbreviation || computeAbbreviationFromName(conditionName);
-          badge.title = conditionName;
-          if (entry && entry.link) {
-            badge.href = entry.link;
-            badge.target = '_blank';
-            badge.rel = 'noopener';
+        p.conditions.forEach((conditionName, index) => {
+          if (index > 0) {
+            list.appendChild(document.createTextNode(', '));
           }
-          list.appendChild(badge);
+          const entry = conditionLookup.get(conditionName);
+          const conditionNode = document.createElement(entry && entry.link ? 'a' : 'span');
+          conditionNode.textContent = conditionName;
+          if (entry && entry.link) {
+            conditionNode.href = entry.link;
+            conditionNode.target = '_blank';
+            conditionNode.rel = 'noopener';
+            conditionNode.classList.add('condition-link');
+          }
+          list.appendChild(conditionNode);
         });
         conditionsTd.appendChild(list);
       } else {

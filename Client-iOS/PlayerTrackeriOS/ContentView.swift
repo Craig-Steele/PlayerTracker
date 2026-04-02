@@ -96,6 +96,7 @@ struct ContentView: View {
                 ConditionsEditorView(
                     draft: binding(for: $conditionsDraft, fallback: draft),
                     ruleSet: model.ruleSet,
+                    serverURLString: model.normalizedServerURL,
                     onSave: {
                         guard let conditionsDraft else { return }
                         if editorDraft?.id == conditionsDraft.id {
@@ -107,9 +108,6 @@ struct ContentView: View {
             }
             .task {
                 await model.connect()
-                if !model.hasPlayerName {
-                    showingPlayerIdentitySheet = true
-                }
             }
             .onDisappear {
                 model.stopPolling()
@@ -123,17 +121,35 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(model.campaign?.name ?? "No campaign connected")
                         .font(.title3.weight(.semibold))
-                    Text(encounterSubtitle)
+                    if let round = model.gameState?.round {
+                        Text("Round \(round)")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    Text(currentTurnSubtitle)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                    if let nextTurnSubtitle {
+                        Text(nextTurnSubtitle)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
-                if let round = model.gameState?.round {
-                    Text("Round \(round)")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Capsule().fill(Color.accentColor.opacity(0.12)))
+                VStack(alignment: .trailing, spacing: 10) {
+                    if let iconURL = rulesetIconURL {
+                        AsyncImage(url: iconURL) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                            default:
+                                EmptyView()
+                            }
+                        }
+                        .frame(width: 96, height: 96)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
                 }
             }
 
@@ -141,10 +157,6 @@ struct ContentView: View {
                 Text(error)
                     .font(.footnote)
                     .foregroundStyle(.red)
-            } else {
-                Text(model.statusMessage)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
             }
         }
         .padding()
@@ -157,15 +169,8 @@ struct ContentView: View {
 
     private var myCharactersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("My Characters")
-                    .font(.headline)
-                Spacer()
-                Button("Player") {
-                    showingPlayerIdentitySheet = true
-                }
-                .buttonStyle(.borderless)
-            }
+            Text(charactersSectionTitle)
+                .font(.headline)
 
             if model.myCharacters.isEmpty {
                 emptyCard(message: "No characters yet. Tap + to add one.")
@@ -232,10 +237,17 @@ struct ContentView: View {
             }
 
             HStack(spacing: 12) {
-                Text(character.conditions.isEmpty ? "Conditions" : character.conditions.joined(separator: ", "))
-                    .font(.subheadline)
-                    .foregroundStyle(character.conditions.isEmpty ? .secondary : .primary)
-                    .lineLimit(2)
+                if character.conditions.isEmpty {
+                    Text("Conditions")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                } else {
+                    Text(conditionSummary(for: character))
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                        .lineLimit(3)
+                }
                 Spacer()
                 Button {
                     conditionsDraft = CharacterDraft(player: character, ruleSet: model.ruleSet)
@@ -317,6 +329,67 @@ struct ContentView: View {
         stat.key == "TempHP" ? "\(stat.current)" : "\(stat.current)/\(stat.max)"
     }
 
+    private var charactersSectionTitle: String {
+        let trimmedName = model.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return "My Characters" }
+        return "\(trimmedName)'s Characters"
+    }
+
+    private var serverBaseURL: URL? {
+        let trimmed = model.normalizedServerURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let normalized = trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://")
+            ? trimmed
+            : "http://\(trimmed)"
+        return URL(string: normalized)
+    }
+
+    private var rulesetIconURL: URL? {
+        guard let icon = model.ruleSet?.icon?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !icon.isEmpty else {
+            return nil
+        }
+
+        if icon.hasPrefix("http://") || icon.hasPrefix("https://") {
+            return URL(string: icon)
+        }
+
+        guard let baseURL = serverBaseURL else { return nil }
+        let path = icon.hasPrefix("/") ? icon : "/rulesets/\(icon)"
+        return URL(string: path, relativeTo: baseURL)?.absoluteURL
+    }
+
+    private func conditionURL(named name: String) -> URL? {
+        guard let definition = model.ruleSet?.conditions.first(where: { $0.name == name }),
+              let description = definition.description?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let url = URL(string: description),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" else {
+            return nil
+        }
+        return url
+    }
+
+    private func conditionSummary(for character: PlayerViewDTO) -> AttributedString {
+        var summary = AttributedString()
+
+        for (index, condition) in character.conditions.enumerated() {
+            if index > 0 {
+                summary.append(AttributedString(", "))
+            }
+
+            var fragment = AttributedString(condition)
+            if let url = conditionURL(named: condition) {
+                fragment.link = url
+                fragment.foregroundColor = .accentColor
+                fragment.underlineStyle = .single
+            }
+            summary.append(fragment)
+        }
+
+        return summary
+    }
+
     private func binding<Item>(for source: Binding<Item?>, fallback: Item) -> Binding<Item> {
         Binding(
             get: { source.wrappedValue ?? fallback },
@@ -336,7 +409,7 @@ struct ContentView: View {
             )
     }
 
-    private var encounterSubtitle: String {
+    private var currentTurnSubtitle: String {
         if model.isMyTurn {
             return "Your turn"
         }
@@ -347,5 +420,19 @@ struct ContentView: View {
             return rulesetLabel
         }
         return "Waiting for encounter state"
+    }
+
+    private var nextTurnSubtitle: String? {
+        guard let players = model.gameState?.players,
+              !players.isEmpty,
+              let currentTurnId = model.gameState?.currentTurnId,
+              let currentIndex = players.firstIndex(where: { $0.id == currentTurnId }) else {
+            return nil
+        }
+
+        let nextIndex = players.index(after: currentIndex)
+        let wrappedIndex = nextIndex == players.endIndex ? players.startIndex : nextIndex
+        let nextPlayer = players[wrappedIndex]
+        return "Next turn: \(nextPlayer.name)"
     }
 }
