@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var showingSettings = false
     @State private var showingConnectionSheet = false
     @State private var showingPlayerIdentitySheet = false
+    @State private var collapsedCharacterIDs: Set<UUID> = []
 
     private let statColumns = [
         GridItem(.adaptive(minimum: 108), spacing: 12, alignment: .top)
@@ -184,7 +185,7 @@ struct ContentView: View {
             if model.myCharacters.isEmpty {
                 emptyCard(message: "No characters yet. Tap + to add one.")
             } else {
-                ForEach(model.myCharacters) { character in
+                ForEach(sortedMyCharacters) { character in
                     characterCard(character)
                 }
             }
@@ -229,64 +230,82 @@ struct ContentView: View {
     }
 
     private func characterCard(_ character: PlayerViewDTO) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        let isExpanded = !collapsedCharacterIDs.contains(character.id)
+        let isCurrentTurn = model.isCurrentTurn(for: character)
+
+        return VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text(character.name)
-                    .font(.title3.weight(.semibold))
-                Spacer()
-                Text("Init \(character.initiative)")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.secondary)
-            }
-
-            LazyVGrid(columns: statColumns, alignment: .leading, spacing: 12) {
-                ForEach(displayStats(for: character)) { stat in
-                    statPod(for: character, stat: stat)
-                }
-            }
-
-            HStack(spacing: 12) {
-                if character.conditions.isEmpty {
-                    Text("Conditions")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                } else {
-                    Text(conditionSummary(for: character))
-                        .font(.subheadline)
-                        .foregroundStyle(.primary)
-                        .lineLimit(3)
-                }
-                Spacer()
                 Button {
-                    conditionsDraft = CharacterDraft(player: character, ruleSet: model.ruleSet)
+                    toggleExpanded(for: character)
                 } label: {
-                    Image(systemName: "pencil")
-                        .frame(width: 34, height: 34)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.small)
-            }
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(uiColor: .tertiarySystemGroupedBackground))
-            )
-
-            HStack {
-                Button("Edit") {
-                    editorDraft = CharacterDraft(player: character, ruleSet: model.ruleSet)
-                }
-                .buttonStyle(.bordered)
-
-                Spacer()
-
-                if model.isCurrentTurn(for: character) {
-                    Button("Turn Complete") {
-                        Task { await model.completeTurn() }
+                    HStack(spacing: 8) {
+                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text(character.name)
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(isCurrentTurn ? .red : .primary)
                     }
-                    .buttonStyle(.borderedProminent)
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                if isExpanded {
+                    Text("Init \(character.initiative)")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if isExpanded {
+                LazyVGrid(columns: statColumns, alignment: .leading, spacing: 12) {
+                    ForEach(displayStats(for: character)) { stat in
+                        statPod(for: character, stat: stat)
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    if character.conditions.isEmpty {
+                        Text("Conditions")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    } else {
+                        Text(conditionSummary(for: character))
+                            .font(.subheadline)
+                            .foregroundStyle(.primary)
+                            .lineLimit(3)
+                    }
+                    Spacer()
+                    Button {
+                        conditionsDraft = CharacterDraft(player: character, ruleSet: model.ruleSet)
+                    } label: {
+                        Image(systemName: "pencil")
+                            .frame(width: 34, height: 34)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(uiColor: .tertiarySystemGroupedBackground))
+                )
+
+                HStack {
+                    Button("Edit") {
+                        editorDraft = CharacterDraft(player: character, ruleSet: model.ruleSet)
+                    }
+                    .buttonStyle(.bordered)
+
+                    Spacer()
+
+                    if isCurrentTurn {
+                        Button("Turn Complete") {
+                            Task { await model.completeTurn() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
             }
         }
@@ -352,6 +371,12 @@ struct ContentView: View {
             || showingSettings
             || showingConnectionSheet
             || showingPlayerIdentitySheet
+    }
+
+    private var sortedMyCharacters: [PlayerViewDTO] {
+        model.myCharacters.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
     }
 
     private var playerDisplayName: String {
@@ -437,8 +462,8 @@ struct ContentView: View {
     }
 
     private var currentTurnSubtitle: String {
-        if model.isMyTurn {
-            return "Your turn"
+        if model.isMyTurn, let currentTurnName = model.gameState?.currentTurnName {
+            return "Your turn: \(currentTurnName)"
         }
         if let currentTurnName = model.gameState?.currentTurnName {
             return "Current turn: \(currentTurnName)"
@@ -461,5 +486,13 @@ struct ContentView: View {
         let wrappedIndex = nextIndex == players.endIndex ? players.startIndex : nextIndex
         let nextPlayer = players[wrappedIndex]
         return "Next turn: \(nextPlayer.name)"
+    }
+
+    private func toggleExpanded(for character: PlayerViewDTO) {
+        if collapsedCharacterIDs.contains(character.id) {
+            collapsedCharacterIDs.remove(character.id)
+        } else {
+            collapsedCharacterIDs.insert(character.id)
+        }
     }
 }
