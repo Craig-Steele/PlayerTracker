@@ -125,7 +125,7 @@ struct CharacterDraft: Identifiable, Equatable {
 
         var orderedKeys = statKeys
         if supportsTempHp && !orderedKeys.contains("TempHP") {
-            orderedKeys.insert("TempHP", at: 0)
+            orderedKeys.append("TempHP")
         }
         if orderedKeys.isEmpty {
             orderedKeys = ["HP"]
@@ -133,7 +133,14 @@ struct CharacterDraft: Identifiable, Equatable {
 
         self.stats = orderedKeys.map { key in
             let existing = sourceStats.first(where: { $0.key == key })
-            let current = existing.map { String($0.current) } ?? ""
+            let current: String
+            if let existing {
+                current = String(existing.current)
+            } else if key == "TempHP" {
+                current = "0"
+            } else {
+                current = ""
+            }
             let max: String
             if key == "TempHP" {
                 max = ""
