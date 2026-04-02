@@ -33,6 +33,7 @@ struct ContentView: View {
                         Image(systemName: "gearshape.fill")
                             .foregroundStyle(.primary)
                     }
+                    .disabled(isShowingModal)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -41,6 +42,7 @@ struct ContentView: View {
                         Image(systemName: "plus.circle.fill")
                             .foregroundStyle(.primary)
                     }
+                    .disabled(isShowingModal)
                 }
             }
             .sheet(isPresented: $showingSettings) {
@@ -85,11 +87,13 @@ struct ContentView: View {
                         conditionsDraft = editorDraft ?? draft
                     },
                     onSave: {
-                        guard let editorDraft else { return }
-                        Task { await model.saveCharacter(editorDraft) }
+                        guard let draftToSave = editorDraft else { return }
+                        editorDraft = nil
+                        Task { await model.saveCharacter(draftToSave) }
                     },
                     onDelete: draft.id == nil ? nil : {
                         guard let id = draft.id else { return }
+                        editorDraft = nil
                         Task { await model.deleteCharacter(id: id) }
                     }
                 )
@@ -331,6 +335,14 @@ struct ContentView: View {
         stat.key == "TempHP" ? "\(stat.current)" : "\(stat.current)/\(stat.max)"
     }
 
+    private var isShowingModal: Bool {
+        editorDraft != nil
+            || conditionsDraft != nil
+            || showingSettings
+            || showingConnectionSheet
+            || showingPlayerIdentitySheet
+    }
+
     private var charactersSectionTitle: String {
         let trimmedName = model.playerName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedName.isEmpty else { return "My Characters" }
@@ -395,7 +407,10 @@ struct ContentView: View {
     private func binding<Item>(for source: Binding<Item?>, fallback: Item) -> Binding<Item> {
         Binding(
             get: { source.wrappedValue ?? fallback },
-            set: { source.wrappedValue = $0 }
+            set: {
+                guard source.wrappedValue != nil else { return }
+                source.wrappedValue = $0
+            }
         )
     }
 
