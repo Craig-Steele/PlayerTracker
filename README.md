@@ -10,8 +10,6 @@ The current working architecture is a Vapor service running on a Mac and serving
   The main Vapor service. This is the primary runtime.
 - `PlayerTrackeriOS`
   Native iPhone player client for the existing server.
-- `InitiativeTrackerP2P`
-  Exploratory work toward a peer-hosted architecture. Useful for design reference, but not the current product direction.
 
 ## What the server does
 
@@ -55,8 +53,6 @@ On startup, the service currently opens the local display view in a browser on t
   checked-in browser client and rulesets
 - `PlayerTrackeriOS/`
   native iOS player app
-- `InitiativeTrackerP2P/`
-  P2P experiments and architecture notes
 
 ## Notes
 
