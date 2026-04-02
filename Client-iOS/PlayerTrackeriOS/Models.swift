@@ -48,6 +48,7 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let initiative: Int
     let stats: [StatEntryDTO]
     let revealStats: Bool
+    let autoSkipTurn: Bool
     let isHidden: Bool
     let revealOnTurn: Bool
     let conditions: [String]
@@ -70,6 +71,7 @@ struct CharacterInputDTO: Codable {
     let initiative: Int
     let stats: [StatEntryDTO]?
     let revealStats: Bool?
+    let autoSkipTurn: Bool?
     let isHidden: Bool?
     let revealOnTurn: Bool?
     let conditions: [String]?
@@ -99,6 +101,7 @@ struct CharacterDraft: Identifiable, Equatable {
     var name: String
     var initiative: String
     var revealStats: Bool
+    var autoSkipTurn: Bool
     var stats: [EditableStat]
     var selectedConditions: Set<String>
 
@@ -107,6 +110,7 @@ struct CharacterDraft: Identifiable, Equatable {
         name: String,
         initiative: Int,
         revealStats: Bool,
+        autoSkipTurn: Bool,
         statKeys: [String],
         supportsTempHp: Bool,
         sourceStats: [StatEntryDTO],
@@ -116,6 +120,7 @@ struct CharacterDraft: Identifiable, Equatable {
         self.name = name
         self.initiative = String(initiative)
         self.revealStats = revealStats
+        self.autoSkipTurn = autoSkipTurn
         self.selectedConditions = Set(selectedConditions)
 
         var orderedKeys = statKeys
@@ -145,6 +150,7 @@ struct CharacterDraft: Identifiable, Equatable {
             name: "",
             initiative: 0,
             revealStats: false,
+            autoSkipTurn: false,
             statKeys: ruleSet?.stats ?? ["HP"],
             supportsTempHp: ruleSet?.supportsTempHp ?? false,
             sourceStats: [],
@@ -158,6 +164,7 @@ struct CharacterDraft: Identifiable, Equatable {
             name: player.name,
             initiative: player.initiative,
             revealStats: player.revealStats,
+            autoSkipTurn: player.autoSkipTurn,
             statKeys: ruleSet?.stats ?? ["HP"],
             supportsTempHp: ruleSet?.supportsTempHp ?? false,
             sourceStats: player.stats,

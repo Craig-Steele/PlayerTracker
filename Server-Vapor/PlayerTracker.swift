@@ -143,6 +143,7 @@ actor UserStore {
         initiative: Int,
         stats: [StatEntry]?,
         revealStats: Bool?,
+        autoSkipTurn: Bool?,
         isHidden: Bool?,
         revealOnTurn: Bool?,
         conditions: Set<String>?
@@ -157,6 +158,7 @@ actor UserStore {
             initiative: initiative,
             stats: stats.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.key, $0) }) } ?? [:],
             revealStats: revealStats ?? false,
+            autoSkipTurn: autoSkipTurn ?? false,
             isHidden: isHidden ?? false,
             revealOnTurn: revealOnTurn ?? false,
             conditions: []
@@ -172,6 +174,9 @@ actor UserStore {
         }
         if let revealStats {
             state.revealStats = revealStats
+        }
+        if let autoSkipTurn {
+            state.autoSkipTurn = autoSkipTurn
         }
         if let isHidden {
             state.isHidden = isHidden
@@ -299,6 +304,7 @@ actor UserStore {
                 initiative: 0,
                 stats: [],
                 revealStats: false,
+                autoSkipTurn: false,
                 isHidden: false,
                 revealOnTurn: false,
                 conditions: conditions
@@ -315,6 +321,7 @@ actor UserStore {
             initiative: storage[existingId]?.initiative ?? 0,
             stats: storage[existingId]?.stats.map { $0.value },
             revealStats: storage[existingId]?.revealStats,
+            autoSkipTurn: storage[existingId]?.autoSkipTurn,
             isHidden: storage[existingId]?.isHidden,
             revealOnTurn: storage[existingId]?.revealOnTurn,
             conditions: conditions
@@ -332,6 +339,7 @@ actor UserStore {
                 initiative: 0,
                 stats: [],
                 revealStats: false,
+                autoSkipTurn: false,
                 isHidden: false,
                 revealOnTurn: false,
                 conditions: [condition]
@@ -350,6 +358,7 @@ actor UserStore {
             initiative: storage[existingId]?.initiative ?? 0,
             stats: storage[existingId]?.stats.map { $0.value },
             revealStats: storage[existingId]?.revealStats,
+            autoSkipTurn: storage[existingId]?.autoSkipTurn,
             isHidden: storage[existingId]?.isHidden,
             revealOnTurn: storage[existingId]?.revealOnTurn,
             conditions: conditions
@@ -372,6 +381,7 @@ actor UserStore {
             initiative: storage[existingId]?.initiative ?? 0,
             stats: storage[existingId]?.stats.map { $0.value },
             revealStats: storage[existingId]?.revealStats,
+            autoSkipTurn: storage[existingId]?.autoSkipTurn,
             isHidden: storage[existingId]?.isHidden,
             revealOnTurn: storage[existingId]?.revealOnTurn,
             conditions: conditions
@@ -459,10 +469,37 @@ actor UserStore {
             initiative: state.initiative,
             stats: state.stats.values.sorted { $0.key < $1.key },
             revealStats: state.revealStats,
+            autoSkipTurn: state.autoSkipTurn,
             isHidden: state.isHidden,
             revealOnTurn: state.revealOnTurn,
             conditions: Array(state.conditions).sorted()
         )
+    }
+
+    private func visibleTurnCandidates(campaignName: String) -> [CharacterState] {
+        sortedStates(
+            campaignName: campaignName,
+            includeHidden: false,
+            includeRevealOnTurn: true
+        )
+    }
+
+    private func advanceTurnStatePastAutoSkip(
+        _ turnState: inout TurnState,
+        candidates: [CharacterState]
+    ) -> Bool {
+        guard !candidates.isEmpty else { return false }
+        var attempts = 0
+        while attempts < candidates.count && candidates[turnState.turnIndex].autoSkipTurn {
+            if turnState.turnIndex + 1 >= candidates.count {
+                turnState.roundIndex += 1
+                turnState.turnIndex = 0
+            } else {
+                turnState.turnIndex += 1
+            }
+            attempts += 1
+        }
+        return attempts < candidates.count
     }
 
     private func sortedStates(
@@ -502,11 +539,7 @@ actor UserStore {
     
     func state(campaignName: String, includeHidden: Bool, encounterState: EncounterState) -> GameState {
         var players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
-        let turnCandidates = sortedStates(
-            campaignName: campaignName,
-            includeHidden: false,
-            includeRevealOnTurn: true
-        )
+        let turnCandidates = visibleTurnCandidates(campaignName: campaignName)
         var turnState = turnState(for: campaignName)
 
         if encounterState == .new {
@@ -536,6 +569,18 @@ actor UserStore {
             turnState.turnIndex = 0
         }
 
+        if encounterState == .active,
+           !advanceTurnStatePastAutoSkip(&turnState, candidates: turnCandidates) {
+            saveTurnState(turnState, for: campaignName)
+            return GameState(
+                round: turnState.roundIndex,
+                encounterState: encounterState,
+                currentTurnId: nil,
+                currentTurnName: nil,
+                players: players
+            )
+        }
+
         var currentPlayer = turnCandidates[turnState.turnIndex]
         if encounterState == .active && currentPlayer.isHidden && currentPlayer.revealOnTurn {
             var updated = currentPlayer
@@ -559,11 +604,7 @@ actor UserStore {
 
     func nextTurn(campaignName: String, includeHidden: Bool, encounterState: EncounterState) -> GameState {
         var players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
-        let turnCandidates = sortedStates(
-            campaignName: campaignName,
-            includeHidden: false,
-            includeRevealOnTurn: true
-        )
+        let turnCandidates = visibleTurnCandidates(campaignName: campaignName)
         var turnState = turnState(for: campaignName)
 
         if turnCandidates.isEmpty {
@@ -584,6 +625,18 @@ actor UserStore {
             turnState.turnIndex = 0
         } else {
             turnState.turnIndex += 1
+        }
+
+        if encounterState == .active,
+           !advanceTurnStatePastAutoSkip(&turnState, candidates: turnCandidates) {
+            saveTurnState(turnState, for: campaignName)
+            return GameState(
+                round: turnState.roundIndex,
+                encounterState: encounterState,
+                currentTurnId: nil,
+                currentTurnName: nil,
+                players: players
+            )
         }
 
         var currentPlayer = turnCandidates[turnState.turnIndex]
@@ -756,6 +809,7 @@ struct CharacterState {
     var initiative: Int
     var stats: [String: StatEntry]
     var revealStats: Bool
+    var autoSkipTurn: Bool
     var isHidden: Bool
     var revealOnTurn: Bool
     var conditions: Set<String>
@@ -769,6 +823,7 @@ struct PlayerView: Content {
     let initiative: Int
     let stats: [StatEntry]
     let revealStats: Bool
+    let autoSkipTurn: Bool
     let isHidden: Bool
     let revealOnTurn: Bool
     let conditions: [String]
@@ -796,6 +851,7 @@ struct CharacterInput: Content {
     let initiative: Int
     let stats: [StatEntry]?
     let revealStats: Bool?
+    let autoSkipTurn: Bool?
     let isHidden: Bool?
     let revealOnTurn: Bool?
     let conditions: [String]?
@@ -1019,6 +1075,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             initiative: input.initiative,
             stats: input.stats,
             revealStats: input.revealStats,
+            autoSkipTurn: input.autoSkipTurn,
             isHidden: input.isHidden,
             revealOnTurn: input.revealOnTurn,
             conditions: input.conditions.map { Set($0) }

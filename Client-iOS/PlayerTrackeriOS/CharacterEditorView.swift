@@ -18,6 +18,7 @@ struct CharacterEditorView: View {
                     TextField("Initiative", text: $draft.initiative)
                         .keyboardType(.numberPad)
                     Toggle("Share stats with others", isOn: $draft.revealStats)
+                    Toggle("Automatically skip this character's turn", isOn: $draft.autoSkipTurn)
                 }
 
                 Section("Stats") {

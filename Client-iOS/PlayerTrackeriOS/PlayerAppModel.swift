@@ -140,6 +140,7 @@ final class PlayerAppModel {
                 initiative: initiative,
                 stats: draft.buildStatsPayload(allowNegativeHealth: ruleSet?.allowNegativeHealth ?? false),
                 revealStats: draft.revealStats,
+                autoSkipTurn: draft.autoSkipTurn,
                 isHidden: false,
                 revealOnTurn: false,
                 conditions: Array(draft.selectedConditions).sorted()

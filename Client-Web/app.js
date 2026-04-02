@@ -160,6 +160,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const statsFields = document.getElementById('stats-fields');
   const currentStatsInputs = document.getElementById('current-stats-inputs');
   const revealStatsInput = document.getElementById('reveal-stats');
+  const autoSkipTurnInput = document.getElementById('auto-skip-turn');
   const roundInfo = document.getElementById('round-info');
   const currentActor = document.getElementById('current-actor');
   const healthHeading = document.getElementById('health-heading');
@@ -367,6 +368,13 @@ window.addEventListener('DOMContentLoaded', () => {
       scheduleAutoSave('reveal-stats');
     });
   }
+  if (autoSkipTurnInput) {
+    autoSkipTurnInput.addEventListener('change', () => {
+      formDirty = true;
+      updateDraftFromForm();
+      scheduleAutoSave('auto-skip-turn');
+    });
+  }
 
   if (form) {
     form.addEventListener('focusin', () => {
@@ -564,7 +572,8 @@ window.addEventListener('DOMContentLoaded', () => {
       id: selectedCharacterId,
       name: nameInput ? nameInput.value.trim() : '',
       stats,
-      revealStats: revealStatsInput ? revealStatsInput.checked : null
+      revealStats: revealStatsInput ? revealStatsInput.checked : null,
+      autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null
     };
     saveDrafts(ownerName, drafts);
   }
@@ -592,6 +601,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (revealStatsInput && typeof draft.revealStats === 'boolean') {
       revealStatsInput.checked = draft.revealStats;
+    }
+    if (autoSkipTurnInput && typeof draft.autoSkipTurn === 'boolean') {
+      autoSkipTurnInput.checked = draft.autoSkipTurn;
     }
   }
 
@@ -629,6 +641,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (typeof draft.revealStats === 'boolean') {
         character.revealStats = draft.revealStats;
       }
+      if (typeof draft.autoSkipTurn === 'boolean') {
+        character.autoSkipTurn = draft.autoSkipTurn;
+      }
     });
   }
 
@@ -650,7 +665,8 @@ window.addEventListener('DOMContentLoaded', () => {
       id: character.id,
       name: character.name,
       stats,
-      revealStats: typeof character.revealStats === 'boolean' ? character.revealStats : null
+      revealStats: typeof character.revealStats === 'boolean' ? character.revealStats : null,
+      autoSkipTurn: typeof character.autoSkipTurn === 'boolean' ? character.autoSkipTurn : null
     };
     saveDrafts(ownerName, drafts);
   }
@@ -681,6 +697,7 @@ window.addEventListener('DOMContentLoaded', () => {
         initiative: character.initiative,
         stats: Array.isArray(character.stats) ? character.stats : [],
         revealStats: character.revealStats,
+        autoSkipTurn: character.autoSkipTurn,
         conditions: Array.isArray(character.conditions) ? character.conditions : []
       };
       if (currentCampaignName) {
@@ -1073,6 +1090,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (revealStatsInput) {
       revealStatsInput.checked = Boolean(found.revealStats);
     }
+    if (autoSkipTurnInput) {
+      autoSkipTurnInput.checked = Boolean(found.autoSkipTurn);
+    }
     applyDraftToForm(found);
     applySelectedConditions(found.conditions || []);
     formDirty = false;
@@ -1093,6 +1113,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (entry.maxInput) entry.maxInput.value = '';
     });
     if (revealStatsInput) revealStatsInput.checked = false;
+    if (autoSkipTurnInput) autoSkipTurnInput.checked = false;
     applySelectedConditions([]);
     formDirty = false;
     renderCharacterList();
@@ -1519,6 +1540,7 @@ window.addEventListener('DOMContentLoaded', () => {
         initiative,
         stats: statsPayload,
         revealStats: revealStatsInput ? revealStatsInput.checked : null,
+        autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
         conditions: conditionList
       };
       if (currentCampaignName) {
@@ -1856,6 +1878,7 @@ window.addEventListener('DOMContentLoaded', () => {
         initiative,
         stats: statsPayload,
         revealStats: revealStatsInput ? revealStatsInput.checked : null,
+        autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
         conditions: conditionList
       };
       if (currentCampaignName) {
