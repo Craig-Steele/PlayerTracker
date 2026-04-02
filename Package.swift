@@ -17,6 +17,7 @@ let package = Package(
             dependencies: [
                 .product(name: "Vapor", package: "vapor")
             ],
+            path: "Server-Vapor",
             exclude: [
                 "PlayerTracker.code-workspace"
             ],

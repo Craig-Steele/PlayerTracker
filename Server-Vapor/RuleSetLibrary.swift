@@ -119,8 +119,7 @@ enum RuleSetLibraryLoader {
         let repositoryRoot = sourceURL
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let directory = repositoryRoot.appendingPathComponent("WebClient/rulesets", isDirectory: true)
+        let directory = repositoryRoot.appendingPathComponent("Client-Web/rulesets", isDirectory: true)
         return FileManager.default.fileExists(atPath: directory.path) ? directory : nil
     }
 

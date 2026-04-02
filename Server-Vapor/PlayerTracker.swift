@@ -111,8 +111,7 @@ private func repositoryWebClientDirectory() -> URL {
     return sourceURL
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .appendingPathComponent("WebClient", isDirectory: true)
+        .appendingPathComponent("Client-Web", isDirectory: true)
 }
 
 private func availableWebClientDirectory() -> URL {

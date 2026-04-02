@@ -1,4 +1,4 @@
-# PlayerTrackeriOS
+# Client-iOS
 
 First-pass native iPhone player client for the existing `PlayerTracker` server.
 
@@ -14,7 +14,7 @@ First-pass native iPhone player client for the existing `PlayerTracker` server.
 
 Open:
 
-- `PlayerTrackeriOS/PlayerTrackeriOS.xcodeproj`
+- `Client-iOS/PlayerTrackeriOS.xcodeproj`
 
 Then set a signing team for the `PlayerTrackeriOS` target before running on device.
 
