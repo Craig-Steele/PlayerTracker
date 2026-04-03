@@ -10,10 +10,6 @@ struct ContentView: View {
     @State private var showingPlayerIdentitySheet = false
     @State private var collapsedCharacterIDs: Set<UUID> = []
 
-    private let statColumns = [
-        GridItem(.adaptive(minimum: 108), spacing: 12, alignment: .top)
-    ]
-
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -235,7 +231,7 @@ struct ContentView: View {
                         .padding(.vertical, 10)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(player.id == model.gameState?.currentTurnId ? Color.yellow.opacity(0.28) : Color(uiColor: .secondarySystemGroupedBackground))
+                                .fill(encounterRowBackground(for: player))
                         )
                     }
                 }
@@ -273,9 +269,11 @@ struct ContentView: View {
             }
 
             if isExpanded {
-                LazyVGrid(columns: statColumns, alignment: .leading, spacing: 12) {
-                    ForEach(displayStats(for: character)) { stat in
-                        statPod(for: character, stat: stat)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 12) {
+                        ForEach(displayStats(for: character)) { stat in
+                            statPod(for: character, stat: stat)
+                        }
                     }
                 }
 
@@ -345,7 +343,7 @@ struct ContentView: View {
                 .font(.headline.monospacedDigit())
             statAdjustButton(systemName: "minus", character: character, stat: stat, delta: -1)
         }
-        .frame(maxWidth: .infinity)
+        .frame(width: 84)
         .padding(.vertical, 10)
         .padding(.horizontal, 8)
         .background(
@@ -360,8 +358,7 @@ struct ContentView: View {
         } label: {
             Image(systemName: systemName)
                 .font(.headline.weight(.bold))
-                .frame(maxWidth: .infinity)
-                .frame(height: 26)
+                .frame(width: 26, height: 26)
         }
         .buttonStyle(.bordered)
         .controlSize(.small)
@@ -370,11 +367,30 @@ struct ContentView: View {
     private func displayStats(for character: PlayerViewDTO) -> [StatEntryDTO] {
         let stats = character.stats
         if !stats.isEmpty {
-            return stats
+            let preferredKeys = orderedStatKeys()
+            var orderedStats: [StatEntryDTO] = preferredKeys.compactMap { key in
+                stats.first(where: { $0.key == key })
+            }
+            let remainingStats = stats.filter { stat in
+                !preferredKeys.contains(stat.key)
+            }
+            orderedStats.append(contentsOf: remainingStats)
+            return orderedStats
         }
 
-        let fallbackKey = model.ruleSet?.stats?.first ?? "HP"
+        let fallbackKey = orderedStatKeys().first ?? "HP"
         return [StatEntryDTO(key: fallbackKey, current: 0, max: 0)]
+    }
+
+    private func orderedStatKeys() -> [String] {
+        var keys = model.ruleSet?.stats ?? []
+        if model.ruleSet?.supportsTempHp == true && !keys.contains("TempHP") {
+            keys.append("TempHP")
+        }
+        if keys.isEmpty {
+            keys = ["HP"]
+        }
+        return keys
     }
 
     private func statValueText(for stat: StatEntryDTO) -> String {
@@ -392,22 +408,20 @@ struct ContentView: View {
                 .joined(separator: " • ")
         }
 
-        let trackedStats = visibleStats.filter { $0.key != "TempHP" }
-        guard let primary = trackedStats.first else { return "—" }
-        let isDead = primary.current <= 0
-        let ratio = primary.max > 0 ? Double(primary.current) / Double(primary.max) : 0
+        guard let summary = healthSummary(for: visibleStats) else { return "—" }
+        let isDead = summary.current <= 0
+        let ratio = Double(summary.current) / Double(summary.max)
         return healthStatusLabel(ratio: ratio, isDead: isDead)
     }
 
     private func encounterStatsStyle(for player: PlayerViewDTO) -> (foreground: Color, background: Color) {
         let visibleStats = visibleEncounterStats(for: player)
-        let trackedStats = visibleStats.filter { $0.key != "TempHP" }
-        guard let primary = trackedStats.first else {
+        guard let summary = healthSummary(for: visibleStats) else {
             return (.secondary, Color(uiColor: .tertiarySystemGroupedBackground))
         }
 
-        let isDead = primary.current <= 0
-        let ratio = primary.max > 0 ? Double(primary.current) / Double(primary.max) : 0
+        let isDead = summary.current <= 0
+        let ratio = Double(summary.current) / Double(summary.max)
 
         if isDead {
             return (.white, Color(red: 0.29, green: 0.29, blue: 0.29))
@@ -428,6 +442,29 @@ struct ContentView: View {
         let stats = displayStats(for: player)
         let orderedStats = stats.filter { $0.key != "TempHP" || $0.current > 0 }
         return orderedStats.isEmpty ? stats : orderedStats
+    }
+
+    private func healthSummary(for stats: [StatEntryDTO]) -> (current: Int, max: Int)? {
+        let trackedStats = stats.filter { $0.key != "TempHP" }
+        guard !trackedStats.isEmpty else { return nil }
+
+        let totals = trackedStats.reduce(into: (current: 0, max: 0)) { partialResult, stat in
+            partialResult.current += stat.current
+            partialResult.max += stat.max
+        }
+
+        guard totals.max > 0 else { return nil }
+        return totals
+    }
+
+    private func encounterRowBackground(for player: PlayerViewDTO) -> Color {
+        if player.id == model.gameState?.currentTurnId {
+            return Color.yellow.opacity(0.28)
+        }
+        if player.ownerName.caseInsensitiveCompare("Referee") == .orderedSame {
+            return Color.red.opacity(0.16)
+        }
+        return Color(uiColor: .secondarySystemGroupedBackground)
     }
 
     private func healthStatusLabel(ratio: Double, isDead: Bool) -> String {
