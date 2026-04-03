@@ -22,7 +22,7 @@ struct CharacterEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Identity") {
+                Section(draft.id == nil ? "New Character Name" : "Character Name") {
                     AccessoryTextField(
                         placeholder: "Character name",
                         text: $draft.name,
@@ -56,11 +56,11 @@ struct CharacterEditorView: View {
                             .frame(maxWidth: 120)
                         }
                     }
+                    Toggle("Automatically skip this character's turn", isOn: $draft.autoSkipTurn)
                 }
 
                 Section("Stats") {
                     Toggle("Share stats with others", isOn: $draft.revealStats)
-                    Toggle("Automatically skip this character's turn", isOn: $draft.autoSkipTurn)
 
                     ForEach($draft.stats) { $stat in
                         LabeledContent(stat.key) {
@@ -105,7 +105,8 @@ struct CharacterEditorView: View {
                     }
                 }
             }
-            .navigationTitle(draft.id == nil ? "New Character" : "Edit Character")
+            .navigationTitle(draft.id == nil ? "" : "Edit Character")
+            .navigationBarTitleDisplayMode(.inline)
             .alert("Delete Character?", isPresented: $showingDeleteConfirmation) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
