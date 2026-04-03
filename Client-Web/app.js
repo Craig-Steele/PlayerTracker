@@ -79,6 +79,11 @@ function createConditionLink(url) {
   return anchor;
 }
 
+function formatInitiative(value) {
+  if (!Number.isFinite(value)) return 'None';
+  return Number.isInteger(value) ? String(value) : String(value);
+}
+
 // Detect whether this client is "admin" (local machine)
 function isAdminHost() {
   const host = window.location.hostname;
@@ -777,6 +782,28 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function editCharacterInitiative(character) {
+    if (!character) return;
+    const entered = prompt(
+      `Set initiative for ${character.name} (leave blank to clear)`,
+      Number.isFinite(character.initiative) ? String(character.initiative) : ''
+    );
+    if (entered === null) return;
+    const trimmed = entered.trim();
+    if (!trimmed) {
+      character.initiative = null;
+      await saveCharacterEntry(character);
+      return;
+    }
+    const initiative = Number(trimmed);
+    if (!Number.isFinite(initiative)) {
+      statusDiv.textContent = 'Initiative must be a valid number.';
+      return;
+    }
+    character.initiative = initiative;
+    await saveCharacterEntry(character);
+  }
+
   async function deleteMyCharacter(character) {
     if (!character?.id) return;
     try {
@@ -934,7 +961,15 @@ window.addEventListener('DOMContentLoaded', () => {
       name.textContent = character.name;
       const meta = document.createElement('div');
       meta.className = 'character-meta';
-      meta.textContent = `Init ${character.initiative ?? 'None'}`;
+      const initiativeButton = document.createElement('button');
+      initiativeButton.type = 'button';
+      initiativeButton.className = 'initiative-inline-button';
+      initiativeButton.textContent = `Init ${formatInitiative(character.initiative)}`;
+      initiativeButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        editCharacterInitiative(character);
+      });
+      meta.appendChild(initiativeButton);
       nameWrap.appendChild(name);
       nameWrap.appendChild(meta);
       row.appendChild(nameWrap);
@@ -1825,7 +1860,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const conditionsTd = document.createElement('td');
             conditionsTd.classList.add('conditions-cell');
 
-            initTd.textContent = Number.isFinite(p.initiative) ? p.initiative : 'None';
+            initTd.textContent = formatInitiative(p.initiative);
             if (p.ownerName && p.ownerName.toLowerCase() === 'referee') {
               initTd.classList.add('init-referee');
             }

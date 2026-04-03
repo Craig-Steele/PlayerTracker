@@ -140,7 +140,7 @@ actor UserStore {
         ownerId: UUID,
         ownerName: String,
         characterName: String,
-        initiative: Int?,
+        initiative: Double?,
         stats: [StatEntry]?,
         revealStats: Bool?,
         autoSkipTurn: Bool?,
@@ -839,7 +839,7 @@ actor CampaignStore {
 // Simple DTO for incoming POST JSON
 struct UserData: Content {
     let name: String
-    let initiative: Int?
+    let initiative: Double?
 }
 
 struct CharacterState {
@@ -848,7 +848,7 @@ struct CharacterState {
     var ownerId: UUID
     var ownerName: String
     var characterName: String
-    var initiative: Int?
+    var initiative: Double?
     var stats: [String: StatEntry]
     var revealStats: Bool
     var autoSkipTurn: Bool
@@ -864,7 +864,7 @@ struct PlayerView: Content {
     let ownerId: UUID
     let ownerName: String
     let name: String
-    let initiative: Int?
+    let initiative: Double?
     let stats: [StatEntry]
     let revealStats: Bool
     let autoSkipTurn: Bool
@@ -894,7 +894,7 @@ struct CharacterInput: Content {
     let ownerId: UUID?
     let ownerName: String
     let name: String
-    let initiative: Int?
+    let initiative: Double?
     let stats: [StatEntry]?
     let revealStats: Bool?
     let autoSkipTurn: Bool?

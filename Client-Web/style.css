@@ -140,6 +140,17 @@ th, td {
   color: #666;
 }
 
+.initiative-inline-button {
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.1em;
+}
+
 .container {
   display: flex;
   gap: 1rem;

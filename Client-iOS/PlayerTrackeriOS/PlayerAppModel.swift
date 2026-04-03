@@ -202,7 +202,7 @@ final class PlayerAppModel {
         await saveCharacter(draft)
     }
 
-    func setInitiative(for character: PlayerViewDTO, initiative: Int) async {
+    func setInitiative(for character: PlayerViewDTO, initiative: Double?) async {
         do {
             let client = try APIClient(baseURLString: serverURLString)
             let payload = CharacterInputDTO(
@@ -222,7 +222,7 @@ final class PlayerAppModel {
                 conditions: character.conditions
             )
             _ = try await client.upsertCharacter(payload)
-            statusMessage = "Initiative set."
+            statusMessage = initiative == nil ? "Initiative cleared." : "Initiative set."
             await refreshAll(showStatus: false)
         } catch {
             statusMessage = error.localizedDescription
@@ -230,30 +230,7 @@ final class PlayerAppModel {
     }
 
     func clearInitiative(for character: PlayerViewDTO) async {
-        do {
-            let client = try APIClient(baseURLString: serverURLString)
-            let payload = CharacterInputDTO(
-                id: character.id,
-                campaignName: campaign?.name,
-                ownerId: ownerId,
-                ownerName: character.ownerName,
-                name: character.name,
-                initiative: nil,
-                stats: character.stats,
-                revealStats: character.revealStats,
-                autoSkipTurn: character.autoSkipTurn,
-                useAppInitiativeRoll: character.useAppInitiativeRoll,
-                initiativeBonus: character.initiativeBonus,
-                isHidden: character.isHidden,
-                revealOnTurn: character.revealOnTurn,
-                conditions: character.conditions
-            )
-            _ = try await client.upsertCharacter(payload)
-            statusMessage = "Initiative cleared."
-            await refreshAll(showStatus: false)
-        } catch {
-            statusMessage = error.localizedDescription
-        }
+        await setInitiative(for: character, initiative: nil)
     }
 
     var isMyTurn: Bool {

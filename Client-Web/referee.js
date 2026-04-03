@@ -101,6 +101,11 @@ window.addEventListener('DOMContentLoaded', () => {
     return trimmed.slice(0, 4).toUpperCase();
   }
 
+  function formatInitiative(value) {
+    if (!Number.isFinite(value)) return 'None';
+    return Number.isInteger(value) ? String(value) : String(value);
+  }
+
   function buildStatsFields() {
     statInputs.clear();
     if (statsFields) statsFields.innerHTML = '';
@@ -416,7 +421,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       const initTd = document.createElement('td');
-      initTd.textContent = Number.isFinite(p.initiative) ? p.initiative : 'None';
+      initTd.textContent = formatInitiative(p.initiative);
 
       const nameTd = document.createElement('td');
       const nameLine = document.createElement('span');
@@ -574,7 +579,15 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         statusLabel = player.ownerName || 'Player';
       }
-      meta.textContent = `Init ${player.initiative ?? 'None'} • ${statusLabel}`;
+      const initiativeButton = document.createElement('button');
+      initiativeButton.type = 'button';
+      initiativeButton.className = 'initiative-inline-button';
+      initiativeButton.textContent = `Init ${formatInitiative(player.initiative)} • ${statusLabel}`;
+      initiativeButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        editCharacterInitiative(player);
+      });
+      meta.appendChild(initiativeButton);
       nameWrap.appendChild(name);
       nameWrap.appendChild(meta);
       row.appendChild(nameWrap);
@@ -728,7 +741,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (editorEmpty) editorEmpty.classList.add('hidden');
     if (editorForm) editorForm.classList.remove('hidden');
     if (editorNameInput) editorNameInput.value = player.name || '';
-    if (editorInitiativeInput) editorInitiativeInput.value = player.initiative ?? '';
+    if (editorInitiativeInput) editorInitiativeInput.value = Number.isFinite(player.initiative) ? player.initiative : '';
     const stats = Array.isArray(player.stats) ? player.stats : [];
     const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
     editorStatInputs.forEach((entry, key) => {
@@ -745,6 +758,28 @@ window.addEventListener('DOMContentLoaded', () => {
     updateSelectedConditionsDisplay();
     updateActionButtons(player);
     renderCharacterList(currentPlayers, currentTurnId);
+  }
+
+  async function editCharacterInitiative(player) {
+    if (!player) return;
+    const entered = prompt(
+      `Set initiative for ${player.name} (leave blank to clear)`,
+      Number.isFinite(player.initiative) ? String(player.initiative) : ''
+    );
+    if (entered === null) return;
+    const trimmed = entered.trim();
+    if (!trimmed) {
+      player.initiative = null;
+      await saveCharacterEntry(player);
+      return;
+    }
+    const initiative = Number(trimmed);
+    if (!Number.isFinite(initiative)) {
+      if (statusDiv) statusDiv.textContent = 'Initiative must be a valid number.';
+      return;
+    }
+    player.initiative = initiative;
+    await saveCharacterEntry(player);
   }
 
   function scheduleEditorSave() {

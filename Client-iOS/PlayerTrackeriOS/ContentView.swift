@@ -70,15 +70,20 @@ struct ContentView: View {
                 )
             ) {
                 TextField("Initiative", text: $manualInitiativeInput)
-                    .keyboardType(.numberPad)
+                    .keyboardType(.decimalPad)
                 Button("Cancel", role: .cancel) {
                     manualInitiativeCharacter = nil
                     manualInitiativeInput = ""
                 }
                 Button("OK") {
                     let trimmed = manualInitiativeInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard let character = manualInitiativeCharacter, !trimmed.isEmpty,
-                          let initiative = Int(trimmed) else {
+                    guard let character = manualInitiativeCharacter else {
+                        manualInitiativeCharacter = nil
+                        manualInitiativeInput = ""
+                        return
+                    }
+                    let initiative = trimmed.isEmpty ? nil : Double(trimmed)
+                    guard trimmed.isEmpty || initiative != nil else {
                         model.statusMessage = "Initiative must be a valid number."
                         manualInitiativeCharacter = nil
                         manualInitiativeInput = ""
@@ -234,7 +239,7 @@ struct ContentView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(player.name)
                                     .font(.subheadline.weight(player.id == model.gameState?.currentTurnId ? .semibold : .regular))
-                                Text("\(player.ownerName) • Init \(player.initiative.map(String.init) ?? "None")")
+                                Text("\(player.ownerName) • Init \(formattedInitiative(player.initiative))")
                                     .font(.caption.monospacedDigit())
                                     .foregroundStyle(.secondary)
                             }
@@ -308,9 +313,15 @@ struct ContentView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
                 } else if isExpanded {
-                    Text("Init \(character.initiative.map(String.init) ?? "None")")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
+                    Button {
+                        manualInitiativeCharacter = character
+                        manualInitiativeInput = character.initiative.map(formattedInitiative) ?? ""
+                    } label: {
+                        Text("Init \(formattedInitiative(character.initiative))")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
 
@@ -685,11 +696,11 @@ struct ContentView: View {
             }
         } else {
             manualInitiativeCharacter = character
-            manualInitiativeInput = ""
+            manualInitiativeInput = character.initiative.map(formattedInitiative) ?? ""
         }
     }
 
-    private func rollInitiative(standardDie: String?, bonus: Int) -> Int? {
+    private func rollInitiative(standardDie: String?, bonus: Int) -> Double? {
         guard let standardDie else { return nil }
         let pattern = /^(\d+)[dD](\d+)$/
         guard let match = standardDie.wholeMatch(of: pattern),
@@ -702,6 +713,14 @@ struct ContentView: View {
         let rollTotal = (0..<count).reduce(0) { partialResult, _ in
             partialResult + Int.random(in: 1...sides)
         }
-        return rollTotal + bonus
+        return Double(rollTotal + bonus)
+    }
+
+    private func formattedInitiative(_ initiative: Double?) -> String {
+        guard let initiative else { return "None" }
+        if initiative.rounded(.towardZero) == initiative {
+            return String(Int(initiative))
+        }
+        return String(initiative)
     }
 }

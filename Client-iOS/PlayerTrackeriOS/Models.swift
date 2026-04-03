@@ -45,7 +45,7 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let ownerId: UUID
     let ownerName: String
     let name: String
-    let initiative: Int?
+    let initiative: Double?
     let stats: [StatEntryDTO]
     let revealStats: Bool
     let autoSkipTurn: Bool
@@ -70,7 +70,7 @@ struct CharacterInputDTO: Codable {
     let ownerId: UUID?
     let ownerName: String
     let name: String
-    let initiative: Int?
+    let initiative: Double?
     let stats: [StatEntryDTO]?
     let revealStats: Bool?
     let autoSkipTurn: Bool?
