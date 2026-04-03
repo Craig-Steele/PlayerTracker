@@ -190,10 +190,13 @@ window.addEventListener('DOMContentLoaded', () => {
   const addUseAppInitiativeRollInput = document.getElementById('add-use-app-initiative-roll');
   const addInitiativeBonusInput = document.getElementById('add-initiative-bonus');
   const addInitiativeBonusWrap = document.getElementById('add-initiative-bonus-wrap');
+  const addRevealStatsInput = document.getElementById('add-reveal-stats');
+  const addAutoSkipTurnInput = document.getElementById('add-auto-skip-turn');
   const addStatsFields = document.getElementById('add-stats-fields');
   const addCurrentStats = document.getElementById('add-current-stats');
   const addSaveBtn = document.getElementById('add-save');
   const addCancelBtn = document.getElementById('add-cancel');
+  const detailsToggles = document.querySelector('.details-toggles');
   const detailsToggle = document.getElementById('details-toggle');
   const detailsPanel = document.getElementById('details-panel');
   const detailPanel = document.querySelector('.detail-panel');
@@ -293,12 +296,30 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateConditionsAvailability() {
-    if (!conditionsSection) return;
-    const hasCharacter = Boolean(selectedCharacterId) || isCreatingCharacter;
-    conditionsSection.classList.toggle('conditions-hidden', !hasCharacter);
-    if (hasCharacter) {
-      setConditionsPanelOpen(conditionsPanelOpen);
+    const hasCharacter = Boolean(selectedCharacterId);
+    if (detailsToggles) {
+      detailsToggles.classList.toggle('conditions-hidden', !hasCharacter);
     }
+    if (conditionsSection) {
+      conditionsSection.classList.toggle('conditions-hidden', !hasCharacter);
+    }
+    if (!hasCharacter) {
+      conditionsPanelOpen = false;
+      if (detailsPanel && detailsToggle) {
+        detailsPanel.classList.remove('details-panel-open');
+        detailsPanel.classList.add('details-panel-collapsed');
+        detailsToggle.setAttribute('aria-expanded', 'false');
+        detailsPanel.setAttribute('aria-hidden', 'true');
+      }
+      if (conditionsPanel && conditionsToggle) {
+        conditionsPanel.classList.remove('conditions-panel-open');
+        conditionsPanel.classList.add('conditions-panel-collapsed');
+        conditionsToggle.setAttribute('aria-expanded', 'false');
+        conditionsPanel.setAttribute('aria-hidden', 'true');
+      }
+      return;
+    }
+    setConditionsPanelOpen(conditionsPanelOpen);
   }
 
   function updatePlayerNameDisplay() {
@@ -470,31 +491,53 @@ window.addEventListener('DOMContentLoaded', () => {
       const maxId = `max-stat-${normalizedKey}`;
       const currentId = `current-stat-${normalizedKey}`;
       const isTempHp = key === 'TempHP';
-
-      if (statsFields && !isTempHp) {
-        const label = document.createElement('label');
-        label.textContent = `Max ${key}`;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.id = maxId;
-        input.min = '0';
-        label.appendChild(input);
-        statsFields.appendChild(label);
-        statInputs.set(key, { maxInput: input, currentInput: null });
+      const currentInput = document.createElement('input');
+      currentInput.type = 'number';
+      currentInput.id = currentId;
+      if (key === 'TempHP' || !allowNegativeHealth) {
+        currentInput.min = '0';
       }
 
-      if (currentStatsInputs) {
-        const currentInput = document.createElement('input');
-        currentInput.type = 'number';
-        currentInput.id = currentId;
-        if (key === 'TempHP' || !allowNegativeHealth) {
-          currentInput.min = '0';
+      let maxInput = null;
+      if (!isTempHp) {
+        maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.id = maxId;
+        maxInput.min = '0';
+      }
+
+      if (statsFields) {
+        const row = document.createElement('div');
+        row.className = 'stat-editor-row';
+        if (isTempHp) row.classList.add('temp-hp-row');
+
+        const keyLabel = document.createElement('div');
+        keyLabel.className = 'stat-editor-key';
+        keyLabel.textContent = key;
+        row.appendChild(keyLabel);
+
+        const currentLabel = document.createElement('label');
+        currentLabel.className = 'stat-editor-input';
+        const currentText = document.createElement('span');
+        currentText.textContent = 'Current';
+        currentLabel.appendChild(currentText);
+        currentLabel.appendChild(currentInput);
+        row.appendChild(currentLabel);
+
+        if (maxInput) {
+          const maxLabel = document.createElement('label');
+          maxLabel.className = 'stat-editor-input';
+          const maxText = document.createElement('span');
+          maxText.textContent = 'Max';
+          maxLabel.appendChild(maxText);
+          maxLabel.appendChild(maxInput);
+          row.appendChild(maxLabel);
         }
-        currentStatsInputs.appendChild(currentInput);
-        const entry = statInputs.get(key) || {};
-        entry.currentInput = currentInput;
-        statInputs.set(key, entry);
+
+        statsFields.appendChild(row);
       }
+
+      statInputs.set(key, { maxInput, currentInput });
     });
 
     statInputs.forEach((entry, key) => {
@@ -520,34 +563,53 @@ window.addEventListener('DOMContentLoaded', () => {
       const maxId = `add-max-stat-${normalizedKey}`;
       const currentId = `add-current-stat-${normalizedKey}`;
       const isTempHp = key === 'TempHP';
-
-      if (addStatsFields && !isTempHp) {
-        const label = document.createElement('label');
-        label.textContent = `Max ${key}`;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.id = maxId;
-        input.min = '0';
-        label.appendChild(input);
-        addStatsFields.appendChild(label);
-        addStatInputs.set(key, { maxInput: input, currentInput: null });
+      const currentInput = document.createElement('input');
+      currentInput.type = 'number';
+      currentInput.id = currentId;
+      if (key === 'TempHP' || !allowNegativeHealth) {
+        currentInput.min = '0';
       }
 
-      if (addCurrentStats) {
-        const label = document.createElement('label');
-        label.textContent = `Current ${key}`;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.id = currentId;
-        if (key === 'TempHP' || !allowNegativeHealth) {
-          input.min = '0';
+      let maxInput = null;
+      if (!isTempHp) {
+        maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.id = maxId;
+        maxInput.min = '0';
+      }
+
+      if (addStatsFields) {
+        const row = document.createElement('div');
+        row.className = 'stat-editor-row';
+        if (isTempHp) row.classList.add('temp-hp-row');
+
+        const keyLabel = document.createElement('div');
+        keyLabel.className = 'stat-editor-key';
+        keyLabel.textContent = key;
+        row.appendChild(keyLabel);
+
+        const currentLabel = document.createElement('label');
+        currentLabel.className = 'stat-editor-input';
+        const currentText = document.createElement('span');
+        currentText.textContent = 'Current';
+        currentLabel.appendChild(currentText);
+        currentLabel.appendChild(currentInput);
+        row.appendChild(currentLabel);
+
+        if (maxInput) {
+          const maxLabel = document.createElement('label');
+          maxLabel.className = 'stat-editor-input';
+          const maxText = document.createElement('span');
+          maxText.textContent = 'Max';
+          maxLabel.appendChild(maxText);
+          maxLabel.appendChild(maxInput);
+          row.appendChild(maxLabel);
         }
-        label.appendChild(input);
-        addCurrentStats.appendChild(label);
-        const entry = addStatInputs.get(key) || {};
-        entry.currentInput = input;
-        addStatInputs.set(key, entry);
+
+        addStatsFields.appendChild(row);
       }
+
+      addStatInputs.set(key, { maxInput, currentInput });
     });
   }
 
@@ -842,7 +904,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     supportsTempHp = Boolean(conditionSet?.supportsTempHp);
     if (supportsTempHp && !statKeys.includes('TempHP')) {
-      statKeys = ['TempHP', ...statKeys];
+      statKeys = [...statKeys, 'TempHP'];
     }
     allowNegativeHealth = Boolean(conditionSet?.allowNegativeHealth);
     currentStandardDie =
@@ -1274,7 +1336,9 @@ window.addEventListener('DOMContentLoaded', () => {
   function clearAddForm() {
     if (addNameInput) addNameInput.value = '';
     if (addUseAppInitiativeRollInput) addUseAppInitiativeRollInput.checked = true;
-    if (addInitiativeBonusInput) addInitiativeBonusInput.value = '0';
+    if (addInitiativeBonusInput) addInitiativeBonusInput.value = '';
+    if (addRevealStatsInput) addRevealStatsInput.checked = false;
+    if (addAutoSkipTurnInput) addAutoSkipTurnInput.checked = false;
     updateAddInitiativeBonusAvailability();
     addStatInputs.forEach((entry) => {
       if (entry.maxInput) entry.maxInput.value = '';
@@ -1725,7 +1789,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
       await ensureOwnerId();
-      const conditionList = Array.from(selectedConditions);
+      const conditionList = [];
       const initiativeBonusRaw = addInitiativeBonusInput ? addInitiativeBonusInput.value.trim() : '0';
       const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
       if (!Number.isFinite(initiativeBonus)) {
@@ -1738,8 +1802,8 @@ window.addEventListener('DOMContentLoaded', () => {
         name,
         initiative: null,
         stats: statsPayload,
-        revealStats: revealStatsInput ? revealStatsInput.checked : null,
-        autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
+        revealStats: addRevealStatsInput ? addRevealStatsInput.checked : null,
+        autoSkipTurn: addAutoSkipTurnInput ? addAutoSkipTurnInput.checked : null,
         useAppInitiativeRoll: addUseAppInitiativeRollInput ? addUseAppInitiativeRollInput.checked : true,
         initiativeBonus,
         conditions: conditionList

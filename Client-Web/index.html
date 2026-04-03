@@ -77,19 +77,50 @@
               </div>
             </div>
           </div>
-          <div id="add-character-form" class="details-panel-collapsed" aria-hidden="true">
-            <label>
-              Character
-              <input type="text" id="add-name" required />
+          <div id="character-list" class="character-list"></div>
+          <div class="character-list-actions">
+            <button type="button" id="character-add" class="icon-button" aria-label="Add character">+</button>
+            <button type="button" id="character-remove" class="icon-button" aria-label="Remove selected character">−</button>
+          </div>
+          <div id="add-character-form" class="details-panel-collapsed property-sheet" aria-hidden="true">
+            <div class="form-section-title">New Character Name</div>
+            <label class="property-row">
+              <span class="property-label">Character name</span>
+              <span class="property-control">
+                <input type="text" id="add-name" required />
+              </span>
             </label>
-            <div class="initiative-settings">
-              <label class="reveal-health-toggle">
-                <input type="checkbox" id="add-use-app-initiative-roll" checked />
-                Use app to roll initiative
+            <div class="form-section-title">Initiative</div>
+            <div class="initiative-settings form-section-block">
+              <label class="property-toggle-row">
+                <span class="property-label">App Roll</span>
+                <span class="property-toggle-control">
+                  <input type="checkbox" id="add-use-app-initiative-roll" checked />
+                  <span>Use app to roll initiative</span>
+                </span>
               </label>
-              <label id="add-initiative-bonus-wrap">
-                Initiative Bonus
-                <input type="number" id="add-initiative-bonus" value="0" />
+              <label id="add-initiative-bonus-wrap" class="property-row">
+                <span class="property-label">Initiative Bonus</span>
+                <span class="property-control">
+                  <input type="number" id="add-initiative-bonus" value="" />
+                </span>
+              </label>
+              <label class="property-toggle-row">
+                <span class="property-label">Auto Skip</span>
+                <span class="property-toggle-control">
+                  <input type="checkbox" id="add-auto-skip-turn" />
+                  <span>Automatically skip this character's turn</span>
+                </span>
+              </label>
+            </div>
+            <div class="form-section-title">Stats</div>
+            <div class="form-section-block">
+              <label class="property-toggle-row">
+                <span class="property-label">Visibility</span>
+                <span class="property-toggle-control">
+                  <input type="checkbox" id="add-reveal-stats" />
+                  <span>Share stats with others</span>
+                </span>
               </label>
             </div>
             <div id="add-stats-fields"></div>
@@ -98,11 +129,6 @@
               <button type="button" id="add-save">Save</button>
               <button type="button" id="add-cancel" class="secondary">Cancel</button>
             </div>
-          </div>
-          <div id="character-list" class="character-list"></div>
-          <div class="character-list-actions">
-            <button type="button" id="character-add" class="icon-button" aria-label="Add character">+</button>
-            <button type="button" id="character-remove" class="icon-button" aria-label="Remove selected character">−</button>
           </div>
         </div>
         <div id="current-stats-inputs" class="visually-hidden" aria-hidden="true"></div>
@@ -114,30 +140,48 @@
             Conditions
           </button>
         </div>
-        <div id="details-panel" class="details-panel-collapsed" aria-hidden="true">
-          <label>
-            Character
-            <input type="text" id="name" required />
+        <div id="details-panel" class="details-panel-collapsed property-sheet" aria-hidden="true">
+          <div class="form-section-title">Character Name</div>
+          <label class="property-row">
+            <span class="property-label">Character name</span>
+            <span class="property-control">
+              <input type="text" id="name" required />
+            </span>
           </label>
-          <div class="initiative-settings">
-            <label class="reveal-health-toggle">
-              <input type="checkbox" id="use-app-initiative-roll" checked />
-              Use app to roll initiative
+          <div class="form-section-title">Initiative</div>
+          <div class="initiative-settings form-section-block">
+            <label class="property-toggle-row">
+              <span class="property-label">App Roll</span>
+              <span class="property-toggle-control">
+                <input type="checkbox" id="use-app-initiative-roll" checked />
+                <span>Use app to roll initiative</span>
+              </span>
             </label>
-            <label id="initiative-bonus-wrap">
-              Initiative Bonus
-              <input type="number" id="initiative-bonus" value="0" />
+            <label id="initiative-bonus-wrap" class="property-row">
+              <span class="property-label">Initiative Bonus</span>
+              <span class="property-control">
+                <input type="number" id="initiative-bonus" value="0" />
+              </span>
+            </label>
+            <label class="property-toggle-row">
+              <span class="property-label">Auto Skip</span>
+              <span class="property-toggle-control">
+                <input type="checkbox" id="auto-skip-turn" />
+                <span>Automatically skip this character's turn</span>
+              </span>
+            </label>
+          </div>
+          <div class="form-section-title">Stats</div>
+          <div class="form-section-block">
+            <label class="property-toggle-row">
+              <span class="property-label">Visibility</span>
+              <span class="property-toggle-control">
+                <input type="checkbox" id="reveal-stats" />
+                <span>Share stats with others</span>
+              </span>
             </label>
           </div>
           <div id="stats-fields"></div>
-          <label class="reveal-health-toggle">
-            <input type="checkbox" id="reveal-stats" />
-            Share stats with others
-          </label>
-          <label class="reveal-health-toggle">
-            <input type="checkbox" id="auto-skip-turn" />
-            Automatically skip this character's turn
-          </label>
         </div>
         <div class="conditions-section">
           <div class="conditions-section-header"></div>
