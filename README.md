@@ -8,6 +8,8 @@ The current working architecture is a Vapor service running on a Mac and serving
 
 - `Server-Vapor`
   The main Vapor service. This is the primary runtime.
+- `Client-Web`
+  Browser clients for player, referee, display, and campaign selection.
 - `Client-iOS`
   Native iPhone player client for the existing server.
 
@@ -16,6 +18,7 @@ The current working architecture is a Vapor service running on a Mac and serving
 - hosts the web UI from the checked-in `Client-Web/` directory
 - serves player, referee, display-only, and campaign-selector pages
 - tracks campaigns, encounter state, initiative, character stats, conditions, visibility, and reveal-on-turn behavior
+- supports optional initiative assignment, in-app initiative rolling, decimal initiative values, and auto-skip turn behavior
 - loads rulesets from `Client-Web/rulesets`
 - starts on port `8080`
 
@@ -58,3 +61,4 @@ On startup, the service currently opens the local display view in a browser on t
 
 - The server prefers the checked-in `Client-Web/` directory and falls back to `~/Sites/PlayerTracker` only if needed.
 - This repository is currently optimized for local-network table play rather than internet-hosted multiplayer.
+- The iOS app is named `Roll For Initiative!`.
