@@ -80,7 +80,7 @@ function createConditionLink(url) {
 }
 
 function formatInitiative(value) {
-  if (!Number.isFinite(value)) return 'None';
+  if (!Number.isFinite(value)) return 'X';
   return Number.isInteger(value) ? String(value) : String(value);
 }
 

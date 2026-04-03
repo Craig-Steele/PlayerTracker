@@ -717,7 +717,7 @@ struct ContentView: View {
     }
 
     private func formattedInitiative(_ initiative: Double?) -> String {
-        guard let initiative else { return "None" }
+        guard let initiative else { return "X" }
         if initiative.rounded(.towardZero) == initiative {
             return String(Int(initiative))
         }
