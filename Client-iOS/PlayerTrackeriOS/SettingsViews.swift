@@ -190,7 +190,7 @@ struct QRScannerSheetView: View {
 
                 VStack {
                     Spacer()
-                    Text("Scan the QR code shown on the display page.")
+                    Text("Scan the QR code shown on the display page. Pinch to zoom.")
                         .font(.footnote)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
@@ -263,11 +263,15 @@ final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObje
 
     private let captureSession = AVCaptureSession()
     private var previewLayer: AVCaptureVideoPreviewLayer?
+    private let preferredZoomFactor: CGFloat = 2.0
+    private var currentZoomFactor: CGFloat = 2.0
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .black
         configureCaptureSession()
+        let pinchRecognizer = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
+        view.addGestureRecognizer(pinchRecognizer)
     }
 
     override func viewDidLayoutSubviews() {
@@ -294,6 +298,8 @@ final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObje
             delegate?.scannerViewController(self, didFail: "This device does not have a camera available.")
             return
         }
+
+        configureZoom(for: videoCaptureDevice)
 
         do {
             let videoInput = try AVCaptureDeviceInput(device: videoCaptureDevice)
@@ -323,6 +329,41 @@ final class ScannerViewController: UIViewController, AVCaptureMetadataOutputObje
         previewLayer.frame = view.layer.bounds
         view.layer.addSublayer(previewLayer)
         self.previewLayer = previewLayer
+    }
+
+    private func configureZoom(for device: AVCaptureDevice) {
+        do {
+            try device.lockForConfiguration()
+            let maxZoom = min(device.activeFormat.videoMaxZoomFactor, 4.0)
+            currentZoomFactor = min(preferredZoomFactor, maxZoom)
+            device.videoZoomFactor = currentZoomFactor
+            device.unlockForConfiguration()
+        } catch {
+            // If zoom configuration fails, keep the default camera behavior.
+        }
+    }
+
+    @objc
+    private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
+        guard let device = AVCaptureDevice.default(for: .video) else { return }
+
+        switch gesture.state {
+        case .began, .changed:
+            let maxZoom = min(device.activeFormat.videoMaxZoomFactor, 8.0)
+            let minZoom: CGFloat = 1.0
+            let targetZoom = min(max(currentZoomFactor * gesture.scale, minZoom), maxZoom)
+            do {
+                try device.lockForConfiguration()
+                device.videoZoomFactor = targetZoom
+                device.unlockForConfiguration()
+                gesture.scale = 1.0
+                currentZoomFactor = targetZoom
+            } catch {
+                return
+            }
+        default:
+            break
+        }
     }
 
     func metadataOutput(
