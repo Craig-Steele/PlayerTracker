@@ -3,7 +3,7 @@
   "label": "Traveller (SRD)",
   "stats": ["STR", "DEX", "END"],
   "standardDie": "2d6",
-  "icon": "traveller.svg",
+  "icon": "traveller.png",
   "license": "https://www.traveller-srd.com/open-game-license/",
   "rulesBaseUrl": "https://www.traveller-srd.com/",
   "conditions": [
