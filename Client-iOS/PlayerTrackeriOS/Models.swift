@@ -116,7 +116,7 @@ struct CharacterDraft: Identifiable, Equatable {
         revealStats: Bool,
         autoSkipTurn: Bool,
         useAppInitiativeRoll: Bool,
-        initiativeBonus: Int,
+        initiativeBonus: String,
         statKeys: [String],
         supportsTempHp: Bool,
         sourceStats: [StatEntryDTO],
@@ -127,7 +127,7 @@ struct CharacterDraft: Identifiable, Equatable {
         self.revealStats = revealStats
         self.autoSkipTurn = autoSkipTurn
         self.useAppInitiativeRoll = useAppInitiativeRoll
-        self.initiativeBonus = String(initiativeBonus)
+        self.initiativeBonus = initiativeBonus
         self.selectedConditions = Set(selectedConditions)
 
         var orderedKeys = statKeys
@@ -165,7 +165,7 @@ struct CharacterDraft: Identifiable, Equatable {
             revealStats: false,
             autoSkipTurn: false,
             useAppInitiativeRoll: true,
-            initiativeBonus: 0,
+            initiativeBonus: "",
             statKeys: ruleSet?.stats ?? ["HP"],
             supportsTempHp: ruleSet?.supportsTempHp ?? false,
             sourceStats: [],
@@ -180,7 +180,7 @@ struct CharacterDraft: Identifiable, Equatable {
             revealStats: player.revealStats,
             autoSkipTurn: player.autoSkipTurn,
             useAppInitiativeRoll: player.useAppInitiativeRoll,
-            initiativeBonus: player.initiativeBonus,
+            initiativeBonus: String(player.initiativeBonus),
             statKeys: ruleSet?.stats ?? ["HP"],
             supportsTempHp: ruleSet?.supportsTempHp ?? false,
             sourceStats: player.stats,
