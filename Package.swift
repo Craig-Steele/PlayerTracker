@@ -20,9 +20,6 @@ let package = Package(
             path: "Server-Vapor",
             exclude: [
                 "PlayerTracker.code-workspace"
-            ],
-            resources: [
-                .process("Resources")
             ]
         ),
     ]
