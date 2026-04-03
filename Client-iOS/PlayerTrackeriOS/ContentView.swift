@@ -9,6 +9,8 @@ struct ContentView: View {
     @State private var showingConnectionSheet = false
     @State private var showingPlayerIdentitySheet = false
     @State private var collapsedCharacterIDs: Set<UUID> = []
+    @State private var manualInitiativeCharacter: PlayerViewDTO?
+    @State private var manualInitiativeInput = ""
 
     var body: some View {
         NavigationStack {
@@ -54,6 +56,38 @@ struct ContentView: View {
                         Task { await model.savePlayerName() }
                     }
                 )
+            }
+            .alert(
+                manualInitiativeCharacter.map { "Enter Initiative for \($0.name)" } ?? "Enter Initiative",
+                isPresented: Binding(
+                    get: { manualInitiativeCharacter != nil },
+                    set: { presented in
+                        if !presented {
+                            manualInitiativeCharacter = nil
+                            manualInitiativeInput = ""
+                        }
+                    }
+                )
+            ) {
+                TextField("Initiative", text: $manualInitiativeInput)
+                    .keyboardType(.numberPad)
+                Button("Cancel", role: .cancel) {
+                    manualInitiativeCharacter = nil
+                    manualInitiativeInput = ""
+                }
+                Button("OK") {
+                    let trimmed = manualInitiativeInput.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard let character = manualInitiativeCharacter, !trimmed.isEmpty,
+                          let initiative = Int(trimmed) else {
+                        model.statusMessage = "Initiative must be a valid number."
+                        manualInitiativeCharacter = nil
+                        manualInitiativeInput = ""
+                        return
+                    }
+                    manualInitiativeCharacter = nil
+                    manualInitiativeInput = ""
+                    Task { await model.setInitiative(for: character, initiative: initiative) }
+                }
             }
             .sheet(item: $editorDraft) { draft in
                 CharacterEditorView(
@@ -200,7 +234,7 @@ struct ContentView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(player.name)
                                     .font(.subheadline.weight(player.id == model.gameState?.currentTurnId ? .semibold : .regular))
-                                Text("\(player.ownerName) • Init \(player.initiative)")
+                                Text("\(player.ownerName) • Init \(player.initiative.map(String.init) ?? "None")")
                                     .font(.caption.monospacedDigit())
                                     .foregroundStyle(.secondary)
                             }
@@ -267,8 +301,14 @@ struct ContentView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
+                } else if needsInitiativeRoll(character) && !isExpanded {
+                    Button("Roll for Initiative!") {
+                        handleInitiativeAction(for: character)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
                 } else if isExpanded {
-                    Text("Init \(character.initiative)")
+                    Text("Init \(character.initiative.map(String.init) ?? "None")")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
                 }
@@ -320,7 +360,12 @@ struct ContentView: View {
 
                     Spacer()
 
-                    if isCurrentTurn {
+                    if needsInitiativeRoll(character) {
+                        Button("Roll for Initiative!") {
+                            handleInitiativeAction(for: character)
+                        }
+                        .buttonStyle(.borderedProminent)
+                    } else if isCurrentTurn {
                         Button("Turn Complete") {
                             Task { await model.completeTurn() }
                         }
@@ -586,6 +631,12 @@ struct ContentView: View {
     }
 
     private var currentTurnSubtitle: String {
+        if model.gameState?.encounterState == .new {
+            return "New Encounter"
+        }
+        if model.gameState?.encounterState == .suspended {
+            return "Encounter Suspended"
+        }
         if model.isMyTurn, let currentTurnName = model.gameState?.currentTurnName {
             return "Your turn: \(currentTurnName)"
         }
@@ -618,5 +669,39 @@ struct ContentView: View {
         } else {
             collapsedCharacterIDs.insert(character.id)
         }
+    }
+
+    private func needsInitiativeRoll(_ character: PlayerViewDTO) -> Bool {
+        model.gameState?.encounterState == .active && character.initiative == nil
+    }
+
+    private func handleInitiativeAction(for character: PlayerViewDTO) {
+        if character.useAppInitiativeRoll {
+            if let rolled = rollInitiative(standardDie: model.ruleSet?.standardDie, bonus: character.initiativeBonus) {
+                Task { await model.setInitiative(for: character, initiative: rolled) }
+            } else {
+                manualInitiativeCharacter = character
+                manualInitiativeInput = ""
+            }
+        } else {
+            manualInitiativeCharacter = character
+            manualInitiativeInput = ""
+        }
+    }
+
+    private func rollInitiative(standardDie: String?, bonus: Int) -> Int? {
+        guard let standardDie else { return nil }
+        let pattern = /^(\d+)[dD](\d+)$/
+        guard let match = standardDie.wholeMatch(of: pattern),
+              let count = Int(match.1),
+              let sides = Int(match.2),
+              count > 0,
+              sides > 0 else {
+            return nil
+        }
+        let rollTotal = (0..<count).reduce(0) { partialResult, _ in
+            partialResult + Int.random(in: 1...sides)
+        }
+        return rollTotal + bonus
     }
 }

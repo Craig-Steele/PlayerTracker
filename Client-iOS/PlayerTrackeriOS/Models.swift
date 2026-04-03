@@ -45,10 +45,12 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let ownerId: UUID
     let ownerName: String
     let name: String
-    let initiative: Int
+    let initiative: Int?
     let stats: [StatEntryDTO]
     let revealStats: Bool
     let autoSkipTurn: Bool
+    let useAppInitiativeRoll: Bool
+    let initiativeBonus: Int
     let isHidden: Bool
     let revealOnTurn: Bool
     let conditions: [String]
@@ -68,10 +70,12 @@ struct CharacterInputDTO: Codable {
     let ownerId: UUID?
     let ownerName: String
     let name: String
-    let initiative: Int
+    let initiative: Int?
     let stats: [StatEntryDTO]?
     let revealStats: Bool?
     let autoSkipTurn: Bool?
+    let useAppInitiativeRoll: Bool?
+    let initiativeBonus: Int?
     let isHidden: Bool?
     let revealOnTurn: Bool?
     let conditions: [String]?
@@ -99,18 +103,20 @@ struct EditableStat: Identifiable, Equatable {
 struct CharacterDraft: Identifiable, Equatable {
     let id: UUID?
     var name: String
-    var initiative: String
     var revealStats: Bool
     var autoSkipTurn: Bool
+    var useAppInitiativeRoll: Bool
+    var initiativeBonus: String
     var stats: [EditableStat]
     var selectedConditions: Set<String>
 
     init(
         id: UUID?,
         name: String,
-        initiative: Int,
         revealStats: Bool,
         autoSkipTurn: Bool,
+        useAppInitiativeRoll: Bool,
+        initiativeBonus: Int,
         statKeys: [String],
         supportsTempHp: Bool,
         sourceStats: [StatEntryDTO],
@@ -118,9 +124,10 @@ struct CharacterDraft: Identifiable, Equatable {
     ) {
         self.id = id
         self.name = name
-        self.initiative = String(initiative)
         self.revealStats = revealStats
         self.autoSkipTurn = autoSkipTurn
+        self.useAppInitiativeRoll = useAppInitiativeRoll
+        self.initiativeBonus = String(initiativeBonus)
         self.selectedConditions = Set(selectedConditions)
 
         var orderedKeys = statKeys
@@ -155,9 +162,10 @@ struct CharacterDraft: Identifiable, Equatable {
         CharacterDraft(
             id: nil,
             name: "",
-            initiative: 0,
             revealStats: false,
             autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
             statKeys: ruleSet?.stats ?? ["HP"],
             supportsTempHp: ruleSet?.supportsTempHp ?? false,
             sourceStats: [],
@@ -169,9 +177,10 @@ struct CharacterDraft: Identifiable, Equatable {
         self.init(
             id: player.id,
             name: player.name,
-            initiative: player.initiative,
             revealStats: player.revealStats,
             autoSkipTurn: player.autoSkipTurn,
+            useAppInitiativeRoll: player.useAppInitiativeRoll,
+            initiativeBonus: player.initiativeBonus,
             statKeys: ruleSet?.stats ?? ["HP"],
             supportsTempHp: ruleSet?.supportsTempHp ?? false,
             sourceStats: player.stats,

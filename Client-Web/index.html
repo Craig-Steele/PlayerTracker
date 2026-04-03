@@ -82,10 +82,16 @@
               Character
               <input type="text" id="add-name" required />
             </label>
-            <label>
-              Initiative
-              <input type="number" id="add-initiative" value="0" required />
-            </label>
+            <div class="initiative-settings">
+              <label class="reveal-health-toggle">
+                <input type="checkbox" id="add-use-app-initiative-roll" checked />
+                Use app to roll initiative
+              </label>
+              <label id="add-initiative-bonus-wrap">
+                Initiative Bonus
+                <input type="number" id="add-initiative-bonus" value="0" />
+              </label>
+            </div>
             <div id="add-stats-fields"></div>
             <div id="add-current-stats" class="add-current-stats"></div>
             <div class="add-form-actions">
@@ -113,10 +119,16 @@
             Character
             <input type="text" id="name" required />
           </label>
-          <label>
-            Initiative
-            <input type="number" id="initiative" required />
-          </label>
+          <div class="initiative-settings">
+            <label class="reveal-health-toggle">
+              <input type="checkbox" id="use-app-initiative-roll" checked />
+              Use app to roll initiative
+            </label>
+            <label id="initiative-bonus-wrap">
+              Initiative Bonus
+              <input type="number" id="initiative-bonus" value="0" />
+            </label>
+          </div>
           <div id="stats-fields"></div>
           <label class="reveal-health-toggle">
             <input type="checkbox" id="reveal-stats" />

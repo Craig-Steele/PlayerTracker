@@ -156,7 +156,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerNameSaveBtn = document.getElementById('player-name-save');
   const playerNameCancelBtn = document.getElementById('player-name-cancel');
   const nameInput = document.getElementById('name');
-  const numberInput = document.getElementById('initiative'); // initiative
+  const useAppInitiativeRollInput = document.getElementById('use-app-initiative-roll');
+  const initiativeBonusInput = document.getElementById('initiative-bonus');
+  const initiativeBonusWrap = document.getElementById('initiative-bonus-wrap');
   const statsFields = document.getElementById('stats-fields');
   const currentStatsInputs = document.getElementById('current-stats-inputs');
   const revealStatsInput = document.getElementById('reveal-stats');
@@ -180,7 +182,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const removeCharacterBtn = document.getElementById('character-remove');
   const addForm = document.getElementById('add-character-form');
   const addNameInput = document.getElementById('add-name');
-  const addInitiativeInput = document.getElementById('add-initiative');
+  const addUseAppInitiativeRollInput = document.getElementById('add-use-app-initiative-roll');
+  const addInitiativeBonusInput = document.getElementById('add-initiative-bonus');
+  const addInitiativeBonusWrap = document.getElementById('add-initiative-bonus-wrap');
   const addStatsFields = document.getElementById('add-stats-fields');
   const addCurrentStats = document.getElementById('add-current-stats');
   const addSaveBtn = document.getElementById('add-save');
@@ -214,6 +218,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let statKeys = ['HP'];
   let allowNegativeHealth = false;
   let supportsTempHp = false;
+  let currentStandardDie = null;
   let ownerId = localStorage.getItem('playerId') || '';
   let statInputs = new Map();
   let addStatInputs = new Map();
@@ -342,6 +347,8 @@ window.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('ownerName', savedOwner);
   }
   updatePlayerNameDisplay();
+  updateInitiativeBonusAvailability();
+  updateAddInitiativeBonusAvailability();
   if (playerNameInput && savedOwner) {
     playerNameInput.value = savedOwner;
   }
@@ -354,10 +361,40 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (numberInput) {
-    numberInput.addEventListener('input', () => {
+  function updateInitiativeBonusAvailability() {
+    if (!initiativeBonusInput || !initiativeBonusWrap) return;
+    const enabled = !useAppInitiativeRollInput || useAppInitiativeRollInput.checked;
+    initiativeBonusInput.disabled = !enabled;
+    initiativeBonusWrap.classList.toggle('disabled', !enabled);
+  }
+
+  function updateAddInitiativeBonusAvailability() {
+    if (!addInitiativeBonusInput || !addInitiativeBonusWrap) return;
+    const enabled = !addUseAppInitiativeRollInput || addUseAppInitiativeRollInput.checked;
+    addInitiativeBonusInput.disabled = !enabled;
+    addInitiativeBonusWrap.classList.toggle('disabled', !enabled);
+  }
+
+  if (useAppInitiativeRollInput) {
+    useAppInitiativeRollInput.addEventListener('change', () => {
       formDirty = true;
-      scheduleAutoSave('initiative');
+      updateInitiativeBonusAvailability();
+      updateDraftFromForm();
+      scheduleAutoSave('use-app-initiative-roll');
+    });
+  }
+
+  if (initiativeBonusInput) {
+    initiativeBonusInput.addEventListener('input', () => {
+      formDirty = true;
+      updateDraftFromForm();
+      scheduleAutoSave('initiative-bonus');
+    });
+  }
+
+  if (addUseAppInitiativeRollInput) {
+    addUseAppInitiativeRollInput.addEventListener('change', () => {
+      updateAddInitiativeBonusAvailability();
     });
   }
 
@@ -573,7 +610,9 @@ window.addEventListener('DOMContentLoaded', () => {
       name: nameInput ? nameInput.value.trim() : '',
       stats,
       revealStats: revealStatsInput ? revealStatsInput.checked : null,
-      autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null
+      autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
+      useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
+      initiativeBonus: initiativeBonusInput ? initiativeBonusInput.value.trim() : '0'
     };
     saveDrafts(ownerName, drafts);
   }
@@ -605,6 +644,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (autoSkipTurnInput && typeof draft.autoSkipTurn === 'boolean') {
       autoSkipTurnInput.checked = draft.autoSkipTurn;
     }
+    if (useAppInitiativeRollInput && typeof draft.useAppInitiativeRoll === 'boolean') {
+      useAppInitiativeRollInput.checked = draft.useAppInitiativeRoll;
+    }
+    if (initiativeBonusInput && typeof draft.initiativeBonus === 'string') {
+      initiativeBonusInput.value = draft.initiativeBonus;
+    }
+    updateInitiativeBonusAvailability();
   }
 
   function scheduleAutoSave(source) {
@@ -644,6 +690,13 @@ window.addEventListener('DOMContentLoaded', () => {
       if (typeof draft.autoSkipTurn === 'boolean') {
         character.autoSkipTurn = draft.autoSkipTurn;
       }
+      if (typeof draft.useAppInitiativeRoll === 'boolean') {
+        character.useAppInitiativeRoll = draft.useAppInitiativeRoll;
+      }
+      if (draft.initiativeBonus !== undefined) {
+        const parsedBonus = Number(draft.initiativeBonus);
+        character.initiativeBonus = Number.isFinite(parsedBonus) ? parsedBonus : 0;
+      }
     });
   }
 
@@ -666,7 +719,10 @@ window.addEventListener('DOMContentLoaded', () => {
       name: character.name,
       stats,
       revealStats: typeof character.revealStats === 'boolean' ? character.revealStats : null,
-      autoSkipTurn: typeof character.autoSkipTurn === 'boolean' ? character.autoSkipTurn : null
+      autoSkipTurn: typeof character.autoSkipTurn === 'boolean' ? character.autoSkipTurn : null,
+      useAppInitiativeRoll:
+        typeof character.useAppInitiativeRoll === 'boolean' ? character.useAppInitiativeRoll : true,
+      initiativeBonus: Number.isFinite(character.initiativeBonus) ? String(character.initiativeBonus) : '0'
     };
     saveDrafts(ownerName, drafts);
   }
@@ -698,6 +754,8 @@ window.addEventListener('DOMContentLoaded', () => {
         stats: Array.isArray(character.stats) ? character.stats : [],
         revealStats: character.revealStats,
         autoSkipTurn: character.autoSkipTurn,
+        useAppInitiativeRoll: character.useAppInitiativeRoll,
+        initiativeBonus: character.initiativeBonus,
         conditions: Array.isArray(character.conditions) ? character.conditions : []
       };
       if (currentCampaignName) {
@@ -760,6 +818,10 @@ window.addEventListener('DOMContentLoaded', () => {
       statKeys = ['TempHP', ...statKeys];
     }
     allowNegativeHealth = Boolean(conditionSet?.allowNegativeHealth);
+    currentStandardDie =
+      typeof conditionSet?.standardDie === 'string' && conditionSet.standardDie.trim()
+        ? conditionSet.standardDie.trim()
+        : null;
     buildStatsFields();
 
     if (normalizedEntries.length === 0) {
@@ -872,7 +934,7 @@ window.addEventListener('DOMContentLoaded', () => {
       name.textContent = character.name;
       const meta = document.createElement('div');
       meta.className = 'character-meta';
-      meta.textContent = `Init ${character.initiative}`;
+      meta.textContent = `Init ${character.initiative ?? 'None'}`;
       nameWrap.appendChild(name);
       nameWrap.appendChild(meta);
       row.appendChild(nameWrap);
@@ -925,6 +987,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
       item.appendChild(row);
 
+      if (needsInitiativeAction(character)) {
+        const initiativeActions = document.createElement('div');
+        initiativeActions.className = 'character-actions';
+        const rollButton = document.createElement('button');
+        rollButton.type = 'button';
+        rollButton.textContent = 'Roll for Initiative!';
+        rollButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          handleInitiativeAction(character);
+        });
+        initiativeActions.appendChild(rollButton);
+        item.appendChild(initiativeActions);
+      }
+
       item.addEventListener('click', () => {
         selectCharacter(character.id);
       });
@@ -939,9 +1015,26 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function clearPendingCharacterSaveTimers() {
+    perCharacterSaveTimers.forEach((timer) => clearTimeout(timer));
+    perCharacterSaveTimers.clear();
+  }
+
   function syncMyCharacterStatsFromState(players) {
     if (displayOnly) return;
     if (typeof ownerId === 'undefined' || !ownerId || !Array.isArray(players)) return;
+    if (encounterState === 'new') {
+      clearPendingCharacterSaveTimers();
+      myCharacters = myCharacters.map((character) => ({
+        ...character,
+        initiative: null
+      }));
+      renderCharacterList();
+      if (selectedCharacterId && myCharacters.some((character) => character.id === selectedCharacterId)) {
+        selectCharacter(selectedCharacterId);
+      }
+      return;
+    }
     const byId = new Map(
       players
         .filter((player) => player.ownerId && player.ownerId === ownerId)
@@ -951,12 +1044,24 @@ window.addEventListener('DOMContentLoaded', () => {
     let updated = false;
     myCharacters = myCharacters.map((character) => {
       const match = byId.get(character.id);
-      if (!match || !Array.isArray(match.stats)) return character;
+      if (!match) return character;
       updated = true;
-      return { ...character, stats: match.stats };
+      return {
+        ...character,
+        initiative: match.initiative,
+        stats: Array.isArray(match.stats) ? match.stats : character.stats,
+        revealStats: match.revealStats,
+        autoSkipTurn: match.autoSkipTurn,
+        useAppInitiativeRoll: match.useAppInitiativeRoll,
+        initiativeBonus: match.initiativeBonus,
+        conditions: match.conditions
+      };
     });
     if (updated) {
       renderCharacterList();
+      if (selectedCharacterId && myCharacters.some((character) => character.id === selectedCharacterId)) {
+        selectCharacter(selectedCharacterId);
+      }
     }
   }
 
@@ -1074,7 +1179,6 @@ window.addEventListener('DOMContentLoaded', () => {
     isCreatingCharacter = false;
     localStorage.setItem('selectedCharacterId', selectedCharacterId);
     nameInput.value = found.name;
-    numberInput.value = found.initiative;
     if (Array.isArray(found.stats)) {
       const statsByKey = new Map(found.stats.map((stat) => [stat.key, stat]));
       statInputs.forEach((entry, key) => {
@@ -1093,6 +1197,13 @@ window.addEventListener('DOMContentLoaded', () => {
     if (autoSkipTurnInput) {
       autoSkipTurnInput.checked = Boolean(found.autoSkipTurn);
     }
+    if (useAppInitiativeRollInput) {
+      useAppInitiativeRollInput.checked = found.useAppInitiativeRoll !== false;
+    }
+    if (initiativeBonusInput) {
+      initiativeBonusInput.value = Number.isFinite(found.initiativeBonus) ? found.initiativeBonus : '0';
+    }
+    updateInitiativeBonusAvailability();
     applyDraftToForm(found);
     applySelectedConditions(found.conditions || []);
     formDirty = false;
@@ -1107,13 +1218,15 @@ window.addEventListener('DOMContentLoaded', () => {
     selectedCharacterId = null;
     localStorage.removeItem('selectedCharacterId');
     nameInput.value = '';
-    numberInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.currentInput) entry.currentInput.value = '';
       if (entry.maxInput) entry.maxInput.value = '';
     });
     if (revealStatsInput) revealStatsInput.checked = false;
     if (autoSkipTurnInput) autoSkipTurnInput.checked = false;
+    if (useAppInitiativeRollInput) useAppInitiativeRollInput.checked = true;
+    if (initiativeBonusInput) initiativeBonusInput.value = '0';
+    updateInitiativeBonusAvailability();
     applySelectedConditions([]);
     formDirty = false;
     renderCharacterList();
@@ -1125,11 +1238,62 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function clearAddForm() {
     if (addNameInput) addNameInput.value = '';
-    if (addInitiativeInput) addInitiativeInput.value = '0';
+    if (addUseAppInitiativeRollInput) addUseAppInitiativeRollInput.checked = true;
+    if (addInitiativeBonusInput) addInitiativeBonusInput.value = '0';
+    updateAddInitiativeBonusAvailability();
     addStatInputs.forEach((entry) => {
       if (entry.maxInput) entry.maxInput.value = '';
       if (entry.currentInput) entry.currentInput.value = '';
     });
+  }
+
+  function parseStandardDie(spec) {
+    const match = /^(\d+)[dD](\d+)$/.exec(spec || '');
+    if (!match) return null;
+    const count = Number(match[1]);
+    const sides = Number(match[2]);
+    if (!Number.isFinite(count) || !Number.isFinite(sides) || count <= 0 || sides <= 0) {
+      return null;
+    }
+    return { count, sides };
+  }
+
+  function rollStandardDie(spec, bonus) {
+    const parsed = parseStandardDie(spec);
+    if (!parsed) return null;
+    let total = 0;
+    for (let index = 0; index < parsed.count; index += 1) {
+      total += Math.floor(Math.random() * parsed.sides) + 1;
+    }
+    return total + (Number.isFinite(bonus) ? bonus : 0);
+  }
+
+  function needsInitiativeAction(character) {
+    return encounterState === 'active' && (character.initiative === null || character.initiative === undefined);
+  }
+
+  async function handleInitiativeAction(character) {
+    if (!character) return;
+    if (character.useAppInitiativeRoll !== false) {
+      const rolled = rollStandardDie(currentStandardDie, character.initiativeBonus);
+      if (Number.isFinite(rolled)) {
+        character.initiative = rolled;
+        await saveCharacterEntry(character);
+        return;
+      }
+    }
+
+    const entered = prompt(`Enter initiative for ${character.name}`, '');
+    if (entered === null) return;
+    const trimmed = entered.trim();
+    if (!trimmed) return;
+    const initiative = Number(trimmed);
+    if (!Number.isFinite(initiative)) {
+      statusDiv.textContent = 'Initiative must be a valid number.';
+      return;
+    }
+    character.initiative = initiative;
+    await saveCharacterEntry(character);
   }
 
   function showAddForm() {
@@ -1486,14 +1650,8 @@ window.addEventListener('DOMContentLoaded', () => {
   async function handleAddCharacterSubmit() {
     const ownerName = getOwnerName();
     const name = addNameInput ? addNameInput.value.trim() : '';
-    const initiativeStr = addInitiativeInput ? addInitiativeInput.value.trim() : '';
-    if (!ownerName || !name || initiativeStr === '') {
-      statusDiv.textContent = 'Player, character, and initiative are required.';
-      return;
-    }
-    const initiative = Number(initiativeStr);
-    if (!Number.isFinite(initiative)) {
-      statusDiv.textContent = 'Initiative must be a valid number.';
+    if (!ownerName || !name) {
+      statusDiv.textContent = 'Player and character are required.';
       return;
     }
 
@@ -1533,14 +1691,22 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       await ensureOwnerId();
       const conditionList = Array.from(selectedConditions);
+      const initiativeBonusRaw = addInitiativeBonusInput ? addInitiativeBonusInput.value.trim() : '0';
+      const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
+      if (!Number.isFinite(initiativeBonus)) {
+        statusDiv.textContent = 'Initiative bonus must be a valid number.';
+        return;
+      }
       const payload = {
         ownerId,
         ownerName,
         name,
-        initiative,
+        initiative: null,
         stats: statsPayload,
         revealStats: revealStatsInput ? revealStatsInput.checked : null,
         autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
+        useAppInitiativeRoll: addUseAppInitiativeRollInput ? addUseAppInitiativeRollInput.checked : true,
+        initiativeBonus,
         conditions: conditionList
       };
       if (currentCampaignName) {
@@ -1659,7 +1825,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const conditionsTd = document.createElement('td');
             conditionsTd.classList.add('conditions-cell');
 
-            initTd.textContent = p.initiative ?? '';
+            initTd.textContent = Number.isFinite(p.initiative) ? p.initiative : 'None';
             if (p.ownerName && p.ownerName.toLowerCase() === 'referee') {
               initTd.classList.add('init-referee');
             }
@@ -1812,15 +1978,16 @@ window.addEventListener('DOMContentLoaded', () => {
   async function saveCharacter({ showStatus = true } = {}) {
     const ownerName = getOwnerName();
     const name = nameInput.value.trim();
-    const initiativeStr = numberInput.value.trim();
-    if (!ownerName || !name || initiativeStr === '') {
-      statusDiv.textContent = 'Player, character, and initiative are required.';
+    if (!ownerName || !name) {
+      statusDiv.textContent = 'Player and character are required.';
       return;
     }
-
-    const initiative = Number(initiativeStr);
-    if (!Number.isFinite(initiative)) {
-      statusDiv.textContent = 'Initiative must be a valid number.';
+    const selectedCharacter = myCharacters.find((character) => character.id === selectedCharacterId);
+    const initiative = selectedCharacter ? selectedCharacter.initiative : null;
+    const initiativeBonusRaw = initiativeBonusInput ? initiativeBonusInput.value.trim() : '0';
+    const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
+    if (!Number.isFinite(initiativeBonus)) {
+      statusDiv.textContent = 'Initiative bonus must be a valid number.';
       return;
     }
 
@@ -1879,6 +2046,8 @@ window.addEventListener('DOMContentLoaded', () => {
         stats: statsPayload,
         revealStats: revealStatsInput ? revealStatsInput.checked : null,
         autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
+        useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
+        initiativeBonus,
         conditions: conditionList
       };
       if (currentCampaignName) {
@@ -1904,7 +2073,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
       updateDraftFromForm();
       if (showStatus) {
-        statusDiv.textContent = `Saved ${name} (${initiative}) — ${conditionList.length} condition${conditionList.length === 1 ? '' : 's'}.`;
+        statusDiv.textContent = `Saved ${name} — ${conditionList.length} condition${conditionList.length === 1 ? '' : 's'}.`;
       } else {
         statusDiv.textContent = '';
       }

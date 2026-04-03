@@ -124,8 +124,14 @@ final class PlayerAppModel {
             return
         }
         let trimmedName = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty, let initiative = Int(draft.initiative) else {
-            statusMessage = "Character name and initiative are required."
+        guard !trimmedName.isEmpty else {
+            statusMessage = "Character name is required."
+            return
+        }
+        let trimmedBonus = draft.initiativeBonus.trimmingCharacters(in: .whitespacesAndNewlines)
+        let initiativeBonus = trimmedBonus.isEmpty ? 0 : Int(trimmedBonus)
+        guard let initiativeBonus else {
+            statusMessage = "Initiative bonus must be a valid number."
             return
         }
 
@@ -137,10 +143,12 @@ final class PlayerAppModel {
                 ownerId: ownerId,
                 ownerName: trimmedOwnerName,
                 name: trimmedName,
-                initiative: initiative,
+                initiative: draft.id.flatMap { existingCharacter(with: $0)?.initiative },
                 stats: draft.buildStatsPayload(allowNegativeHealth: ruleSet?.allowNegativeHealth ?? false),
                 revealStats: draft.revealStats,
                 autoSkipTurn: draft.autoSkipTurn,
+                useAppInitiativeRoll: draft.useAppInitiativeRoll,
+                initiativeBonus: initiativeBonus,
                 isHidden: false,
                 revealOnTurn: false,
                 conditions: Array(draft.selectedConditions).sorted()
@@ -194,6 +202,60 @@ final class PlayerAppModel {
         await saveCharacter(draft)
     }
 
+    func setInitiative(for character: PlayerViewDTO, initiative: Int) async {
+        do {
+            let client = try APIClient(baseURLString: serverURLString)
+            let payload = CharacterInputDTO(
+                id: character.id,
+                campaignName: campaign?.name,
+                ownerId: ownerId,
+                ownerName: character.ownerName,
+                name: character.name,
+                initiative: initiative,
+                stats: character.stats,
+                revealStats: character.revealStats,
+                autoSkipTurn: character.autoSkipTurn,
+                useAppInitiativeRoll: character.useAppInitiativeRoll,
+                initiativeBonus: character.initiativeBonus,
+                isHidden: character.isHidden,
+                revealOnTurn: character.revealOnTurn,
+                conditions: character.conditions
+            )
+            _ = try await client.upsertCharacter(payload)
+            statusMessage = "Initiative set."
+            await refreshAll(showStatus: false)
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
+    func clearInitiative(for character: PlayerViewDTO) async {
+        do {
+            let client = try APIClient(baseURLString: serverURLString)
+            let payload = CharacterInputDTO(
+                id: character.id,
+                campaignName: campaign?.name,
+                ownerId: ownerId,
+                ownerName: character.ownerName,
+                name: character.name,
+                initiative: nil,
+                stats: character.stats,
+                revealStats: character.revealStats,
+                autoSkipTurn: character.autoSkipTurn,
+                useAppInitiativeRoll: character.useAppInitiativeRoll,
+                initiativeBonus: character.initiativeBonus,
+                isHidden: character.isHidden,
+                revealOnTurn: character.revealOnTurn,
+                conditions: character.conditions
+            )
+            _ = try await client.upsertCharacter(payload)
+            statusMessage = "Initiative cleared."
+            await refreshAll(showStatus: false)
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
     var isMyTurn: Bool {
         guard let gameState else { return false }
         return gameState.players.contains(where: { $0.ownerId == ownerId && $0.id == gameState.currentTurnId })
@@ -201,5 +263,9 @@ final class PlayerAppModel {
 
     func isCurrentTurn(for character: PlayerViewDTO) -> Bool {
         gameState?.currentTurnId == character.id
+    }
+
+    private func existingCharacter(with id: UUID) -> PlayerViewDTO? {
+        myCharacters.first(where: { $0.id == id })
     }
 }

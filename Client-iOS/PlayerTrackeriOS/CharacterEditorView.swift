@@ -4,7 +4,7 @@ import UIKit
 struct CharacterEditorView: View {
     private enum FocusedField: Hashable {
         case name
-        case initiative
+        case initiativeBonus
         case statCurrent(String)
         case statMax(String)
     }
@@ -35,20 +35,26 @@ struct CharacterEditorView: View {
                         previousField: previousField(for: .name),
                         nextField: nextField(for: .name)
                     )
-                    LabeledContent("Initiative") {
-                        AccessoryTextField(
-                            placeholder: "Initiative",
-                            text: $draft.initiative,
-                            keyboardType: .numberPad,
-                            autocapitalization: .none,
-                            autocorrection: .no,
-                            textAlignment: .right,
-                            fieldID: .initiative,
-                            focusedField: $focusedField,
-                            previousField: previousField(for: .initiative),
-                            nextField: nextField(for: .initiative)
-                        )
+                }
+
+                Section("Initiative") {
+                    Toggle("Use app to roll initiative", isOn: $draft.useAppInitiativeRoll)
+                    if draft.useAppInitiativeRoll {
+                        LabeledContent("Initiative Bonus") {
+                            AccessoryTextField(
+                                placeholder: "Bonus",
+                                text: $draft.initiativeBonus,
+                                keyboardType: .numberPad,
+                                autocapitalization: .none,
+                                autocorrection: .no,
+                                textAlignment: .right,
+                                fieldID: .initiativeBonus,
+                                focusedField: $focusedField,
+                                previousField: previousField(for: .initiativeBonus),
+                                nextField: nextField(for: .initiativeBonus)
+                            )
                             .frame(maxWidth: 120)
+                        }
                     }
                 }
 
@@ -126,7 +132,10 @@ struct CharacterEditorView: View {
     }
 
     private var focusOrder: [FocusedField] {
-        var fields: [FocusedField] = [.name, .initiative]
+        var fields: [FocusedField] = [.name]
+        if draft.useAppInitiativeRoll {
+            fields.append(.initiativeBonus)
+        }
         for stat in draft.stats {
             fields.append(.statCurrent(stat.key))
             if stat.key != "TempHP" {

@@ -140,10 +140,12 @@ actor UserStore {
         ownerId: UUID,
         ownerName: String,
         characterName: String,
-        initiative: Int,
+        initiative: Int?,
         stats: [StatEntry]?,
         revealStats: Bool?,
         autoSkipTurn: Bool?,
+        useAppInitiativeRoll: Bool?,
+        initiativeBonus: Int?,
         isHidden: Bool?,
         revealOnTurn: Bool?,
         conditions: Set<String>?
@@ -159,6 +161,8 @@ actor UserStore {
             stats: stats.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.key, $0) }) } ?? [:],
             revealStats: revealStats ?? false,
             autoSkipTurn: autoSkipTurn ?? false,
+            useAppInitiativeRoll: useAppInitiativeRoll ?? true,
+            initiativeBonus: initiativeBonus ?? 0,
             isHidden: isHidden ?? false,
             revealOnTurn: revealOnTurn ?? false,
             conditions: []
@@ -177,6 +181,12 @@ actor UserStore {
         }
         if let autoSkipTurn {
             state.autoSkipTurn = autoSkipTurn
+        }
+        if let useAppInitiativeRoll {
+            state.useAppInitiativeRoll = useAppInitiativeRoll
+        }
+        if let initiativeBonus {
+            state.initiativeBonus = initiativeBonus
         }
         if let isHidden {
             state.isHidden = isHidden
@@ -250,7 +260,7 @@ actor UserStore {
                 idsToRemove.append(id)
                 continue
             }
-            state.initiative = 0
+            state.initiative = nil
             storage[id] = state
         }
         for id in idsToRemove {
@@ -301,10 +311,12 @@ actor UserStore {
                 ownerId: UUID(),
                 ownerName: name,
                 characterName: name,
-                initiative: 0,
+                initiative: nil,
                 stats: [],
                 revealStats: false,
                 autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 0,
                 isHidden: false,
                 revealOnTurn: false,
                 conditions: conditions
@@ -318,10 +330,12 @@ actor UserStore {
             ownerId: existingOwnerId,
             ownerName: name,
             characterName: name,
-            initiative: storage[existingId]?.initiative ?? 0,
+            initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
+            useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
+            initiativeBonus: storage[existingId]?.initiativeBonus,
             isHidden: storage[existingId]?.isHidden,
             revealOnTurn: storage[existingId]?.revealOnTurn,
             conditions: conditions
@@ -336,10 +350,12 @@ actor UserStore {
                 ownerId: UUID(),
                 ownerName: name,
                 characterName: name,
-                initiative: 0,
+                initiative: nil,
                 stats: [],
                 revealStats: false,
                 autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 0,
                 isHidden: false,
                 revealOnTurn: false,
                 conditions: [condition]
@@ -355,10 +371,12 @@ actor UserStore {
             ownerId: existingOwnerId,
             ownerName: name,
             characterName: name,
-            initiative: storage[existingId]?.initiative ?? 0,
+            initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
+            useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
+            initiativeBonus: storage[existingId]?.initiativeBonus,
             isHidden: storage[existingId]?.isHidden,
             revealOnTurn: storage[existingId]?.revealOnTurn,
             conditions: conditions
@@ -378,10 +396,12 @@ actor UserStore {
             ownerId: existingOwnerId,
             ownerName: name,
             characterName: name,
-            initiative: storage[existingId]?.initiative ?? 0,
+            initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
+            useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
+            initiativeBonus: storage[existingId]?.initiativeBonus,
             isHidden: storage[existingId]?.isHidden,
             revealOnTurn: storage[existingId]?.revealOnTurn,
             conditions: conditions
@@ -470,6 +490,8 @@ actor UserStore {
             stats: state.stats.values.sorted { $0.key < $1.key },
             revealStats: state.revealStats,
             autoSkipTurn: state.autoSkipTurn,
+            useAppInitiativeRoll: state.useAppInitiativeRoll,
+            initiativeBonus: state.initiativeBonus,
             isHidden: state.isHidden,
             revealOnTurn: state.revealOnTurn,
             conditions: Array(state.conditions).sorted()
@@ -482,6 +504,7 @@ actor UserStore {
             includeHidden: false,
             includeRevealOnTurn: true
         )
+        .filter { $0.initiative != nil }
     }
 
     private func advanceTurnStatePastAutoSkip(
@@ -525,7 +548,19 @@ actor UserStore {
                     }
                     return a.ownerName < b.ownerName
                 }
-                return a.initiative > b.initiative
+                switch (a.initiative, b.initiative) {
+                case let (lhs?, rhs?):
+                    return lhs > rhs
+                case (.some, .none):
+                    return true
+                case (.none, .some):
+                    return false
+                case (.none, .none):
+                    if a.ownerName == b.ownerName {
+                        return a.characterName < b.characterName
+                    }
+                    return a.ownerName < b.ownerName
+                }
             }
     }
 
@@ -713,7 +748,14 @@ actor CampaignStore {
                 self.currentName = persisted.name
                 self.currentRulesetId = restoredLibrary.id
                 self.currentLibrary = restoredLibrary
-                self.currentEncounterState = persisted.encounterState ?? .new
+                self.currentEncounterState = .new
+                CampaignStore.savePersistedState(
+                    CampaignPersistedState(
+                        name: self.currentName,
+                        rulesetId: self.currentRulesetId,
+                        encounterState: self.currentEncounterState
+                    )
+                )
                 return
             }
         }
@@ -806,10 +848,12 @@ struct CharacterState {
     var ownerId: UUID
     var ownerName: String
     var characterName: String
-    var initiative: Int
+    var initiative: Int?
     var stats: [String: StatEntry]
     var revealStats: Bool
     var autoSkipTurn: Bool
+    var useAppInitiativeRoll: Bool
+    var initiativeBonus: Int
     var isHidden: Bool
     var revealOnTurn: Bool
     var conditions: Set<String>
@@ -820,10 +864,12 @@ struct PlayerView: Content {
     let ownerId: UUID
     let ownerName: String
     let name: String
-    let initiative: Int
+    let initiative: Int?
     let stats: [StatEntry]
     let revealStats: Bool
     let autoSkipTurn: Bool
+    let useAppInitiativeRoll: Bool
+    let initiativeBonus: Int
     let isHidden: Bool
     let revealOnTurn: Bool
     let conditions: [String]
@@ -848,10 +894,12 @@ struct CharacterInput: Content {
     let ownerId: UUID?
     let ownerName: String
     let name: String
-    let initiative: Int
+    let initiative: Int?
     let stats: [StatEntry]?
     let revealStats: Bool?
     let autoSkipTurn: Bool?
+    let useAppInitiativeRoll: Bool?
+    let initiativeBonus: Int?
     let isHidden: Bool?
     let revealOnTurn: Bool?
     let conditions: [String]?
@@ -886,7 +934,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         }
 
         let campaignName = await campaignStore.currentCampaignName()
-        let initiative = await userStore.get(name: name, campaignName: campaignName)?.initiative ?? 0
+        let initiative = await userStore.get(name: name, campaignName: campaignName)?.initiative
         return UserData(name: name, initiative: initiative)
     }
 
@@ -1076,6 +1124,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             stats: input.stats,
             revealStats: input.revealStats,
             autoSkipTurn: input.autoSkipTurn,
+            useAppInitiativeRoll: input.useAppInitiativeRoll,
+            initiativeBonus: input.initiativeBonus,
             isHidden: input.isHidden,
             revealOnTurn: input.revealOnTurn,
             conditions: input.conditions.map { Set($0) }

@@ -416,7 +416,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       const initTd = document.createElement('td');
-      initTd.textContent = p.initiative ?? '';
+      initTd.textContent = Number.isFinite(p.initiative) ? p.initiative : 'None';
 
       const nameTd = document.createElement('td');
       const nameLine = document.createElement('span');
@@ -574,7 +574,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         statusLabel = player.ownerName || 'Player';
       }
-      meta.textContent = `Init ${player.initiative} • ${statusLabel}`;
+      meta.textContent = `Init ${player.initiative ?? 'None'} • ${statusLabel}`;
       nameWrap.appendChild(name);
       nameWrap.appendChild(meta);
       row.appendChild(nameWrap);
@@ -770,9 +770,6 @@ window.addEventListener('DOMContentLoaded', () => {
       hideBtn.classList.toggle('hidden', !isReferee || isHidden);
       hideBtn.disabled = !isReferee || isHidden;
     }
-    if (deleteBtn) {
-      deleteBtn.disabled = !player;
-    }
   }
 
   function renderEditorConditions(filterText = '') {
@@ -873,12 +870,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!selectedCharacterId) return;
     const name = editorNameInput ? editorNameInput.value.trim() : '';
     const initiativeStr = editorInitiativeInput ? editorInitiativeInput.value.trim() : '';
-    if (!name || initiativeStr === '') {
-      if (statusDiv) statusDiv.textContent = 'Character and initiative are required.';
+    if (!name) {
+      if (statusDiv) statusDiv.textContent = 'Character is required.';
       return;
     }
-    const initiative = Number(initiativeStr);
-    if (!Number.isFinite(initiative)) {
+    const initiative = initiativeStr === '' ? null : Number(initiativeStr);
+    if (initiative !== null && !Number.isFinite(initiative)) {
       if (statusDiv) statusDiv.textContent = 'Initiative must be a valid number.';
       return;
     }
@@ -965,8 +962,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const name = nameInput.value.trim();
     const quantityStr = quantityInput ? quantityInput.value.trim() : '1';
     const initiativeStr = initiativeInput.value.trim();
-    if (!name || initiativeStr === '') {
-      if (statusDiv) statusDiv.textContent = 'Character and initiative are required.';
+    if (!name) {
+      if (statusDiv) statusDiv.textContent = 'Character is required.';
       return;
     }
     const quantity = Math.max(1, Number(quantityStr));
@@ -974,8 +971,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (statusDiv) statusDiv.textContent = 'Quantity must be at least 1.';
       return;
     }
-    const initiative = Number(initiativeStr);
-    if (!Number.isFinite(initiative)) {
+    const initiative = initiativeStr === '' ? null : Number(initiativeStr);
+    if (initiative !== null && !Number.isFinite(initiative)) {
       if (statusDiv) statusDiv.textContent = 'Initiative must be a valid number.';
       return;
     }
@@ -1070,7 +1067,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function clearAddForm() {
     if (nameInput) nameInput.value = '';
     if (quantityInput) quantityInput.value = '1';
-    if (initiativeInput) initiativeInput.value = '0';
+    if (initiativeInput) initiativeInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.maxInput) entry.maxInput.value = '';
       if (entry.currentInput) entry.currentInput.value = '';
