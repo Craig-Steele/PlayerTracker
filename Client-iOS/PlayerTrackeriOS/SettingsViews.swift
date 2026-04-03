@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreImage.CIFilterBuiltins
 import SwiftUI
 
 struct ConnectionSheetView: View {
@@ -142,6 +143,9 @@ struct SettingsView: View {
     let onChangeConnection: () -> Void
     let onChangePlayer: () -> Void
 
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingServerQRCode = false
+
     var body: some View {
         NavigationStack {
             List {
@@ -149,6 +153,10 @@ struct SettingsView: View {
                     Text(serverURL.isEmpty ? "Not set" : serverURL)
                         .foregroundStyle(serverURL.isEmpty ? .secondary : .primary)
                     Button("Change Connection", action: onChangeConnection)
+                    Button("Show QR Code") {
+                        showingServerQRCode = true
+                    }
+                    .disabled(serverURL.isEmpty)
                 }
 
                 Section("Player") {
@@ -165,7 +173,79 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+            .sheet(isPresented: $showingServerQRCode) {
+                ServerQRCodeSheetView(serverURL: serverURL)
+            }
         }
+    }
+}
+
+struct ServerQRCodeSheetView: View {
+    let serverURL: String
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                if let image = qrCodeImage(for: serverURL) {
+                    Image(uiImage: image)
+                        .interpolation(.none)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxWidth: 320, maxHeight: 320)
+                        .padding(16)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                } else {
+                    ContentUnavailableView(
+                        "Unable to Generate QR Code",
+                        systemImage: "qrcode",
+                        description: Text("The current server URL is not valid.")
+                    )
+                }
+
+                Text(serverURL)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .textSelection(.enabled)
+                    .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("Server QR Code")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private func qrCodeImage(for text: String) -> UIImage? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        let context = CIContext()
+        let filter = CIFilter.qrCodeGenerator()
+        filter.message = Data(trimmed.utf8)
+        filter.correctionLevel = "M"
+
+        guard let outputImage = filter.outputImage else { return nil }
+        let scaledImage = outputImage.transformed(by: CGAffineTransform(scaleX: 12, y: 12))
+        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 }
 
