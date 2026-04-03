@@ -3,7 +3,7 @@
   "label": "Pathfinder (1st)",
   "stats": ["HP"],
   "standardDie": "1d20",
-  "icon": "pathfinder.jpg",
+  "icon": "pathfinder.png",
   "supportsTempHp": true,
   "allowNegativeHealth": true,
   "license": "https://www.d20pfsrd.com/extras/legal/",
