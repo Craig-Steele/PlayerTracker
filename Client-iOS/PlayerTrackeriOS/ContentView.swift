@@ -261,7 +261,13 @@ struct ContentView: View {
                 }
                 .buttonStyle(.plain)
                 Spacer()
-                if isExpanded {
+                if isCurrentTurn && !isExpanded {
+                    Button("Turn Complete") {
+                        Task { await model.completeTurn() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                } else if isExpanded {
                     Text("Init \(character.initiative)")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.secondary)
