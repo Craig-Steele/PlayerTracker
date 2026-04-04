@@ -32,6 +32,8 @@
   --text-link: #1d5fbf;
   --text-selected: #0e2a5f;
   --text-referee: #6f0f0f;
+  --text-encounter-header: var(--text-primary);
+  --text-encounter-header-mine: var(--text-referee);
   --text-mine: #0b3b5f;
   --text-success: #1c5a2a;
   --text-success-strong: #124a1b;
@@ -221,6 +223,7 @@ th, td {
 .player-list {
   flex: 1;
   min-width: 0;
+  order: 2;
 }
 
 .detail-panel {
@@ -229,6 +232,7 @@ th, td {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  order: 1;
 }
 
 #player-form {
@@ -269,11 +273,19 @@ th, td {
   align-self: flex-start;
 }
 
+.character-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+
 .details-toggles {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.4rem;
+  margin-top: 0;
 }
 
 .details-toggles .details-toggle {
@@ -457,11 +469,11 @@ th, td {
 
 .character-list-actions {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 0.5rem;
-  width: 100%;
+  margin-top: 0;
+  width: auto;
 }
 
 .character-list-actions .icon-button {
@@ -811,6 +823,10 @@ th, td {
     display: inline-flex;
   }
 
+  .character-toolbar {
+    gap: 0.5rem;
+  }
+
   table,
   th,
   td {
@@ -961,8 +977,9 @@ th, td {
   }
 
   .details-toggle {
-    width: 100%;
-    font-size: 1.6rem;
+    width: auto;
+    font-size: 1rem;
+    padding: 0.55rem 0.8rem;
   }
 
   .selected-conditions .selected-pill {
@@ -1209,6 +1226,14 @@ body:not(.display-only):not(.referee-page) .player-campaign-card {
 
 .player-campaign-meta {
   color: var(--text-secondary);
+}
+
+#player-encounter-state {
+  color: var(--text-encounter-header);
+}
+
+#player-encounter-state.player-encounter-state-mine {
+  color: var(--text-encounter-header-mine);
 }
 
 .campaign-text {

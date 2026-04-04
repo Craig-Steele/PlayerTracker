@@ -414,8 +414,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.title = `${campaignName} - ${ownerName || 'Player'}`;
   }
 
-  function updateEncounterStateDisplay(round = 1, currentTurnName = null) {
+  function updateEncounterStateDisplay(round = 1, currentTurnName = null, isMineTurn = false) {
     if (!playerEncounterState) return;
+    playerEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isMineTurn));
     if (encounterState === 'active') {
       playerEncounterState.textContent = currentTurnName
         ? `Round ${round}: ${currentTurnName}`
@@ -2000,16 +2001,15 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         lastStateJson = currentJson;
 
-        updateEncounterStateDisplay(round, currentTurnName);
+        const isMineTurn = Boolean(
+          currentTurnId && myCharacters.some((character) => character.id === currentTurnId)
+        );
+        updateEncounterStateDisplay(round, currentTurnName, isMineTurn);
         if (currentActor) {
           if (hideTurnTable && currentTurnId) {
             const current = players.find((player) => player.id === currentTurnId);
             if (current) {
               currentActor.textContent = `Acting: ${current.name}`;
-              const isMineTurn =
-                ownerInput && ownerInput.value.trim() &&
-                current.ownerName &&
-                current.ownerName.toLowerCase() === ownerInput.value.trim().toLowerCase();
               currentActor.classList.toggle('current-actor-mine', Boolean(isMineTurn));
             } else {
               currentActor.textContent = '';
