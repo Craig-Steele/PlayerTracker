@@ -331,6 +331,13 @@ th, td {
   gap: 0.5rem;
 }
 
+.property-group {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 10px;
+  background: var(--bg-panel-subtle);
+}
+
 .property-row,
 .property-toggle-row,
 .stat-editor-row {
@@ -398,7 +405,9 @@ th, td {
 }
 
 .stat-editor-key {
+  font-size: 0.85rem;
   font-weight: 600;
+  color: var(--text-secondary);
   white-space: nowrap;
   padding-bottom: 0.3rem;
 }

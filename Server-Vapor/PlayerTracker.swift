@@ -134,6 +134,36 @@ actor UserStore {
         var turnIndex: Int
     }
 
+    private func parseStandardDie(_ spec: String?) -> (count: Int, sides: Int)? {
+        guard let spec,
+              let match = spec.trimmingCharacters(in: .whitespacesAndNewlines)
+                .wholeMatch(of: /(\d+)[dD](\d+)/) else {
+            return nil
+        }
+        guard let count = Int(match.output.1),
+              let sides = Int(match.output.2),
+              count > 0,
+              sides > 0 else {
+            return nil
+        }
+        return (count, sides)
+    }
+
+    func autoRollUnsetInitiativeForReferee(campaignName: String, standardDie: String?) {
+        guard let die = parseStandardDie(standardDie) else { return }
+        for (id, var state) in storage {
+            guard state.campaignName == campaignName else { continue }
+            guard state.ownerName.caseInsensitiveCompare("Referee") == .orderedSame else { continue }
+            guard state.initiative == nil else { continue }
+            guard state.useAppInitiativeRoll else { continue }
+            let roll = (0..<die.count).reduce(0) { partialResult, _ in
+                partialResult + Int.random(in: 1...die.sides)
+            }
+            state.initiative = Double(roll + state.initiativeBonus)
+            storage[id] = state
+        }
+    }
+
     func upsertCharacter(
         id: UUID?,
         campaignName: String,
@@ -1034,6 +1064,11 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
     app.post("encounter", "start") { req async throws -> GameState in
         logConnection(req, action: "encounter-start")
         let campaignName = await campaignStore.currentCampaignName()
+        let library = await campaignStore.library()
+        await userStore.autoRollUnsetInitiativeForReferee(
+            campaignName: campaignName,
+            standardDie: library.standardDie
+        )
         await userStore.resetTurnState(campaignName: campaignName)
         await campaignStore.setEncounterState(.active)
         return await userStore.state(

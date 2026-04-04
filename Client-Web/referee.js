@@ -23,6 +23,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const nameInput = document.getElementById('ref-name');
   const quantityInput = document.getElementById('ref-quantity');
   const initiativeInput = document.getElementById('ref-initiative');
+  const useAppInitiativeRollInput = document.getElementById('ref-use-app-initiative-roll');
+  const initiativeBonusInput = document.getElementById('ref-initiative-bonus');
+  const initiativeBonusWrap = document.getElementById('ref-initiative-bonus-wrap');
   const statsFields = document.getElementById('ref-stats-fields');
   const characterList = document.getElementById('referee-character-list');
   const healthHeading = document.getElementById('health-heading');
@@ -33,7 +36,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const editorEmpty = document.getElementById('ref-editor-empty');
   const editorForm = document.getElementById('ref-editor');
   const editorNameInput = document.getElementById('ref-edit-name');
-  const editorInitiativeInput = document.getElementById('ref-edit-initiative');
+  const editorInitiativeBonusInput = document.getElementById('ref-edit-initiative-bonus');
+  const editorInitiativeBonusWrap = document.getElementById('ref-edit-initiative-bonus-wrap');
   const editorStatsFields = document.getElementById('ref-edit-stats');
   const editorCurrentStats = document.getElementById('ref-edit-current-stats');
   const editorConditionFilter = document.getElementById('ref-condition-filter');
@@ -102,8 +106,21 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatInitiative(value) {
-    if (!Number.isFinite(value)) return 'None';
+    if (!Number.isFinite(value)) return 'X';
     return Number.isInteger(value) ? String(value) : String(value);
+  }
+
+  function updateAddInitiativeBonusAvailability() {
+    if (!initiativeBonusInput || !initiativeBonusWrap) return;
+    const enabled = !useAppInitiativeRollInput || useAppInitiativeRollInput.checked;
+    initiativeBonusInput.disabled = !enabled;
+    initiativeBonusWrap.classList.toggle('disabled', !enabled);
+  }
+
+  function updateEditorInitiativeBonusAvailability() {
+    if (!editorInitiativeBonusInput || !editorInitiativeBonusWrap) return;
+    editorInitiativeBonusInput.disabled = false;
+    editorInitiativeBonusWrap.classList.remove('disabled');
   }
 
   function buildStatsFields() {
@@ -119,35 +136,53 @@ window.addEventListener('DOMContentLoaded', () => {
       const maxId = `ref-max-stat-${normalizedKey}`;
       const currentId = `ref-current-stat-${normalizedKey}`;
       const isTempHp = key === 'TempHP';
-      if (!isTempHp) {
-        const label = document.createElement('label');
-        label.textContent = `Max ${key}`;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.id = maxId;
-        input.min = '0';
-        label.appendChild(input);
-        statsFields.appendChild(label);
-        statInputs.set(key, { maxInput: input, currentInput: null });
-      } else {
-        statInputs.set(key, { maxInput: null, currentInput: null });
+      const currentInput = document.createElement('input');
+      currentInput.type = 'number';
+      currentInput.id = currentId;
+      if (key === 'TempHP' || !allowNegativeHealth) {
+        currentInput.min = '0';
       }
 
-      if (addCurrentStats) {
-        const currentLabel = document.createElement('label');
-        currentLabel.textContent = `Current ${key}`;
-        const currentInput = document.createElement('input');
-        currentInput.type = 'number';
-        currentInput.id = currentId;
-        if (key === 'TempHP' || !allowNegativeHealth) {
-          currentInput.min = '0';
-        }
-        currentLabel.appendChild(currentInput);
-        addCurrentStats.appendChild(currentLabel);
-        const entry = statInputs.get(key) || {};
-        entry.currentInput = currentInput;
-        statInputs.set(key, entry);
+      let maxInput = null;
+      if (!isTempHp) {
+        maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.id = maxId;
+        maxInput.min = '0';
       }
+
+      if (statsFields) {
+        const row = document.createElement('div');
+        row.className = 'stat-editor-row';
+        if (isTempHp) row.classList.add('temp-hp-row');
+
+        const keyLabel = document.createElement('div');
+        keyLabel.className = 'stat-editor-key';
+        keyLabel.textContent = key;
+        row.appendChild(keyLabel);
+
+        const currentLabel = document.createElement('label');
+        currentLabel.className = 'stat-editor-input';
+        const currentText = document.createElement('span');
+        currentText.textContent = 'Current';
+        currentLabel.appendChild(currentText);
+        currentLabel.appendChild(currentInput);
+        row.appendChild(currentLabel);
+
+        if (maxInput) {
+          const maxLabel = document.createElement('label');
+          maxLabel.className = 'stat-editor-input';
+          const maxText = document.createElement('span');
+          maxText.textContent = 'Max';
+          maxLabel.appendChild(maxText);
+          maxLabel.appendChild(maxInput);
+          row.appendChild(maxLabel);
+        }
+
+        statsFields.appendChild(row);
+      }
+
+      statInputs.set(key, { maxInput, currentInput });
     });
   }
 
@@ -187,40 +222,59 @@ window.addEventListener('DOMContentLoaded', () => {
       const maxId = `ref-edit-max-stat-${normalizedKey}`;
       const currentId = `ref-edit-current-stat-${normalizedKey}`;
       const isTempHp = key === 'TempHP';
+      const currentInput = document.createElement('input');
+      currentInput.type = 'number';
+      currentInput.id = currentId;
+      if (key === 'TempHP' || !allowNegativeHealth) {
+        currentInput.min = '0';
+      }
+      currentInput.addEventListener('input', () => {
+        scheduleEditorSave();
+      });
 
-      if (editorStatsFields && !isTempHp) {
-        const label = document.createElement('label');
-        label.textContent = `Max ${key}`;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.id = maxId;
-        input.min = '0';
-        input.addEventListener('input', () => {
+      let maxInput = null;
+      if (!isTempHp) {
+        maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.id = maxId;
+        maxInput.min = '0';
+        maxInput.addEventListener('input', () => {
           scheduleEditorSave();
         });
-        label.appendChild(input);
-        editorStatsFields.appendChild(label);
-        editorStatInputs.set(key, { maxInput: input, currentInput: null });
       }
 
-      if (editorCurrentStats) {
-        const label = document.createElement('label');
-        label.textContent = `Current ${key}`;
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.id = currentId;
-        if (key === 'TempHP' || !allowNegativeHealth) {
-          input.min = '0';
+      if (editorStatsFields) {
+        const row = document.createElement('div');
+        row.className = 'stat-editor-row';
+        if (isTempHp) row.classList.add('temp-hp-row');
+
+        const keyLabel = document.createElement('div');
+        keyLabel.className = 'stat-editor-key';
+        keyLabel.textContent = key;
+        row.appendChild(keyLabel);
+
+        const currentLabel = document.createElement('label');
+        currentLabel.className = 'stat-editor-input';
+        const currentText = document.createElement('span');
+        currentText.textContent = 'Current';
+        currentLabel.appendChild(currentText);
+        currentLabel.appendChild(currentInput);
+        row.appendChild(currentLabel);
+
+        if (maxInput) {
+          const maxLabel = document.createElement('label');
+          maxLabel.className = 'stat-editor-input';
+          const maxText = document.createElement('span');
+          maxText.textContent = 'Max';
+          maxLabel.appendChild(maxText);
+          maxLabel.appendChild(maxInput);
+          row.appendChild(maxLabel);
         }
-        input.addEventListener('input', () => {
-          scheduleEditorSave();
-        });
-        label.appendChild(input);
-        editorCurrentStats.appendChild(label);
-        const entry = editorStatInputs.get(key) || {};
-        entry.currentInput = input;
-        editorStatInputs.set(key, entry);
+
+        editorStatsFields.appendChild(row);
       }
+
+      editorStatInputs.set(key, { maxInput, currentInput });
     });
   }
 
@@ -273,7 +327,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       supportsTempHp = Boolean(json?.supportsTempHp);
       if (supportsTempHp && !statKeys.includes('TempHP')) {
-        statKeys = ['TempHP', ...statKeys];
+        statKeys = [...statKeys, 'TempHP'];
       }
       allowNegativeHealth = Boolean(json?.allowNegativeHealth);
       buildStatsFields();
@@ -349,6 +403,18 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
     updateTurnControls();
+  }
+
+  if (useAppInitiativeRollInput) {
+    useAppInitiativeRollInput.addEventListener('change', () => {
+      updateAddInitiativeBonusAvailability();
+    });
+  }
+
+  if (editorInitiativeBonusInput) {
+    editorInitiativeBonusInput.addEventListener('input', () => {
+      scheduleEditorSave();
+    });
   }
 
   async function loadState() {
@@ -741,7 +807,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (editorEmpty) editorEmpty.classList.add('hidden');
     if (editorForm) editorForm.classList.remove('hidden');
     if (editorNameInput) editorNameInput.value = player.name || '';
-    if (editorInitiativeInput) editorInitiativeInput.value = Number.isFinite(player.initiative) ? player.initiative : '';
+    if (editorInitiativeBonusInput) {
+      editorInitiativeBonusInput.value = Number.isFinite(player.initiativeBonus) ? player.initiativeBonus : '';
+    }
+    updateEditorInitiativeBonusAvailability();
     const stats = Array.isArray(player.stats) ? player.stats : [];
     const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
     editorStatInputs.forEach((entry, key) => {
@@ -904,14 +973,14 @@ window.addEventListener('DOMContentLoaded', () => {
   async function saveEditorCharacter() {
     if (!selectedCharacterId) return;
     const name = editorNameInput ? editorNameInput.value.trim() : '';
-    const initiativeStr = editorInitiativeInput ? editorInitiativeInput.value.trim() : '';
     if (!name) {
       if (statusDiv) statusDiv.textContent = 'Character is required.';
       return;
     }
-    const initiative = initiativeStr === '' ? null : Number(initiativeStr);
-    if (initiative !== null && !Number.isFinite(initiative)) {
-      if (statusDiv) statusDiv.textContent = 'Initiative must be a valid number.';
+    const initiativeBonusStr = editorInitiativeBonusInput ? editorInitiativeBonusInput.value.trim() : '';
+    const initiativeBonus = initiativeBonusStr === '' ? 0 : Number(initiativeBonusStr);
+    if (!Number.isFinite(initiativeBonus)) {
+      if (statusDiv) statusDiv.textContent = 'Initiative bonus must be a valid number.';
       return;
     }
 
@@ -953,11 +1022,17 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+    if (current) {
+      current.useAppInitiativeRoll = true;
+      current.initiativeBonus = initiativeBonus;
+    }
     const payload = {
       id: selectedCharacterId,
       ownerName: current?.ownerName || 'Referee',
       name,
-      initiative,
+      initiative: current?.initiative ?? null,
+      useAppInitiativeRoll: true,
+      initiativeBonus,
       stats: statsPayload,
       revealStats: current?.revealStats ?? false,
       isHidden: current?.isHidden,
@@ -996,7 +1071,6 @@ window.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();
     const name = nameInput.value.trim();
     const quantityStr = quantityInput ? quantityInput.value.trim() : '1';
-    const initiativeStr = initiativeInput.value.trim();
     if (!name) {
       if (statusDiv) statusDiv.textContent = 'Character is required.';
       return;
@@ -1006,9 +1080,10 @@ window.addEventListener('DOMContentLoaded', () => {
       if (statusDiv) statusDiv.textContent = 'Quantity must be at least 1.';
       return;
     }
-    const initiative = initiativeStr === '' ? null : Number(initiativeStr);
-    if (initiative !== null && !Number.isFinite(initiative)) {
-      if (statusDiv) statusDiv.textContent = 'Initiative must be a valid number.';
+    const initiativeBonusStr = initiativeBonusInput ? initiativeBonusInput.value.trim() : '';
+    const initiativeBonus = initiativeBonusStr === '' ? 0 : Number(initiativeBonusStr);
+    if (!Number.isFinite(initiativeBonus)) {
+      if (statusDiv) statusDiv.textContent = 'Initiative bonus must be a valid number.';
       return;
     }
 
@@ -1056,7 +1131,9 @@ window.addEventListener('DOMContentLoaded', () => {
         const payload = {
           ownerName: 'Referee',
           name: `${name}${suffix}`,
-          initiative,
+          initiative: null,
+          useAppInitiativeRoll: true,
+          initiativeBonus,
           stats: statsPayload,
           revealStats: false,
           isHidden: !shouldReveal,
@@ -1102,7 +1179,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function clearAddForm() {
     if (nameInput) nameInput.value = '';
     if (quantityInput) quantityInput.value = '1';
-    if (initiativeInput) initiativeInput.value = '';
+    if (initiativeBonusInput) initiativeBonusInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.maxInput) entry.maxInput.value = '';
       if (entry.currentInput) entry.currentInput.value = '';
@@ -1117,6 +1194,8 @@ window.addEventListener('DOMContentLoaded', () => {
         ownerName: player.ownerName,
         name: player.name,
         initiative: player.initiative,
+        useAppInitiativeRoll: player.useAppInitiativeRoll,
+        initiativeBonus: player.initiativeBonus,
         stats: Array.isArray(player.stats) ? player.stats : [],
         revealStats: player.revealStats,
         isHidden: player.isHidden,
@@ -1201,6 +1280,8 @@ window.addEventListener('DOMContentLoaded', () => {
   if (form) {
     form.addEventListener('submit', handleAddCharacter);
   }
+  updateAddInitiativeBonusAvailability();
+  updateEditorInitiativeBonusAvailability();
   if (editorForm) {
     editorForm.addEventListener('submit', (event) => {
       event.preventDefault();
@@ -1232,11 +1313,6 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (editorNameInput) {
     editorNameInput.addEventListener('input', () => {
-      scheduleEditorSave();
-    });
-  }
-  if (editorInitiativeInput) {
-    editorInitiativeInput.addEventListener('input', () => {
       scheduleEditorSave();
     });
   }

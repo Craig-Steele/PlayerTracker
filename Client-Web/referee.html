@@ -61,37 +61,52 @@
       <div class="character-drawer referee-drawer">
         <div class="character-drawer-header">
           <div class="character-drawer-title">All Characters</div>
-          <button type="button" id="ref-add-button">Add</button>
         </div>
         <label class="ref-filter">
           <input type="checkbox" id="ref-hide-pcs" checked />
           Show NPCs only
         </label>
-        <form id="referee-form" class="details-panel-collapsed" aria-hidden="true">
-          <label>
-            Character
-            <input type="text" id="ref-name" required />
-          </label>
-          <label>
-            Quantity
-            <input type="number" id="ref-quantity" min="1" value="1" required />
-          </label>
-          <label>
-            Initiative
-            <input type="number" id="ref-initiative" step="any" />
-          </label>
-          <div id="ref-stats-fields"></div>
-          <div id="ref-add-current-stats" class="add-current-stats"></div>
-          <label class="reveal-health-toggle">
-            <input type="checkbox" id="ref-visible" />
-            Start revealed
-          </label>
+        <div id="referee-character-list" class="character-list"></div>
+        <div class="character-list-actions referee-list-actions">
+          <button type="button" id="ref-add-button" class="icon-button" aria-label="Add character">+</button>
+        </div>
+        <form id="referee-form" class="details-panel-collapsed property-sheet" aria-hidden="true">
+          <div class="form-section-block property-group">
+            <label class="property-row">
+              <span class="property-label">Character name</span>
+              <span class="property-control">
+                <input type="text" id="ref-name" required />
+              </span>
+            </label>
+            <label class="property-row">
+              <span class="property-label">Quantity</span>
+              <span class="property-control">
+                <input type="number" id="ref-quantity" min="1" value="1" required />
+              </span>
+            </label>
+            <label class="property-toggle-row">
+              <span class="property-label">Visibility</span>
+              <span class="property-toggle-control">
+                <input type="checkbox" id="ref-visible" />
+                <span>Start revealed</span>
+              </span>
+            </label>
+          </div>
+          <div class="form-section-block property-group">
+            <label id="ref-initiative-bonus-wrap" class="property-row">
+              <span class="property-label">Initiative Bonus</span>
+              <span class="property-control">
+                <input type="text" id="ref-initiative-bonus" value="" inputmode="numeric" pattern="[+-]?[0-9]*" />
+              </span>
+            </label>
+            <div id="ref-stats-fields"></div>
+            <div id="ref-add-current-stats" class="add-current-stats"></div>
+          </div>
           <div class="add-form-actions">
             <button type="submit">Save</button>
             <button type="button" id="ref-add-cancel" class="secondary">Cancel</button>
           </div>
         </form>
-        <div id="referee-character-list" class="character-list"></div>
       </div>
 
       <div class="referee-block">
@@ -114,17 +129,25 @@
               Hide
             </button>
           </div>
-          <div id="ref-details-panel" class="details-panel-collapsed" aria-hidden="true">
-            <label>
-              Character
-              <input type="text" id="ref-edit-name" required />
-            </label>
-            <label>
-              Initiative
-              <input type="number" id="ref-edit-initiative" step="any" />
-            </label>
-            <div id="ref-edit-stats"></div>
-            <div id="ref-edit-current-stats" class="ref-current-stats"></div>
+          <div id="ref-details-panel" class="details-panel-collapsed property-sheet" aria-hidden="true">
+            <div class="form-section-block property-group">
+              <label class="property-row">
+                <span class="property-label">Character name</span>
+                <span class="property-control">
+                  <input type="text" id="ref-edit-name" required />
+                </span>
+              </label>
+            </div>
+            <div class="form-section-block property-group">
+              <label id="ref-edit-initiative-bonus-wrap" class="property-row">
+                <span class="property-label">Initiative Bonus</span>
+                <span class="property-control">
+                  <input type="text" id="ref-edit-initiative-bonus" value="" inputmode="numeric" pattern="[+-]?[0-9]*" />
+                </span>
+              </label>
+              <div id="ref-edit-stats"></div>
+              <div id="ref-edit-current-stats" class="ref-current-stats"></div>
+            </div>
           </div>
           <div id="ref-conditions-panel" class="conditions-panel-collapsed" aria-hidden="true">
             <input type="search" id="ref-condition-filter" placeholder="Filter list…" />
