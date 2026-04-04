@@ -154,7 +154,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const qrContainer = document.getElementById('qr-container'); // if you have it
 
   const ownerInput = document.getElementById('owner-name');
-  const playerNameDisplay = document.getElementById('player-name-display');
   const playerNameEdit = document.getElementById('player-name-edit');
   const playerNameInput = document.getElementById('player-name-input');
   const playerNameEditBtn = document.getElementById('edit-player-name');
@@ -168,7 +167,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const currentStatsInputs = document.getElementById('current-stats-inputs');
   const revealStatsInput = document.getElementById('reveal-stats');
   const autoSkipTurnInput = document.getElementById('auto-skip-turn');
-  const roundInfo = document.getElementById('round-info');
   const currentActor = document.getElementById('current-actor');
   const healthHeading = document.getElementById('health-heading');
 
@@ -178,10 +176,17 @@ window.addEventListener('DOMContentLoaded', () => {
   const conditionFilterInput = document.getElementById('condition-filter');
   const conditionsCharacter = document.getElementById('conditions-character');
   const campaignNameLabel = document.getElementById('campaign-name');
+  const playerCampaignName = document.getElementById('player-campaign-name');
+  const playerCardPlayerName = document.getElementById('player-card-player-name');
+  const playerEncounterState = document.getElementById('player-encounter-state');
+  const playerRulesetLink = document.getElementById('player-ruleset-link');
+  const playerRulesetLicense = document.getElementById('player-ruleset-license');
+  const playerRulesetLicenseWrap = document.getElementById('player-ruleset-license-wrap');
   const rulesetLink = document.getElementById('ruleset-link');
   const rulesetLicense = document.getElementById('ruleset-license');
   const rulesetLicenseWrap = document.getElementById('ruleset-license-wrap');
   const rulesetIcon = document.getElementById('ruleset-icon');
+  const playerRulesetIcon = document.getElementById('player-ruleset-icon');
   const characterList = document.getElementById('character-list');
   const addCharacterBtn = document.getElementById('character-add');
   const removeCharacterBtn = document.getElementById('character-remove');
@@ -208,7 +213,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsCancelBtn = document.getElementById('details-cancel');
   const playerListSection = document.querySelector('.player-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
-  const characterDrawerTitle = document.getElementById('character-drawer-title');
   const characterListActions = document.querySelector('.character-list-actions');
 
   let selectedConditions = new Set();
@@ -237,31 +241,42 @@ window.addEventListener('DOMContentLoaded', () => {
   let isCreatingCharacter = false;
   let conditionsPanelOpen = false;
 
-  function updateRulesetLink(labelText, baseUrl) {
-    if (!rulesetLink) return;
-    rulesetLink.textContent = labelText || '';
+  function setRulesetLinkTarget(linkEl, labelText, baseUrl) {
+    if (!linkEl) return;
+    linkEl.textContent = labelText || '';
     if (baseUrl) {
-      rulesetLink.href = baseUrl;
-      rulesetLink.removeAttribute('aria-disabled');
+      linkEl.href = baseUrl;
+      linkEl.removeAttribute('aria-disabled');
     } else {
-      rulesetLink.removeAttribute('href');
-      rulesetLink.setAttribute('aria-disabled', 'true');
+      linkEl.removeAttribute('href');
+      linkEl.setAttribute('aria-disabled', 'true');
+    }
+  }
+
+  function updateRulesetLink(labelText, baseUrl) {
+    setRulesetLinkTarget(rulesetLink, labelText, baseUrl);
+    setRulesetLinkTarget(playerRulesetLink, labelText, baseUrl);
+  }
+
+  function setRulesetLicenseTarget(linkEl, wrapEl, licenseUrl) {
+    if (!linkEl || !wrapEl) return;
+    if (licenseUrl) {
+      linkEl.href = licenseUrl;
+      wrapEl.style.display = 'inline';
+    } else {
+      linkEl.removeAttribute('href');
+      wrapEl.style.display = 'none';
     }
   }
 
   function updateRulesetLicense(licenseUrl) {
-    if (!rulesetLicense || !rulesetLicenseWrap) return;
-    if (licenseUrl) {
-      rulesetLicense.href = licenseUrl;
-      rulesetLicenseWrap.style.display = 'inline';
-    } else {
-      rulesetLicense.removeAttribute('href');
-      rulesetLicenseWrap.style.display = 'none';
-    }
+    setRulesetLicenseTarget(rulesetLicense, rulesetLicenseWrap, licenseUrl);
+    setRulesetLicenseTarget(playerRulesetLicense, playerRulesetLicenseWrap, licenseUrl);
   }
 
   function setRulesetIcon(iconUrl, labelText) {
     updateRulesetIcon(rulesetIcon, iconUrl, labelText);
+    updateRulesetIcon(playerRulesetIcon, iconUrl, labelText);
   }
 
   const displayOnly = isDisplayPath();
@@ -378,10 +393,8 @@ window.addEventListener('DOMContentLoaded', () => {
     playerNameInput.value = ownerName ? ownerName : 'Player';
     playerNameInput.classList.toggle('player-name-placeholder', !ownerName);
     document.body.classList.toggle('no-player-name', !ownerName);
-    if (characterDrawerTitle) {
-      characterDrawerTitle.textContent = ownerName
-        ? `${ownerName}'s Characters`
-        : 'My Characters';
+    if (playerCardPlayerName) {
+      playerCardPlayerName.textContent = `Player: ${ownerName || 'Player'}`;
     }
     updateConditionsAvailability();
     updateWindowTitle();
@@ -401,11 +414,25 @@ window.addEventListener('DOMContentLoaded', () => {
     document.title = `${campaignName} - ${ownerName || 'Player'}`;
   }
 
+  function updateEncounterStateDisplay(round = 1, currentTurnName = null) {
+    if (!playerEncounterState) return;
+    if (encounterState === 'active') {
+      playerEncounterState.textContent = currentTurnName
+        ? `Round ${round}: ${currentTurnName}`
+        : `Round ${round}`;
+      return;
+    }
+    if (encounterState === 'suspended') {
+      playerEncounterState.textContent = 'Encounter: Suspended';
+      return;
+    }
+    playerEncounterState.textContent = 'Encounter: New';
+  }
+
   // Admin UI: show/hide toolbar & IP banner/QR
   if (displayOnly) {
     if (adminToolbar) adminToolbar.style.display = 'none';
     if (detailPanel) detailPanel.style.display = 'none';
-    if (playerNameDisplay) playerNameDisplay.style.display = 'none';
     if (playerNameEdit) playerNameEdit.style.display = 'none';
     document.body.classList.add('display-only');
     showServerIP(ipDisplay);
@@ -1054,6 +1081,7 @@ window.addEventListener('DOMContentLoaded', () => {
       break;
     }
     localStorage.setItem('playerId', ownerId);
+    return ownerId;
   }
 
   function renderCharacterList() {
@@ -1152,17 +1180,37 @@ window.addEventListener('DOMContentLoaded', () => {
 
       item.appendChild(row);
 
-      if (needsInitiativeAction(character)) {
+      const showTurnCompleteAction =
+        !displayOnly &&
+        encounterState === 'active' &&
+        Boolean(currentTurnId) &&
+        character.id === currentTurnId &&
+        myCharacters.some((entry) => entry.id === currentTurnId);
+
+      if (needsInitiativeAction(character) || showTurnCompleteAction) {
         const initiativeActions = document.createElement('div');
         initiativeActions.className = 'character-actions';
-        const rollButton = document.createElement('button');
-        rollButton.type = 'button';
-        rollButton.textContent = 'Roll for Initiative!';
-        rollButton.addEventListener('click', (event) => {
-          event.stopPropagation();
-          handleInitiativeAction(character);
-        });
-        initiativeActions.appendChild(rollButton);
+        if (needsInitiativeAction(character)) {
+          const rollButton = document.createElement('button');
+          rollButton.type = 'button';
+          rollButton.textContent = 'Roll for Initiative!';
+          rollButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            handleInitiativeAction(character);
+          });
+          initiativeActions.appendChild(rollButton);
+        }
+        if (showTurnCompleteAction) {
+          const turnButton = document.createElement('button');
+          turnButton.type = 'button';
+          turnButton.textContent = 'Turn Complete';
+          turnButton.className = 'character-turn-complete';
+          turnButton.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            await handleTurnComplete();
+          });
+          initiativeActions.appendChild(turnButton);
+        }
         item.appendChild(initiativeActions);
       }
 
@@ -1241,33 +1289,8 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateTurnCompleteVisibility() {
-    const myTurnMatch =
-      currentTurnId && myCharacters.some((character) => character.id === currentTurnId);
-
     if (!turnCompleteBtn) return;
-    if (displayOnly) {
-      turnCompleteBtn.style.display = 'none';
-      return;
-    }
-    if (encounterState === 'new') {
-      turnCompleteBtn.textContent = 'New Encounter';
-      turnCompleteBtn.style.display = '';
-      turnCompleteBtn.disabled = true;
-      turnCompleteBtn.setAttribute('aria-disabled', 'true');
-      return;
-    }
-    if (encounterState === 'suspended') {
-      turnCompleteBtn.textContent = 'Encounter Suspended';
-      turnCompleteBtn.style.display = '';
-      turnCompleteBtn.disabled = true;
-      turnCompleteBtn.setAttribute('aria-disabled', 'true');
-      return;
-    }
-    turnCompleteBtn.textContent = 'Turn Complete';
-    const enabled = Boolean(myTurnMatch);
-    turnCompleteBtn.disabled = !enabled;
-    turnCompleteBtn.setAttribute('aria-disabled', (!enabled).toString());
-    turnCompleteBtn.style.display = enabled ? '' : 'none';
+    turnCompleteBtn.style.display = 'none';
   }
 
   function clampCurrentHp(value, maxValue) {
@@ -1552,6 +1575,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (campaignNameLabel) {
         campaignNameLabel.textContent = currentCampaignName || 'Campaign';
       }
+      if (playerCampaignName) {
+        playerCampaignName.textContent = currentCampaignName || 'Campaign';
+      }
       updateRulesetLink(campaign.rulesetLabel || '', null);
       updateWindowTitle();
     } catch (err) {
@@ -1559,6 +1585,9 @@ window.addEventListener('DOMContentLoaded', () => {
       currentCampaignName = localStorage.getItem('campaignName') || '';
       if (campaignNameLabel) {
         campaignNameLabel.textContent = currentCampaignName || 'Campaign';
+      }
+      if (playerCampaignName) {
+        playerCampaignName.textContent = currentCampaignName || 'Campaign';
       }
       updateWindowTitle();
     }
@@ -1742,9 +1771,11 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function showPlayerNameEdit(show) {
-    if (!playerNameDisplay || !playerNameEdit) return;
-    playerNameDisplay.classList.toggle('editing', show);
+    if (!playerNameEdit) return;
     playerNameEdit.classList.toggle('visible', show);
+    if (playerNameEditBtn) {
+      playerNameEditBtn.classList.toggle('hidden', show);
+    }
     if (playerNameInput) {
       playerNameInput.readOnly = !show;
     }
@@ -1916,6 +1947,12 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function initApp() {
+    await ensureOwnerId();
+    if (ownerInput && !ownerInput.value.trim()) {
+      ownerInput.value = ownerId;
+      localStorage.setItem('ownerName', ownerId);
+    }
+    updatePlayerNameDisplay();
     await loadCampaign();
     await loadState();
     setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
@@ -1963,8 +2000,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         lastStateJson = currentJson;
 
-        // Update round info text
-        roundInfo.textContent = `Round ${round}`;
+        updateEncounterStateDisplay(round, currentTurnName);
         if (currentActor) {
           if (hideTurnTable && currentTurnId) {
             const current = players.find((player) => player.id === currentTurnId);

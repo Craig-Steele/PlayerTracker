@@ -29,13 +29,36 @@
     </div>
   </div>
 
+  <div class="player-page-header">
+    <div class="player-campaign-card">
+      <img id="player-ruleset-icon" class="ruleset-icon" alt="" />
+      <div class="player-campaign-text">
+        <div id="player-campaign-name" class="player-campaign-name">Campaign</div>
+        <div class="ruleset-meta player-ruleset-meta">
+          <a id="player-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
+          <span id="player-ruleset-license-wrap" class="ruleset-license-wrap">
+            (<a id="player-ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
+          </span>
+        </div>
+        <div class="player-campaign-player-row">
+          <div id="player-card-player-name" class="player-campaign-meta">Player: —</div>
+          <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✎</button>
+        </div>
+        <div id="player-name-edit" class="player-name-edit">
+          <input type="text" id="player-name-input" aria-label="Player name" />
+          <div class="player-name-actions">
+            <button type="button" id="player-name-save" class="icon-button icon-button-success" aria-label="Save player name">✓</button>
+            <button type="button" id="player-name-cancel" class="icon-button icon-button-danger" aria-label="Cancel player name edit">✕</button>
+          </div>
+        </div>
+        <div id="player-encounter-state" class="player-campaign-meta">Encounter: New</div>
+      </div>
+    </div>
+  </div>
+
   <div class="container">
     <!-- LEFT: Player list -->
     <section class="player-list">
-      <div class="round-row">
-        <div id="round-info" class="subtitle"></div>
-        <button id="turn-complete">Turn Complete</button>
-      </div>
       <div id="current-actor" class="subtitle current-actor"></div>
       <table>
         <thead>
@@ -62,21 +85,6 @@
       <form id="player-form">
         <input type="text" id="owner-name" class="visually-hidden" aria-hidden="true" />
         <div class="character-drawer">
-          <div class="character-drawer-header">
-            <div class="character-drawer-title" id="character-drawer-title">My Characters</div>
-            <div class="character-drawer-player">
-              <div id="player-name-display" class="player-name-display">
-                <input type="text" id="player-name-input" aria-label="Player name" readonly />
-                <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✎</button>
-              </div>
-              <div id="player-name-edit" class="player-name-edit">
-                <div class="player-name-actions">
-                  <button type="button" id="player-name-save" class="icon-button icon-button-success" aria-label="Save player name">✓</button>
-                  <button type="button" id="player-name-cancel" class="icon-button icon-button-danger" aria-label="Cancel player name edit">✕</button>
-                </div>
-              </div>
-            </div>
-          </div>
           <div id="character-list" class="character-list"></div>
           <div class="character-list-actions">
             <button type="button" id="character-add" class="icon-button" aria-label="Add character">+</button>
