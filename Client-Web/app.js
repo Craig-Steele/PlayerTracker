@@ -200,9 +200,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsToggle = document.getElementById('details-toggle');
   const detailsPanel = document.getElementById('details-panel');
   const detailPanel = document.querySelector('.detail-panel');
-  const conditionsSection = document.querySelector('.conditions-section');
   const conditionsToggle = document.getElementById('conditions-toggle');
   const conditionsPanel = document.getElementById('conditions-panel');
+  const conditionsSaveBtn = document.getElementById('conditions-save');
+  const conditionsCancelBtn = document.getElementById('conditions-cancel');
+  const detailsSaveBtn = document.getElementById('details-save');
+  const detailsCancelBtn = document.getElementById('details-cancel');
   const playerListSection = document.querySelector('.player-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
   const characterDrawerTitle = document.getElementById('character-drawer-title');
@@ -230,7 +233,6 @@ window.addEventListener('DOMContentLoaded', () => {
   let ownerId = localStorage.getItem('playerId') || '';
   let statInputs = new Map();
   let addStatInputs = new Map();
-  let autoSaveTimer = null;
   const perCharacterSaveTimers = new Map();
   let isCreatingCharacter = false;
   let conditionsPanelOpen = false;
@@ -289,19 +291,67 @@ window.addEventListener('DOMContentLoaded', () => {
       detailsToggle.setAttribute('aria-expanded', 'false');
       detailsPanel.setAttribute('aria-hidden', 'true');
     }
+    conditionsPanel.classList.toggle('hidden', !open);
     conditionsPanel.classList.toggle('conditions-panel-open', open);
-    conditionsPanel.classList.toggle('conditions-panel-collapsed', !open);
     conditionsToggle.setAttribute('aria-expanded', open.toString());
     conditionsPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function revertSelectedConditions() {
+    if (!selectedCharacterId) return;
+    const current = myCharacters.find((character) => character.id === selectedCharacterId);
+    applySelectedConditions(current?.conditions || []);
+    statusDiv.textContent = '';
+  }
+
+  function revertSelectedCharacterDetails() {
+    if (!selectedCharacterId) return;
+    const current = myCharacters.find((character) => character.id === selectedCharacterId);
+    if (!current) {
+      clearCharacterSelection();
+      return;
+    }
+    nameInput.value = current.name || '';
+    if (revealStatsInput) {
+      revealStatsInput.checked = Boolean(current.revealStats);
+    }
+    if (autoSkipTurnInput) {
+      autoSkipTurnInput.checked = Boolean(current.autoSkipTurn);
+    }
+    if (useAppInitiativeRollInput) {
+      useAppInitiativeRollInput.checked = current.useAppInitiativeRoll !== false;
+    }
+    if (initiativeBonusInput) {
+      initiativeBonusInput.value = Number.isFinite(current.initiativeBonus) ? current.initiativeBonus : '0';
+    }
+    updateInitiativeBonusAvailability();
+    formDirty = false;
+    updateDraftFromForm();
+    statusDiv.textContent = '';
+  }
+
+  function confirmDiscardDetailsChanges() {
+    if (!formDirty) return true;
+    const confirmed = confirm('Discard unsaved detail changes?');
+    if (confirmed) {
+      revertSelectedCharacterDetails();
+    }
+    return confirmed;
+  }
+
+  function confirmDiscardConditionChanges() {
+    if (!conditionsDirty) return true;
+    const confirmed = confirm('Discard unsaved condition changes?');
+    if (confirmed) {
+      revertSelectedConditions();
+    }
+    return confirmed;
   }
 
   function updateConditionsAvailability() {
     const hasCharacter = Boolean(selectedCharacterId);
     if (detailsToggles) {
       detailsToggles.classList.toggle('conditions-hidden', !hasCharacter);
-    }
-    if (conditionsSection) {
-      conditionsSection.classList.toggle('conditions-hidden', !hasCharacter);
     }
     if (!hasCharacter) {
       conditionsPanelOpen = false;
@@ -313,7 +363,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       if (conditionsPanel && conditionsToggle) {
         conditionsPanel.classList.remove('conditions-panel-open');
-        conditionsPanel.classList.add('conditions-panel-collapsed');
+        conditionsPanel.classList.add('hidden');
         conditionsToggle.setAttribute('aria-expanded', 'false');
         conditionsPanel.setAttribute('aria-hidden', 'true');
       }
@@ -383,7 +433,6 @@ window.addEventListener('DOMContentLoaded', () => {
     nameInput.addEventListener('input', () => {
       formDirty = true;
       updateDraftFromForm();
-      scheduleAutoSave('name');
     });
   }
 
@@ -406,7 +455,6 @@ window.addEventListener('DOMContentLoaded', () => {
       formDirty = true;
       updateInitiativeBonusAvailability();
       updateDraftFromForm();
-      scheduleAutoSave('use-app-initiative-roll');
     });
   }
 
@@ -414,7 +462,6 @@ window.addEventListener('DOMContentLoaded', () => {
     initiativeBonusInput.addEventListener('input', () => {
       formDirty = true;
       updateDraftFromForm();
-      scheduleAutoSave('initiative-bonus');
     });
   }
 
@@ -428,14 +475,12 @@ window.addEventListener('DOMContentLoaded', () => {
     revealStatsInput.addEventListener('change', () => {
       formDirty = true;
       updateDraftFromForm();
-      scheduleAutoSave('reveal-stats');
     });
   }
   if (autoSkipTurnInput) {
     autoSkipTurnInput.addEventListener('change', () => {
       formDirty = true;
       updateDraftFromForm();
-      scheduleAutoSave('auto-skip-turn');
     });
   }
 
@@ -452,10 +497,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (detailsToggle && detailsPanel) {
     detailsToggle.addEventListener('click', () => {
-      const isOpen = detailsPanel.classList.contains('details-panel-open');
-      if (!isOpen && conditionsToggle && conditionsPanel) {
+      const isOpen =
+        detailsPanel.classList.contains('details-panel-open') &&
+        !detailsPanel.classList.contains('hidden');
+      if (isOpen) {
+        if (!confirmDiscardDetailsChanges()) return;
+      } else if (conditionsToggle && conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open')) {
+        if (!confirmDiscardConditionChanges()) return;
         setConditionsPanelOpen(false);
       }
+      detailsPanel.classList.toggle('hidden', isOpen);
       detailsPanel.classList.toggle('details-panel-open', !isOpen);
       detailsPanel.classList.toggle('details-panel-collapsed', isOpen);
       detailsToggle.setAttribute('aria-expanded', (!isOpen).toString());
@@ -465,8 +516,28 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (conditionsToggle && conditionsPanel) {
     conditionsToggle.addEventListener('click', () => {
-      const isOpen = conditionsPanel.classList.contains('conditions-panel-open');
+      const isOpen =
+        conditionsPanel.classList.contains('conditions-panel-open') &&
+        !conditionsPanel.classList.contains('hidden');
+      if (isOpen) {
+        if (!confirmDiscardConditionChanges()) return;
+      } else if (detailsToggle && detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
+        if (!confirmDiscardDetailsChanges()) return;
+        detailsPanel.classList.remove('details-panel-open');
+        detailsPanel.classList.add('details-panel-collapsed');
+        detailsPanel.classList.add('hidden');
+        detailsToggle.setAttribute('aria-expanded', 'false');
+        detailsPanel.setAttribute('aria-hidden', 'true');
+      }
       setConditionsPanelOpen(!isOpen);
+    });
+  }
+
+  if (conditionsPanel) {
+    conditionsPanel.addEventListener('click', (event) => {
+      if (event.target !== conditionsPanel) return;
+      if (!confirmDiscardConditionChanges()) return;
+      setConditionsPanelOpen(false);
     });
   }
 
@@ -545,7 +616,12 @@ window.addEventListener('DOMContentLoaded', () => {
         entry.maxInput.addEventListener('input', () => {
           formDirty = true;
           updateDraftFromForm();
-          scheduleAutoSave(`max-${key}`);
+        });
+      }
+      if (entry.currentInput) {
+        entry.currentInput.addEventListener('input', () => {
+          formDirty = true;
+          updateDraftFromForm();
         });
       }
     });
@@ -718,14 +794,6 @@ window.addEventListener('DOMContentLoaded', () => {
       initiativeBonusInput.value = draft.initiativeBonus;
     }
     updateInitiativeBonusAvailability();
-  }
-
-  function scheduleAutoSave(source) {
-    if (displayOnly || isCreatingCharacter) return;
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-      saveCharacter({ showStatus: false, source });
-    }, AUTO_SAVE_DELAY_MS);
   }
 
   function applyDraftsToCharacters(ownerName, characters) {
@@ -1127,7 +1195,12 @@ window.addEventListener('DOMContentLoaded', () => {
         initiative: null
       }));
       renderCharacterList();
-      if (selectedCharacterId && myCharacters.some((character) => character.id === selectedCharacterId)) {
+      if (
+        !formDirty &&
+        !conditionsDirty &&
+        selectedCharacterId &&
+        myCharacters.some((character) => character.id === selectedCharacterId)
+      ) {
         selectCharacter(selectedCharacterId);
       }
       return;
@@ -1156,7 +1229,12 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     if (updated) {
       renderCharacterList();
-      if (selectedCharacterId && myCharacters.some((character) => character.id === selectedCharacterId)) {
+      if (
+        !formDirty &&
+        !conditionsDirty &&
+        selectedCharacterId &&
+        myCharacters.some((character) => character.id === selectedCharacterId)
+      ) {
         selectCharacter(selectedCharacterId);
       }
     }
@@ -1333,6 +1411,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function revertSelectedCharacterForm() {
+    revertSelectedCharacterDetails();
+  }
+
   function clearAddForm() {
     if (addNameInput) addNameInput.value = '';
     if (addUseAppInitiativeRollInput) addUseAppInitiativeRollInput.checked = true;
@@ -1397,7 +1479,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function showAddForm() {
     if (!addForm) return;
-    addForm.classList.remove('details-panel-collapsed');
+    addForm.classList.remove('hidden');
     addForm.classList.add('details-panel-open');
     addForm.setAttribute('aria-hidden', 'false');
     isCreatingCharacter = true;
@@ -1413,6 +1495,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!addForm) return;
     addForm.classList.add('details-panel-collapsed');
     addForm.classList.remove('details-panel-open');
+    addForm.classList.add('hidden');
     addForm.setAttribute('aria-hidden', 'true');
     isCreatingCharacter = false;
     clearAddForm();
@@ -1567,42 +1650,38 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     filtered.forEach((condition) => {
-      const checkboxId = `cond-${condition.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-      const wrapper = document.createElement('label');
-      wrapper.setAttribute('for', checkboxId);
-      wrapper.classList.add('condition-cell');
-
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.id = checkboxId;
-      checkbox.value = condition.name;
-      checkbox.checked = selectedConditions.has(condition.name);
-      if (checkbox.checked) {
+      const wrapper = document.createElement('button');
+      wrapper.type = 'button';
+      wrapper.classList.add('condition-row');
+      wrapper.setAttribute('aria-pressed', selectedConditions.has(condition.name) ? 'true' : 'false');
+      if (selectedConditions.has(condition.name)) {
         wrapper.classList.add('selected');
       }
 
-      checkbox.addEventListener('change', (event) => {
-        if (event.target.checked) {
-          selectedConditions.add(condition.name);
-          wrapper.classList.add('selected');
-        } else {
+      wrapper.addEventListener('click', () => {
+        if (selectedConditions.has(condition.name)) {
           selectedConditions.delete(condition.name);
           wrapper.classList.remove('selected');
+          wrapper.setAttribute('aria-pressed', 'false');
+        } else {
+          selectedConditions.add(condition.name);
+          wrapper.classList.add('selected');
+          wrapper.setAttribute('aria-pressed', 'true');
         }
         conditionsDirty = true;
         formDirty = true;
         lastConditionsSignatureFromState = null;
         updateSelectedConditionsDisplay();
-        if (!isCreatingCharacter) {
-          scheduleAutoSave('conditions');
-        }
       });
 
+      const indicator = document.createElement('span');
+      indicator.className = 'condition-row-indicator';
+      indicator.textContent = selectedConditions.has(condition.name) ? '✓' : '';
+      wrapper.appendChild(indicator);
+
       const nameSpan = document.createElement('span');
+      nameSpan.classList.add('condition-row-name');
       nameSpan.textContent = condition.name;
-
-      wrapper.appendChild(checkbox);
-
       const nameContainer = document.createElement('div');
       nameContainer.classList.add('condition-name-cell');
       nameContainer.appendChild(nameSpan);
@@ -1612,10 +1691,14 @@ window.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (event) => {
           event.stopPropagation();
         });
+        link.classList.add('condition-row-link');
         nameContainer.appendChild(link);
       }
 
       wrapper.appendChild(nameContainer);
+      wrapper.addEventListener('click', () => {
+        indicator.textContent = selectedConditions.has(condition.name) ? '✓' : '';
+      });
       conditionGrid.appendChild(wrapper);
     });
   }
@@ -2074,81 +2157,19 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // --- Save player (add/update this client's entry) ------------------------
 
-  async function saveCharacter({ showStatus = true } = {}) {
-    const ownerName = getOwnerName();
-    const name = nameInput.value.trim();
-    if (!ownerName || !name) {
-      statusDiv.textContent = 'Player and character are required.';
-      return;
-    }
-    const selectedCharacter = myCharacters.find((character) => character.id === selectedCharacterId);
-    const initiative = selectedCharacter ? selectedCharacter.initiative : null;
-    const initiativeBonusRaw = initiativeBonusInput ? initiativeBonusInput.value.trim() : '0';
-    const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
-    if (!Number.isFinite(initiativeBonus)) {
-      statusDiv.textContent = 'Initiative bonus must be a valid number.';
-      return;
-    }
-
-    const statsPayload = [];
-    for (const key of statKeys) {
-      const entry = statInputs.get(key);
-      const maxStr = entry?.maxInput ? entry.maxInput.value.trim() : '';
-      const currentStr = entry?.currentInput ? entry.currentInput.value.trim() : '';
-      const isTempHp = key === 'TempHP';
-      if (!isTempHp && maxStr === '') {
-        statusDiv.textContent = `Max ${key} is required.`;
-        return;
-      }
-      const maxVal = isTempHp ? 0 : Number(maxStr);
-      const requiresPositiveMax = !isTempHp;
-      if (!isTempHp && (!Number.isFinite(maxVal) || (requiresPositiveMax ? maxVal <= 0 : maxVal < 0))) {
-        statusDiv.textContent = requiresPositiveMax
-          ? `Max ${key} must be greater than 0.`
-          : `Max ${key} must be 0 or greater.`;
-        return;
-      }
-      const currentVal = currentStr === '' ? (isTempHp ? 0 : maxVal) : Number(currentStr);
-      if (!Number.isFinite(currentVal)) {
-        statusDiv.textContent = `${key} current value must be a valid number.`;
-        return;
-      }
-      const allowsNegative = key !== 'TempHP' && allowNegativeHealth;
-      if ((!isTempHp && currentVal > maxVal) || (!allowsNegative && currentVal < 0)) {
-        statusDiv.textContent = allowsNegative
-          ? `${key} current must be less than or equal to Max.`
-          : `${key} current must be between 0 and Max.`;
-        return;
-      }
-      if (entry?.currentInput) {
-        entry.currentInput.value = currentVal;
-      }
-      statsPayload.push({ key, current: currentVal, max: isTempHp ? 0 : maxVal });
-    }
-
+  async function persistCharacterPayload(payload, { showStatus = true, successMessage = '' } = {}) {
+    const ownerName = payload.ownerName || getOwnerName();
     if (showStatus) {
       statusDiv.textContent = 'Saving...';
     }
 
-    // Remember last-used owner name on this device
     localStorage.setItem('ownerName', ownerName);
 
     try {
       await ensureOwnerId();
-      const conditionList = Array.from(selectedConditions);
-      const payload = {
-        id: selectedCharacterId,
-        ownerId,
-        ownerName,
-        name,
-        initiative,
-        stats: statsPayload,
-        revealStats: revealStatsInput ? revealStatsInput.checked : null,
-        autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
-        useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
-        initiativeBonus,
-        conditions: conditionList
-      };
+      if (!payload.ownerId) {
+        payload.ownerId = ownerId;
+      }
       if (currentCampaignName) {
         payload.campaignName = currentCampaignName;
       }
@@ -2166,30 +2187,89 @@ window.addEventListener('DOMContentLoaded', () => {
       selectedCharacterId = savedCharacter.id;
       localStorage.setItem('selectedCharacterId', selectedCharacterId);
 
-      conditionsDirty = false;
-      lastConditionsSignatureFromState = conditionsSignature(conditionList);
-      formDirty = false;
-
-      updateDraftFromForm();
       if (showStatus) {
-        statusDiv.textContent = `Saved ${name} — ${conditionList.length} condition${conditionList.length === 1 ? '' : 's'}.`;
+        statusDiv.textContent = successMessage;
       } else {
         statusDiv.textContent = '';
       }
       isCreatingCharacter = false;
       updateConditionsAvailability();
 
-      lastStateJson = null; // force redraw so table reflects latest
+      lastStateJson = null;
       await loadCharactersForOwner(ownerName);
       await loadState();
+      return savedCharacter;
     } catch (err) {
       statusDiv.textContent = 'Error: ' + err.message;
+      return null;
     }
   }
 
-  async function handleSave(event) {
-    event.preventDefault();
-    await saveCharacter({ showStatus: true });
+  async function saveCharacterDetails({ showStatus = true } = {}) {
+    const ownerName = getOwnerName();
+    const name = nameInput.value.trim();
+    if (!ownerName || !name || !selectedCharacterId) {
+      statusDiv.textContent = 'Player and character are required.';
+      return;
+    }
+    const selectedCharacter = myCharacters.find((character) => character.id === selectedCharacterId);
+    const initiative = selectedCharacter ? selectedCharacter.initiative : null;
+    const initiativeBonusRaw = initiativeBonusInput ? initiativeBonusInput.value.trim() : '0';
+    const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
+    if (!Number.isFinite(initiativeBonus)) {
+      statusDiv.textContent = 'Initiative bonus must be a valid number.';
+      return;
+    }
+    const payload = {
+      id: selectedCharacterId,
+      ownerId,
+      ownerName,
+      name,
+      initiative,
+      stats: Array.isArray(selectedCharacter?.stats) ? selectedCharacter.stats : [],
+      revealStats: revealStatsInput ? revealStatsInput.checked : null,
+      autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
+      useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
+      initiativeBonus,
+      conditions: Array.isArray(selectedCharacter?.conditions) ? selectedCharacter.conditions : []
+    };
+    const savedCharacter = await persistCharacterPayload(payload, {
+      showStatus,
+      successMessage: `Saved ${name}.`
+    });
+    if (!savedCharacter) return;
+    formDirty = false;
+    updateDraftFromForm();
+  }
+
+  async function saveCharacterConditions({ showStatus = true } = {}) {
+    const ownerName = getOwnerName();
+    const selectedCharacter = myCharacters.find((character) => character.id === selectedCharacterId);
+    if (!ownerName || !selectedCharacter || !selectedCharacterId) {
+      statusDiv.textContent = 'Player and character are required.';
+      return;
+    }
+    const conditionList = Array.from(selectedConditions);
+    const payload = {
+      id: selectedCharacterId,
+      ownerId,
+      ownerName,
+      name: selectedCharacter.name,
+      initiative: selectedCharacter.initiative,
+      stats: Array.isArray(selectedCharacter.stats) ? selectedCharacter.stats : [],
+      revealStats: selectedCharacter.revealStats,
+      autoSkipTurn: selectedCharacter.autoSkipTurn,
+      useAppInitiativeRoll: selectedCharacter.useAppInitiativeRoll,
+      initiativeBonus: selectedCharacter.initiativeBonus,
+      conditions: conditionList
+    };
+    const savedCharacter = await persistCharacterPayload(payload, {
+      showStatus,
+      successMessage: `Saved ${selectedCharacter.name} — ${conditionList.length} condition${conditionList.length === 1 ? '' : 's'}.`
+    });
+    if (!savedCharacter) return;
+    conditionsDirty = false;
+    lastConditionsSignatureFromState = conditionsSignature(conditionList);
   }
 
   // --- Clear all players (admin-only) --------------------------------------
@@ -2232,7 +2312,38 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- Wire up events + timers ---------------------------------------------
 
   if (!displayOnly) {
-    form.addEventListener('submit', handleSave);
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+    });
+  }
+  if (detailsSaveBtn) {
+    detailsSaveBtn.addEventListener('click', () => {
+      saveCharacterDetails({ showStatus: true });
+    });
+  }
+  if (detailsCancelBtn) {
+    detailsCancelBtn.addEventListener('click', () => {
+      if (!confirmDiscardDetailsChanges()) return;
+      detailsPanel.classList.remove('details-panel-open');
+      detailsPanel.classList.add('details-panel-collapsed');
+      detailsPanel.classList.add('hidden');
+      detailsToggle?.setAttribute('aria-expanded', 'false');
+      detailsPanel.setAttribute('aria-hidden', 'true');
+    });
+  }
+  if (conditionsSaveBtn) {
+    conditionsSaveBtn.addEventListener('click', async () => {
+      await saveCharacterConditions({ showStatus: true });
+      if (!conditionsDirty) {
+        setConditionsPanelOpen(false);
+      }
+    });
+  }
+  if (conditionsCancelBtn) {
+    conditionsCancelBtn.addEventListener('click', () => {
+      if (!confirmDiscardConditionChanges()) return;
+      setConditionsPanelOpen(false);
+    });
   }
   if (addSaveBtn) {
     addSaveBtn.addEventListener('click', () => {
@@ -2248,6 +2359,16 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (addCancelBtn) {
     addCancelBtn.addEventListener('click', () => {
+      const hasAddDraft =
+        Boolean(addNameInput?.value.trim()) ||
+        Array.from(addStatInputs.values()).some((entry) =>
+          Boolean(entry.currentInput?.value.trim()) || Boolean(entry.maxInput?.value.trim())
+        ) ||
+        Boolean(addInitiativeBonusInput?.value.trim()) ||
+        Boolean(addRevealStatsInput?.checked) ||
+        Boolean(addAutoSkipTurnInput?.checked) ||
+        (addUseAppInitiativeRollInput ? addUseAppInitiativeRollInput.checked === false : false);
+      if (hasAddDraft && !confirm('Discard new character changes?')) return;
       hideAddForm();
     });
   }
