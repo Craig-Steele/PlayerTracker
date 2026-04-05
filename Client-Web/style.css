@@ -1274,6 +1274,13 @@ body.display-only .display-campaign-card {
   min-width: 0;
 }
 
+.referee-card-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
 .player-ruleset-meta {
   min-width: 0;
 }
@@ -1337,6 +1344,28 @@ body.display-only .display-campaign-card {
 
 .referee-card-admin a:hover {
   text-decoration: underline;
+}
+
+.referee-settings-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  text-decoration: none;
+  color: var(--text-primary);
+  width: auto;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 1;
+}
+
+.referee-settings-button::before {
+  content: "\2699";
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 .campaign-text {
