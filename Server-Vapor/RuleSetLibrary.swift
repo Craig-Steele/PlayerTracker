@@ -50,7 +50,7 @@ enum RuleSetLibraryLoader {
     static func availableRulesets() -> [RulesetSummary] {
         let libraries = availableLibraries()
         var summaries = libraries.map { RulesetSummary(id: $0.id, label: $0.label) }
-        summaries.append(RulesetSummary(id: "none", label: "No Conditions"))
+        summaries.append(RulesetSummary(id: "none", label: "-None-"))
         return summaries.sorted { $0.label < $1.label }
     }
 

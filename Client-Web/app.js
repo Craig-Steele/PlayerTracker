@@ -3,8 +3,9 @@ let lastStateJson = null;
 const REFRESH_INTERVAL_MS = 5000;
 let skipRefresh = false;
 
-const { QR_CODE_SIZE, rollStandardDie, formatInitiative } = window.PlayerTrackerShared || {
+const { QR_CODE_SIZE, isAdminHost, rollStandardDie, formatInitiative } = window.PlayerTrackerShared || {
   QR_CODE_SIZE: 96,
+  isAdminHost: () => false,
   rollStandardDie: () => null,
   formatInitiative: () => 'X'
 };
@@ -55,12 +56,6 @@ const EMPTY_CONDITION_SET = {
 
 function normalizePlayerName(name) {
   return (name || '').trim().toLowerCase();
-}
-
-// Detect whether this client is "admin" (local machine)
-function isAdminHost() {
-  const host = window.location.hostname;
-  return host === 'localhost' || host === '127.0.0.1';
 }
 
 function isDisplayPath() {

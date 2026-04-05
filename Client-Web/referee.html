@@ -7,30 +7,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="referee-page">
-  <div id="header-bar">
-    <div id="header-bar-left">
-      <div class="campaign-header">
-        <img id="ruleset-icon" class="ruleset-icon" alt="" />
-        <div class="campaign-text">
-          <h1 id="campaign-name">Campaign</h1>
-          <div class="ruleset-meta">
-            <a id="ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
-            <span id="ruleset-license-wrap" class="ruleset-license-wrap">
-              (<a id="ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div id="header-bar-right">
-      <div id="player-name-display" class="player-name-display">
-        <span id="player-name-text">Referee</span>
-        <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name" disabled>✎</button>
-      </div>
-      <div id="admin-link" class="admin-nav"><a href="campaignselector.html">Campaign Selector</a></div>
-    </div>
-  </div>
-
   <div class="referee-page-header">
     <div class="player-campaign-card referee-campaign-card">
       <img id="ref-ruleset-icon" class="ruleset-icon" alt="" />
@@ -45,7 +21,7 @@
         <div id="ref-encounter-state" class="player-campaign-meta">Encounter: New</div>
       </div>
       <div class="referee-card-actions">
-        <a href="campaignselector.html" class="referee-settings-button" aria-label="Campaign settings"></a>
+        <button type="button" id="ref-campaign-settings" class="referee-settings-button" aria-label="Campaign settings"></button>
       </div>
     </div>
   </div>
@@ -198,9 +174,37 @@
     </section>
   </div>
 
+  <div id="ref-campaign-panel" class="conditions-modal hidden" aria-hidden="true">
+    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-campaign-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="ref-campaign-dialog-title">Campaign Settings</h2>
+        <div class="conditions-dialog-actions">
+          <button type="button" id="ref-campaign-cancel" class="secondary">Cancel</button>
+          <button type="button" id="ref-campaign-save">Save</button>
+        </div>
+      </div>
+      <div class="form-section-block property-group">
+        <label class="property-row">
+          <span class="property-label">Campaign Name</span>
+          <span class="property-control">
+            <input type="text" id="ref-campaign-name-input" required />
+          </span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Ruleset</span>
+          <span class="property-control">
+            <select id="ref-ruleset-select" required></select>
+          </span>
+        </label>
+      </div>
+      <div id="ref-campaign-summary" class="subtitle"></div>
+      <div id="ref-campaign-status"></div>
+    </div>
+  </div>
+
   <script src="shared.js?v=2"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=3"></script>
+  <script src="referee.js?v=6"></script>
 </body>
 </html>

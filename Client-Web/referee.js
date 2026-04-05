@@ -44,17 +44,20 @@ window.addEventListener('DOMContentLoaded', () => {
   const encounterStartBtn = document.getElementById('encounter-start');
   const encounterSuspendBtn = document.getElementById('encounter-suspend');
 
-  const campaignNameLabel = document.getElementById('campaign-name');
   const refereeCampaignName = document.getElementById('ref-campaign-name');
   const refereeEncounterState = document.getElementById('ref-encounter-state');
   const refereeRulesetLink = document.getElementById('ref-ruleset-link');
   const refereeRulesetLicense = document.getElementById('ref-ruleset-license');
   const refereeRulesetLicenseWrap = document.getElementById('ref-ruleset-license-wrap');
-  const rulesetLink = document.getElementById('ruleset-link');
-  const rulesetLicense = document.getElementById('ruleset-license');
-  const rulesetLicenseWrap = document.getElementById('ruleset-license-wrap');
-  const rulesetIcon = document.getElementById('ruleset-icon');
   const refereeRulesetIcon = document.getElementById('ref-ruleset-icon');
+  const campaignSettingsBtn = document.getElementById('ref-campaign-settings');
+  const campaignPanel = document.getElementById('ref-campaign-panel');
+  const campaignNameInput = document.getElementById('ref-campaign-name-input');
+  const campaignRulesetSelect = document.getElementById('ref-ruleset-select');
+  const campaignStatusDiv = document.getElementById('ref-campaign-status');
+  const campaignSummaryDiv = document.getElementById('ref-campaign-summary');
+  const campaignCancelBtn = document.getElementById('ref-campaign-cancel');
+  const campaignSaveBtn = document.getElementById('ref-campaign-save');
 
   const form = document.getElementById('ref-add-panel');
   const nameInput = document.getElementById('ref-name');
@@ -114,15 +117,15 @@ window.addEventListener('DOMContentLoaded', () => {
   let hidePlayers = true;
   let detailsDirty = false;
   let conditionsDirty = false;
+  let availableRulesets = [];
 
   function updateRulesetLink(labelText, baseUrl) {
-    updateRulesetLinks([rulesetLink, refereeRulesetLink], labelText, baseUrl);
+    updateRulesetLinks([refereeRulesetLink], labelText, baseUrl);
   }
 
   function updateRulesetLicense(licenseUrl) {
     updateRulesetLicenses(
       [
-        { linkEl: rulesetLicense, wrapEl: rulesetLicenseWrap },
         { linkEl: refereeRulesetLicense, wrapEl: refereeRulesetLicenseWrap }
       ],
       licenseUrl
@@ -130,7 +133,109 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function setRulesetIcon(iconUrl, labelText) {
-    updateRulesetIcons([rulesetIcon, refereeRulesetIcon], iconUrl, labelText);
+    updateRulesetIcons([refereeRulesetIcon], iconUrl, labelText);
+  }
+
+  function setCampaignPanelOpen(open) {
+    if (!campaignPanel) return;
+    campaignPanel.classList.toggle('hidden', !open);
+    campaignPanel.classList.toggle('conditions-panel-open', open);
+    campaignPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function setCampaignStatus(message, isError = false) {
+    if (!campaignStatusDiv) return;
+    campaignStatusDiv.textContent = message;
+    campaignStatusDiv.style.color = isError ? '#b00020' : '';
+  }
+
+  function setCampaignSummary(campaign) {
+    if (!campaignSummaryDiv) return;
+    if (!campaign) {
+      campaignSummaryDiv.textContent = '';
+      return;
+    }
+    const label = campaign.rulesetLabel ? campaign.rulesetLabel : 'No Conditions';
+    campaignSummaryDiv.textContent = `Current: ${campaign.name} - ${label}`;
+  }
+
+  function populateCampaignRulesets(rulesets) {
+    if (!campaignRulesetSelect) return;
+    campaignRulesetSelect.innerHTML = '';
+    if (Array.isArray(rulesets) && rulesets.length > 0) {
+      rulesets.forEach((ruleset) => {
+        const option = document.createElement('option');
+        option.value = ruleset.id;
+        option.textContent = ruleset.label || ruleset.id;
+        campaignRulesetSelect.appendChild(option);
+      });
+      return;
+    }
+    const option = document.createElement('option');
+    option.value = 'none';
+    option.textContent = 'No Conditions';
+    campaignRulesetSelect.appendChild(option);
+  }
+
+  async function fetchJson(url, options) {
+    const res = await fetch(url, options);
+    if (!res.ok) {
+      throw new Error(`Server returned ${res.status}`);
+    }
+    return res.json();
+  }
+
+  async function loadCampaignSettings() {
+    if (!campaignNameInput || !campaignRulesetSelect) return;
+    try {
+      const [rulesets, campaign] = await Promise.all([
+        fetchJson('/rulesets'),
+        fetchJson('/campaign')
+      ]);
+      availableRulesets = Array.isArray(rulesets) ? rulesets : [];
+      populateCampaignRulesets(availableRulesets);
+      if (campaign) {
+        campaignNameInput.value = campaign.name || '';
+        if (campaign.rulesetId) {
+          campaignRulesetSelect.value = campaign.rulesetId;
+        }
+        setCampaignSummary(campaign);
+      }
+      setCampaignStatus('');
+    } catch (err) {
+      setCampaignStatus(`Failed to load campaign data: ${err.message}`, true);
+    }
+  }
+
+  async function saveCampaignSettings() {
+    if (!campaignNameInput || !campaignRulesetSelect) return false;
+    const name = campaignNameInput.value.trim();
+    const rulesetId = campaignRulesetSelect.value;
+    if (!name) {
+      setCampaignStatus('Campaign name is required.', true);
+      return false;
+    }
+    try {
+      setCampaignStatus('Saving...');
+      const campaign = await fetchJson('/campaign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, rulesetId })
+      });
+      currentCampaignName = campaign.name || '';
+      if (refereeCampaignName) {
+        refereeCampaignName.textContent = currentCampaignName || 'Campaign';
+      }
+      setCampaignSummary(campaign);
+      setCampaignStatus('Campaign updated.');
+      await loadCampaign();
+      await loadConditionLibrary();
+      await loadState();
+      return true;
+    } catch (err) {
+      setCampaignStatus(`Failed to update campaign: ${err.message}`, true);
+      return false;
+    }
   }
 
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
@@ -332,9 +437,6 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!res.ok) throw new Error('Server returned ' + res.status);
       const campaign = await res.json();
       currentCampaignName = campaign.name || '';
-      if (campaignNameLabel) {
-        campaignNameLabel.textContent = currentCampaignName || 'Campaign';
-      }
       if (refereeCampaignName) {
         refereeCampaignName.textContent = currentCampaignName || 'Campaign';
       }
@@ -1463,6 +1565,31 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
       setConditionsPanelOpen(false);
+    });
+  }
+  if (campaignSettingsBtn) {
+    campaignSettingsBtn.addEventListener('click', async () => {
+      await loadCampaignSettings();
+      setCampaignPanelOpen(true);
+    });
+  }
+  if (campaignCancelBtn) {
+    campaignCancelBtn.addEventListener('click', () => {
+      setCampaignPanelOpen(false);
+    });
+  }
+  if (campaignSaveBtn) {
+    campaignSaveBtn.addEventListener('click', async () => {
+      const saved = await saveCampaignSettings();
+      if (saved) {
+        setCampaignPanelOpen(false);
+      }
+    });
+  }
+  if (campaignPanel) {
+    campaignPanel.addEventListener('click', (event) => {
+      if (event.target !== campaignPanel) return;
+      setCampaignPanelOpen(false);
     });
   }
   if (addButton) {

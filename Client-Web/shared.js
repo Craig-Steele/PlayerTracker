@@ -1,6 +1,11 @@
 (function () {
   const QR_CODE_SIZE = 96;
 
+  function isAdminHost() {
+    const host = window.location.hostname;
+    return host === 'localhost' || host === '127.0.0.1';
+  }
+
   function parseStandardDie(spec) {
     if (typeof spec !== 'string') return null;
     const match = spec.trim().match(/^(\d+)d(\d+)$/i);
@@ -30,6 +35,7 @@
 
   window.PlayerTrackerShared = {
     QR_CODE_SIZE,
+    isAdminHost,
     parseStandardDie,
     rollStandardDie,
     formatInitiative
