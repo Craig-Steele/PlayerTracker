@@ -429,13 +429,7 @@ window.addEventListener('DOMContentLoaded', () => {
       updateSelectionControls();
     }
     if (statusDiv) {
-      if (encounterState === 'active') {
-        statusDiv.textContent = 'Encounter active.';
-      } else if (encounterState === 'suspended') {
-        statusDiv.textContent = 'Encounter suspended.';
-      } else {
-        statusDiv.textContent = 'New encounter.';
-      }
+      statusDiv.textContent = '';
     }
     updateTurnControls();
   }
