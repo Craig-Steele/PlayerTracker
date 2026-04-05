@@ -10,227 +10,182 @@
   "conditions": [
     {
       "name": "Blinded",
-      "abbreviation": "BLI",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Blinded"
     },
     {
       "name": "Bloodied",
-      "abbreviation": "BLD",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Bloodied"
     },
     {
       "name": "Burned (a)",
-      "abbreviation": "BRNA",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Burned_a"
     },
     {
       "name": "Burned (b; 3PP)",
-      "abbreviation": "BRNB",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Burned_b_3PP"
     },
     {
       "name": "Challenged",
-      "abbreviation": "CHAL",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Challenged"
     },
     {
       "name": "Charmed",
-      "abbreviation": "CHAR",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Charmed"
     },
     {
       "name": "Confused",
-      "abbreviation": "CONF",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Confused"
     },
     {
       "name": "Damaged [3PP]",
-      "abbreviation": "DAM",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Damaged_3PP"
     },
     {
       "name": "Dazed [3PP]",
-      "abbreviation": "DAZ",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Dazed_3PP"
     },
     {
       "name": "Deafened",
-      "abbreviation": "DEAF",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Deafened"
     },
     {
       "name": "Decrepit [3PP]",
-      "abbreviation": "DECR",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Decrepit_3PP"
     },
     {
       "name": "Despondent",
-      "abbreviation": "DESP",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Despondent"
     },
     {
       "name": "Decaying [3PP]",
-      "abbreviation": "DECA",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Decaying_3PP"
     },
     {
       "name": "Demoralized [3PP]",
-      "abbreviation": "DEMO",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Demoralized_3PP"
     },
     {
       "name": "Dominated",
-      "abbreviation": "DOM",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Dominated"
     },
     {
       "name": "Doomed [3PP]",
-      "abbreviation": "DOOM",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Doomed_3PP"
     },
     {
       "name": "Dulled [3PP]",
-      "abbreviation": "DULL",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Dulled_3PP"
     },
     {
       "name": "Entombed [3PP]",
-      "abbreviation": "ENTM",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Entombed_3PP"
     },
     {
       "name": "Euphoric/ia [3PP]",
-      "abbreviation": "EUPH",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Euphoricia_3PP"
     },
     {
       "name": "Exhausted/ion",
-      "abbreviation": "EXH",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Exhaustedion"
     },
     {
       "name": "Fatigued [3PP]",
-      "abbreviation": "FAT",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Fatigued_3PP"
     },
     {
       "name": "Frightened",
-      "abbreviation": "FRI",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Frightened"
     },
     {
       "name": "Frigid [3PP]",
-      "abbreviation": "FRIG",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Frigid_3PP"
     },
     {
       "name": "Frozen [3PP]",
-      "abbreviation": "FROZ",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Frozen_3PP"
     },
     {
       "name": "Grappled",
-      "abbreviation": "GRAP",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Grappled"
     },
     {
       "name": "Guilty [3PP]",
-      "abbreviation": "GUIL",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Guilty_3PP"
     },
     {
       "name": "Hidden",
-      "abbreviation": "HID",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Hidden"
     },
     {
       "name": "Incapacitated",
-      "abbreviation": "INCA",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Incapacitated"
     },
     {
       "name": "Infested [3PP]",
-      "abbreviation": "INF",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Infested_3PP"
     },
     {
       "name": "Intoxicated [3PP]",
-      "abbreviation": "INTO",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Intoxicated_3PP"
     },
     {
       "name": "Invisible",
-      "abbreviation": "INV",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Invisible"
     },
     {
       "name": "Marked",
-      "abbreviation": "MARK",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Marked"
     },
     {
       "name": "Paralyzed",
-      "abbreviation": "PAR",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Paralyzed"
     },
     {
       "name": "Petrified",
-      "abbreviation": "PET",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Petrified"
     },
     {
       "name": "Poisoned",
-      "abbreviation": "POIS",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Poisoned"
     },
     {
       "name": "Possessed",
-      "abbreviation": "POSS",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Possessed"
     },
     {
       "name": "Prone",
-      "abbreviation": "PRN",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Prone"
     },
     {
       "name": "Relaxed [3PP]",
-      "abbreviation": "REL",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Relaxed_3PP"
     },
     {
       "name": "Rested [3PP]",
-      "abbreviation": "REST",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Rested_3PP"
     },
     {
       "name": "Restrained",
-      "abbreviation": "RSTR",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Restrained"
     },
     {
       "name": "Scouted",
-      "abbreviation": "SCOU",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Scouted"
     },
     {
       "name": "Shocked [3PP]",
-      "abbreviation": "SHOC",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Shocked_3PP"
     },
     {
       "name": "Stunned",
-      "abbreviation": "STUN",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Stunned"
     },
     {
       "name": "Unconscious",
-      "abbreviation": "UNCO",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Unconscious"
     },
     {
       "name": "Wounded [3PP]",
-      "abbreviation": "WOUN",
       "description": "https://www.5esrd.com/gamemastering/conditions/#Wounded_3PP"
     }
   ]

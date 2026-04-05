@@ -9,62 +9,50 @@
   "conditions": [
     {
       "name": "Standing",
-      "abbreviation": "STD",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Stance"
     },
     {
       "name": "Crouched",
-      "abbreviation": "CRCH",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Stance"
     },
     {
       "name": "Prone",
-      "abbreviation": "PRN",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Stance"
     },
     {
       "name": "Dodging",
-      "abbreviation": "DDG",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Reactions"
     },
     {
       "name": "Parrying",
-      "abbreviation": "PRY",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Reactions"
     },
     {
       "name": "In Cover",
-      "abbreviation": "COV",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Cover"
     },
     {
       "name": "Grappled",
-      "abbreviation": "GRP",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Grappling"
     },
     {
       "name": "Acting Hastily",
-      "abbreviation": "HST",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Dynamic-Initiative"
     },
     {
       "name": "Extended Action",
-      "abbreviation": "EXT",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Extended-Actions"
     },
     {
       "name": "Diving for Cover",
-      "abbreviation": "DFC",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Explosions"
     },
     {
       "name": "Unconscious",
-      "abbreviation": "UNC",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Damage"
     },
     {
       "name": "Dead",
-      "abbreviation": "DED",
       "description": "https://www.traveller-srd.com/core-rules/combat/#TOC-Damage"
     }
   ]

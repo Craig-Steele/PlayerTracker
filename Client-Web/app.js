@@ -3,17 +3,48 @@ let lastStateJson = null;
 const REFRESH_INTERVAL_MS = 5000;
 let skipRefresh = false;
 
-const { QR_CODE_SIZE, updateRulesetIcon, rollStandardDie } = window.PlayerTrackerShared || {
+const { QR_CODE_SIZE, rollStandardDie, formatInitiative } = window.PlayerTrackerShared || {
   QR_CODE_SIZE: 96,
-  updateRulesetIcon: () => {},
-  rollStandardDie: () => null
+  rollStandardDie: () => null,
+  formatInitiative: () => 'X'
+};
+const {
+  normalizeConditionEntry,
+  createConditionLink,
+  formatEncounterStateText,
+  healthStatusLabel,
+  orderedEncounterStats,
+  encounterStatusInfo,
+  applyEncounterHealthClasses,
+  formatEncounterStatsText,
+  buildEncounterConditionsList,
+  createEmptyEncounterRow
+} = window.PlayerTrackerEncounter || {
+  normalizeConditionEntry: () => null,
+  createConditionLink: () => null,
+  formatEncounterStateText: () => 'Encounter: New',
+  healthStatusLabel: () => '',
+  orderedEncounterStats: (stats) => (Array.isArray(stats) ? stats : []),
+  encounterStatusInfo: () => null,
+  applyEncounterHealthClasses: () => {},
+  formatEncounterStatsText: () => '',
+  buildEncounterConditionsList: () => null,
+  createEmptyEncounterRow: (colSpan, text) => {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = colSpan;
+    td.textContent = text || '(no players yet)';
+    tr.appendChild(td);
+    return tr;
+  }
+};
+const { updateRulesetIcons, updateRulesetLinks, updateRulesetLicenses } = window.PlayerTrackerRuleset || {
+  updateRulesetIcons: () => {},
+  updateRulesetLinks: () => {},
+  updateRulesetLicenses: () => {}
 };
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
-
-function slugifyConditionName(name) {
-  return (name || '').trim().replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
 
 const EMPTY_CONDITION_SET = {
   id: 'none',
@@ -22,67 +53,8 @@ const EMPTY_CONDITION_SET = {
   conditions: []
 };
 
-function computeAbbreviationFromName(name) {
-  const trimmed = (name || '').trim();
-  if (!trimmed) return '';
-  if (trimmed.length <= 4) return trimmed.toUpperCase();
-  return trimmed.slice(0, 4).toUpperCase();
-}
-
-function normalizeConditionEntry(entry, baseUrl) {
-  if (!entry || typeof entry.name !== 'string') {
-    return null;
-  }
-
-  const trimmedName = entry.name.trim();
-  if (!trimmedName) {
-    return null;
-  }
-
-  const rawAbbreviation =
-    (typeof entry.abbreviation === 'string' && entry.abbreviation.trim()) ||
-    (typeof entry.abbrev === 'string' && entry.abbrev.trim()) ||
-    '';
-
-  const abbreviation = rawAbbreviation || computeAbbreviationFromName(trimmedName);
-  const explicitLink =
-    typeof entry.description === 'string' && entry.description.trim()
-      ? entry.description.trim()
-      : null;
-
-  const normalizedBase =
-    typeof baseUrl === 'string' && baseUrl.trim().length > 0 ? baseUrl.trim() : null;
-
-  const fallbackLink = normalizedBase
-    ? `${normalizedBase}#TOC-${slugifyConditionName(trimmedName)}`
-    : null;
-
-  return {
-    name: trimmedName,
-    abbreviation,
-    link: explicitLink || fallbackLink
-  };
-}
-
 function normalizePlayerName(name) {
   return (name || '').trim().toLowerCase();
-}
-
-function createConditionLink(url) {
-  if (!url) return null;
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.target = '_blank';
-  anchor.rel = 'noopener';
-  anchor.classList.add('condition-link');
-  anchor.textContent = '↗';
-  anchor.title = 'Open rule text in a new tab';
-  return anchor;
-}
-
-function formatInitiative(value) {
-  if (!Number.isFinite(value)) return 'X';
-  return Number.isInteger(value) ? String(value) : String(value);
 }
 
 // Detect whether this client is "admin" (local machine)
@@ -247,45 +219,23 @@ window.addEventListener('DOMContentLoaded', () => {
   let isCreatingCharacter = false;
   let conditionsPanelOpen = false;
 
-  function setRulesetLinkTarget(linkEl, labelText, baseUrl) {
-    if (!linkEl) return;
-    linkEl.textContent = labelText || '';
-    if (baseUrl) {
-      linkEl.href = baseUrl;
-      linkEl.removeAttribute('aria-disabled');
-    } else {
-      linkEl.removeAttribute('href');
-      linkEl.setAttribute('aria-disabled', 'true');
-    }
-  }
-
   function updateRulesetLink(labelText, baseUrl) {
-    setRulesetLinkTarget(rulesetLink, labelText, baseUrl);
-    setRulesetLinkTarget(playerRulesetLink, labelText, baseUrl);
-    setRulesetLinkTarget(displayRulesetLink, labelText, baseUrl);
-  }
-
-  function setRulesetLicenseTarget(linkEl, wrapEl, licenseUrl) {
-    if (!linkEl || !wrapEl) return;
-    if (licenseUrl) {
-      linkEl.href = licenseUrl;
-      wrapEl.style.display = 'inline';
-    } else {
-      linkEl.removeAttribute('href');
-      wrapEl.style.display = 'none';
-    }
+    updateRulesetLinks([rulesetLink, playerRulesetLink, displayRulesetLink], labelText, baseUrl);
   }
 
   function updateRulesetLicense(licenseUrl) {
-    setRulesetLicenseTarget(rulesetLicense, rulesetLicenseWrap, licenseUrl);
-    setRulesetLicenseTarget(playerRulesetLicense, playerRulesetLicenseWrap, licenseUrl);
-    setRulesetLicenseTarget(displayRulesetLicense, displayRulesetLicenseWrap, licenseUrl);
+    updateRulesetLicenses(
+      [
+        { linkEl: rulesetLicense, wrapEl: rulesetLicenseWrap },
+        { linkEl: playerRulesetLicense, wrapEl: playerRulesetLicenseWrap },
+        { linkEl: displayRulesetLicense, wrapEl: displayRulesetLicenseWrap }
+      ],
+      licenseUrl
+    );
   }
 
   function setRulesetIcon(iconUrl, labelText) {
-    updateRulesetIcon(rulesetIcon, iconUrl, labelText);
-    updateRulesetIcon(playerRulesetIcon, iconUrl, labelText);
-    updateRulesetIcon(displayRulesetIcon, iconUrl, labelText);
+    updateRulesetIcons([rulesetIcon, playerRulesetIcon, displayRulesetIcon], iconUrl, labelText);
   }
 
   const displayOnly = isDisplayPath();
@@ -423,22 +373,8 @@ window.addEventListener('DOMContentLoaded', () => {
     document.title = `${campaignName} - ${ownerName || 'Player'}`;
   }
 
-  function formatEncounterActorLabel(player) {
-    if (!player || !player.name) return null;
-    const ownerName = typeof player.ownerName === 'string' ? player.ownerName.trim() : '';
-    return ownerName ? `${player.name} (${ownerName})` : player.name;
-  }
-
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isMineTurn = false) {
-    const currentTurnLabel = formatEncounterActorLabel(currentTurnPlayer);
-    const encounterText =
-      encounterState === 'active'
-        ? currentTurnLabel
-          ? `Round ${round}: ${currentTurnLabel}`
-          : `Round ${round}`
-        : encounterState === 'suspended'
-          ? 'Encounter: Suspended'
-          : 'Encounter: New';
+    const encounterText = formatEncounterStateText(encounterState, round, currentTurnPlayer);
     if (playerEncounterState) {
       playerEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isMineTurn));
       playerEncounterState.textContent = encounterText;
@@ -588,14 +524,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function abbreviationForCondition(name) {
-    const entry = conditionLookup.get(name);
-    if (entry && entry.abbreviation) {
-      return entry.abbreviation;
-    }
-    return computeAbbreviationFromName(name);
-  }
-
   function buildStatsFields() {
     statInputs.clear();
     if (statsFields) statsFields.innerHTML = '';
@@ -734,22 +662,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       addStatInputs.set(key, { maxInput, currentInput });
     });
-  }
-
-  function healthStatusLabel(ratio, isDead) {
-    if (isDead) {
-      return 'Dead';
-    }
-    if (ratio === 1) {
-      return 'Full';
-    } else if (ratio > 0.75) {
-      return 'Slight Damage';
-    } else if (ratio > 0.5) {
-      return 'Some Damage';
-    } else if (ratio > 0.25) {
-      return 'Bloodied';
-    }
-    return 'Heavily Blooded';
   }
 
   function draftKeyForOwner(ownerName) {
@@ -1009,7 +921,7 @@ window.addEventListener('DOMContentLoaded', () => {
         : null;
 
     const normalizedEntries = (conditionSet?.conditions ?? [])
-      .map((entry) => normalizeConditionEntry(entry, baseUrl))
+      .map((entry) => normalizeConditionEntry(entry))
       .filter(Boolean);
 
     if (Array.isArray(conditionSet?.stats) && conditionSet.stats.length > 0) {
@@ -2032,13 +1944,8 @@ window.addEventListener('DOMContentLoaded', () => {
         playersBody.innerHTML = '';
 
         if (players.length === 0) {
-          const tr = document.createElement('tr');
-          const td = document.createElement('td');
           const hasConditions = conditionLibrary.length > 0;
-          td.colSpan = hasConditions ? 4 : 3;
-          td.textContent = '(no players yet)';
-          tr.appendChild(td);
-          playersBody.appendChild(tr);
+          playersBody.appendChild(createEmptyEncounterRow(hasConditions ? 4 : 3));
         } else {
           for (const p of players) {
             const tr = document.createElement('tr');
@@ -2074,44 +1981,11 @@ window.addEventListener('DOMContentLoaded', () => {
             }
 
             const stats = Array.isArray(p.stats) ? p.stats : [];
-            const orderedStats = statKeys
-              .map((key) => stats.find((stat) => stat.key === key))
-              .filter(Boolean);
-            const statusInfo = (() => {
-              const source = (orderedStats.length > 0 ? orderedStats : stats)
-                .filter((stat) => stat.key !== 'TempHP');
-              if (source.length === 0) return null;
-              const totals = source.reduce(
-                (acc, stat) => {
-                  if (Number.isFinite(stat.current)) acc.current += stat.current;
-                  if (Number.isFinite(stat.max)) acc.max += stat.max;
-                  return acc;
-                },
-                { current: 0, max: 0 }
-              );
-              if (totals.max <= 0) return null;
-              return {
-                ratio: totals.current / totals.max,
-                isDead: totals.current <= 0
-              };
-            })();
+            const orderedStats = orderedEncounterStats(stats, statKeys);
+            const statusInfo = encounterStatusInfo(stats, statKeys);
 
             if (statusInfo) {
-              hpTd.classList.add('hp-cell');
-              if (statusInfo.isDead) {
-                hpTd.classList.add('hp-dead');
-              } else if (statusInfo.ratio === 1) {
-                hpTd.classList.add('hp-blue');
-              } else if (statusInfo.ratio > 0.75) {
-                hpTd.classList.add('hp-green');
-              } else if (statusInfo.ratio > 0.5) {
-                hpTd.classList.add('hp-yellow');
-              } else if (statusInfo.ratio > 0.25) {
-                hpTd.classList.add('hp-orange');
-              } else {
-                hpTd.classList.add('hp-red');
-              }
-
+              applyEncounterHealthClasses(hpTd, statusInfo);
               hpTd.innerHTML = '';
               const canReveal = isMine || p.revealStats;
               if (!canReveal) {
@@ -2122,43 +1996,15 @@ window.addEventListener('DOMContentLoaded', () => {
               }
               if (canReveal) {
                 const valueLine = document.createElement('div');
-                const displayStats = orderedStats.length > 0 ? orderedStats : stats;
-                const visibleStats = displayStats.filter(
-                  (stat) => stat.key !== 'TempHP' || Number(stat.current) > 0
-                );
-                valueLine.textContent = (visibleStats.length > 0 ? visibleStats : displayStats)
-                  .map((stat) =>
-                    stat.key === 'TempHP'
-                      ? `${stat.key} ${stat.current}`
-                      : `${stat.key} ${stat.current}/${stat.max}`
-                  )
-                  .join(' • ');
+                valueLine.textContent = formatEncounterStatsText(orderedStats, statKeys);
                 hpTd.appendChild(valueLine);
               }
             } else {
               hpTd.textContent = '—';
             }
 
-            if (Array.isArray(p.conditions) && p.conditions.length > 0) {
-              const list = document.createElement('div');
-              list.classList.add('player-conditions');
-
-              p.conditions.forEach((conditionName, index) => {
-                if (index > 0) {
-                  list.appendChild(document.createTextNode(', '));
-                }
-                const entry = conditionLookup.get(conditionName);
-                const conditionNode = document.createElement(entry && entry.link ? 'a' : 'span');
-                conditionNode.textContent = conditionName;
-                if (entry && entry.link) {
-                  conditionNode.href = entry.link;
-                  conditionNode.target = '_blank';
-                  conditionNode.rel = 'noopener';
-                  conditionNode.classList.add('condition-link');
-                }
-                list.appendChild(conditionNode);
-              });
-
+            const list = buildEncounterConditionsList(p.conditions, conditionLookup);
+            if (list) {
               conditionsTd.appendChild(list);
             } else {
               conditionsTd.textContent = '—';
