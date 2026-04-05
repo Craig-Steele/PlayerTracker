@@ -48,6 +48,58 @@
   --hp-orange-bg: #ffd7b3;
   --hp-red-bg: #ffc2c2;
   --hp-dead-bg: #4a4a4a;
+  --shadow-modal: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-page: #1b1d20;
+    --bg-panel: #24272b;
+    --bg-panel-muted: #30343a;
+    --bg-panel-subtle: #2a2d31;
+    --bg-qr: #ddd0b4;
+    --bg-selected: #202a34;
+    --bg-selected-strong: #27394d;
+    --bg-turn-active: #4d4420;
+    --bg-referee: #3f2424;
+    --bg-mine: #1d313e;
+    --bg-success: #22352a;
+    --bg-info: #1f2d3a;
+    --bg-danger-soft: #412a2a;
+    --bg-danger: #8f4339;
+    --border-default: #4a4f57;
+    --border-soft: #3d434b;
+    --border-selected: #5c87c6;
+    --border-selected-strong: #7aa4e5;
+    --border-pill: #567db2;
+    --border-success: #486b52;
+    --border-danger: #865353;
+    --text-primary: #eef0f3;
+    --text-secondary: #c2c7cf;
+    --text-body-soft: #d6d9de;
+    --text-muted: #a5acb5;
+    --text-placeholder: #8d949d;
+    --text-link: #87b8ff;
+    --text-selected: #d6e7ff;
+    --text-referee: #ff9d9d;
+    --text-encounter-header: var(--text-primary);
+    --text-encounter-header-mine: #ff8e8e;
+    --text-mine: #a9d8ff;
+    --text-success: #bfeac8;
+    --text-success-strong: #d3f4d9;
+    --text-info-strong: #d1e6ff;
+    --text-warning: #f3df8b;
+    --text-orange: #f1bf8c;
+    --text-danger: #ffc3c3;
+    --text-dead: #e3e5e8;
+    --hp-blue-bg: #1f3347;
+    --hp-green-bg: #28402d;
+    --hp-yellow-bg: #433d1b;
+    --hp-orange-bg: #583c28;
+    --hp-red-bg: #4c2626;
+    --hp-dead-bg: #5b6169;
+    --shadow-modal: 0 18px 40px rgba(0, 0, 0, 0.45);
+  }
 }
 
 html, body {
@@ -63,6 +115,10 @@ body {
   box-sizing: border-box;
   background: var(--bg-page);
   color: var(--text-primary);
+}
+
+html {
+  color-scheme: light dark;
 }
 
 body:not(.display-only):not(.referee-page) {
@@ -89,6 +145,10 @@ textarea {
   width: 100%;
   box-sizing: border-box;
   font-size: 16px;
+  background: var(--bg-panel);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
 }
 
 input[type="number"]::-webkit-outer-spin-button,
@@ -122,6 +182,10 @@ button {
   margin-top: 0.5rem;
   padding: 0.45rem 0.9rem;
   cursor: pointer;
+  background: var(--bg-panel-muted);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
 }
 
 .round-row button {
@@ -658,7 +722,7 @@ th, td {
   border: 1px solid var(--border-soft);
   border-radius: 12px;
   padding: 1rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-modal);
 }
 
 .conditions-dialog-header {
