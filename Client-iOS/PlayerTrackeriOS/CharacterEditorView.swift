@@ -44,7 +44,7 @@ struct CharacterEditorView: View {
                             AccessoryTextField(
                                 placeholder: "Bonus",
                                 text: $draft.initiativeBonus,
-                                keyboardType: .numberPad,
+                                keyboardType: .numbersAndPunctuation,
                                 autocapitalization: .none,
                                 autocorrection: .no,
                                 textAlignment: .right,
@@ -68,7 +68,7 @@ struct CharacterEditorView: View {
                                 AccessoryTextField(
                                     placeholder: "Current",
                                     text: $stat.current,
-                                    keyboardType: .numberPad,
+                                    keyboardType: .numbersAndPunctuation,
                                     autocapitalization: .none,
                                     autocorrection: .no,
                                     textAlignment: .right,
@@ -81,7 +81,7 @@ struct CharacterEditorView: View {
                                     AccessoryTextField(
                                         placeholder: "Max",
                                         text: $stat.max,
-                                        keyboardType: .numberPad,
+                                        keyboardType: .numbersAndPunctuation,
                                         autocapitalization: .none,
                                         autocorrection: .no,
                                         textAlignment: .right,
