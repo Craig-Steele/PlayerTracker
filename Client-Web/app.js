@@ -176,16 +176,22 @@ window.addEventListener('DOMContentLoaded', () => {
   const conditionsCharacter = document.getElementById('conditions-character');
   const campaignNameLabel = document.getElementById('campaign-name');
   const playerCampaignName = document.getElementById('player-campaign-name');
+  const displayCampaignName = document.getElementById('display-campaign-name');
   const playerCardPlayerName = document.getElementById('player-card-player-name');
   const playerEncounterState = document.getElementById('player-encounter-state');
+  const displayEncounterState = document.getElementById('display-encounter-state');
   const playerRulesetLink = document.getElementById('player-ruleset-link');
   const playerRulesetLicense = document.getElementById('player-ruleset-license');
   const playerRulesetLicenseWrap = document.getElementById('player-ruleset-license-wrap');
+  const displayRulesetLink = document.getElementById('display-ruleset-link');
+  const displayRulesetLicense = document.getElementById('display-ruleset-license');
+  const displayRulesetLicenseWrap = document.getElementById('display-ruleset-license-wrap');
   const rulesetLink = document.getElementById('ruleset-link');
   const rulesetLicense = document.getElementById('ruleset-license');
   const rulesetLicenseWrap = document.getElementById('ruleset-license-wrap');
   const rulesetIcon = document.getElementById('ruleset-icon');
   const playerRulesetIcon = document.getElementById('player-ruleset-icon');
+  const displayRulesetIcon = document.getElementById('display-ruleset-icon');
   const characterList = document.getElementById('character-list');
   const addCharacterBtn = document.getElementById('character-add');
   const removeCharacterBtn = document.getElementById('character-remove');
@@ -256,6 +262,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function updateRulesetLink(labelText, baseUrl) {
     setRulesetLinkTarget(rulesetLink, labelText, baseUrl);
     setRulesetLinkTarget(playerRulesetLink, labelText, baseUrl);
+    setRulesetLinkTarget(displayRulesetLink, labelText, baseUrl);
   }
 
   function setRulesetLicenseTarget(linkEl, wrapEl, licenseUrl) {
@@ -272,11 +279,13 @@ window.addEventListener('DOMContentLoaded', () => {
   function updateRulesetLicense(licenseUrl) {
     setRulesetLicenseTarget(rulesetLicense, rulesetLicenseWrap, licenseUrl);
     setRulesetLicenseTarget(playerRulesetLicense, playerRulesetLicenseWrap, licenseUrl);
+    setRulesetLicenseTarget(displayRulesetLicense, displayRulesetLicenseWrap, licenseUrl);
   }
 
   function setRulesetIcon(iconUrl, labelText) {
     updateRulesetIcon(rulesetIcon, iconUrl, labelText);
     updateRulesetIcon(playerRulesetIcon, iconUrl, labelText);
+    updateRulesetIcon(displayRulesetIcon, iconUrl, labelText);
   }
 
   const displayOnly = isDisplayPath();
@@ -421,20 +430,23 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isMineTurn = false) {
-    if (!playerEncounterState) return;
-    playerEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isMineTurn));
     const currentTurnLabel = formatEncounterActorLabel(currentTurnPlayer);
-    if (encounterState === 'active') {
-      playerEncounterState.textContent = currentTurnLabel
-        ? `Round ${round}: ${currentTurnLabel}`
-        : `Round ${round}`;
-      return;
+    const encounterText =
+      encounterState === 'active'
+        ? currentTurnLabel
+          ? `Round ${round}: ${currentTurnLabel}`
+          : `Round ${round}`
+        : encounterState === 'suspended'
+          ? 'Encounter: Suspended'
+          : 'Encounter: New';
+    if (playerEncounterState) {
+      playerEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isMineTurn));
+      playerEncounterState.textContent = encounterText;
     }
-    if (encounterState === 'suspended') {
-      playerEncounterState.textContent = 'Encounter: Suspended';
-      return;
+    if (displayEncounterState) {
+      displayEncounterState.classList.remove('player-encounter-state-mine');
+      displayEncounterState.textContent = encounterText;
     }
-    playerEncounterState.textContent = 'Encounter: New';
   }
 
   // Admin UI: show/hide toolbar & IP banner/QR
@@ -1566,6 +1578,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (playerCampaignName) {
         playerCampaignName.textContent = currentCampaignName || 'Campaign';
       }
+      if (displayCampaignName) {
+        displayCampaignName.textContent = currentCampaignName || 'Campaign';
+      }
       updateRulesetLink(campaign.rulesetLabel || '', null);
       updateWindowTitle();
     } catch (err) {
@@ -1576,6 +1591,9 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       if (playerCampaignName) {
         playerCampaignName.textContent = currentCampaignName || 'Campaign';
+      }
+      if (displayCampaignName) {
+        displayCampaignName.textContent = currentCampaignName || 'Campaign';
       }
       updateWindowTitle();
     }

@@ -1121,6 +1121,16 @@ th, td {
   margin-right: 0;
 }
 
+.display-only .player-list table th:nth-child(2),
+.display-only .player-list table td:nth-child(2) {
+  width: 30%;
+}
+
+.display-only .player-list table th:nth-child(4),
+.display-only .player-list table td:nth-child(4) {
+  width: 40%;
+}
+
 /* Conditions column takes the rest */
 .player-list table th:last-child,
 .player-list table td:last-child {
@@ -1188,6 +1198,10 @@ body.referee-page #header-bar {
   display: block;
 }
 
+.display-page-header {
+  display: block;
+}
+
 .player-campaign-card {
   display: flex;
   align-items: center;
@@ -1219,6 +1233,16 @@ body.referee-page .referee-page-header {
   background: var(--bg-page);
 }
 
+body.display-only .display-page-header {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--bg-page);
+}
+
 body:not(.display-only):not(.referee-page) .player-campaign-card {
   margin-top: 0;
   padding-top: 0.75rem;
@@ -1226,6 +1250,12 @@ body:not(.display-only):not(.referee-page) .player-campaign-card {
 }
 
 body.referee-page .referee-campaign-card {
+  margin-top: 0;
+  padding-top: 0.75rem;
+  border-radius: 0 0 12px 12px;
+}
+
+body.display-only .display-campaign-card {
   margin-top: 0;
   padding-top: 0.75rem;
   border-radius: 0 0 12px 12px;
@@ -1296,6 +1326,10 @@ body.referee-page .referee-campaign-card {
   color: var(--text-encounter-header-mine);
 }
 
+#display-encounter-state {
+  color: var(--text-encounter-header);
+}
+
 .referee-card-admin a {
   color: var(--text-link);
   text-decoration: none;
@@ -1309,6 +1343,15 @@ body.referee-page .referee-campaign-card {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
+}
+
+.display-header-side {
+  margin-left: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .ruleset-icon {

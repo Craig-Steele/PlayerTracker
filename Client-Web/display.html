@@ -8,32 +8,28 @@
 </head>
 <body class="display-only">
 
-  <div id="header-bar">
-    <div id="header-bar-left">
-      <div class="campaign-header">
-        <img id="ruleset-icon" class="ruleset-icon" alt="" />
-        <div class="campaign-text">
-          <h1 id="campaign-name">Campaign</h1>
-          <div class="ruleset-meta">
-            <a id="ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
-            <span id="ruleset-license-wrap" class="ruleset-license-wrap">
-              (<a id="ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
-            </span>
-          </div>
+  <div class="display-page-header">
+    <div class="player-campaign-card display-campaign-card">
+      <img id="display-ruleset-icon" class="ruleset-icon" alt="" />
+      <div class="player-campaign-text">
+        <div id="display-campaign-name" class="player-campaign-name">Campaign</div>
+        <div class="ruleset-meta player-ruleset-meta">
+          <a id="display-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
+          <span id="display-ruleset-license-wrap" class="ruleset-license-wrap">
+            (<a id="display-ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
+          </span>
         </div>
+        <div id="display-encounter-state" class="player-campaign-meta">Encounter: New</div>
       </div>
-    </div>
-    <div id="header-bar-right">
-      <div id="ip-display"></div>
-      <div id="qr-container"></div>
+      <div class="display-header-side">
+        <div id="ip-display"></div>
+        <div id="qr-container"></div>
+      </div>
     </div>
   </div>
 
   <div class="container">
     <section class="player-list">
-      <div class="round-row">
-        <div id="round-info" class="subtitle"></div>
-      </div>
       <table>
         <thead>
           <tr>
