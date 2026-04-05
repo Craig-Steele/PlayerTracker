@@ -2066,9 +2066,9 @@ window.addEventListener('DOMContentLoaded', () => {
             }
 
             const isMine =
-              ownerInput && ownerInput.value.trim() &&
-              p.ownerName &&
-              p.ownerName.toLowerCase() === ownerInput.value.trim().toLowerCase();
+              Boolean(ownerId) &&
+              ((p.ownerId && p.ownerId === ownerId) ||
+                myCharacters.some((character) => character.id === p.id));
             if (isMine) {
               initTd.classList.add('init-mine');
             }
