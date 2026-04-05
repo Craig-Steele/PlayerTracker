@@ -115,7 +115,7 @@
               <label class="property-row">
                 <span class="property-label">Character name</span>
                 <span class="property-control">
-                  <input type="text" id="add-name" required />
+                  <input type="text" id="add-name" required autocapitalize="words" autocomplete="off" />
                 </span>
               </label>
               <div class="form-section-title">Initiative</div>
@@ -130,7 +130,7 @@
                 <label id="add-initiative-bonus-wrap" class="property-row">
                   <span class="property-label">Initiative Bonus</span>
                   <span class="property-control">
-                  <input type="text" id="add-initiative-bonus" value="" inputmode="numeric" pattern="[+-]?[0-9]*" />
+                  <input type="number" id="add-initiative-bonus" value="" />
                   </span>
                 </label>
                 <label class="property-toggle-row">
@@ -197,7 +197,7 @@
               <label id="initiative-bonus-wrap" class="property-row">
                 <span class="property-label">Bonus</span>
                 <span class="property-control">
-                  <input type="text" id="initiative-bonus" value="0" inputmode="numeric" pattern="[+-]?[0-9]*" />
+                  <input type="number" id="initiative-bonus" value="0" />
                 </span>
               </label>
             </div>
