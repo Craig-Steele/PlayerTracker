@@ -1,11 +1,11 @@
 const REFRESH_INTERVAL_MS = 5000;
-const { QR_CODE_SIZE, updateRulesetIcon } = window.PlayerTrackerShared || {
+const { QR_CODE_SIZE, updateRulesetIcon, rollStandardDie } = window.PlayerTrackerShared || {
   QR_CODE_SIZE: 96,
-  updateRulesetIcon: () => {}
+  updateRulesetIcon: () => {},
+  rollStandardDie: () => null
 };
 
 window.addEventListener('DOMContentLoaded', () => {
-  const roundInfo = document.getElementById('round-info');
   const playersBody = document.getElementById('players-body');
   const turnCompleteBtn = document.getElementById('turn-complete');
   const statusDiv = document.getElementById('status');
@@ -14,12 +14,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const encounterSuspendBtn = document.getElementById('encounter-suspend');
 
   const campaignNameLabel = document.getElementById('campaign-name');
+  const refereeCampaignName = document.getElementById('ref-campaign-name');
+  const refereeEncounterState = document.getElementById('ref-encounter-state');
+  const refereeRulesetLink = document.getElementById('ref-ruleset-link');
+  const refereeRulesetLicense = document.getElementById('ref-ruleset-license');
+  const refereeRulesetLicenseWrap = document.getElementById('ref-ruleset-license-wrap');
   const rulesetLink = document.getElementById('ruleset-link');
   const rulesetLicense = document.getElementById('ruleset-license');
   const rulesetLicenseWrap = document.getElementById('ruleset-license-wrap');
   const rulesetIcon = document.getElementById('ruleset-icon');
+  const refereeRulesetIcon = document.getElementById('ref-ruleset-icon');
 
-  const form = document.getElementById('referee-form');
+  const form = document.getElementById('ref-add-panel');
   const nameInput = document.getElementById('ref-name');
   const quantityInput = document.getElementById('ref-quantity');
   const initiativeInput = document.getElementById('ref-initiative');
@@ -32,6 +38,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const visibleToggle = document.getElementById('ref-visible');
   const addCurrentStats = document.getElementById('ref-add-current-stats');
   const addButton = document.getElementById('ref-add-button');
+  const removeButton = document.getElementById('ref-remove-button');
   const addCancelBtn = document.getElementById('ref-add-cancel');
   const editorEmpty = document.getElementById('ref-editor-empty');
   const editorForm = document.getElementById('ref-editor');
@@ -43,10 +50,15 @@ window.addEventListener('DOMContentLoaded', () => {
   const editorConditionFilter = document.getElementById('ref-condition-filter');
   const editorConditionsGrid = document.getElementById('ref-conditions-grid');
   const editorSelectedConditions = document.getElementById('ref-selected-conditions');
+  const selectionToolbarAnchor = document.getElementById('ref-selection-toolbar-anchor');
   const detailsToggle = document.getElementById('ref-details-toggle');
   const detailsPanel = document.getElementById('ref-details-panel');
   const conditionsToggle = document.getElementById('ref-conditions-toggle');
   const conditionsPanel = document.getElementById('ref-conditions-panel');
+  const detailsCancelBtn = document.getElementById('ref-details-cancel');
+  const detailsSaveBtn = document.getElementById('ref-details-save');
+  const conditionsCancelBtn = document.getElementById('ref-conditions-cancel');
+  const conditionsSaveBtn = document.getElementById('ref-conditions-save');
   const revealNowBtn = document.getElementById('ref-reveal-now');
   const revealTurnBtn = document.getElementById('ref-reveal-turn');
   const hideBtn = document.getElementById('ref-hide-character');
@@ -67,35 +79,70 @@ window.addEventListener('DOMContentLoaded', () => {
   let skipRefresh = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
+  let currentStandardDie = null;
   let hidePlayers = true;
-  let autoSaveTimer = null;
-  const AUTO_SAVE_DELAY_MS = 600;
+  let detailsDirty = false;
+  let conditionsDirty = false;
+
+  function setRulesetLinkTarget(linkEl, labelText, baseUrl) {
+    if (!linkEl) return;
+    linkEl.textContent = labelText || '';
+    if (baseUrl) {
+      linkEl.href = baseUrl;
+      linkEl.removeAttribute('aria-disabled');
+    } else {
+      linkEl.removeAttribute('href');
+      linkEl.setAttribute('aria-disabled', 'true');
+    }
+  }
 
   function updateRulesetLink(labelText, baseUrl) {
-    if (!rulesetLink) return;
-    rulesetLink.textContent = labelText || '';
-    if (baseUrl) {
-      rulesetLink.href = baseUrl;
-      rulesetLink.removeAttribute('aria-disabled');
+    setRulesetLinkTarget(rulesetLink, labelText, baseUrl);
+    setRulesetLinkTarget(refereeRulesetLink, labelText, baseUrl);
+  }
+
+  function setRulesetLicenseTarget(linkEl, wrapEl, licenseUrl) {
+    if (!linkEl || !wrapEl) return;
+    if (licenseUrl) {
+      linkEl.href = licenseUrl;
+      wrapEl.style.display = 'inline';
     } else {
-      rulesetLink.removeAttribute('href');
-      rulesetLink.setAttribute('aria-disabled', 'true');
+      linkEl.removeAttribute('href');
+      wrapEl.style.display = 'none';
     }
   }
 
   function updateRulesetLicense(licenseUrl) {
-    if (!rulesetLicense || !rulesetLicenseWrap) return;
-    if (licenseUrl) {
-      rulesetLicense.href = licenseUrl;
-      rulesetLicenseWrap.style.display = 'inline';
-    } else {
-      rulesetLicense.removeAttribute('href');
-      rulesetLicenseWrap.style.display = 'none';
-    }
+    setRulesetLicenseTarget(rulesetLicense, rulesetLicenseWrap, licenseUrl);
+    setRulesetLicenseTarget(refereeRulesetLicense, refereeRulesetLicenseWrap, licenseUrl);
   }
 
   function setRulesetIcon(iconUrl, labelText) {
     updateRulesetIcon(rulesetIcon, iconUrl, labelText);
+    updateRulesetIcon(refereeRulesetIcon, iconUrl, labelText);
+  }
+
+  function formatEncounterActorLabel(player) {
+    if (!player || !player.name) return null;
+    const ownerName = typeof player.ownerName === 'string' ? player.ownerName.trim() : '';
+    return ownerName ? `${player.name} (${ownerName})` : player.name;
+  }
+
+  function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
+    if (!refereeEncounterState) return;
+    refereeEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isRefTurn));
+    const currentTurnLabel = formatEncounterActorLabel(currentTurnPlayer);
+    if (encounterState === 'active') {
+      refereeEncounterState.textContent = currentTurnLabel
+        ? `Round ${round}: ${currentTurnLabel}`
+        : `Round ${round}`;
+      return;
+    }
+    if (encounterState === 'suspended') {
+      refereeEncounterState.textContent = 'Encounter: Suspended';
+      return;
+    }
+    refereeEncounterState.textContent = 'Encounter: New';
   }
 
   function computeAbbreviationFromName(name) {
@@ -188,13 +235,23 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function setConditionsPanelOpen(open) {
     if (!conditionsToggle || !conditionsPanel) return;
+    if (open && detailsDirty) {
+      const discard = confirm('Discard unsaved detail changes?');
+      if (!discard) return;
+      const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+      if (current) {
+        setSelectedCharacter(current);
+      }
+    }
     conditionsPanelOpen = open;
     if (open && detailsToggle && detailsPanel) {
       detailsPanel.classList.remove('details-panel-open');
       detailsPanel.classList.add('details-panel-collapsed');
+      detailsPanel.classList.add('hidden');
       detailsToggle.setAttribute('aria-expanded', 'false');
       detailsPanel.setAttribute('aria-hidden', 'true');
     }
+    conditionsPanel.classList.toggle('hidden', !open);
     conditionsPanel.classList.toggle('conditions-panel-open', open);
     conditionsPanel.classList.toggle('conditions-panel-collapsed', !open);
     conditionsToggle.setAttribute('aria-expanded', open.toString());
@@ -203,9 +260,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function setDetailsPanelOpen(open) {
     if (!detailsToggle || !detailsPanel) return;
+    if (open && conditionsDirty) {
+      const discard = confirm('Discard unsaved condition changes?');
+      if (!discard) return;
+      const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+      if (current) {
+        setSelectedCharacter(current);
+      }
+    }
     if (open && conditionsToggle && conditionsPanel) {
       setConditionsPanelOpen(false);
     }
+    detailsPanel.classList.toggle('hidden', !open);
     detailsPanel.classList.toggle('details-panel-open', open);
     detailsPanel.classList.toggle('details-panel-collapsed', !open);
     detailsToggle.setAttribute('aria-expanded', open.toString());
@@ -229,7 +295,7 @@ window.addEventListener('DOMContentLoaded', () => {
         currentInput.min = '0';
       }
       currentInput.addEventListener('input', () => {
-        scheduleEditorSave();
+        detailsDirty = true;
       });
 
       let maxInput = null;
@@ -239,7 +305,7 @@ window.addEventListener('DOMContentLoaded', () => {
         maxInput.id = maxId;
         maxInput.min = '0';
         maxInput.addEventListener('input', () => {
-          scheduleEditorSave();
+          detailsDirty = true;
         });
       }
 
@@ -303,6 +369,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (campaignNameLabel) {
         campaignNameLabel.textContent = currentCampaignName || 'Campaign';
       }
+      if (refereeCampaignName) {
+        refereeCampaignName.textContent = currentCampaignName || 'Campaign';
+      }
       updateRulesetLink(campaign.rulesetLabel || '', null);
       if (currentCampaignName) {
         document.title = `${currentCampaignName} - Referee`;
@@ -311,6 +380,9 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Failed to load campaign:', err);
+      if (refereeCampaignName) {
+        refereeCampaignName.textContent = currentCampaignName || 'Campaign';
+      }
       document.title = 'Turn Track';
     }
   }
@@ -330,6 +402,10 @@ window.addEventListener('DOMContentLoaded', () => {
         statKeys = [...statKeys, 'TempHP'];
       }
       allowNegativeHealth = Boolean(json?.allowNegativeHealth);
+      currentStandardDie =
+        typeof json?.standardDie === 'string' && json.standardDie.trim()
+          ? json.standardDie.trim()
+          : null;
       buildStatsFields();
       buildEditorStatsFields();
 
@@ -371,6 +447,7 @@ window.addEventListener('DOMContentLoaded', () => {
       updateRulesetLicense(null);
       allowNegativeHealth = false;
       supportsTempHp = false;
+      currentStandardDie = null;
       statKeys = ['HP'];
       buildStatsFields();
       buildEditorStatsFields();
@@ -382,16 +459,27 @@ window.addEventListener('DOMContentLoaded', () => {
     currentPlayers = players;
     currentTurnId = state.currentTurnId || null;
     encounterState = state.encounterState || 'new';
-    if (roundInfo) {
-      roundInfo.textContent = `Round ${state.round || 1}`;
-    }
+    const round = state.round || 1;
+    const currentTurnPlayer = currentTurnId ? players.find((player) => player.id === currentTurnId) : null;
+    const isRefTurn = (currentTurnPlayer?.ownerName || '').toLowerCase() === 'referee';
+    updateEncounterStateDisplay(round, currentTurnPlayer || null, isRefTurn);
     renderTurnTable(players, state.currentTurnId);
     renderCharacterList(players, state.currentTurnId);
     if (selectedCharacterId) {
       const updated = currentPlayers.find((p) => p.id === selectedCharacterId);
       if (updated) {
-        setSelectedCharacter(updated);
+        if (!detailsDirty && !conditionsDirty) {
+          setSelectedCharacter(updated);
+        } else {
+          updateActionButtons(updated);
+          updateSelectionControls();
+          renderCharacterList(currentPlayers, currentTurnId);
+        }
+      } else {
+        clearSelectedCharacter();
       }
+    } else {
+      updateSelectionControls();
     }
     if (statusDiv) {
       if (encounterState === 'active') {
@@ -413,7 +501,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (editorInitiativeBonusInput) {
     editorInitiativeBonusInput.addEventListener('input', () => {
-      scheduleEditorSave();
+      detailsDirty = true;
     });
   }
 
@@ -601,6 +689,9 @@ window.addEventListener('DOMContentLoaded', () => {
   function renderCharacterList(players, activeTurnId) {
     if (!characterList) return;
     characterList.innerHTML = '';
+    if (selectionToolbarAnchor && detailsToggle?.parentElement) {
+      selectionToolbarAnchor.appendChild(detailsToggle.parentElement);
+    }
     const filteredPlayers = hidePlayers
       ? players.filter((player) => (player.ownerName || '').toLowerCase() === 'referee')
       : players;
@@ -703,22 +794,49 @@ window.addEventListener('DOMContentLoaded', () => {
       });
 
       row.appendChild(statsWrap);
-      const actions = document.createElement('div');
-      actions.className = 'character-actions';
-      const removeBtn = document.createElement('button');
-      removeBtn.type = 'button';
-      removeBtn.className = 'icon-button danger character-remove';
-      removeBtn.textContent = '✕';
-      removeBtn.setAttribute('aria-label', `Remove ${player.name}`);
-      removeBtn.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const confirmDelete = confirm(`Remove ${player.name} from the tracker?`);
-        if (!confirmDelete) return;
-        deleteCharacter(player.id);
-      });
-      actions.appendChild(removeBtn);
-      row.appendChild(actions);
       item.appendChild(row);
+
+      const needsInitiativeAction =
+        encounterState === 'active' &&
+        isReferee &&
+        (player.initiative === null || player.initiative === undefined);
+
+      const showTurnCompleteAction =
+        encounterState === 'active' &&
+        Boolean(activeTurnId) &&
+        player.id === activeTurnId &&
+        isReferee;
+
+      if (needsInitiativeAction || showTurnCompleteAction) {
+        const actions = document.createElement('div');
+        actions.className = 'character-actions';
+        if (needsInitiativeAction) {
+          const rollButton = document.createElement('button');
+          rollButton.type = 'button';
+          rollButton.textContent = 'Roll for Initiative!';
+          rollButton.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            await handleInitiativeAction(player);
+          });
+          actions.appendChild(rollButton);
+        }
+        const turnButton = document.createElement('button');
+        if (showTurnCompleteAction) {
+          turnButton.type = 'button';
+          turnButton.textContent = 'Turn Complete';
+          turnButton.className = 'character-turn-complete';
+          turnButton.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            await handleTurnComplete();
+          });
+          actions.appendChild(turnButton);
+        }
+        item.appendChild(actions);
+      }
+
+      if (player.id === selectedCharacterId && detailsToggle?.parentElement) {
+        item.appendChild(detailsToggle.parentElement);
+      }
 
       item.addEventListener('click', () => {
         setSelectedCharacter(player);
@@ -804,6 +922,8 @@ window.addEventListener('DOMContentLoaded', () => {
   function setSelectedCharacter(player) {
     if (!player) return;
     selectedCharacterId = player.id;
+    detailsDirty = false;
+    conditionsDirty = false;
     if (editorEmpty) editorEmpty.classList.add('hidden');
     if (editorForm) editorForm.classList.remove('hidden');
     if (editorNameInput) editorNameInput.value = player.name || '';
@@ -826,6 +946,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderEditorConditions(editorConditionFilter ? editorConditionFilter.value : '');
     updateSelectedConditionsDisplay();
     updateActionButtons(player);
+    updateSelectionControls();
     renderCharacterList(currentPlayers, currentTurnId);
   }
 
@@ -851,12 +972,32 @@ window.addEventListener('DOMContentLoaded', () => {
     await saveCharacterEntry(player);
   }
 
-  function scheduleEditorSave() {
-    if (!selectedCharacterId) return;
-    clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(() => {
-      saveEditorCharacter();
-    }, AUTO_SAVE_DELAY_MS);
+  async function handleInitiativeAction(player) {
+    if (!player) return;
+    if (player.useAppInitiativeRoll !== false) {
+      const rolled = rollStandardDie(currentStandardDie, player.initiativeBonus);
+      if (Number.isFinite(rolled)) {
+        player.initiative = rolled;
+        renderCharacterList(currentPlayers, currentTurnId);
+        skipRefresh = true;
+        await saveCharacterEntry(player);
+        return;
+      }
+    }
+
+    const entered = prompt(`Enter initiative for ${player.name}`, '');
+    if (entered === null) return;
+    const trimmed = entered.trim();
+    if (!trimmed) return;
+    const initiative = Number(trimmed);
+    if (!Number.isFinite(initiative)) {
+      if (statusDiv) statusDiv.textContent = 'Initiative must be a valid number.';
+      return;
+    }
+    player.initiative = initiative;
+    renderCharacterList(currentPlayers, currentTurnId);
+    skipRefresh = true;
+    await saveCharacterEntry(player);
   }
 
   function updateActionButtons(player) {
@@ -874,6 +1015,39 @@ window.addEventListener('DOMContentLoaded', () => {
       hideBtn.classList.toggle('hidden', !isReferee || isHidden);
       hideBtn.disabled = !isReferee || isHidden;
     }
+  }
+
+  function updateSelectionControls() {
+    const hasSelection = Boolean(selectedCharacterId);
+    const toggleButtons = [detailsToggle, conditionsToggle];
+    toggleButtons.forEach((button) => {
+      if (!button) return;
+      button.disabled = !hasSelection;
+      button.classList.toggle('hidden', !hasSelection);
+    });
+    [revealNowBtn, revealTurnBtn, hideBtn].forEach((button) => {
+      if (!button) return;
+      if (!hasSelection) {
+        button.disabled = true;
+        button.classList.add('hidden');
+      }
+    });
+    if (removeButton) {
+      removeButton.disabled = !hasSelection;
+      removeButton.setAttribute('aria-disabled', (!hasSelection).toString());
+    }
+  }
+
+  function clearSelectedCharacter() {
+    selectedCharacterId = null;
+    detailsDirty = false;
+    conditionsDirty = false;
+    if (editorForm) editorForm.classList.add('hidden');
+    if (editorEmpty) editorEmpty.classList.remove('hidden');
+    setDetailsPanelOpen(false);
+    setConditionsPanelOpen(false);
+    updateSelectionControls();
+    renderCharacterList(currentPlayers, currentTurnId);
   }
 
   function renderEditorConditions(filterText = '') {
@@ -925,7 +1099,7 @@ window.addEventListener('DOMContentLoaded', () => {
           wrapper.classList.remove('selected');
         }
         updateSelectedConditionsDisplay();
-        scheduleEditorSave();
+        conditionsDirty = true;
       });
 
       const nameSpan = document.createElement('span');
@@ -970,18 +1144,18 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function saveEditorCharacter() {
-    if (!selectedCharacterId) return;
+  function buildEditorPayload() {
+    if (!selectedCharacterId) return null;
     const name = editorNameInput ? editorNameInput.value.trim() : '';
     if (!name) {
       if (statusDiv) statusDiv.textContent = 'Character is required.';
-      return;
+      return null;
     }
     const initiativeBonusStr = editorInitiativeBonusInput ? editorInitiativeBonusInput.value.trim() : '';
     const initiativeBonus = initiativeBonusStr === '' ? 0 : Number(initiativeBonusStr);
     if (!Number.isFinite(initiativeBonus)) {
       if (statusDiv) statusDiv.textContent = 'Initiative bonus must be a valid number.';
-      return;
+      return null;
     }
 
     const statsPayload = [];
@@ -992,7 +1166,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const isTempHp = key === 'TempHP';
       if (!isTempHp && maxStr === '') {
         if (statusDiv) statusDiv.textContent = `Max ${key} is required.`;
-        return;
+        return null;
       }
       const maxVal = isTempHp ? 0 : Number(maxStr);
       const requiresPositiveMax = !isTempHp;
@@ -1002,12 +1176,12 @@ window.addEventListener('DOMContentLoaded', () => {
             ? `Max ${key} must be greater than 0.`
             : `Max ${key} must be 0 or greater.`;
         }
-        return;
+        return null;
       }
       const currentVal = currentStr === '' ? (isTempHp ? 0 : maxVal) : Number(currentStr);
       if (!Number.isFinite(currentVal)) {
         if (statusDiv) statusDiv.textContent = `${key} current value must be a valid number.`;
-        return;
+        return null;
       }
       const allowsNegative = key !== 'TempHP' && allowNegativeHealth;
       if ((!isTempHp && currentVal > maxVal) || (!allowsNegative && currentVal < 0)) {
@@ -1016,7 +1190,7 @@ window.addEventListener('DOMContentLoaded', () => {
             ? `${key} current must be less than or equal to Max.`
             : `${key} current must be between 0 and Max.`;
         }
-        return;
+        return null;
       }
       statsPayload.push({ key, current: currentVal, max: isTempHp ? 0 : maxVal });
     }
@@ -1042,7 +1216,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (currentCampaignName) {
       payload.campaignName = currentCampaignName;
     }
+    return payload;
+  }
 
+  async function saveEditorCharacter() {
+    const payload = buildEditorPayload();
+    if (!payload) return false;
     try {
       const res = await fetch('/characters', {
         method: 'POST',
@@ -1050,10 +1229,14 @@ window.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(payload)
       });
       if (!res.ok) throw new Error('Server returned ' + res.status);
+      detailsDirty = false;
+      conditionsDirty = false;
       if (statusDiv) statusDiv.textContent = 'Character updated.';
       await loadState();
+      return true;
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Failed to update character: ${err.message}`;
+      return false;
     }
   }
 
@@ -1163,6 +1346,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function showAddForm() {
     if (!form) return;
     clearAddForm();
+    form.classList.remove('hidden');
     form.classList.remove('details-panel-collapsed');
     form.classList.add('details-panel-open');
     form.setAttribute('aria-hidden', 'false');
@@ -1173,6 +1357,7 @@ window.addEventListener('DOMContentLoaded', () => {
     clearAddForm();
     form.classList.add('details-panel-collapsed');
     form.classList.remove('details-panel-open');
+    form.classList.add('hidden');
     form.setAttribute('aria-hidden', 'true');
   }
 
@@ -1221,9 +1406,7 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch(`/characters/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Server returned ' + res.status);
-      selectedCharacterId = null;
-      if (editorForm) editorForm.classList.add('hidden');
-      if (editorEmpty) editorEmpty.classList.remove('hidden');
+      clearSelectedCharacter();
       await loadState();
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Failed to remove character: ${err.message}`;
@@ -1313,7 +1496,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (editorNameInput) {
     editorNameInput.addEventListener('input', () => {
-      scheduleEditorSave();
+      detailsDirty = true;
     });
   }
   if (detailsToggle && detailsPanel) {
@@ -1322,15 +1505,95 @@ window.addEventListener('DOMContentLoaded', () => {
       setDetailsPanelOpen(!isOpen);
     });
   }
+  if (detailsCancelBtn) {
+    detailsCancelBtn.addEventListener('click', () => {
+      if (detailsDirty) {
+        const discard = confirm('Discard unsaved detail changes?');
+        if (!discard) return;
+        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+        if (current) {
+          setSelectedCharacter(current);
+        }
+      }
+      setDetailsPanelOpen(false);
+    });
+  }
+  if (detailsSaveBtn) {
+    detailsSaveBtn.addEventListener('click', async () => {
+      const saved = await saveEditorCharacter();
+      if (saved) {
+        setDetailsPanelOpen(false);
+      }
+    });
+  }
+  if (detailsPanel) {
+    detailsPanel.addEventListener('click', (event) => {
+      if (event.target !== detailsPanel) return;
+      if (detailsDirty) {
+        const discard = confirm('Discard unsaved detail changes?');
+        if (!discard) return;
+        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+        if (current) {
+          setSelectedCharacter(current);
+        }
+      }
+      setDetailsPanelOpen(false);
+    });
+  }
   if (conditionsToggle && conditionsPanel) {
     conditionsToggle.addEventListener('click', () => {
       const isOpen = conditionsPanel.classList.contains('conditions-panel-open');
       setConditionsPanelOpen(!isOpen);
     });
   }
+  if (conditionsCancelBtn) {
+    conditionsCancelBtn.addEventListener('click', () => {
+      if (conditionsDirty) {
+        const discard = confirm('Discard unsaved condition changes?');
+        if (!discard) return;
+        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+        if (current) {
+          setSelectedCharacter(current);
+        }
+      }
+      setConditionsPanelOpen(false);
+    });
+  }
+  if (conditionsSaveBtn) {
+    conditionsSaveBtn.addEventListener('click', async () => {
+      const saved = await saveEditorCharacter();
+      if (saved) {
+        setConditionsPanelOpen(false);
+      }
+    });
+  }
+  if (conditionsPanel) {
+    conditionsPanel.addEventListener('click', (event) => {
+      if (event.target !== conditionsPanel) return;
+      if (conditionsDirty) {
+        const discard = confirm('Discard unsaved condition changes?');
+        if (!discard) return;
+        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+        if (current) {
+          setSelectedCharacter(current);
+        }
+      }
+      setConditionsPanelOpen(false);
+    });
+  }
   if (addButton) {
     addButton.addEventListener('click', () => {
       showAddForm();
+    });
+  }
+  if (removeButton) {
+    removeButton.addEventListener('click', () => {
+      if (!selectedCharacterId) return;
+      const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+      if (!current) return;
+      const confirmDelete = confirm(`Remove ${current.name} from the tracker?`);
+      if (!confirmDelete) return;
+      deleteCharacter(current.id);
     });
   }
   if (addCancelBtn) {
@@ -1345,6 +1608,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   bindActionButtons();
+  updateSelectionControls();
 
   init();
 });

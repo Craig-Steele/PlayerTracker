@@ -87,13 +87,15 @@
         <div class="character-drawer">
           <div id="character-list" class="character-list"></div>
           <div class="character-toolbar">
-            <div class="details-toggles">
-              <button type="button" id="details-toggle" class="details-toggle" aria-expanded="false">
-                Details
-              </button>
-              <button type="button" id="conditions-toggle" class="details-toggle conditions-toggle" aria-expanded="false">
-                Conditions
-              </button>
+            <div id="player-selection-toolbar-anchor" class="hidden">
+              <div class="details-toggles">
+                <button type="button" id="details-toggle" class="details-toggle" aria-expanded="false">
+                  Details
+                </button>
+                <button type="button" id="conditions-toggle" class="details-toggle conditions-toggle" aria-expanded="false">
+                  Conditions
+                </button>
+              </div>
             </div>
             <div class="character-list-actions">
               <button type="button" id="character-add" class="icon-button" aria-label="Add character">+</button>
@@ -222,7 +224,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="shared.js"></script>
-  <script src="app.js"></script>
+  <script src="shared.js?v=1"></script>
+  <script src="app.js?v=1"></script>
 </body>
 </html>

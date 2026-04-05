@@ -3,9 +3,10 @@ let lastStateJson = null;
 const REFRESH_INTERVAL_MS = 5000;
 let skipRefresh = false;
 
-const { QR_CODE_SIZE, updateRulesetIcon } = window.PlayerTrackerShared || {
+const { QR_CODE_SIZE, updateRulesetIcon, rollStandardDie } = window.PlayerTrackerShared || {
   QR_CODE_SIZE: 96,
-  updateRulesetIcon: () => {}
+  updateRulesetIcon: () => {},
+  rollStandardDie: () => null
 };
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
@@ -169,8 +170,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const autoSkipTurnInput = document.getElementById('auto-skip-turn');
   const currentActor = document.getElementById('current-actor');
   const healthHeading = document.getElementById('health-heading');
-
-  const turnCompleteBtn = document.getElementById('turn-complete');
   const conditionGrid = document.getElementById('conditions-grid');
   const selectedConditionsWrap = document.getElementById('selected-conditions');
   const conditionFilterInput = document.getElementById('condition-filter');
@@ -214,6 +213,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerListSection = document.querySelector('.player-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
   const characterListActions = document.querySelector('.character-list-actions');
+  const selectionToolbarAnchor = document.getElementById('player-selection-toolbar-anchor');
 
   let selectedConditions = new Set();
   let conditionsDirty = false;
@@ -414,12 +414,19 @@ window.addEventListener('DOMContentLoaded', () => {
     document.title = `${campaignName} - ${ownerName || 'Player'}`;
   }
 
-  function updateEncounterStateDisplay(round = 1, currentTurnName = null, isMineTurn = false) {
+  function formatEncounterActorLabel(player) {
+    if (!player || !player.name) return null;
+    const ownerName = typeof player.ownerName === 'string' ? player.ownerName.trim() : '';
+    return ownerName ? `${player.name} (${ownerName})` : player.name;
+  }
+
+  function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isMineTurn = false) {
     if (!playerEncounterState) return;
     playerEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isMineTurn));
+    const currentTurnLabel = formatEncounterActorLabel(currentTurnPlayer);
     if (encounterState === 'active') {
-      playerEncounterState.textContent = currentTurnName
-        ? `Round ${round}: ${currentTurnName}`
+      playerEncounterState.textContent = currentTurnLabel
+        ? `Round ${round}: ${currentTurnLabel}`
         : `Round ${round}`;
       return;
     }
@@ -1088,6 +1095,9 @@ window.addEventListener('DOMContentLoaded', () => {
   function renderCharacterList() {
     if (!characterList) return;
     characterList.innerHTML = '';
+    if (selectionToolbarAnchor && detailsToggles) {
+      selectionToolbarAnchor.appendChild(detailsToggles);
+    }
 
     if (myCharacters.length === 0) {
       const empty = document.createElement('div');
@@ -1215,6 +1225,10 @@ window.addEventListener('DOMContentLoaded', () => {
         item.appendChild(initiativeActions);
       }
 
+      if (character.id === selectedCharacterId && detailsToggles) {
+        item.appendChild(detailsToggles);
+      }
+
       item.addEventListener('click', () => {
         selectCharacter(character.id);
       });
@@ -1287,11 +1301,6 @@ window.addEventListener('DOMContentLoaded', () => {
         selectCharacter(selectedCharacterId);
       }
     }
-  }
-
-  function updateTurnCompleteVisibility() {
-    if (!turnCompleteBtn) return;
-    turnCompleteBtn.style.display = 'none';
   }
 
   function clampCurrentHp(value, maxValue) {
@@ -1452,27 +1461,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function parseStandardDie(spec) {
-    const match = /^(\d+)[dD](\d+)$/.exec(spec || '');
-    if (!match) return null;
-    const count = Number(match[1]);
-    const sides = Number(match[2]);
-    if (!Number.isFinite(count) || !Number.isFinite(sides) || count <= 0 || sides <= 0) {
-      return null;
-    }
-    return { count, sides };
-  }
-
-  function rollStandardDie(spec, bonus) {
-    const parsed = parseStandardDie(spec);
-    if (!parsed) return null;
-    let total = 0;
-    for (let index = 0; index < parsed.count; index += 1) {
-      total += Math.floor(Math.random() * parsed.sides) + 1;
-    }
-    return total + (Number.isFinite(bonus) ? bonus : 0);
-  }
-
   function needsInitiativeAction(character) {
     return encounterState === 'active' && (character.initiative === null || character.initiative === undefined);
   }
@@ -1559,7 +1547,6 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         clearCharacterSelection();
       }
-      updateTurnCompleteVisibility();
     } catch (err) {
       console.error('Failed to load characters:', err);
     }
@@ -1980,14 +1967,16 @@ window.addEventListener('DOMContentLoaded', () => {
       const players = state.players || [];
       const round = state.round || 1;
       encounterState = state.encounterState || 'new';
-      const currentTurnName = state.currentTurnName || null;
       currentTurnId = state.currentTurnId || null;
+      const currentTurnPlayer = currentTurnId
+        ? players.find((player) => player.id === currentTurnId) || null
+        : null;
       const turnChanged = currentTurnId !== lastTurnId;
 
       // Build a normalized snapshot for no-blink detection
       const normalized = {
         round,
-        currentTurnName,
+        currentTurnName: currentTurnPlayer?.name || null,
         currentTurnId,
         players,
         encounterState
@@ -2004,7 +1993,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const isMineTurn = Boolean(
           currentTurnId && myCharacters.some((character) => character.id === currentTurnId)
         );
-        updateEncounterStateDisplay(round, currentTurnName, isMineTurn);
+        updateEncounterStateDisplay(round, currentTurnPlayer, isMineTurn);
         if (currentActor) {
           if (hideTurnTable && currentTurnId) {
             const current = players.find((player) => player.id === currentTurnId);
@@ -2184,8 +2173,6 @@ window.addEventListener('DOMContentLoaded', () => {
         lastTurnId = currentTurnId;
       }
 
-      // Turn Complete button visibility
-      updateTurnCompleteVisibility();
     } catch (err) {
       statusDiv.textContent = 'Error loading state: ' + err.message;
     }
@@ -2411,10 +2398,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (clearBtn) {
     clearBtn.addEventListener('click', handleClear);
-  }
-
-  if (turnCompleteBtn) {
-    turnCompleteBtn.addEventListener('click', handleTurnComplete);
   }
 
   // Initial load + auto-refresh
