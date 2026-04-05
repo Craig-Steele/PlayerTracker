@@ -674,6 +674,12 @@ window.addEventListener('DOMContentLoaded', () => {
       row.appendChild(statsWrap);
       item.appendChild(row);
 
+      const conditionsList = buildEncounterConditionsList(player.conditions, conditionLookup);
+      if (conditionsList) {
+        conditionsList.classList.add('character-card-conditions');
+        item.appendChild(conditionsList);
+      }
+
       const needsInitiativeAction =
         encounterState === 'active' &&
         isReferee &&

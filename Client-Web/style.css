@@ -606,6 +606,13 @@ th, td {
   margin-top: 0.55rem;
 }
 
+.character-card-conditions {
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  margin-top: 0.1rem;
+}
+
 .character-actions button {
   margin-top: 0;
   width: 100%;

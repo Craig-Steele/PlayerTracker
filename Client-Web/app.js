@@ -1115,6 +1115,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
       item.appendChild(row);
 
+      const conditionsList = buildEncounterConditionsList(character.conditions, conditionLookup);
+      if (conditionsList) {
+        conditionsList.classList.add('character-card-conditions');
+        item.appendChild(conditionsList);
+      }
+
       const showTurnCompleteAction =
         !displayOnly &&
         encounterState === 'active' &&
