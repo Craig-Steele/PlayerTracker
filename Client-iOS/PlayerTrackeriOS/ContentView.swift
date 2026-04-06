@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @Bindable var model: PlayerAppModel
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var editorDraft: CharacterDraft?
     @State private var conditionsDraft: CharacterDraft?
@@ -17,10 +18,23 @@ struct ContentView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     encounterCard
-                    myCharactersSection
-                    initiativeSection
+
+                    if horizontalSizeClass == .regular {
+                        HStack(alignment: .top, spacing: 20) {
+                            myCharactersSection
+                                .frame(maxWidth: .infinity, alignment: .topLeading)
+
+                            initiativeSection
+                                .frame(width: 360, alignment: .topLeading)
+                        }
+                    } else {
+                        myCharactersSection
+                        initiativeSection
+                    }
                 }
+                .frame(maxWidth: 1180, alignment: .leading)
                 .padding()
+                .frame(maxWidth: .infinity, alignment: .center)
             }
             .background(Color(uiColor: .systemGroupedBackground))
             .sheet(isPresented: $showingSettings) {
