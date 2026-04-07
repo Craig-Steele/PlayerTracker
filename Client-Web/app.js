@@ -89,22 +89,52 @@ function renderQrCode(url) {
   });
 }
 
-// Fetch the server IP and show "Connect to http://IP:8080" + QR
-async function showServerIP(ipDisplayElement) {
-  if (!ipDisplayElement) return;
-
+// Fetch the available join addresses and show the selected URL as a QR code.
+async function showServerIP() {
   try {
     const res = await fetch('/server-ip');
     if (!res.ok) return;
 
     const json = await res.json();
-    const ip = json.ip;
+    const selector = document.getElementById('ip-selector');
+    const localIP = typeof json.localIP === 'string' ? json.localIP.trim() : '';
+    const publicIP = typeof json.publicIP === 'string' ? json.publicIP.trim() : '';
+    const localURL = localIP && localIP !== 'unknown' ? `http://${localIP}:8080` : null;
+    const publicURL = publicIP && publicIP !== 'unknown' ? `http://${publicIP}:7531` : null;
 
-    if (ip && ip !== 'unknown') {
-      const url = `http://${ip}:8080`;
-      ipDisplayElement.textContent = url;
-      renderQrCode(url);
+    if (!localURL && !publicURL) {
+      if (selector) {
+        selector.classList.add('hidden');
+      }
+      return;
     }
+
+    const availableOptions = [];
+    if (localURL) availableOptions.push({ label: `Local: ${localURL}`, url: localURL });
+    if (publicURL) availableOptions.push({ label: `Public: ${publicURL}`, url: publicURL });
+    let selectedURL = availableOptions[0]?.url || null;
+
+    function updateSelectedAddress() {
+      if (!selectedURL) return;
+      renderQrCode(selectedURL);
+    }
+
+    if (selector) {
+      selector.innerHTML = '';
+      availableOptions.forEach(({ label, url }) => {
+        const option = document.createElement('option');
+        option.value = url;
+        option.textContent = label;
+        selector.appendChild(option);
+      });
+      selector.value = selectedURL;
+      selector.classList.toggle('hidden', availableOptions.length < 2);
+      selector.onchange = () => {
+        selectedURL = selector.value;
+        updateSelectedAddress();
+      };
+    }
+    updateSelectedAddress();
   } catch (err) {
     console.error('Failed to fetch server IP:', err);
   }
@@ -118,7 +148,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const adminToolbar = document.getElementById('admin-toolbar');
   const clearBtn = document.getElementById('clear');
 
-  const ipDisplay = document.getElementById('ip-display');
   const qrContainer = document.getElementById('qr-container'); // if you have it
 
   const ownerInput = document.getElementById('owner-name');
@@ -386,10 +415,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (detailPanel) detailPanel.style.display = 'none';
     if (playerNameEdit) playerNameEdit.style.display = 'none';
     document.body.classList.add('display-only');
-    showServerIP(ipDisplay);
+    showServerIP();
   } else {
     if (adminToolbar) adminToolbar.style.display = 'none';
-    if (ipDisplay) ipDisplay.textContent = '';
     if (qrContainer) qrContainer.innerHTML = '';
   }
 

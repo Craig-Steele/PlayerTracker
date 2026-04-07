@@ -1765,8 +1765,15 @@ body.display-only {
   gap: 1rem;
 }
 
-.display-only #ip-display {
-  white-space: nowrap;
+.display-join-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.ip-selector {
+  max-width: min(32rem, 70vw);
 }
 
 .display-only #qr-container {
