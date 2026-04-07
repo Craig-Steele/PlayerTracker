@@ -115,13 +115,7 @@ private func repositoryWebClientDirectory() -> URL {
 }
 
 private func availableWebClientDirectory() -> URL {
-    let repositoryDirectory = repositoryWebClientDirectory()
-    if FileManager.default.fileExists(atPath: repositoryDirectory.path) {
-        return repositoryDirectory
-    }
-
-    let homeDir = FileManager.default.homeDirectoryForCurrentUser
-    return homeDir.appendingPathComponent("Sites/PlayerTracker", isDirectory: true)
+    repositoryWebClientDirectory()
 }
 
 // Concurrency-safe store for your character list

@@ -59,6 +59,6 @@ On startup, the service currently opens the local display view in a browser on t
 
 ## Notes
 
-- The server prefers the checked-in `Client-Web/` directory and falls back to `~/Sites/PlayerTracker` only if needed.
+- The server serves the checked-in `Client-Web/` directory from this repository.
 - This repository is currently optimized for local-network table play rather than internet-hosted multiplayer.
 - The iOS app is named `Roll For Initiative!`.

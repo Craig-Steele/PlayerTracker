@@ -109,11 +109,6 @@ enum RuleSetLibraryLoader {
         return try JSONDecoder().decode(RuleSetLibrary.self, from: data)
     }
 
-    private static func homeConditionsDirectory() -> URL? {
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser
-        return homeDir.appendingPathComponent("Sites/PlayerTracker/rulesets")
-    }
-
     private static func repositoryConditionsDirectory() -> URL? {
         let sourceURL = URL(fileURLWithPath: #filePath)
         let repositoryRoot = sourceURL
@@ -124,7 +119,7 @@ enum RuleSetLibraryLoader {
     }
 
     private static func availableConditionsDirectory() -> URL? {
-        repositoryConditionsDirectory() ?? homeConditionsDirectory()
+        repositoryConditionsDirectory()
     }
 
     private static func emptyLibrary() -> RuleSetLibrary {
