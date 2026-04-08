@@ -110,9 +110,11 @@ async function showServerIP() {
     }
 
     const availableOptions = [];
-    if (localURL) availableOptions.push({ label: `Local: ${localURL}`, url: localURL });
-    if (publicURL) availableOptions.push({ label: `Public: ${publicURL}`, url: publicURL });
-    let selectedURL = availableOptions[0]?.url || null;
+    if (localURL) availableOptions.push({ label: `Local: ${localURL}`, url: localURL, host: localIP });
+    if (publicURL) availableOptions.push({ label: `Public: ${publicURL}`, url: publicURL, host: publicIP });
+    const currentHost = (window.location.hostname || '').trim();
+    const matchingOption = availableOptions.find((option) => option.host === currentHost);
+    let selectedURL = (matchingOption || availableOptions[0])?.url || null;
 
     function updateSelectedAddress() {
       if (!selectedURL) return;
