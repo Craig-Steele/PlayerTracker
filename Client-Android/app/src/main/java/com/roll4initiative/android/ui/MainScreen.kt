@@ -288,14 +288,6 @@ fun CharacterCard(
                     ) {
                         Icon(Icons.Default.Casino, contentDescription = "Roll Initiative", tint = MaterialTheme.colorScheme.primary)
                     }
-                } else if (isCurrentTurn && !expanded) {
-                    Button(
-                        onClick = { viewModel.completeTurn() },
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Text("Turn Complete", fontSize = 12.sp)
-                    }
                 } else if (expanded) {
                     Surface(
                         onClick = onEditInitiative,
