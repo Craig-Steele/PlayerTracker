@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Roll For Initiative</string>
+    <string name="server_url_hint">Server URL</string>
+    <string name="default_server_url">http://10.0.2.2:8080</string>
+    <string name="check_server">Check Server</string>
+    <string name="checking_server">Checking server...</string>
+    <string name="instructions">Enter your Roll4Initiative server URL, then check the connection. Use 10.0.2.2 from the Android emulator when the Vapor server is running on this Mac.</string>
+</resources>
+
