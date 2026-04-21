@@ -5,7 +5,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Arrangement
@@ -33,6 +32,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,9 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -69,8 +68,7 @@ fun MainScreen(viewModel: PlayerAppViewModel) {
     var conditionsCharacter by remember { mutableStateOf<PlayerViewDTO?>(null) }
     var initiativeCharacter by remember { mutableStateOf<PlayerViewDTO?>(null) }
 
-    Scaffold(
-    ) { padding ->
+    Scaffold { padding ->
         val configuration = LocalConfiguration.current
         val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -326,7 +324,7 @@ fun CharacterCard(
                 modifier = Modifier.padding(vertical = 4.dp)
             ) {
                 Icon(
-                    if (expanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
+                    if (expanded) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null
                 )
                 Text(
@@ -567,8 +565,8 @@ fun HealthBadge(player: PlayerViewDTO, viewModel: PlayerAppViewModel) {
     val current = healthStats.sumOf { it.current }
     val max = healthStats.sumOf { it.max }
     
-    var backgroundColor = Color.Gray.copy(alpha = 0.2f)
-    var textColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val backgroundColor: Color
+    val textColor: Color
 
     val isDead = current <= 0 && max > 0
     val ratio = if (max > 0) current.toDouble() / max else 1.0
@@ -858,7 +856,7 @@ fun CharacterEditorDialog(
                         AlertDialog(
                             onDismissRequest = { showingDeleteConfirm = false },
                             title = { Text("Delete Character?") },
-                            text = { Text("This will remove ${if (name.isBlank()) "this character" else name} from the tracker.") },
+                            text = { Text("This will remove ${name.ifBlank { "this character" }} from the tracker.") },
                             confirmButton = {
                                 TextButton(onClick = { 
                                     onDelete(draft.id)
@@ -1161,7 +1159,7 @@ fun ConditionRow(
                         modifier = Modifier.size(24.dp).clip(RoundedCornerShape(4.dp))
                     )
                 } else {
-                    Icon(Icons.Default.OpenInNew, contentDescription = "Open info")
+                    Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open info")
                 }
             }
         }
