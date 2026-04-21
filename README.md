@@ -2,7 +2,7 @@
 
 Initiative and condition tracking for tabletop RPG encounters.
 
-The current working architecture is a Vapor service running on a Mac and serving browser clients over the local network. There is also a first-pass native iOS player client that talks to the same HTTP API.
+The current working architecture is a Vapor service running on a Mac and serving browser clients over the local network. There are also native iOS and Android player clients that talk to the same HTTP API.
 
 ## Current status
 
@@ -12,6 +12,8 @@ The current working architecture is a Vapor service running on a Mac and serving
   Browser clients for player, referee, display, and campaign selection.
 - `Client-iOS`
   Native iPhone player client for the existing server.
+- `Client-Android`
+  Native Android player client built with Jetpack Compose.
 
 ## What the server does
 
