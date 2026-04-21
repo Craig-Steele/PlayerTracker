@@ -1,5 +1,7 @@
 package com.roll4initiative.android.ui
 
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -68,51 +70,94 @@ fun MainScreen(viewModel: PlayerAppViewModel) {
     var initiativeCharacter by remember { mutableStateOf<PlayerViewDTO?>(null) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Roll For Initiative") },
-                actions = {
-                    IconButton(onClick = { showingSettings = true }) {
-                        Icon(Icons.Default.Settings, "Settings")
-                    }
-                    IconButton(onClick = { editorDraft = CharacterDraft.new(viewModel.ruleSet, viewModel.playerName) }) {
-                        Icon(Icons.Default.Add, "Add Character")
-                    }
-                }
-            )
-        }
     ) { padding ->
+        val configuration = LocalConfiguration.current
+        val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
         Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            EncounterCard(viewModel)
-
-            if (viewModel.myCharacters.isEmpty()) {
-                EmptyCard("No characters yet. Tap + to add one.")
-            } else {
-                viewModel.myCharacters.sortedBy { it.name }.forEach { character ->
-                    CharacterCard(
-                        character, 
-                        viewModel, 
-                        onEdit = { editorDraft = CharacterDraft.fromPlayer(character, viewModel.ruleSet) },
-                        onEditConditions = { conditionsCharacter = character },
-                        onEditInitiative = { initiativeCharacter = character }
-                    )
-                }
-            }
-
-            InitiativeSection(
-                viewModel, 
-                onEditInitiative = { initiativeCharacter = it }
+            // Campaign header always spans the full width
+            EncounterCard(
+                viewModel = viewModel,
+                onShowSettings = { showingSettings = true },
+                onAddCharacter = { editorDraft = CharacterDraft.new(viewModel.ruleSet, viewModel.playerName) }
             )
-            
-            if (lastError != null) {
-                Text(lastError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+
+            if (isLandscape) {
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    // Left Column: Characters
+                    Column(
+                        modifier = Modifier
+                            .weight(1.2f)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        if (viewModel.myCharacters.isEmpty()) {
+                            EmptyCard("No characters yet. Tap + to add one.")
+                        } else {
+                            viewModel.myCharacters.sortedBy { it.name }.forEach { character ->
+                                CharacterCard(
+                                    character,
+                                    viewModel,
+                                    onEdit = { editorDraft = CharacterDraft.fromPlayer(character, viewModel.ruleSet) },
+                                    onEditConditions = { conditionsCharacter = character },
+                                    onEditInitiative = { initiativeCharacter = character }
+                                )
+                            }
+                        }
+                    }
+
+                    // Right Column: Initiative
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(20.dp)
+                    ) {
+                        InitiativeSection(
+                            viewModel,
+                            onEditInitiative = { initiativeCharacter = it }
+                        )
+                    }
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    if (viewModel.myCharacters.isEmpty()) {
+                        EmptyCard("No characters yet. Tap + to add one.")
+                    } else {
+                        viewModel.myCharacters.sortedBy { it.name }.forEach { character ->
+                            CharacterCard(
+                                character,
+                                viewModel,
+                                onEdit = { editorDraft = CharacterDraft.fromPlayer(character, viewModel.ruleSet) },
+                                onEditConditions = { conditionsCharacter = character },
+                                onEditInitiative = { initiativeCharacter = character }
+                            )
+                        }
+                    }
+
+                    InitiativeSection(
+                        viewModel,
+                        onEditInitiative = { initiativeCharacter = it }
+                    )
+                    
+                    if (lastError != null) {
+                        Text(lastError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
             }
         }
     }
@@ -169,7 +214,11 @@ fun MainScreen(viewModel: PlayerAppViewModel) {
 }
 
 @Composable
-fun EncounterCard(viewModel: PlayerAppViewModel) {
+fun EncounterCard(
+    viewModel: PlayerAppViewModel,
+    onShowSettings: () -> Unit,
+    onAddCharacter: () -> Unit
+) {
     val campaign = viewModel.campaign
     val gameState = viewModel.gameState
     val isMyTurn = viewModel.isMyTurn
@@ -216,20 +265,31 @@ fun EncounterCard(viewModel: PlayerAppViewModel) {
                 )
             }
 
-            val iconUrl = viewModel.ruleSet?.icon?.let { icon ->
-                if (icon.startsWith("http")) icon 
-                else "${viewModel.serverURLString.removeSuffix("/")}/rulesets/${icon.removePrefix("/")}"
-            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                val iconUrl = viewModel.ruleSet?.icon?.let { icon ->
+                    if (icon.startsWith("http")) icon 
+                    else "${viewModel.serverURLString.removeSuffix("/")}/rulesets/${icon.removePrefix("/")}"
+                }
 
-            if (iconUrl != null) {
-                AsyncImage(
-                    model = iconUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(RoundedCornerShape(10.dp)),
-                    contentScale = ContentScale.Fit
-                )
+                if (iconUrl != null) {
+                    AsyncImage(
+                        model = iconUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(RoundedCornerShape(10.dp)),
+                        contentScale = ContentScale.Fit
+                    )
+                }
+                
+                Row {
+                    IconButton(onClick = onShowSettings) {
+                        Icon(Icons.Default.Settings, "Settings", tint = MaterialTheme.colorScheme.primary)
+                    }
+                    IconButton(onClick = onAddCharacter) {
+                        Icon(Icons.Default.Add, "Add Character", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
             }
         }
     }
@@ -244,7 +304,7 @@ fun CharacterCard(
     onEditConditions: () -> Unit,
     onEditInitiative: () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(true) }
     val isCurrentTurn = viewModel.isCurrentTurn(character)
     val haptic = LocalHapticFeedback.current
 
@@ -424,12 +484,18 @@ fun InitiativeSection(viewModel: PlayerAppViewModel, onEditInitiative: (PlayerVi
 @Composable
 fun InitiativeRow(player: PlayerViewDTO, viewModel: PlayerAppViewModel, onEditInitiative: (PlayerViewDTO) -> Unit) {
     val isCurrentTurn = viewModel.isCurrentTurn(player)
+    val isOwner = player.ownerId == viewModel.ownerId
     val backgroundColor = if (isCurrentTurn) Color.Yellow.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant
 
     Surface(
         color = backgroundColor,
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth().clickable { onEditInitiative(player) }
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (isOwner) Modifier.clickable { onEditInitiative(player) }
+                else Modifier
+            )
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
@@ -501,6 +567,32 @@ fun HealthBadge(player: PlayerViewDTO, viewModel: PlayerAppViewModel) {
     val current = healthStats.sumOf { it.current }
     val max = healthStats.sumOf { it.max }
     
+    var backgroundColor = Color.Gray.copy(alpha = 0.2f)
+    var textColor = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val isDead = current <= 0 && max > 0
+    val ratio = if (max > 0) current.toDouble() / max else 1.0
+
+    if (isDead) {
+        backgroundColor = Color(0xFF4A4A4A) // Dark Gray (~0.29 rgb)
+        textColor = Color.White
+    } else if (ratio >= 1.0) {
+        backgroundColor = Color(0xFFCFE8FF) // Light Blue
+        textColor = Color(0xFF0F3B5E) // Dark Blue
+    } else if (ratio > 0.75) {
+        backgroundColor = Color(0xFFD6F5D6) // Light Green
+        textColor = Color(0xFF124A1C) // Dark Green
+    } else if (ratio > 0.5) {
+        backgroundColor = Color(0xFFFFF2B3) // Light Yellow
+        textColor = Color(0xFF5E4A00) // Dark Yellow
+    } else if (ratio > 0.25) {
+        backgroundColor = Color(0xFFFFD6B3) // Light Orange
+        textColor = Color(0xFF6B3B00) // Dark Orange
+    } else {
+        backgroundColor = Color(0xFFFFC2C2) // Light Red
+        textColor = Color(0xFF590A0A) // Dark Red
+    }
+
     val text = if (showStats) {
         player.stats.filter { it.key != "TempHP" || it.current > 0 }
             .joinToString(" • ") { stat ->
@@ -510,27 +602,27 @@ fun HealthBadge(player: PlayerViewDTO, viewModel: PlayerAppViewModel) {
     } else {
         if (max == 0) "—"
         else {
-            val ratio = current.toDouble() / max
             when {
-                current <= 0 -> "Dead"
+                isDead -> "Dead"
                 ratio >= 1.0 -> "Full"
                 ratio > 0.75 -> "Slight Damage"
                 ratio > 0.5 -> "Some Damage"
                 ratio > 0.25 -> "Bloodied"
-                else -> "Heavily Bloodied"
+                else -> "Heavily Blooded"
             }
         }
     }
 
     Surface(
-        color = Color.Gray.copy(alpha = 0.2f),
+        color = backgroundColor,
         shape = RoundedCornerShape(12.dp)
     ) {
         Text(
             text,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = textColor
         )
     }
 }
