@@ -739,20 +739,33 @@ fun CharacterEditorDialog(
                     Text("Initiative", style = MaterialTheme.typography.titleSmall)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { useAppInitiativeRoll = !useAppInitiativeRoll }
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Checkbox(checked = useAppInitiativeRoll, onCheckedChange = { useAppInitiativeRoll = it })
-                        Text("Use app to roll initiative")
-                    }
-                    if (useAppInitiativeRoll) {
-                        OutlinedTextField(
-                            value = initiativeBonus,
-                            onValueChange = { initiativeBonus = it },
-                            label = { Text("Initiative Bonus") },
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                            singleLine = true
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { useAppInitiativeRoll = !useAppInitiativeRoll }
+                        ) {
+                            Checkbox(
+                                checked = useAppInitiativeRoll,
+                                onCheckedChange = { useAppInitiativeRoll = it })
+                            Text("Use app to roll initiative", style = MaterialTheme.typography.bodyMedium)
+                        }
+                        if (useAppInitiativeRoll) {
+                            OutlinedTextField(
+                                value = initiativeBonus,
+                                onValueChange = { initiativeBonus = it },
+                                label = { Text("Initiative Bonus") },
+                                modifier = Modifier.weight(0.6f),
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number,
+                                    imeAction = ImeAction.Next
+                                ),
+                                singleLine = true
+                            )
+                        }
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -833,45 +846,53 @@ fun CharacterEditorDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = {
-                draft.name = name
-                draft.useAppInitiativeRoll = useAppInitiativeRoll
-                draft.initiativeBonus = initiativeBonus
-                draft.autoSkipTurn = autoSkipTurn
-                draft.revealStats = revealStats
-                draft.stats = stats.toList()
-                draft.selectedConditions = selectedConditions.toSet()
-                onSave(draft)
-            }) { Text("Save") }
-        },
-        dismissButton = {
-            Row {
-                if (draft.id != null) {
-                    var showingDeleteConfirm by remember { mutableStateOf(false) }
-                    TextButton(onClick = { showingDeleteConfirm = true }) {
-                        Text("Delete", color = Color.Red)
-                    }
-                    
-                    if (showingDeleteConfirm) {
-                        AlertDialog(
-                            onDismissRequest = { showingDeleteConfirm = false },
-                            title = { Text("Delete Character?") },
-                            text = { Text("This will remove ${name.ifBlank { "this character" }} from the tracker.") },
-                            confirmButton = {
-                                TextButton(onClick = { 
-                                    onDelete(draft.id)
-                                    showingDeleteConfirm = false
-                                }) { Text("Delete", color = Color.Red) }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showingDeleteConfirm = false }) { Text("Cancel") }
-                            }
-                        )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box {
+                    if (draft.id != null) {
+                        var showingDeleteConfirm by remember { mutableStateOf(false) }
+                        TextButton(onClick = { showingDeleteConfirm = true }) {
+                            Text("Delete", color = Color.Red)
+                        }
+
+                        if (showingDeleteConfirm) {
+                            AlertDialog(
+                                onDismissRequest = { showingDeleteConfirm = false },
+                                title = { Text("Delete Character?") },
+                                text = { Text("This will remove ${name.ifBlank { "this character" }} from the tracker.") },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        onDelete(draft.id)
+                                        showingDeleteConfirm = false
+                                    }) { Text("Delete", color = Color.Red) }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showingDeleteConfirm = false }) { Text("Cancel") }
+                                }
+                            )
+                        }
                     }
                 }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                
+                Row {
+                    TextButton(onClick = onDismiss) { Text("Cancel") }
+                    TextButton(onClick = {
+                        draft.name = name
+                        draft.useAppInitiativeRoll = useAppInitiativeRoll
+                        draft.initiativeBonus = initiativeBonus
+                        draft.autoSkipTurn = autoSkipTurn
+                        draft.revealStats = revealStats
+                        draft.stats = stats.toList()
+                        draft.selectedConditions = selectedConditions.toSet()
+                        onSave(draft)
+                    }) { Text("Save") }
+                }
             }
-        }
+        },
+        dismissButton = null
     )
 }
 
