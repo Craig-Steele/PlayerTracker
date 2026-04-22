@@ -455,7 +455,11 @@ fun StatPod(character: PlayerViewDTO, stat: StatEntryDTO, viewModel: PlayerAppVi
                 onClick = { viewModel.adjustStat(character, stat.key, 1) },
                 modifier = Modifier.size(32.dp)
             ) {
-                Icon(Icons.Default.Add, "Increase ${stat.key}")
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Increase ${stat.key}",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
             
             Text(
@@ -475,7 +479,11 @@ fun StatPod(character: PlayerViewDTO, stat: StatEntryDTO, viewModel: PlayerAppVi
                 onClick = { viewModel.adjustStat(character, stat.key, -1) },
                 modifier = Modifier.size(32.dp)
             ) {
-                Icon(Icons.Default.Remove, "Decrease ${stat.key}")
+                Icon(
+                    Icons.Default.Remove,
+                    contentDescription = "Decrease ${stat.key}",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
         }
     }

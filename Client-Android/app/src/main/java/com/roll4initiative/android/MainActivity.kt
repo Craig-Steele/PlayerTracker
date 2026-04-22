@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import com.roll4initiative.android.ui.MainScreen
 import com.roll4initiative.android.ui.PlayerAppViewModel
+import com.roll4initiative.android.ui.Roll4InitiativeTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PlayerAppViewModel by viewModels()
@@ -15,7 +16,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            Roll4InitiativeTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     MainScreen(viewModel)
                 }
