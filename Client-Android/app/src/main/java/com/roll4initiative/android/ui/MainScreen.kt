@@ -24,12 +24,32 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.core.content.ContextCompat
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.qrcode.QRCodeWriter
+import android.graphics.Bitmap
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -650,14 +670,64 @@ fun formatInitiative(initiative: Double?): String {
 fun SettingsDialog(viewModel: PlayerAppViewModel, onDismiss: () -> Unit) {
     var url by remember { mutableStateOf(viewModel.serverURLString) }
     var name by remember { mutableStateOf(viewModel.playerName) }
+    var showingScanner by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            showingScanner = true
+        }
+    }
+
+    if (showingScanner) {
+        QRScannerDialog(
+            onDismiss = { showingScanner = false },
+            onScan = { scannedUrl ->
+                url = scannedUrl
+                showingScanner = false
+            }
+        )
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Settings") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextField(value = url, onValueChange = { url = it }, label = { Text("Server URL") })
-                TextField(value = name, onValueChange = { name = it }, label = { Text("Player Name") })
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                // QR Code Display
+                if (url.isNotBlank()) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Scan to connect", style = MaterialTheme.typography.labelMedium)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        QRCodeImage(url)
+                    }
+                }
+
+                TextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text("Server URL") },
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            if (context.checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                                showingScanner = true
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            }
+                        }) {
+                            Icon(Icons.Default.QrCodeScanner, "Scan QR Code")
+                        }
+                    }
+                )
+                TextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Player Name") },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
@@ -669,6 +739,153 @@ fun SettingsDialog(viewModel: PlayerAppViewModel, onDismiss: () -> Unit) {
                 onDismiss()
             }) { Text("Save") }
         },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
+}
+
+@Composable
+fun QRCodeImage(text: String) {
+    val bitmap = remember(text) {
+        try {
+            val writer = QRCodeWriter()
+            val bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, 512, 512)
+            val width = bitMatrix.width
+            val height = bitMatrix.height
+            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    bmp.setPixel(x, y, if (bitMatrix.get(x, y)) android.graphics.Color.BLACK else android.graphics.Color.WHITE)
+                }
+            }
+            bmp
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    bitmap?.let {
+        Image(
+            bitmap = it.asImageBitmap(),
+            contentDescription = "Connection QR Code",
+            modifier = Modifier
+                .size(150.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color.White)
+                .padding(8.dp)
+        )
+    }
+}
+
+@Composable
+fun QRScannerDialog(onDismiss: () -> Unit, onScan: (String) -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    var zoomRatio by remember { mutableFloatStateOf(1f) }
+    var maxZoom by remember { mutableFloatStateOf(1f) }
+    var cameraControl by remember { mutableStateOf<androidx.camera.core.CameraControl?>(null) }
+
+    LaunchedEffect(zoomRatio) {
+        cameraControl?.setZoomRatio(zoomRatio)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Scan Server QR Code") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .pointerInput(maxZoom) {
+                            detectTransformGestures { _, _, zoom, _ ->
+                                zoomRatio = (zoomRatio * zoom).coerceIn(1f, maxZoom.coerceAtLeast(1f))
+                            }
+                        }
+                ) {
+                    AndroidView(
+                        factory = { ctx ->
+                            val previewView = PreviewView(ctx)
+                            val executor = ContextCompat.getMainExecutor(ctx)
+                            cameraProviderFuture.addListener({
+                                val cameraProvider = cameraProviderFuture.get()
+                                val preview = androidx.camera.core.Preview.Builder().build().also {
+                                    it.setSurfaceProvider(previewView.surfaceProvider)
+                                }
+
+                                val scanner = BarcodeScanning.getClient()
+                                val imageAnalysis = ImageAnalysis.Builder()
+                                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                                    .build()
+
+                                imageAnalysis.setAnalyzer(executor) { imageProxy ->
+                                    val mediaImage = imageProxy.image
+                                    if (mediaImage != null) {
+                                        val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                                        scanner.process(image)
+                                            .addOnSuccessListener { barcodes ->
+                                                barcodes.firstOrNull()?.rawValue?.let { onScan(it) }
+                                            }
+                                            .addOnCompleteListener { imageProxy.close() }
+                                    } else {
+                                        imageProxy.close()
+                                    }
+                                }
+
+                                val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                                try {
+                                    cameraProvider.unbindAll()
+                                    val camera = cameraProvider.bindToLifecycle(
+                                        lifecycleOwner,
+                                        cameraSelector,
+                                        preview,
+                                        imageAnalysis
+                                    )
+                                    
+                                    cameraControl = camera.cameraControl
+                                    camera.cameraInfo.zoomState.observe(lifecycleOwner) { state ->
+                                        maxZoom = state.maxZoomRatio
+                                    }
+                                } catch (e: Exception) {
+                                    // Handle exception
+                                }
+                            }, executor)
+                            previewView
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+
+                if (maxZoom > 1f) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.ZoomOut, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Slider(
+                                value = zoomRatio,
+                                onValueChange = { zoomRatio = it },
+                                valueRange = 1f..maxZoom.coerceAtLeast(1.1f),
+                                modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+                            )
+                            Icon(Icons.Default.ZoomIn, contentDescription = null, modifier = Modifier.size(16.dp))
+                        }
+                        Text(
+                            "Zoom: ${"%.1f".format(zoomRatio)}x",
+                            style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
         }
