@@ -863,7 +863,7 @@ fun QRScannerDialog(onDismiss: () -> Unit, onScan: (String) -> Unit) {
                                         maxZoom = state.maxZoomRatio
                                     }
                                 } catch (e: Exception) {
-                                    // Handle exception
+                                    e.printStackTrace()
                                 }
                             }, executor)
                             previewView
