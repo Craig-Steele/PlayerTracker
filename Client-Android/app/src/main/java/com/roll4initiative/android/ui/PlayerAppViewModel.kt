@@ -23,12 +23,13 @@ import retrofit2.Retrofit
 import java.util.*
 
 private val android.content.Context.dataStore by preferencesDataStore(name = "settings")
+private const val DEFAULT_SERVER_URL = "http://10.0.2.2:8080"
 
 class PlayerAppViewModel(application: Application) : AndroidViewModel(application) {
     private val context = application.applicationContext
     private val json = Json { ignoreUnknownKeys = true }
 
-    var serverURLString by mutableStateOf("http://192.168.1.130:8080")
+    var serverURLString by mutableStateOf(DEFAULT_SERVER_URL)
     var playerName by mutableStateOf("")
     var ownerId by mutableStateOf(UUID.randomUUID())
 
@@ -49,7 +50,7 @@ class PlayerAppViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         viewModelScope.launch {
             val prefs = context.dataStore.data.first()
-            serverURLString = prefs[serverURLKey] ?: "http://192.168.1.130:8080"
+            serverURLString = prefs[serverURLKey] ?: DEFAULT_SERVER_URL
             playerName = prefs[playerNameKey] ?: ""
             val rawId = prefs[ownerIdKey]
             if (rawId != null) {
@@ -83,6 +84,30 @@ class PlayerAppViewModel(application: Application) : AndroidViewModel(applicatio
             saveSettings()
             refreshAll(showStatus = true)
             startPolling()
+        }
+    }
+
+    fun applySettings(serverURL: String, playerName: String, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            val trimmedURL = serverURL.trim()
+            val trimmedName = playerName.trim()
+            if (trimmedURL.isEmpty()) {
+                statusMessage = "Enter a valid server URL."
+                onComplete()
+                return@launch
+            }
+
+            serverURLString = trimmedURL
+            this@PlayerAppViewModel.playerName = trimmedName
+            saveSettings()
+            refreshAll(showStatus = true)
+            startPolling()
+
+            if (trimmedName.isNotEmpty()) {
+                savePlayerName()
+            }
+
+            onComplete()
         }
     }
 
@@ -150,8 +175,14 @@ class PlayerAppViewModel(application: Application) : AndroidViewModel(applicatio
     fun savePlayerName() {
         viewModelScope.launch {
             val api = getApiService() ?: return@launch
+            val trimmedName = playerName.trim()
+            if (trimmedName.isEmpty()) {
+                statusMessage = "Enter a player name."
+                return@launch
+            }
             try {
-                api.renameOwner(ownerId.toString(), CharacterRenameInputDTO(playerName))
+                playerName = trimmedName
+                api.renameOwner(ownerId.toString(), CharacterRenameInputDTO(trimmedName))
                 saveSettings()
                 statusMessage = "Player name saved."
                 refreshAll(showStatus = false)
@@ -165,20 +196,42 @@ class PlayerAppViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             val api = getApiService() ?: return@launch
             val currentCampaign = campaign ?: return@launch
+            val trimmedOwnerName = playerName.trim()
+            val trimmedCharacterName = draft.name.trim()
+            val trimmedInitiativeBonus = draft.initiativeBonus.trim()
+
+            if (trimmedOwnerName.isEmpty()) {
+                statusMessage = "Save a player name before creating characters."
+                return@launch
+            }
+            if (trimmedCharacterName.isEmpty()) {
+                statusMessage = "Character name is required."
+                return@launch
+            }
+
+            val initiativeBonus = if (trimmedInitiativeBonus.isEmpty()) {
+                0
+            } else {
+                trimmedInitiativeBonus.toIntOrNull()
+            }
+            if (initiativeBonus == null) {
+                statusMessage = "Initiative bonus must be a valid number."
+                return@launch
+            }
             
             try {
                 val payload = CharacterInputDTO(
                     id = draft.id,
                     campaignName = currentCampaign.name,
                     ownerId = ownerId,
-                    ownerName = playerName,
-                    name = draft.name,
+                    ownerName = trimmedOwnerName,
+                    name = trimmedCharacterName,
                     initiative = draft.id?.let { id -> myCharacters.find { it.id == id }?.initiative },
                     stats = draft.buildStatsPayload(ruleSet?.allowNegativeHealth ?: false),
                     revealStats = draft.revealStats,
                     autoSkipTurn = draft.autoSkipTurn,
                     useAppInitiativeRoll = draft.useAppInitiativeRoll,
-                    initiativeBonus = draft.initiativeBonus.toIntOrNull() ?: 0,
+                    initiativeBonus = initiativeBonus,
                     conditions = draft.selectedConditions.toList().sorted()
                 )
                 api.upsertCharacter(payload)

@@ -78,6 +78,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import coil.compose.AsyncImage
 import com.roll4initiative.android.models.*
+import java.net.URI
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -359,14 +360,34 @@ fun CharacterCard(
                 Spacer(modifier = Modifier.weight(1f))
                 
                 if (character.initiative == null) {
-                    IconButton(
-                        onClick = { 
-                            val rolled = DiceLogic.roll(viewModel.ruleSet?.standardDie ?: "1d20")?.let { it + character.initiativeBonus }
-                            viewModel.setInitiative(character, rolled?.toDouble())
-                        },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(Icons.Default.Casino, contentDescription = "Roll Initiative", tint = MaterialTheme.colorScheme.primary)
+                    if (character.useAppInitiativeRoll) {
+                        IconButton(
+                            onClick = {
+                                val rolled = DiceLogic.roll(viewModel.ruleSet?.standardDie ?: "1d20")
+                                    ?.let { it + character.initiativeBonus }
+                                viewModel.setInitiative(character, rolled?.toDouble())
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Casino,
+                                contentDescription = "Roll Initiative",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else {
+                        Surface(
+                            onClick = onEditInitiative,
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                "Set Init",
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
                 } else if (expanded) {
                     Surface(
@@ -681,6 +702,7 @@ fun SettingsDialog(viewModel: PlayerAppViewModel, onDismiss: () -> Unit) {
     var url by remember { mutableStateOf(viewModel.serverURLString) }
     var name by remember { mutableStateOf(viewModel.playerName) }
     var showingScanner by remember { mutableStateOf(false) }
+    var scannerError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -695,8 +717,14 @@ fun SettingsDialog(viewModel: PlayerAppViewModel, onDismiss: () -> Unit) {
         QRScannerDialog(
             onDismiss = { showingScanner = false },
             onScan = { scannedUrl ->
-                url = scannedUrl
-                showingScanner = false
+                val normalizedUrl = normalizeServerURL(scannedUrl)
+                if (normalizedUrl != null) {
+                    url = normalizedUrl
+                    scannerError = null
+                    showingScanner = false
+                } else {
+                    scannerError = "The QR code did not contain a valid server URL."
+                }
             }
         )
     }
@@ -713,6 +741,14 @@ fun SettingsDialog(viewModel: PlayerAppViewModel, onDismiss: () -> Unit) {
                         Spacer(modifier = Modifier.height(8.dp))
                         QRCodeImage(url)
                     }
+                }
+
+                scannerError?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
 
                 TextField(
@@ -742,17 +778,34 @@ fun SettingsDialog(viewModel: PlayerAppViewModel, onDismiss: () -> Unit) {
         },
         confirmButton = {
             TextButton(onClick = {
-                viewModel.serverURLString = url
-                viewModel.playerName = name
-                viewModel.savePlayerName()
-                viewModel.connect()
-                onDismiss()
+                viewModel.applySettings(url, name, onComplete = onDismiss)
             }) { Text("Save") }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text("Cancel") }
         }
     )
+}
+
+private fun normalizeServerURL(scannedValue: String): String? {
+    val trimmedValue = scannedValue.trim()
+    if (trimmedValue.isEmpty()) {
+        return null
+    }
+
+    return try {
+        val uri = URI(trimmedValue)
+        val scheme = uri.scheme?.lowercase()
+        val host = uri.host
+        if ((scheme == "http" || scheme == "https") && !host.isNullOrBlank()) {
+            val port = if (uri.port != -1) ":${uri.port}" else ""
+            "$scheme://$host$port"
+        } else {
+            null
+        }
+    } catch (_: Exception) {
+        null
+    }
 }
 
 @Composable
@@ -1339,7 +1392,7 @@ fun InitiativeEditorDialog(
                 value = textValue,
                 onValueChange = { textValue = it },
                 modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 placeholder = { Text("Enter initiative") },
                 singleLine = true
             )
@@ -1415,4 +1468,3 @@ fun ConditionRow(
         }
     }
 }
-
