@@ -37,6 +37,12 @@ Impact:
 - browser/device storage is convenience only
 - ownership must come from authenticated session, not client-generated IDs
 
+Launch authentication decision:
+
+- use email/password accounts at launch
+- plan for password reset as part of the initial auth system
+- defer magic-link and social login until after the core account model is stable
+
 ### 3. Multiple Devices Per User
 
 One account may be active on:
@@ -54,23 +60,23 @@ Impact:
 
 ### 4. Campaign Membership and Role Model
 
-A user may have different roles in different campaigns.
+A user may have different permissions in different campaigns, but referee behavior at launch is a session UX mode rather than a separate authorization role.
 
 At minimum:
 
 - player
-- referee
 - admin/owner
 
 Likely later:
 
-- assistant referee
 - spectator/read-only
 
 Impact:
 
-- role enforcement must be server-side
-- permissions must be campaign-specific, not global
+- membership permissions must be campaign-specific, not global
+- any campaign player may enter referee mode for their current session
+- referee mode is UX-only at launch, not a separate permission boundary
+- the system needs session-presence tracking so both the referee view and display view can show which players are currently using referee mode
 
 ### 5. Invitation and Onboarding Flow
 
@@ -92,11 +98,11 @@ Impact:
 
 Commercial users will expect updates faster and more reliably than simple polling often provides.
 
-Decision needed:
+Decision:
 
-- keep polling intentionally
-- move to Server-Sent Events
-- move to WebSockets
+- standardize on Server-Sent Events for server-to-client live updates
+- keep ordinary HTTP writes for client-to-server mutations
+- treat polling as a fallback path only where SSE is unavailable or temporarily degraded
 
 Impact:
 
@@ -105,40 +111,47 @@ Impact:
 - campaign switching
 - multi-device consistency
 
-If deferred, design APIs so realtime can be layered in later.
+Implementation direction:
+
+- publish campaign-scoped event streams
+- authenticate SSE connections the same way as normal app requests
+- keep event payloads lightweight and versionable
+- continue to support explicit reload/reconnect behavior after disconnects
 
 ### 7. Concurrency and Conflict Handling
 
 Two clients may edit the same entity at once.
 
-You need a policy for:
+Launch decision:
+
+- use last-write-wins for concurrent writes
+- prefer small, targeted mutations over large broad replacement payloads where practical
+- rely on audit/activity history to explain overwrites
+
+This policy applies to:
 
 - character edits
 - campaign settings
 - turn state
 - conditions
 
-Options:
-
-- last-write-wins
-- optimistic locking/version numbers
-- hybrid by entity type
-
 Impact:
 
 - persistence schema
 - API contracts
 - client UX when stale data is edited
+- audit/event log importance increases because overwritten changes must remain explainable
 
 ### 8. Offline / Degraded-Network Behavior
 
 Table play often happens on imperfect Wi-Fi.
 
-You need an explicit product stance:
+Launch decision:
 
 - online-only with graceful failure
-- read-only offline cache
-- queued writes with conflict resolution
+- allow cached last-known read state during disconnects where practical
+- block writes while disconnected
+- require reconnect and resync before mutations resume
 
 Impact:
 
@@ -146,7 +159,12 @@ Impact:
 - sync semantics
 - support burden
 
-Even if you choose online-only, define degraded behavior early.
+Implementation direction:
+
+- show stale/disconnected state explicitly in clients
+- keep reconnect/resync fast and reliable after suspension or transient network loss
+- do not queue offline writes at launch
+- treat offline mutation support as a later product decision, not an accidental side effect
 
 ### 9. Audit and Activity History
 
@@ -180,11 +198,15 @@ Impact:
 
 ### 11. Ruleset Extensibility
 
-Checked-in JSON rulesets may not be enough long term.
-
-Possible future needs:
+Launch decision:
 
 - custom rulesets
+- users may upload rulesets for their own homebrew systems
+- built-in rulesets shipped with the product must be limited to content you are licensed to provide
+- campaign-specific ruleset selection must support both built-in and user-uploaded rulesets
+
+Possible later extensions:
+
 - house-rule variants
 - campaign-specific overrides
 - versioned rulesets
@@ -194,21 +216,25 @@ Impact:
 - schema design
 - campaign/ruleset association
 - admin tooling
+- import and validation tooling
+- moderation/support boundary for user-supplied content
 
 ### 12. Billing and Entitlements
 
-Even if monetization comes later, decide what the product will likely charge for:
+Launch billing decision:
 
-- per user
-- per GM
-- per campaign
-- premium referee features
-- storage/history/export
+- use a monthly admin subscription
+- one subscription covers one admin account
+- the admin may have up to 5 active campaigns in a subscription period
+- archived campaigns do not count against the active campaign cap
+- campaigns must support archive and unarchive operations
+- if the subscription lapses, campaign access becomes admin-only until renewal
 
 Impact:
 
 - entitlements model
 - account data model
+- campaign lifecycle model
 - admin tooling
 - UX boundaries
 
@@ -268,6 +294,7 @@ Constrained by:
 - multi-device session behavior
 - campaign switching UX
 - degraded-network behavior
+- SSE client support and reconnect behavior
 
 ### Phase D: Transition and Hardening
 
@@ -371,11 +398,13 @@ Work:
 - add `User` model
 - add `Session` model
 - add password hashing
+- implement email/password signup and login as the launch auth method
 - add auth endpoints:
   - `POST /auth/signup`
   - `POST /auth/login`
   - `POST /auth/logout`
   - `GET /auth/session`
+  - password reset endpoints once `M11` hardening begins
 
 Web auth:
 
@@ -390,6 +419,7 @@ Acceptance:
 
 - user can sign up, log in, restore session, and log out
 - identity no longer depends on local `ownerId`
+- the initial auth system is explicitly email/password, not passwordless or social login
 
 ### M5: Authorization and Ownership Rewrite
 
@@ -408,15 +438,18 @@ Work:
   - `POST /campaigns/:campaignId/me/characters`
   - `PATCH /campaigns/:campaignId/me/characters/:id`
   - `DELETE /campaigns/:campaignId/me/characters/:id`
-- add role enforcement for:
+- add membership enforcement for:
   - player
-  - referee
   - admin
+- define which campaign operations are available to any authenticated campaign member versus campaign admins
+- add session-mode tracking so a logged-in campaign member can enter or leave referee mode without changing stored membership
 
 Acceptance:
 
 - players can edit only their own characters
-- referees can manage encounter/NPC/referee controls
+- campaign members can switch into referee mode for their current session without changing account roles
+- the server can surface which campaign members are currently in referee mode
+- display-oriented clients can render the current referee(s) from that presence data
 - all ownership comes from server session + campaign membership
 - no gameplay write route trusts raw client identity
 
@@ -427,7 +460,8 @@ Goal: make campaigns usable as a product, not just local state.
 Work:
 
 - add campaign creation
-- add membership roles per campaign
+- add campaign membership permissions per campaign
+- add campaign archive and unarchive support
 - add invite flow:
   - `POST /campaigns/:campaignId/invites`
   - `POST /invites/:token/accept`
@@ -437,8 +471,37 @@ Work:
 Acceptance:
 
 - users can create and join multiple campaigns
-- roles are enforced per campaign
-- the same user can be a player in one campaign and referee in another
+- permissions are enforced per campaign
+- campaign members can enter referee mode without changing membership records
+- the referee UI can show the set of players currently acting in referee mode
+- the display UI can show the current referee(s) for the active campaign/session
+- active campaign count can be limited independently from archived campaigns
+
+### M6A: Server-Sent Events Real-Time Layer
+
+Goal: replace the current polling-first model with campaign-scoped server push.
+
+Work:
+
+- add authenticated SSE endpoints for campaign-scoped event streams
+- define event types for:
+  - encounter state changes
+  - turn changes
+  - character updates
+  - condition changes
+  - campaign metadata changes
+  - referee-mode presence changes
+- add reconnect semantics using event IDs or equivalent resume logic where useful
+- keep polling as a fallback path during migration and failure handling
+- make emitted payloads stable enough for all three clients to consume
+
+Acceptance:
+
+- web can subscribe to live campaign updates without polling as the primary mechanism
+- iOS and Android can consume the same event model
+- disconnect/reconnect behavior is understood and implemented
+- ordinary writes still use normal HTTP endpoints
+- display clients can receive current-referee presence updates in real time
 
 ### M7: Web Client Migration
 
@@ -457,6 +520,8 @@ Work:
 - add session restore flow
 - replace local `ownerId` identity with server `/auth/session` + `/me`
 - add campaign chooser
+- add SSE subscription lifecycle for the selected campaign
+- update the display web experience to show the current referee(s)
 - switch all character operations to campaign-scoped authenticated routes
 - keep local storage only for UI drafts and optional convenience state
 
@@ -465,6 +530,8 @@ Acceptance:
 - Private Browsing reconnect works via login
 - campaign switching is explicit
 - web no longer depends on persistent browser identity for ownership
+- live state updates arrive via SSE in normal operation
+- display mode surfaces the current referee(s)
 
 ### M8: iOS Migration
 
@@ -482,6 +549,7 @@ Work:
 - add login/signup/logout/session restore flow
 - replace `ownerId` persistence as primary identity
 - add campaign selection
+- add SSE client handling for selected campaign updates
 - store session securely in Keychain-backed storage
 
 Acceptance:
@@ -489,6 +557,7 @@ Acceptance:
 - user can sign in and recover all campaigns/characters
 - same user can switch between campaigns on iPhone
 - account identity survives app reinstall if credentials/session are re-entered
+- live state updates arrive via SSE in normal operation
 
 ### M9: Android Migration
 
@@ -506,12 +575,14 @@ Work:
 - add login/signup/logout/session restore
 - remove `ownerId` as primary identity
 - add campaign chooser
+- add SSE client handling for selected campaign updates
 - move auth state into secure storage
 
 Acceptance:
 
 - Android becomes a real account-based client
 - users can move between campaigns without losing ownership continuity
+- live state updates arrive via SSE in normal operation
 
 ### M10: Legacy Anonymous Migration
 
@@ -519,9 +590,9 @@ Goal: transition current users cleanly.
 
 Work:
 
-- decide whether to support claim/migration from existing anonymous player identity
-- if yes, add one-time claim flow that attaches legacy characters to authenticated accounts
-- if no, define a hard cutover and communicate it
+- use a hard cutover from anonymous identity to account-based identity
+- remove anonymous write access when authenticated identity ships
+- communicate that pre-release anonymous identities are not migrated forward
 
 Acceptance:
 
@@ -534,6 +605,9 @@ Goal: be safe to expose publicly.
 
 Work:
 
+- implement subscription entitlement checks for admin accounts
+- enforce the 5 active campaign cap while allowing archive/unarchive flows
+- block non-admin campaign access when the admin subscription is inactive
 - password reset
 - optional email verification
 - rate limiting on auth routes
@@ -546,6 +620,8 @@ Work:
 
 Acceptance:
 
+- subscription status can gate active campaign creation and unarchive operations
+- when a subscription lapses, only the admin retains campaign access for billing and management
 - core auth operations are hardened
 - operations and recovery are realistic for a commercial service
 
@@ -579,12 +655,13 @@ Acceptance:
 4. `M4`
 5. `M5`
 6. `M6`
-7. `M7`
-8. `M8`
-9. `M9`
-10. `M10`
-11. `M11`
-12. `M12`
+7. `M6A`
+8. `M7`
+9. `M8`
+10. `M9`
+11. `M10`
+12. `M11`
+13. `M12`
 
 ## Why This Order
 
@@ -606,13 +683,15 @@ If the goal is the smallest serious commercial slice, start with:
 3. `M3`
 4. minimal `M4`
 5. minimal `M5`
-6. minimal `M7`
+6. minimal `M6A`
+7. minimal `M7`
 
 That yields:
 
 - a DB-backed server
 - simultaneous campaigns
 - account login
+- SSE-based live updates
 - authenticated web client
 - no dependence on browser-local identity
 
@@ -620,15 +699,57 @@ That is the first version that starts looking like a product instead of a LAN to
 
 ## Early Product Decisions
 
-These should be decided before deep implementation:
+All high-impact launch product decisions listed here have now been made.
 
-1. Is the product online-only, or should it support meaningful offline behavior?
-2. Is the long-term sync model polling, SSE, or WebSockets?
-3. What is the initial role model: `player/referee/admin`, or more?
-4. What is the billing boundary: user, campaign, GM, or feature tier?
-5. Will custom rulesets be allowed?
-6. What is the conflict policy for concurrent edits?
-7. Will existing anonymous users get a claim/migration path?
+The real-time sync decision is already made:
+
+- use Server-Sent Events as the primary live update mechanism
+
+The launch authentication decision is already made:
+
+- use email/password accounts
+- include password reset in the commercial auth plan
+- defer magic-link and social login for later evaluation
+
+The launch campaign mode decision is already made:
+
+- membership permissions at launch are `player` and `admin`
+- referee is a UX mode, not a separate authorization role
+- any campaign member may enter referee mode for their current session
+- the referee view should show which campaign members are currently using referee mode
+- display mode should also show the current referee(s)
+
+The launch billing decision is already made:
+
+- use a monthly admin subscription
+- allow up to 5 active campaigns in a subscription period
+- allow archive and unarchive operations
+- archived campaigns do not count against the active campaign cap
+- if the subscription lapses, only the admin retains access until renewal
+
+The launch offline behavior decision is already made:
+
+- launch as online-only
+- allow cached last-known read state during disconnects where practical
+- block writes while disconnected until reconnect and resync complete
+- do not support offline write queuing at launch
+
+The launch ruleset decision is already made:
+
+- support custom rulesets as a product feature
+- allow users to upload rulesets for their own homebrew systems
+- ship built-in rulesets only where you have the necessary license to provide that content
+
+The launch conflict policy decision is already made:
+
+- use last-write-wins for concurrent writes
+- keep mutations targeted where practical
+- depend on audit/activity history to make overwrites explainable
+
+The launch migration decision is already made:
+
+- use a hard cutover from anonymous identity to account-based identity
+- do not provide a legacy claim/migration flow for pre-release anonymous users
 
 ## Highest-Leverage Constraints
 
