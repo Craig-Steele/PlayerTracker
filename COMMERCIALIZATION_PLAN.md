@@ -203,9 +203,14 @@ Impact:
 Launch decision:
 
 - custom rulesets
-- users may upload rulesets for their own homebrew systems
+- only paid admins may upload custom rulesets for their own homebrew systems
 - built-in rulesets shipped with the product must be limited to content you are licensed to provide
 - campaign-specific ruleset selection must support both built-in and user-uploaded rulesets
+- uploaded rulesets belong to the admin account that uploaded them and can be assigned by that admin to new campaigns
+- ruleset updates create new versions rather than mutating old ones in place
+- new ruleset versions must remain structurally compatible with prior versions for the same ruleset family
+  - dice and stats remain stable
+  - condition lists may change
 
 Possible later extensions:
 
@@ -217,6 +222,7 @@ Impact:
 
 - schema design
 - campaign/ruleset association
+- ruleset ownership and reuse model
 - admin tooling
 - import and validation tooling
 - moderation/support boundary for user-supplied content
@@ -228,9 +234,11 @@ Launch billing decision:
 - use a monthly admin subscription
 - one subscription covers one admin account
 - the admin may have up to 5 active campaigns in a subscription period
+- active means an encounter has been started with that campaign
 - archived campaigns do not count against the active campaign cap
 - campaigns must support archive and unarchive operations
 - if the subscription lapses, campaign access becomes admin-only until renewal
+- while lapsed, the admin has view/export access and billing management only
 
 Impact:
 
@@ -446,6 +454,8 @@ Work:
 - define which campaign operations are available to any authenticated campaign member versus campaign admins
 - add session-mode tracking so a logged-in campaign member can enter or leave referee mode without changing stored membership
 - define referee-facing encounter cloning/template operations so any campaign member currently in referee mode can use them
+- define referee-mode concurrency as fully equal control among campaign members currently using referee mode
+- define encounter snapshot creation and restore operations as referee manual actions
 
 Acceptance:
 
@@ -454,6 +464,8 @@ Acceptance:
 - the server can surface which campaign members are currently in referee mode
 - display-oriented clients can render the current referee(s) from that presence data
 - referee-facing encounter cloning/template operations are defined separately from full campaign export and are available to campaign members currently in referee mode
+- campaign members concurrently in referee mode have fully equal control
+- encounter snapshots are created manually by referee-mode users rather than automatically at launch
 - all ownership comes from server session + campaign membership
 - no gameplay write route trusts raw client identity
 
@@ -467,6 +479,8 @@ Work:
 - add campaign membership permissions per campaign
 - add campaign archive and unarchive support
 - add encounter cloning and template support for referee-facing workflows
+- make encounter templates ruleset-scoped so they can be reused by any campaign using the same ruleset
+- retain the last 20 manually created encounter snapshots per campaign for restore/testing purposes
 - add invite flow:
   - `POST /campaigns/:campaignId/invites`
   - `POST /invites/:token/accept`
@@ -481,7 +495,9 @@ Acceptance:
 - the referee UI can show the set of players currently acting in referee mode
 - the display UI can show the current referee(s) for the active campaign/session
 - campaign members currently in referee mode can clone encounters and create or apply reusable encounter templates inside a campaign
-- active campaign count can be limited independently from archived campaigns
+- encounter templates are reusable across campaigns that use the same ruleset
+- the last 20 manually created encounter snapshots are retained per campaign
+- active campaign count is based on campaigns where an encounter has been started
 
 ### M6A: Server-Sent Events Real-Time Layer
 
@@ -730,9 +746,11 @@ The launch billing decision is already made:
 
 - use a monthly admin subscription
 - allow up to 5 active campaigns in a subscription period
+- active means an encounter has been started with that campaign
 - allow archive and unarchive operations
 - archived campaigns do not count against the active campaign cap
 - if the subscription lapses, only the admin retains access until renewal
+- while lapsed, the admin has view/export access and billing management only
 
 The launch offline behavior decision is already made:
 
@@ -744,8 +762,26 @@ The launch offline behavior decision is already made:
 The launch ruleset decision is already made:
 
 - support custom rulesets as a product feature
-- allow users to upload rulesets for their own homebrew systems
+- only paid admins may upload custom rulesets for their own homebrew systems
 - ship built-in rulesets only where you have the necessary license to provide that content
+- uploaded rulesets belong to the admin account that uploaded them and can be assigned by that admin to new campaigns
+- ruleset updates create new versions rather than mutating old ones in place
+- new versions must preserve structural compatibility, with stable dice/stats and changeable condition lists
+
+The launch encounter-template decision is already made:
+
+- encounter templates are ruleset-scoped
+- any campaign using the same ruleset can use those templates
+
+The launch snapshot/restore decision is already made:
+
+- snapshots are a referee manual action at launch
+- retain the last 20 snapshots per campaign
+- keep retention policy under evaluation during testing
+
+The launch referee-mode concurrency decision is already made:
+
+- campaign members currently in referee mode have fully equal control
 
 The launch conflict policy decision is already made:
 
@@ -778,3 +814,7 @@ The most important constraints to design for now are:
 - audit history
 
 These are the most likely to force expensive rework if ignored.
+
+Audit visibility decision:
+
+- audit/history is visible to campaign admins
