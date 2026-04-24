@@ -185,6 +185,7 @@ Impact:
 Paid users will eventually expect:
 
 - export of campaign data
+- encounter cloning and reusable encounter templates
 - archive/restore of old campaigns
 - account deletion
 - backups
@@ -194,6 +195,7 @@ Impact:
 - soft-delete vs hard-delete decisions
 - archival model
 - export format design
+- encounter snapshot/template format design
 - operational policy
 
 ### 11. Ruleset Extensibility
@@ -443,6 +445,7 @@ Work:
   - admin
 - define which campaign operations are available to any authenticated campaign member versus campaign admins
 - add session-mode tracking so a logged-in campaign member can enter or leave referee mode without changing stored membership
+- define referee-facing encounter cloning/template operations so any campaign member currently in referee mode can use them
 
 Acceptance:
 
@@ -450,6 +453,7 @@ Acceptance:
 - campaign members can switch into referee mode for their current session without changing account roles
 - the server can surface which campaign members are currently in referee mode
 - display-oriented clients can render the current referee(s) from that presence data
+- referee-facing encounter cloning/template operations are defined separately from full campaign export and are available to campaign members currently in referee mode
 - all ownership comes from server session + campaign membership
 - no gameplay write route trusts raw client identity
 
@@ -462,6 +466,7 @@ Work:
 - add campaign creation
 - add campaign membership permissions per campaign
 - add campaign archive and unarchive support
+- add encounter cloning and template support for referee-facing workflows
 - add invite flow:
   - `POST /campaigns/:campaignId/invites`
   - `POST /invites/:token/accept`
@@ -475,6 +480,7 @@ Acceptance:
 - campaign members can enter referee mode without changing membership records
 - the referee UI can show the set of players currently acting in referee mode
 - the display UI can show the current referee(s) for the active campaign/session
+- campaign members currently in referee mode can clone encounters and create or apply reusable encounter templates inside a campaign
 - active campaign count can be limited independently from archived campaigns
 
 ### M6A: Server-Sent Events Real-Time Layer
@@ -638,6 +644,7 @@ Work:
   - sign up
   - create/join two campaigns
   - create characters in both
+  - clone an encounter and apply a reusable encounter template in a campaign
   - logout
   - log back in
   - recover both campaign states
@@ -750,6 +757,14 @@ The launch migration decision is already made:
 
 - use a hard cutover from anonymous identity to account-based identity
 - do not provide a legacy claim/migration flow for pre-release anonymous users
+
+The next feature-planning priorities are:
+
+- launch-critical: ruleset upload validation and immutable versioning for user-supplied rulesets
+- high-value near-term: encounter templates/cloning
+- high-value near-term: undo/restore from encounter snapshots
+- later portability feature: character import/export
+- later portability feature: campaign export bundle
 
 ## Highest-Leverage Constraints
 
