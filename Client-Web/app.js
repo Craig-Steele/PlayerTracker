@@ -210,6 +210,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailPanel = document.querySelector('.detail-panel');
   const conditionsToggle = document.getElementById('conditions-toggle');
   const conditionsPanel = document.getElementById('conditions-panel');
+  const initiativePanel = document.getElementById('initiative-panel');
+  const initiativeEditorInput = document.getElementById('initiative-editor-input');
+  const initiativeSaveBtn = document.getElementById('initiative-save');
+  const initiativeCancelBtn = document.getElementById('initiative-cancel');
+  const initiativeClearBtn = document.getElementById('initiative-clear');
+  const initiativeDialogTitle = document.getElementById('initiative-dialog-title');
   const conditionsSaveBtn = document.getElementById('conditions-save');
   const conditionsCancelBtn = document.getElementById('conditions-cancel');
   const detailsSaveBtn = document.getElementById('details-save');
@@ -244,6 +250,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const perCharacterSaveTimers = new Map();
   let isCreatingCharacter = false;
   let conditionsPanelOpen = false;
+  let initiativeEditorCharacterId = null;
 
   function updateRulesetLink(labelText, baseUrl) {
     updateRulesetLinks([rulesetLink, playerRulesetLink, displayRulesetLink], labelText, baseUrl);
@@ -898,24 +905,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function editCharacterInitiative(character) {
     if (!character) return;
-    const entered = prompt(
-      `Set initiative for ${character.name} (leave blank to clear)`,
-      Number.isFinite(character.initiative) ? String(character.initiative) : ''
-    );
-    if (entered === null) return;
-    const trimmed = entered.trim();
-    if (!trimmed) {
-      character.initiative = null;
-      await saveCharacterEntry(character);
-      return;
-    }
-    const initiative = Number(trimmed);
-    if (!Number.isFinite(initiative)) {
-      statusDiv.textContent = 'Initiative must be a valid number.';
-      return;
-    }
-    character.initiative = initiative;
-    await saveCharacterEntry(character);
+    openInitiativeEditor(character);
   }
 
   async function deleteMyCharacter(character) {
@@ -2263,6 +2253,43 @@ window.addEventListener('DOMContentLoaded', () => {
       setConditionsPanelOpen(false);
     });
   }
+
+  if (initiativeSaveBtn) {
+    initiativeSaveBtn.addEventListener('click', async () => {
+      await saveInitiativeFromEditor(false);
+    });
+  }
+
+  if (initiativeClearBtn) {
+    initiativeClearBtn.addEventListener('click', async () => {
+      await saveInitiativeFromEditor(true);
+    });
+  }
+
+  if (initiativeCancelBtn) {
+    initiativeCancelBtn.addEventListener('click', () => {
+      closeInitiativeEditor();
+    });
+  }
+
+  if (initiativeEditorInput) {
+    initiativeEditorInput.addEventListener('keydown', async (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        await saveInitiativeFromEditor(false);
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeInitiativeEditor();
+      }
+    });
+  }
+
+  if (initiativePanel) {
+    initiativePanel.addEventListener('click', (event) => {
+      if (event.target !== initiativePanel) return;
+      closeInitiativeEditor();
+    });
+  }
   if (addSaveBtn) {
     addSaveBtn.addEventListener('click', () => {
       handleAddCharacterSubmit();
@@ -2289,6 +2316,66 @@ window.addEventListener('DOMContentLoaded', () => {
       if (hasAddDraft && !confirm('Discard new character changes?')) return;
       hideAddForm();
     });
+  }
+
+  function setInitiativePanelOpen(open) {
+    if (!initiativePanel) return;
+    initiativePanel.classList.toggle('hidden', !open);
+    initiativePanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function openInitiativeEditor(character) {
+    if (!character || !initiativePanel || !initiativeEditorInput) return;
+    initiativeEditorCharacterId = character.id;
+    if (initiativeDialogTitle) {
+      initiativeDialogTitle.textContent = `Set Initiative for ${character.name}`;
+    }
+    initiativeEditorInput.value = Number.isFinite(character.initiative) ? String(character.initiative) : '';
+    setInitiativePanelOpen(true);
+    window.requestAnimationFrame(() => {
+      initiativeEditorInput.focus();
+      initiativeEditorInput.select();
+    });
+  }
+
+  function closeInitiativeEditor() {
+    initiativeEditorCharacterId = null;
+    if (initiativeEditorInput) {
+      initiativeEditorInput.value = '';
+    }
+    setInitiativePanelOpen(false);
+  }
+
+  async function saveInitiativeFromEditor(clearValue = false) {
+    if (!initiativeEditorCharacterId) return;
+    const character = myCharacters.find((entry) => entry.id === initiativeEditorCharacterId);
+    if (!character) {
+      closeInitiativeEditor();
+      return;
+    }
+
+    const raw = clearValue || !initiativeEditorInput ? '' : initiativeEditorInput.value;
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      character.initiative = null;
+      await saveCharacterEntry(character);
+      closeInitiativeEditor();
+      return;
+    }
+
+    const initiative = Number(trimmed);
+    if (!Number.isFinite(initiative)) {
+      statusDiv.textContent = 'Initiative must be a valid number.';
+      if (initiativeEditorInput) {
+        initiativeEditorInput.focus();
+        initiativeEditorInput.select();
+      }
+      return;
+    }
+
+    character.initiative = initiative;
+    await saveCharacterEntry(character);
+    closeInitiativeEditor();
   }
 
   if (clearBtn) {
