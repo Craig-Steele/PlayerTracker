@@ -44,14 +44,16 @@ The service listens on:
 http://localhost:8080
 ```
 
-On startup, the service currently opens the local display view in a browser on the host machine.
+On startup, the service opens the local display view in a browser when the platform has a supported launcher. Set `ROLL4INITIATIVE_LAUNCH_BROWSER=0` to run the server without opening a browser.
 
 ## Project layout
 
 - `Package.swift`
   Swift package manifest for the Vapor server
 - `Server-Vapor/PlayerTracker.swift`
-  main server entry point, routes, and in-memory game state
+  main server entry point
+- `Server-Vapor/ServerBootstrap.swift`
+  server startup configuration, route registration, and static file setup
 - `Server-Vapor/RuleSetLibrary.swift`
   ruleset model and loader
 - `Client-Web/`

@@ -18,7 +18,7 @@ struct ServerBootstrapOptions {
             campaignName: "Campaign",
             restorePersistedState: true,
             persistChanges: true,
-            launchBrowser: true
+            launchBrowser: BrowserLauncher.shouldLaunchByDefault
         )
     }
 }
