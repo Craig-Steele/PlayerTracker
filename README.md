@@ -11,7 +11,7 @@ The current working architecture is a Vapor service running on a Mac and serving
 - `Client-Web`
   Browser clients for player, referee, display, and campaign selection.
 - `Client-iOS`
-  Native iPhone player client for the existing server.
+  Native iOS and iPadOS player client for the existing server.
 - `Client-Android`
   Native Android player client built with Jetpack Compose.
 
