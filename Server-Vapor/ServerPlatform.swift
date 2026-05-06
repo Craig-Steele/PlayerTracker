@@ -6,6 +6,11 @@ enum AppPaths {
             .appendingPathComponent("Library/Application Support/Roll4Initiative", isDirectory: true)
     }
 
+    static func logsDirectory() -> URL {
+        FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Logs/Roll4Initiative", isDirectory: true)
+    }
+
     static func webClientDirectory() -> URL {
         let sourceURL = URL(fileURLWithPath: #filePath)
         return sourceURL

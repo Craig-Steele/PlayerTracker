@@ -90,6 +90,32 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(response.status, .conflict)
     }
 
+    func testServerBootstrapConfiguresRoutesWithoutLaunchingProductionServer() async throws {
+        await userStore.clear()
+        app = try await Application.make(.testing)
+
+        let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
+        var options = ServerBootstrapOptions.production
+        options.hostname = "127.0.0.1"
+        options.port = 0
+        options.campaignName = "Bootstrap Smoke"
+        options.restorePersistedState = false
+        options.persistChanges = false
+        options.launchBrowser = false
+
+        try await ServerBootstrap.configure(app, options: options, library: library)
+
+        XCTAssertEqual(app.http.server.configuration.hostname, "127.0.0.1")
+        XCTAssertEqual(app.http.server.configuration.port, 0)
+
+        let tester = try app.testable()
+        let response = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(response.status, .ok)
+        let campaign = try response.content.decode(CampaignState.self)
+        XCTAssertEqual(campaign.name, "Bootstrap Smoke")
+        XCTAssertEqual(campaign.rulesetId, "dnd5e")
+    }
+
     private func makeTester() async throws -> XCTApplicationTester {
         await userStore.clear()
         app = try await Application.make(.testing)

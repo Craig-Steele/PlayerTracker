@@ -401,6 +401,9 @@ rulesets/custom/
 - app logs
 - request/access logs if enabled
 - import/validation logs for ruleset failures
+- logging should use injectable services or app-scoped dependencies so tests and packaged builds can select no-op, file, or deployment log sinks
+- file-backed logging must use a deliberate write strategy, either deployment-managed SwiftLog sinks or an actor-owned file writer with bounded resource use
+- structured log fields must be escaped or encoded so player names, character names, request paths, and user-supplied metadata cannot break line-oriented parsing
 
 `cache/`
 
@@ -956,6 +959,7 @@ Work:
 - rate limiting on auth routes
 - CSRF protection for cookie-based web auth
 - audit logging
+- request/access logging with field sanitization and configurable sinks
 - session management
 - packaged backup/export and restore flows for local server data
 - local-LAN HTTP support remains acceptable for same-network play

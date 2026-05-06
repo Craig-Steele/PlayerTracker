@@ -79,6 +79,18 @@ Goal: catch DTO and HTTP behavior regressions that actor tests miss.
 
 Implementation note: use Vapor's testing support once route setup can be initialized without launching the browser or binding the production server port.
 
+### 7. Connection Logging
+
+Goal: make request logging safe, deterministic, and replaceable as packaging evolves.
+
+- Test `X-Forwarded-For` takes precedence over peer and remote addresses.
+- Test missing or blank address information resolves to `unknown`.
+- Test log field escaping for spaces, quotes, backslashes, tabs, and newlines in identifiers and paths.
+- Test server-event logging uses the same timestamp and field-escaping rules as request logging.
+- Test route registration can use a no-op or test logger instead of writing to the real user log directory.
+
+Implementation note: this likely needs a small connection-logging service protocol or app-scoped dependency so tests can exercise formatting and routing without file writes.
+
 ## Client Test Opportunities
 
 ### iOS
@@ -106,6 +118,7 @@ These changes should stay small and be driven by tests:
 
 - Inject `CampaignStore` persistence directory.
 - Inject ruleset-library directory.
+- Inject or app-scope connection logging so tests and packaged builds can select file, no-op, or deployment log sinks.
 - Split `PlayerTracker.swift` into startup, routes, models, and store files.
 - Keep browser launch out of test initialization.
 - Add API-client injection points for iOS and Android ViewModels.
