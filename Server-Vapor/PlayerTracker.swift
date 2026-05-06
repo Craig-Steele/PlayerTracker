@@ -836,22 +836,31 @@ actor CampaignStore {
         return state()
     }
 
-    private static func persistedStateURL() -> URL? {
+    private static func persistedStateDirectory() -> URL {
         let homeDir = FileManager.default.homeDirectoryForCurrentUser
-        return homeDir.appendingPathComponent("Sites/PlayerTracker/campaign.json")
+        return homeDir
+            .appendingPathComponent("Library/Application Support/Roll4Initiative", isDirectory: true)
+    }
+
+    private static func persistedStateURL() -> URL {
+        persistedStateDirectory().appendingPathComponent("campaign.json")
     }
 
     private static func loadPersistedState() -> CampaignPersistedState? {
-        guard let url = persistedStateURL(),
-              let data = try? Data(contentsOf: url) else {
+        let url = persistedStateURL()
+        guard let data = try? Data(contentsOf: url) else {
             return nil
         }
         return try? JSONDecoder().decode(CampaignPersistedState.self, from: data)
     }
 
     private static func savePersistedState(_ state: CampaignPersistedState) {
-        guard let url = persistedStateURL() else { return }
+        let url = persistedStateURL()
         do {
+            try FileManager.default.createDirectory(
+                at: persistedStateDirectory(),
+                withIntermediateDirectories: true
+            )
             let data = try JSONEncoder().encode(state)
             try data.write(to: url, options: [.atomic])
         } catch {

@@ -681,7 +681,6 @@ Acceptance:
 - fresh DB migration works
 - campaign and character data can be persisted
 - packaged server builds can persist data without requiring users to provision PostgreSQL
-- `~/Sites/PlayerTracker/campaign.json` is no longer the future state model
 
 ### M3: Multi-Campaign Architecture
 
