@@ -25,7 +25,8 @@ let package = Package(
         .testTarget(
             name: "PlayerTrackerTests",
             dependencies: [
-                "PlayerTracker"
+                "PlayerTracker",
+                .product(name: "XCTVapor", package: "vapor")
             ]
         ),
     ]
