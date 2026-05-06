@@ -28,6 +28,26 @@
 				"target": "PlayerTracker",
 				"configuration": "release",
 				"preLaunchTask": "swift: Build Release PlayerTracker (PlayerTracker)"
+			},
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:Projects}/Roll4Initiative",
+				"name": "Debug PlayerTracker (Projects/Roll4Initiative)",
+				"target": "PlayerTracker",
+				"configuration": "debug",
+				"preLaunchTask": "swift: Build Debug PlayerTracker (Projects/Roll4Initiative)"
+			},
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:Projects}/Roll4Initiative",
+				"name": "Release PlayerTracker (Projects/Roll4Initiative)",
+				"target": "PlayerTracker",
+				"configuration": "release",
+				"preLaunchTask": "swift: Build Release PlayerTracker (Projects/Roll4Initiative)"
 			}
 		]
 	}
