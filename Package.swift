@@ -22,5 +22,11 @@ let package = Package(
                 "PlayerTracker.code-workspace"
             ]
         ),
+        .testTarget(
+            name: "PlayerTrackerTests",
+            dependencies: [
+                "PlayerTracker"
+            ]
+        ),
     ]
 )
