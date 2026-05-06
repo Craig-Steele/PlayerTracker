@@ -2,6 +2,30 @@
 
 This document captures the current product and engineering roadmap for taking Roll4Initiative from a local-network encounter tracker to a commercial product.
 
+Commercial launch shape:
+
+- paid server app
+- distributed through Apple and Microsoft app stores
+- licensed at a low annual price point, tentatively `$5/year`
+- free iOS and Android companion clients
+- the server remains the source of truth for encounter state
+
+## Architecture Decision
+
+Launch decision:
+
+- keep Swift as the server-core language
+- continue using the existing Vapor-based backend as the foundation
+- optimize for platform-neutral server structure rather than a backend rewrite
+- keep room for a separate desktop app shell later if Windows/Linux packaging needs it
+
+Rationale:
+
+- the current Swift codebase is already functional
+- Swift is not currently causing delivery pain
+- the near-term risk is architectural coupling, not language mismatch
+- a rewrite would delay persistence, auth, ruleset versioning, and packaging work without solving the main product constraints
+
 ## Planning Constraints
 
 These are cross-cutting constraints that affect architecture, API design, persistence, authentication, and client behavior.
@@ -36,6 +60,7 @@ Impact:
 - authenticated server-side identity
 - browser/device storage is convenience only
 - ownership must come from authenticated session, not client-generated IDs
+- account identity is scoped to the chosen server, not to a central Roll4Initiative cloud account
 
 Launch authentication decision:
 
@@ -231,22 +256,21 @@ Impact:
 
 Launch billing decision:
 
-- use a monthly admin subscription
-- one subscription covers one admin account
-- the admin may have up to 5 active campaigns in a subscription period
-- active means an encounter has been started with that campaign
-- archived campaigns do not count against the active campaign cap
-- campaigns must support archive and unarchive operations
-- if the subscription lapses, campaign access becomes admin-only until renewal
-- while lapsed, the admin has view/export access and billing management only
+- sell the server on a low-cost annual license, tentatively `$5/year`
+- distribute the paid server through Apple and Microsoft storefronts
+- keep iOS and Android clients free
+- tie entitlement to the server installation or store purchaser, not to each player account
+- do not introduce launch caps on campaign count, archive count, or player count
+- if the license expires, preserve read/export access and block starting new hosted sessions until renewal
+- if store validation is temporarily unavailable, preserve a grace period rather than interrupting active play
 
 Impact:
 
 - entitlements model
-- account data model
-- campaign lifecycle model
-- admin tooling
-- UX boundaries
+- store receipt / purchase validation
+- server install identity
+- renewal and grace-period UX
+- app-store policy compliance
 
 ### 13. Support and Admin Operations
 
@@ -263,6 +287,294 @@ Impact:
 - admin APIs/tools
 - audit logging
 - data model visibility boundaries
+
+## App Data Layout
+
+The packaged server app needs a predictable local data layout on macOS, Windows, and Linux so upgrades, backups, exports, and support operations are straightforward.
+
+### Layout Goals
+
+- keep the main transactional state in one SQLite database
+- keep large user-supplied artifacts such as ruleset uploads and exports as files on disk
+- separate shipped built-in assets from mutable application data
+- make backup and restore possible without reverse-engineering the install layout
+- avoid storing critical mutable state inside the app bundle
+
+### OS-Specific Base Directory
+
+Use a per-user application-data root by default.
+
+macOS:
+
+- `~/Library/Application Support/Roll4Initiative`
+
+Windows:
+
+- `%LOCALAPPDATA%\\Roll4Initiative`
+
+Linux:
+
+- `${XDG_DATA_HOME:-~/.local/share}/roll4initiative`
+
+If a future edition supports multi-user hosting or a system service install, add an explicit configurable data root. The app should still default to the per-user path above.
+
+### Top-Level Directory Shape
+
+Suggested layout:
+
+```text
+Roll4Initiative/
+  data/
+    app.sqlite3
+    app.sqlite3-wal
+    app.sqlite3-shm
+  rulesets/
+    builtins/
+    custom/
+  uploads/
+    ruleset-imports/
+  exports/
+    campaigns/
+    rulesets/
+  backups/
+  logs/
+  cache/
+  receipts/
+  config/
+```
+
+### Directory Responsibilities
+
+`data/`
+
+- primary SQLite database
+- authoritative source for accounts, campaigns, memberships, sessions, characters, turn state, conditions, and audit history
+
+`rulesets/builtins/`
+
+- immutable built-in ruleset manifests and assets shipped with the app
+- copied or materialized from app resources on first launch or upgrade if needed
+- never edited in place by users
+
+`rulesets/custom/`
+
+- validated custom ruleset packages owned by local server admins
+- each ruleset gets its own stable directory and version subdirectories
+- stored separately from the database so image assets and future larger attachments stay manageable
+
+Suggested shape:
+
+```text
+rulesets/custom/
+  <ruleset-slug>/
+    metadata.json
+    versions/
+      v1/
+        manifest.json
+        assets/
+      v2/
+        manifest.json
+        assets/
+```
+
+`uploads/ruleset-imports/`
+
+- temporary staging area for newly imported ruleset ZIPs or folders
+- safe place for validation before promoting a ruleset into `rulesets/custom/`
+- old staging artifacts should be cleaned automatically
+
+`exports/`
+
+- user-triggered exports only
+- campaign export bundles
+- ruleset export bundles
+- not authoritative storage
+
+`backups/`
+
+- scheduled or manual SQLite backups
+- optional compact snapshots for fast restore
+- retention policy should be configurable later
+
+`logs/`
+
+- app logs
+- request/access logs if enabled
+- import/validation logs for ruleset failures
+
+`cache/`
+
+- non-authoritative derived data only
+- rendered previews, normalized JSON caches, temporary packaging output
+
+`receipts/`
+
+- cached store receipts or validation state where platform policy allows it
+- this directory must not become the sole proof of entitlement; it is a convenience cache only
+
+`config/`
+
+- small local configuration files that are installation-specific rather than campaign-specific
+- examples: chosen port, LAN exposure preference, optional external hostname, backup preferences
+
+### What Goes in SQLite
+
+SQLite should hold the relational and transactional model:
+
+- `users`
+- `sessions`
+- `campaigns`
+- `campaign_memberships`
+- `rulesets`
+- `ruleset_versions`
+- `campaign_ruleset_bindings`
+- `characters`
+- `character_stats`
+- `character_conditions`
+- `encounters`
+- `turn_state`
+- `presence_sessions`
+- `audit_events`
+- `invite_tokens`
+
+SQLite should also hold pointers to file-backed assets:
+
+- custom ruleset manifest path
+- custom ruleset asset root
+- exported bundle metadata
+- backup metadata
+
+The database should not store large binary assets directly at launch unless a later requirement clearly justifies it.
+
+### Ruleset Data Model
+
+Built-in and custom rulesets should share one logical model:
+
+- `ruleset`
+  - stable internal ID
+  - slug
+  - display name
+  - source type: `builtin` or `custom`
+  - owner user ID for custom rulesets
+  - created/updated timestamps
+- `ruleset_version`
+  - version ID
+  - parent ruleset ID
+  - semantic or monotonic version label
+  - manifest path
+  - compatibility family
+  - import checksum
+  - published/archived status
+
+Design rules:
+
+- campaigns bind to a specific ruleset version, not just to a ruleset slug
+- built-in rulesets are read-only entries
+- custom ruleset updates create a new version row and a new version directory
+- old versions remain available for campaigns already using them
+- validation happens before a version becomes selectable by campaigns
+
+### Campaign Data Model
+
+Campaign state should live primarily in SQLite and be exportable as a bundle.
+
+Minimum persisted entities:
+
+- campaign metadata
+  - campaign ID
+  - name
+  - selected ruleset version
+  - archive state
+  - created/updated timestamps
+- memberships
+  - user ID
+  - campaign ID
+  - role
+- encounter state
+  - active/suspended/new
+  - round index
+  - turn index
+  - active character ID
+- encounter templates and snapshots
+  - campaign-scoped snapshots
+  - ruleset-scoped templates
+- audit/activity history
+
+Suggested export shape:
+
+```text
+campaign-export/
+  manifest.json
+  campaign.json
+  memberships.json
+  characters.json
+  encounters.json
+  snapshots.json
+  audit.json
+  referenced-ruleset/
+```
+
+### Player State Model
+
+Player state splits into three categories.
+
+Authoritative shared player state in SQLite:
+
+- player account
+- campaign membership
+- owned characters
+- character stats
+- conditions
+- initiative values
+- reveal flags
+- referee-mode presence for active sessions
+
+Per-install local server state on disk:
+
+- login/session configuration for the web admin shell if needed
+- receipt cache
+- local backup preferences
+- port/bind settings
+
+Per-client state stays on the clients, not in the server app data root:
+
+- remembered server URLs
+- mobile auth tokens
+- client UI drafts
+- client-side caches
+
+### Import, Export, and Backup Flow
+
+Ruleset import:
+
+1. place uploaded bundle in `uploads/ruleset-imports/`
+2. validate manifest and assets
+3. assign ruleset/version IDs in SQLite
+4. move validated files into `rulesets/custom/...`
+5. record immutable version metadata
+
+Campaign export:
+
+1. read campaign and dependent entities from SQLite
+2. copy referenced custom ruleset version if needed
+3. write export bundle into `exports/campaigns/`
+
+Backup:
+
+1. checkpoint SQLite WAL if appropriate
+2. create a consistent DB backup
+3. optionally include custom ruleset directories and config files
+4. record backup metadata in SQLite or a backup manifest
+
+### Packaging Notes
+
+Built-in rulesets should ship as app resources, but mutable state must always live under the data root above.
+
+For the desktop/server app:
+
+- app upgrades must not overwrite `data/`, `rulesets/custom/`, `exports/`, or `backups/`
+- the app should detect missing built-in ruleset resources and rehydrate them safely
+- the app should expose the active data-root path in a diagnostics or settings screen for support
 
 ## Reframed Roadmap
 
@@ -291,6 +603,7 @@ Constrained by:
 - campaign role model
 - onboarding/invite flow
 - support/admin needs
+- per-server account model rather than a global SaaS account system
 
 ### Phase C: Client Migration
 
@@ -319,6 +632,7 @@ Constrained by:
 - billing/entitlements
 - concurrency/conflict policy
 - support/admin tooling
+- app-store packaging and license validation
 
 ## Milestones
 
@@ -333,20 +647,24 @@ Work:
 - extract `UserStore`
 - extract `CampaignStore`
 - isolate static file serving/bootstrap from domain logic
+- extract platform services for browser launch, app-data path resolution, and future packaging hooks
+- ensure core server startup can run without macOS-only assumptions
 
 Acceptance:
 
 - app still runs with `swift run`
 - no product behavior change
 - `PlayerTracker.swift` becomes thin startup/config code
+- core server runtime is platform-neutral even if packaging remains platform-specific
 
 ### M2: Persistence Foundation
 
-Goal: move from in-memory/local-file authority to database-backed authority.
+Goal: move from in-memory/local-file authority to durable app-friendly persistence.
 
 Work:
 
-- add Fluent + PostgreSQL in `Package.swift`
+- add Fluent + SQLite in `Package.swift` for the default packaged-server path
+- keep the storage layer abstract enough that PostgreSQL can remain a future advanced/self-hosted option if needed
 - add DB configuration in server bootstrap
 - create migrations for:
   - `users`
@@ -362,6 +680,7 @@ Acceptance:
 
 - fresh DB migration works
 - campaign and character data can be persisted
+- packaged server builds can persist data without requiring users to provision PostgreSQL
 - `~/Sites/PlayerTracker/campaign.json` is no longer the future state model
 
 ### M3: Multi-Campaign Architecture
@@ -401,7 +720,7 @@ Acceptance:
 
 ### M4: Accounts and Sessions
 
-Goal: introduce durable authenticated identity.
+Goal: introduce durable authenticated identity within each licensed server.
 
 Work:
 
@@ -424,12 +743,13 @@ Web auth:
 Mobile auth:
 
 - token or session bootstrap model, but still backed by the same server-side session concept
+- login is against the chosen server, not a global Roll4Initiative identity service
 
 Acceptance:
 
 - user can sign up, log in, restore session, and log out
 - identity no longer depends on local `ownerId`
-- the initial auth system is explicitly email/password, not passwordless or social login
+- the initial auth system is explicitly email/password on a per-server basis, not passwordless or social login
 
 ### M5: Authorization and Ownership Rewrite
 
@@ -497,7 +817,7 @@ Acceptance:
 - campaign members currently in referee mode can clone encounters and create or apply reusable encounter templates inside a campaign
 - encounter templates are reusable across campaigns that use the same ruleset
 - the last 20 manually created encounter snapshots are retained per campaign
-- active campaign count is based on campaigns where an encounter has been started
+- no launch behavior depends on subscription plan caps or active-campaign counting
 
 ### M6A: Server-Sent Events Real-Time Layer
 
@@ -623,29 +943,32 @@ Acceptance:
 
 ### M11: Commercial Security and Operations
 
-Goal: be safe to expose publicly.
+Goal: make the paid server app safe to distribute and practical to operate.
 
 Work:
 
-- implement subscription entitlement checks for admin accounts
-- enforce the 5 active campaign cap while allowing archive/unarchive flows
-- block non-admin campaign access when the admin subscription is inactive
+- implement annual server-license entitlement checks through store receipts or the store account model available on each platform
+- add a grace-period model so temporary receipt-validation failures do not interrupt active sessions
+- define expiry behavior:
+  - preserve read/export access
+  - block starting new hosted sessions until renewed
 - password reset
 - optional email verification
 - rate limiting on auth routes
 - CSRF protection for cookie-based web auth
 - audit logging
 - session management
-- backup/restore for PostgreSQL
-- HTTPS-only deployment assumptions
+- packaged backup/export and restore flows for local server data
+- local-LAN HTTP support remains acceptable for same-network play
+- HTTPS is required only for intentional internet exposure or remote-access scenarios
 - account deletion/export support
 
 Acceptance:
 
-- subscription status can gate active campaign creation and unarchive operations
-- when a subscription lapses, only the admin retains campaign access for billing and management
+- license status is enforced without adding player-account subscriptions
+- expiry behavior is predictable and does not trap user data
 - core auth operations are hardened
-- operations and recovery are realistic for a commercial service
+- operations and recovery are realistic for a commercially distributed server app
 
 ### M12: Testing and Release Readiness
 
@@ -733,6 +1056,7 @@ The launch authentication decision is already made:
 - use email/password accounts
 - include password reset in the commercial auth plan
 - defer magic-link and social login for later evaluation
+- accounts are scoped to a chosen server, not a central SaaS identity system
 
 The launch campaign mode decision is already made:
 
@@ -744,13 +1068,12 @@ The launch campaign mode decision is already made:
 
 The launch billing decision is already made:
 
-- use a monthly admin subscription
-- allow up to 5 active campaigns in a subscription period
-- active means an encounter has been started with that campaign
-- allow archive and unarchive operations
-- archived campaigns do not count against the active campaign cap
-- if the subscription lapses, only the admin retains access until renewal
-- while lapsed, the admin has view/export access and billing management only
+- sell the server app on an annual license, tentatively `$5/year`
+- distribute the paid server through Apple and Microsoft storefronts
+- keep iOS and Android player clients free
+- do not introduce launch caps for campaign count or player count
+- on expiry, preserve read/export access and block new hosted sessions until renewal
+- use a grace period so receipt-validation problems do not interrupt play
 
 The launch offline behavior decision is already made:
 
