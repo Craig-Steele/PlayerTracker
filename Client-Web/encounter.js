@@ -62,7 +62,7 @@
     } else if (ratio > 0.25) {
       return 'Bloodied';
     }
-    return 'Heavily Blooded';
+    return 'Heavily Bloodied';
   }
 
   function orderedEncounterStats(stats, statKeys) {

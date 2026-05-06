@@ -664,7 +664,7 @@ fun HealthBadge(player: PlayerViewDTO, viewModel: PlayerAppViewModel) {
                 ratio > 0.75 -> "Slight Damage"
                 ratio > 0.5 -> "Some Damage"
                 ratio > 0.25 -> "Bloodied"
-                else -> "Heavily Blooded"
+                else -> "Heavily Bloodied"
             }
         }
     }

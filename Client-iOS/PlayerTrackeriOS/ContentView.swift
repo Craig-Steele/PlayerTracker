@@ -556,7 +556,7 @@ struct ContentView: View {
         } else if ratio > 0.25 {
             return "Bloodied"
         }
-        return "Heavily Blooded"
+        return "Heavily Bloodied"
     }
 
     private var isShowingModal: Bool {
