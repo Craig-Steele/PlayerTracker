@@ -583,7 +583,7 @@ For the desktop/server app:
 
 ### Phase A: Foundation
 
-- `M1` Server decomposition
+- `M1` Server decomposition complete
 - `M2` Persistence foundation
 - `M3` Multi-campaign architecture
 
@@ -641,6 +641,8 @@ Constrained by:
 ## Milestones
 
 ### M1: Server Decomposition
+
+Status: complete
 
 Goal: make the backend changeable without piling more logic into `Server-Vapor/PlayerTracker.swift`.
 
