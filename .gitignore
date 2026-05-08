@@ -16,3 +16,4 @@ xcuserdata/
 
 .netrc
 *.log
+.aider*

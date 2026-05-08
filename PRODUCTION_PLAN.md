@@ -621,6 +621,7 @@ Constrained by:
 - campaign switching UX
 - degraded-network behavior
 - SSE client support and reconnect behavior
+- Apple TV/tvOS may be a future display-only client, but not a stable server target because the server needs long-lived uptime and tvOS background behavior is too constrained for that role
 
 ### Phase D: Transition and Hardening
 
