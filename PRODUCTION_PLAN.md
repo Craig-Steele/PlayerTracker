@@ -725,6 +725,12 @@ Route direction:
   - `/campaigns/:campaignId/state`
   - `/campaigns/:campaignId/characters`
 
+Client transition scope:
+
+- update the web client in M3 so it can select and bind to a campaign explicitly
+- keep the legacy `/campaign` and `/state` flows as compatibility shims during the transition
+- defer iOS and Android client updates until a later milestone
+
 Acceptance:
 
 - two campaigns can exist concurrently
@@ -732,6 +738,8 @@ Acceptance:
 - one user can belong to multiple campaigns
 - switching campaigns does not mutate another campaign's state
 - campaign relational constraints are tightened here, after the M2 persistence foundation is in place
+- web client campaign selection works end to end against the new campaign model
+- iOS and Android remain on the legacy flow until a later milestone
 
 ### M4: Accounts and Sessions
 
