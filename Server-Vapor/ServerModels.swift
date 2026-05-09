@@ -31,12 +31,6 @@ struct CampaignState: Content {
     let encounterState: EncounterState
 }
 
-struct CampaignPersistedState: Content {
-    let name: String
-    let rulesetId: String
-    let encounterState: EncounterState?
-}
-
 struct CampaignUpdateInput: Content {
     let name: String
     let rulesetId: String

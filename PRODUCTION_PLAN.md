@@ -447,6 +447,8 @@ SQLite should also hold pointers to file-backed assets:
 - exported bundle metadata
 - backup metadata
 
+Temporary hit points are not a separate top-level field in the server model for launch. They are represented as a normal `character_stats` row with `stat_key = "TempHP"` and `max_value = 0`, and clients treat them as a special-case stat when rendering health.
+
 The database should not store large binary assets directly at launch unless a later requirement clearly justifies it.
 
 ### Ruleset Data Model
@@ -665,6 +667,8 @@ Acceptance:
 
 ### M2: Persistence Foundation
 
+Status: complete
+
 Goal: move from in-memory/local-file authority to durable app-friendly persistence.
 
 Work:
@@ -687,6 +691,11 @@ Acceptance:
 - fresh DB migration works
 - campaign and character data can be persisted
 - packaged server builds can persist data without requiring users to provision PostgreSQL
+
+Schema hardening note:
+
+- the M2 schema is intentionally pragmatic so the persistence foundation can land cleanly
+- relational hardening, stricter campaign scoping, and auth/session ownership constraints are split into M3 and M4
 
 ### M3: Multi-Campaign Architecture
 
@@ -722,6 +731,7 @@ Acceptance:
 - each campaign has independent round/turn/encounter/ruleset
 - one user can belong to multiple campaigns
 - switching campaigns does not mutate another campaign's state
+- campaign relational constraints are tightened here, after the M2 persistence foundation is in place
 
 ### M4: Accounts and Sessions
 
@@ -755,6 +765,7 @@ Acceptance:
 - user can sign up, log in, restore session, and log out
 - identity no longer depends on local `ownerId`
 - the initial auth system is explicitly email/password on a per-server basis, not passwordless or social login
+- auth/session ownership constraints are tightened here, after the M2 persistence foundation is in place
 
 ### M5: Authorization and Ownership Rewrite
 

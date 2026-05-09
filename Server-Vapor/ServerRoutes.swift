@@ -277,7 +277,13 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
     app.post("campaign") { req async throws -> CampaignState in
         let input = try req.content.decode(CampaignUpdateInput.self)
         logConnection(req, action: "update-campaign", identifier: input.name)
-        return try await campaignStore.update(name: input.name, rulesetId: input.rulesetId)
+        let updated = try await campaignStore.update(name: input.name, rulesetId: input.rulesetId)
+        try await userStore.configure(
+            campaignName: updated.name,
+            rulesetId: updated.rulesetId,
+            on: req.application.db
+        )
+        return updated
     }
 
     app.get("rulesets") { req async throws -> [RulesetSummary] in

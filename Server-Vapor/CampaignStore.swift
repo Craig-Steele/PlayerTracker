@@ -1,10 +1,15 @@
 import Foundation
+import Fluent
+import Vapor
 
 actor CampaignStore {
     private var currentName: String
     private var currentRulesetId: String
     private var currentLibrary: RuleSetLibrary
     private var currentEncounterState: EncounterState
+    private var currentCampaignID: UUID?
+    private var database: (any Database)?
+    private let restorePersistedState: Bool
     private let persistChanges: Bool
 
     init(
@@ -13,30 +18,39 @@ actor CampaignStore {
         restorePersistedState: Bool = true,
         persistChanges: Bool = true
     ) {
+        self.restorePersistedState = restorePersistedState
         self.persistChanges = persistChanges
-        let persisted = restorePersistedState ? CampaignStore.loadPersistedState() : nil
-        if let persisted {
-            if let restoredLibrary = try? RuleSetLibraryLoader.loadLibrary(id: persisted.rulesetId) {
-                self.currentName = persisted.name
-                self.currentRulesetId = restoredLibrary.id
-                self.currentLibrary = restoredLibrary
-                self.currentEncounterState = .new
-                if persistChanges {
-                    CampaignStore.savePersistedState(
-                        CampaignPersistedState(
-                            name: self.currentName,
-                            rulesetId: self.currentRulesetId,
-                            encounterState: self.currentEncounterState
-                        )
-                    )
-                }
-                return
-            }
-        }
         self.currentName = defaultName
         self.currentRulesetId = defaultLibrary.id
         self.currentLibrary = defaultLibrary
         self.currentEncounterState = .new
+    }
+
+    func configure(database: any Database) async throws {
+        self.database = database
+        if restorePersistedState,
+           let loaded = try await DatabasePersistence.loadCampaign(named: currentName, on: database) {
+            currentCampaignID = loaded.id
+            currentRulesetId = loaded.rulesetId
+            currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
+            currentEncounterState = loaded.encounterState
+            return
+        }
+
+        try await DatabasePersistence.upsertCampaign(
+            name: currentName,
+            rulesetId: currentRulesetId,
+            encounterState: currentEncounterState,
+            roundIndex: 1,
+            turnIndex: 0,
+            currentTurnID: nil,
+            on: database
+        )
+        currentCampaignID = try await DatabasePersistence.upsertCampaignMetadata(
+            name: currentName,
+            rulesetId: currentRulesetId,
+            on: database
+        )
     }
 
     func state() -> CampaignState {
@@ -60,64 +74,41 @@ actor CampaignStore {
         currentEncounterState
     }
 
-    func setEncounterState(_ state: EncounterState) {
+    func setEncounterState(_ state: EncounterState) async {
         currentEncounterState = state
-        savePersistedStateIfNeeded(
-            CampaignPersistedState(
-                name: currentName,
-                rulesetId: currentRulesetId,
-                encounterState: currentEncounterState
-            )
-        )
+        await savePersistedStateIfNeeded()
     }
 
-    func update(name: String, rulesetId: String) throws -> CampaignState {
-        let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
+    func update(name: String, rulesetId: String) async throws -> CampaignState {
         currentName = name
+        if restorePersistedState,
+           let database,
+           let loaded = try await DatabasePersistence.loadCampaign(named: name, on: database) {
+            currentCampaignID = loaded.id
+            currentRulesetId = loaded.rulesetId
+            currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
+            currentEncounterState = loaded.encounterState
+            return state()
+        }
+
+        let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
         currentRulesetId = library.id
         currentLibrary = library
-        savePersistedStateIfNeeded(
-            CampaignPersistedState(
-                name: currentName,
-                rulesetId: currentRulesetId,
-                encounterState: currentEncounterState
-            )
-        )
+        currentEncounterState = .new
+        await savePersistedStateIfNeeded()
         return state()
     }
 
-    private func savePersistedStateIfNeeded(_ state: CampaignPersistedState) {
-        guard persistChanges else { return }
-        CampaignStore.savePersistedState(state)
-    }
-
-    private static func persistedStateDirectory() -> URL {
-        AppPaths.appDataDirectory()
-    }
-
-    private static func persistedStateURL() -> URL {
-        persistedStateDirectory().appendingPathComponent("campaign.json")
-    }
-
-    private static func loadPersistedState() -> CampaignPersistedState? {
-        let url = persistedStateURL()
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-        return try? JSONDecoder().decode(CampaignPersistedState.self, from: data)
-    }
-
-    private static func savePersistedState(_ state: CampaignPersistedState) {
-        let url = persistedStateURL()
+    private func savePersistedStateIfNeeded() async {
+        guard persistChanges, let database else { return }
         do {
-            try FileManager.default.createDirectory(
-                at: persistedStateDirectory(),
-                withIntermediateDirectories: true
+            currentCampaignID = try await DatabasePersistence.upsertCampaignMetadata(
+                name: currentName,
+                rulesetId: currentRulesetId,
+                on: database
             )
-            let data = try JSONEncoder().encode(state)
-            try data.write(to: url, options: [.atomic])
         } catch {
-            print("Failed to persist campaign state:", error)
+            print("Failed to persist campaign metadata:", error)
         }
     }
 }

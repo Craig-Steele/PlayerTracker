@@ -1,4 +1,6 @@
 import Foundation
+import Fluent
+import FluentSQLiteDriver
 import Vapor
 
 struct ServerBootstrapOptions {
@@ -6,6 +8,7 @@ struct ServerBootstrapOptions {
     var port: Int
     var webClientDirectory: URL
     var campaignName: String
+    var databaseFileURL: URL
     var restorePersistedState: Bool
     var persistChanges: Bool
     var launchBrowser: Bool
@@ -16,6 +19,9 @@ struct ServerBootstrapOptions {
             port: 8080,
             webClientDirectory: AppPaths.webClientDirectory(),
             campaignName: "Campaign",
+            databaseFileURL: AppPaths.appDataDirectory()
+                .appendingPathComponent("data", isDirectory: true)
+                .appendingPathComponent("app.sqlite3"),
             restorePersistedState: true,
             persistChanges: true,
             launchBrowser: BrowserLauncher.shouldLaunchByDefault
@@ -37,6 +43,14 @@ enum ServerBootstrap {
         app.http.server.configuration.hostname = options.hostname
         app.http.server.configuration.port = options.port
 
+        try FileManager.default.createDirectory(
+            at: options.databaseFileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        app.databases.use(.sqlite(.file(options.databaseFileURL.path)), as: .sqlite)
+        DatabaseMigrations.register(on: app)
+        try await app.autoMigrate()
+
         let conditionLibrary = try library ?? RuleSetLibraryLoader.loadDefault()
         let campaignStore = CampaignStore(
             defaultLibrary: conditionLibrary,
@@ -44,7 +58,13 @@ enum ServerBootstrap {
             restorePersistedState: options.restorePersistedState,
             persistChanges: options.persistChanges
         )
-
+        try await campaignStore.configure(database: app.db)
+        let campaignState = await campaignStore.state()
+        try await userStore.configure(
+            campaignName: campaignState.name,
+            rulesetId: campaignState.rulesetId,
+            on: app.db
+        )
         print("Loaded default ruleset:", conditionLibrary.label)
         print("Connection logs:", await connectionLogPath())
         await logServerEvent("startup host=\(options.hostname) port=\(options.port)")

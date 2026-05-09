@@ -1,13 +1,108 @@
 import Foundation
+import Fluent
+import Vapor
 
 // Concurrency-safe store for character and turn state.
 actor UserStore {
     private var storage: [UUID: CharacterState] = [:]
     private var campaignTurns: [String: TurnState] = [:]
+    private var database: (any Database)?
+    private var currentCampaignID: UUID?
+    private var currentCampaignName: String?
+    private var currentRulesetId: String?
+    private var currentEncounterState: EncounterState = .new
 
     private struct TurnState {
         var roundIndex: Int
         var turnIndex: Int
+    }
+
+    func resetMemoryForTesting() {
+        storage.removeAll()
+        campaignTurns.removeAll()
+        database = nil
+        currentCampaignID = nil
+        currentCampaignName = nil
+        currentRulesetId = nil
+        currentEncounterState = .new
+    }
+
+    private func configuredCampaignTurnState() -> TurnState {
+        guard let campaignName = currentCampaignName else {
+            return TurnState(roundIndex: 1, turnIndex: 0)
+        }
+        return campaignTurns[campaignName] ?? TurnState(roundIndex: 1, turnIndex: 0)
+    }
+
+    private func persistConfiguredCampaignCharacters() async throws {
+        guard let database, let campaignID = currentCampaignID, let campaignName = currentCampaignName else {
+            return
+        }
+        try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
+        for state in storage.values where state.campaignName == campaignName {
+            try await DatabasePersistence.persistCharacter(
+                state,
+                campaignID: campaignID,
+                on: database
+            )
+        }
+    }
+
+    private func persistConfiguredCampaignEncounter(
+        currentTurnID: UUID?
+    ) async throws {
+        guard let database,
+              let campaignName = currentCampaignName,
+              let campaignID = currentCampaignID,
+              let rulesetId = currentRulesetId else {
+            return
+        }
+        let turnState = configuredCampaignTurnState()
+        try await DatabasePersistence.upsertCampaign(
+            name: campaignName,
+            rulesetId: rulesetId,
+            encounterState: currentEncounterState,
+            roundIndex: turnState.roundIndex,
+            turnIndex: turnState.turnIndex,
+            currentTurnID: currentTurnID,
+            on: database
+        )
+        currentCampaignID = campaignID
+    }
+
+    func configure(
+        campaignName: String,
+        rulesetId: String,
+        on database: any Database
+    ) async throws {
+        self.database = database
+        self.currentCampaignName = campaignName
+        self.currentRulesetId = rulesetId
+
+        guard let loaded = try await DatabasePersistence.loadCampaign(named: campaignName, on: database) else {
+            currentCampaignID = try await DatabasePersistence.upsertCampaignMetadata(
+                name: campaignName,
+                rulesetId: rulesetId,
+                on: database
+            )
+            storage.removeAll()
+            campaignTurns[campaignName] = TurnState(roundIndex: 1, turnIndex: 0)
+            currentEncounterState = .new
+            return
+        }
+
+        currentCampaignID = loaded.id
+        currentRulesetId = loaded.rulesetId
+        currentEncounterState = loaded.encounterState
+        campaignTurns[campaignName] = TurnState(roundIndex: loaded.roundIndex, turnIndex: loaded.turnIndex)
+
+        let loadedCharacters = try await DatabasePersistence.loadCharacters(
+            campaignID: loaded.id,
+            campaignName: campaignName,
+            on: database
+        )
+
+        storage = Dictionary(uniqueKeysWithValues: loadedCharacters.map { ($0.id, $0) })
     }
 
     private func parseStandardDie(_ spec: String?) -> (count: Int, sides: Int)? {
@@ -25,7 +120,7 @@ actor UserStore {
         return (count, sides)
     }
 
-    func autoRollUnsetInitiativeForReferee(campaignName: String, standardDie: String?) {
+    func autoRollUnsetInitiativeForReferee(campaignName: String, standardDie: String?) async {
         guard let die = parseStandardDie(standardDie) else { return }
         for (id, var state) in storage {
             guard state.campaignName == campaignName else { continue }
@@ -37,6 +132,13 @@ actor UserStore {
             }
             state.initiative = Double(roll + state.initiativeBonus)
             storage[id] = state
+        }
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist referee initiative rolls:", error)
+            }
         }
     }
 
@@ -55,7 +157,7 @@ actor UserStore {
         isHidden: Bool?,
         revealOnTurn: Bool?,
         conditions: Set<String>?
-    ) -> PlayerView {
+    ) async -> PlayerView {
         let resolvedId = id ?? UUID()
         var state = storage[resolvedId] ?? CharacterState(
             id: resolvedId,
@@ -109,13 +211,39 @@ actor UserStore {
         }
 
         storage[resolvedId] = state
+        if currentCampaignName == campaignName {
+            if let campaignID = currentCampaignID {
+                if let database {
+                    do {
+                        try await DatabasePersistence.persistCharacter(
+                            state,
+                            campaignID: campaignID,
+                            on: database
+                        )
+                    } catch {
+                        print("Failed to persist character:", error)
+                    }
+                }
+            }
+        }
         return view(from: state)
     }
 
-    func renameCharacter(id: UUID, characterName: String) {
+    func renameCharacter(id: UUID, characterName: String) async {
         guard var state = storage[id] else { return }
         state.characterName = characterName
         storage[id] = state
+        if state.campaignName == currentCampaignName, let database, let campaignID = currentCampaignID {
+            do {
+                try await DatabasePersistence.persistCharacter(
+                    state,
+                    campaignID: campaignID,
+                    on: database
+                )
+            } catch {
+                print("Failed to persist character rename:", error)
+            }
+        }
     }
 
     private func turnState(for campaignName: String) -> TurnState {
@@ -153,12 +281,19 @@ actor UserStore {
         )
     }
 
-    func clear() {
+    func clear() async {
         storage.removeAll()
         campaignTurns.removeAll()
+        if let database, let campaignID = currentCampaignID {
+            do {
+                try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
+            } catch {
+                print("Failed to clear campaign characters:", error)
+            }
+        }
     }
 
-    func resetForNewEncounter(campaignName: String) {
+    func resetForNewEncounter(campaignName: String) async {
         let entries = storage.filter { $0.value.campaignName == campaignName }
         var idsToRemove: [UUID] = []
         for (id, var state) in entries {
@@ -173,6 +308,13 @@ actor UserStore {
             storage.removeValue(forKey: id)
         }
         resetTurnState(campaignName: campaignName)
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist reset encounter:", error)
+            }
+        }
     }
 
     func resetTurnState(campaignName: String, roundIndex: Int = 1, turnIndex: Int = 0) {
@@ -180,8 +322,15 @@ actor UserStore {
         saveTurnState(updated, for: campaignName)
     }
 
-    func deleteCharacter(id: UUID) -> Bool {
+    func deleteCharacter(id: UUID) async -> Bool {
         if storage.removeValue(forKey: id) != nil {
+            if let database {
+                do {
+                    try await DatabasePersistence.deleteCharacter(id: id, on: database)
+                } catch {
+                    print("Failed to delete character:", error)
+                }
+            }
             return true
         }
         return false
@@ -201,17 +350,24 @@ actor UserStore {
         storage[id]
     }
 
-    func renameOwner(ownerId: UUID, newName: String, campaignName: String) {
+    func renameOwner(ownerId: UUID, newName: String, campaignName: String) async {
         for (id, var state) in storage {
             guard state.campaignName == campaignName, state.ownerId == ownerId else { continue }
             state.ownerName = newName
             storage[id] = state
         }
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist owner rename:", error)
+            }
+        }
     }
 
-    func setConditions(name: String, conditions: Set<String>, campaignName: String) {
+    func setConditions(name: String, conditions: Set<String>, campaignName: String) async {
         guard let existingId = storage.values.first(where: { $0.campaignName == campaignName && $0.characterName == name })?.id else {
-            _ = upsertCharacter(
+            _ = await upsertCharacter(
                 id: nil,
                 campaignName: campaignName,
                 ownerId: UUID(),
@@ -230,7 +386,7 @@ actor UserStore {
             return
         }
         let existingOwnerId = storage[existingId]?.ownerId ?? UUID()
-        _ = upsertCharacter(
+        _ = await upsertCharacter(
             id: existingId,
             campaignName: campaignName,
             ownerId: existingOwnerId,
@@ -248,9 +404,9 @@ actor UserStore {
         )
     }
 
-    func addCondition(name: String, condition: String, campaignName: String) {
+    func addCondition(name: String, condition: String, campaignName: String) async {
         guard let existingId = storage.values.first(where: { $0.campaignName == campaignName && $0.characterName == name })?.id else {
-            _ = upsertCharacter(
+            _ = await upsertCharacter(
                 id: nil,
                 campaignName: campaignName,
                 ownerId: UUID(),
@@ -271,7 +427,7 @@ actor UserStore {
         var conditions = storage[existingId]?.conditions ?? []
         conditions.insert(condition)
         let existingOwnerId = storage[existingId]?.ownerId ?? UUID()
-        _ = upsertCharacter(
+        _ = await upsertCharacter(
             id: existingId,
             campaignName: campaignName,
             ownerId: existingOwnerId,
@@ -289,14 +445,14 @@ actor UserStore {
         )
     }
 
-    func removeCondition(name: String, condition: String, campaignName: String) {
+    func removeCondition(name: String, condition: String, campaignName: String) async {
         guard let existingId = storage.values.first(where: { $0.campaignName == campaignName && $0.characterName == name })?.id else {
             return
         }
         var conditions = storage[existingId]?.conditions ?? []
         conditions.remove(condition)
         let existingOwnerId = storage[existingId]?.ownerId ?? UUID()
-        _ = upsertCharacter(
+        _ = await upsertCharacter(
             id: existingId,
             campaignName: campaignName,
             ownerId: existingOwnerId,
@@ -318,7 +474,7 @@ actor UserStore {
         id: UUID,
         isHidden: Bool?,
         revealOnTurn: Bool?
-    ) -> PlayerView? {
+    ) async -> PlayerView? {
         guard var state = storage[id] else { return nil }
         let campaignName = state.campaignName
         let previousCandidates = sortedStates(
@@ -333,6 +489,13 @@ actor UserStore {
             state.isHidden = false
             state.revealOnTurn = false
             storage[id] = state
+            if campaignName == currentCampaignName {
+                do {
+                    try await persistConfiguredCampaignCharacters()
+                } catch {
+                    print("Failed to persist visibility change:", error)
+                }
+            }
             return view(from: state)
         }
         if let isHidden {
@@ -358,12 +521,19 @@ actor UserStore {
                 saveTurnState(updatedTurnState, for: campaignName)
             }
         }
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist visibility change:", error)
+            }
+        }
         return view(from: state)
     }
 
-    func setCurrentTurn(campaignName: String, characterId: UUID, encounterState: EncounterState) -> GameState {
+    func setCurrentTurn(campaignName: String, characterId: UUID, encounterState: EncounterState) async -> GameState {
         guard var target = storage[characterId], target.campaignName == campaignName else {
-            return state(campaignName: campaignName, includeHidden: true, encounterState: encounterState)
+            return await state(campaignName: campaignName, includeHidden: true, encounterState: encounterState)
         }
 
         if target.isHidden {
@@ -383,7 +553,7 @@ actor UserStore {
             saveTurnState(turnState, for: campaignName)
         }
 
-        return state(campaignName: campaignName, includeHidden: true, encounterState: encounterState)
+        return await state(campaignName: campaignName, includeHidden: true, encounterState: encounterState)
     }
 
     private func view(from state: CharacterState) -> PlayerView {
@@ -478,12 +648,20 @@ actor UserStore {
             .map { view(from: $0) }
     }
 
-    func state(campaignName: String, includeHidden: Bool, encounterState: EncounterState) -> GameState {
+    func state(campaignName: String, includeHidden: Bool, encounterState: EncounterState) async -> GameState {
+        currentEncounterState = encounterState
         var players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
         let turnCandidates = visibleTurnCandidates(campaignName: campaignName)
         var turnState = turnState(for: campaignName)
 
         if encounterState == .new {
+            if campaignName == currentCampaignName {
+                do {
+                    try await persistConfiguredCampaignEncounter(currentTurnID: nil)
+                } catch {
+                    print("Failed to persist new encounter state:", error)
+                }
+            }
             return GameState(
                 round: turnState.roundIndex,
                 encounterState: encounterState,
@@ -497,6 +675,13 @@ actor UserStore {
             turnState.roundIndex = 1
             turnState.turnIndex = 0
             saveTurnState(turnState, for: campaignName)
+            if campaignName == currentCampaignName {
+                do {
+                    try await persistConfiguredCampaignEncounter(currentTurnID: nil)
+                } catch {
+                    print("Failed to persist empty encounter state:", error)
+                }
+            }
             return GameState(
                 round: turnState.roundIndex,
                 encounterState: encounterState,
@@ -513,6 +698,13 @@ actor UserStore {
         if encounterState == .active,
            !advanceTurnStatePastAutoSkip(&turnState, candidates: turnCandidates) {
             saveTurnState(turnState, for: campaignName)
+            if campaignName == currentCampaignName {
+                do {
+                    try await persistConfiguredCampaignEncounter(currentTurnID: nil)
+                } catch {
+                    print("Failed to persist skipped encounter state:", error)
+                }
+            }
             return GameState(
                 round: turnState.roundIndex,
                 encounterState: encounterState,
@@ -534,6 +726,14 @@ actor UserStore {
 
         saveTurnState(turnState, for: campaignName)
         let currentView = view(from: currentPlayer)
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+                try await persistConfiguredCampaignEncounter(currentTurnID: currentView.id)
+            } catch {
+                print("Failed to persist encounter state:", error)
+            }
+        }
         return GameState(
             round: turnState.roundIndex,
             encounterState: encounterState,
@@ -543,7 +743,8 @@ actor UserStore {
         )
     }
 
-    func nextTurn(campaignName: String, includeHidden: Bool, encounterState: EncounterState) -> GameState {
+    func nextTurn(campaignName: String, includeHidden: Bool, encounterState: EncounterState) async -> GameState {
+        currentEncounterState = encounterState
         var players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
         let turnCandidates = visibleTurnCandidates(campaignName: campaignName)
         var turnState = turnState(for: campaignName)
@@ -592,6 +793,14 @@ actor UserStore {
 
         saveTurnState(turnState, for: campaignName)
         let currentView = view(from: currentPlayer)
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+                try await persistConfiguredCampaignEncounter(currentTurnID: currentView.id)
+            } catch {
+                print("Failed to persist next turn state:", error)
+            }
+        }
         return GameState(
             round: turnState.roundIndex,
             encounterState: encounterState,
