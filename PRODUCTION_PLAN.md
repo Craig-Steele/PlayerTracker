@@ -700,6 +700,8 @@ Schema hardening note:
 
 ### M3: Multi-Campaign Architecture
 
+Status: complete
+
 Goal: support multiple stored campaigns, with one active campaign at a time, without overwriting one another.
 
 Work:
