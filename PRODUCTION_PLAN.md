@@ -30,9 +30,9 @@ Rationale:
 
 These are cross-cutting constraints that affect architecture, API design, persistence, authentication, and client behavior.
 
-### 1. Multiple Simultaneous Campaigns
+### 1. Multiple Stored Campaigns, One Active Campaign
 
-The system must support multiple live campaigns at once, each with its own:
+The system must support multiple stored campaigns, with exactly one active campaign at a time, each with its own:
 
 - ruleset
 - characters
@@ -42,9 +42,10 @@ The system must support multiple live campaigns at once, each with its own:
 
 Impact:
 
-- no globally current campaign model
+- no globally shared gameplay state across campaigns
 - all gameplay state must be campaign-scoped
-- all APIs must be campaign-aware
+- all gameplay APIs must resolve against the active campaign
+- the admin must be able to switch which campaign is active
 
 ### 2. Durable Account Identity
 
@@ -591,7 +592,7 @@ For the desktop/server app:
 
 Constrained by:
 
-- multiple simultaneous campaigns
+- multiple stored campaigns with one active campaign at a time
 - future ruleset extensibility
 - export/retention
 
@@ -699,11 +700,18 @@ Schema hardening note:
 
 ### M3: Multi-Campaign Architecture
 
-Goal: support multiple live campaigns at once without overwriting one another.
+Goal: support multiple stored campaigns, with one active campaign at a time, without overwriting one another.
 
 Work:
 
-- remove the notion of one globally current campaign as the server's authoritative model
+- remove the notion of an implicit globally current campaign as the server's authoritative runtime state
+- make active-campaign selection explicit and admin-controlled
+- extract campaign admin controls from the referee page into a separate admin surface
+- support server-global active-campaign selection with explicit `Select Campaign` confirmation
+- mirror the admin surface across browsers so they show the same active campaign and switching controls
+- do not persist the active-campaign selection across restart
+- on startup, preselect the last active campaign if it still exists, otherwise show the campaign list with no selection
+- if there are no campaigns, start in the create-campaign flow
 - make encounter state campaign-scoped
 - make turn state campaign-scoped
 - make character queries campaign-scoped
@@ -727,18 +735,31 @@ Route direction:
 
 Client transition scope:
 
-- update the web client in M3 so it can select and bind to a campaign explicitly
+- update the web client in M3 so it can select and bind to a campaign explicitly through that admin surface
+- keep the admin browser as a status/control surface after selection, with a `Change Campaign` action
 - keep the legacy `/campaign` and `/state` flows as compatibility shims during the transition
 - defer iOS and Android client updates until a later milestone
 
 Acceptance:
 
-- two campaigns can exist concurrently
+- multiple campaigns can exist concurrently in storage
+- exactly one campaign is active at a time for play
+- the admin can switch which campaign is active by selecting a campaign and confirming with `Select Campaign`
+- the admin browser mirrors the same active-campaign state across browsers
+- the admin browser shows the active campaign and a `Change Campaign` action after selection
+- if the server has no campaigns, the chooser starts in the create-campaign flow
+- if the server has campaigns but no active selection, the chooser starts with no selection
+- if the previously active campaign still exists on startup, it is preselected in the chooser
+- active-campaign selection does not persist across restart
+- the referee page remains focused on active-campaign gameplay
+- the admin surface handles campaign selection and active-campaign switching
 - each campaign has independent round/turn/encounter/ruleset
 - one user can belong to multiple campaigns
-- switching campaigns does not mutate another campaign's state
+- switching the active campaign does not mutate another campaign's state
+- players cannot join until an active campaign exists
+- legacy routes return `No campaign selected` when there is no active campaign
 - campaign relational constraints are tightened here, after the M2 persistence foundation is in place
-- web client campaign selection works end to end against the new campaign model
+- web client admin controls can select and bind the active campaign end to end against the new campaign model
 - iOS and Android remain on the legacy flow until a later milestone
 
 ### M4: Accounts and Sessions
@@ -1060,7 +1081,7 @@ If the goal is the smallest serious commercial slice, start with:
 That yields:
 
 - a DB-backed server
-- simultaneous campaigns
+- multiple stored campaigns with a single active campaign
 - account login
 - SSE-based live updates
 - authenticated web client
@@ -1154,7 +1175,7 @@ The next feature-planning priorities are:
 
 The most important constraints to design for now are:
 
-- multiple simultaneous campaigns
+- multiple stored campaigns with one active campaign at a time
 - multiple devices per user
 - campaign-scoped authorization
 - invite/join flow
