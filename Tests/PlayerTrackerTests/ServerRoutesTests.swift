@@ -18,6 +18,7 @@ final class ServerRoutesTests: XCTestCase {
         let campaignResponse = try await tester.sendRequest(.GET, "/campaign")
         XCTAssertEqual(campaignResponse.status, .ok)
         let campaign = try campaignResponse.content.decode(CampaignState.self)
+        XCTAssertFalse(campaign.id.uuidString.isEmpty)
         XCTAssertEqual(campaign.name, "Route Smoke")
         XCTAssertEqual(campaign.rulesetId, "dnd5e")
         XCTAssertEqual(campaign.encounterState, .new)
@@ -27,6 +28,114 @@ final class ServerRoutesTests: XCTestCase {
         let rulesets = try rulesetsResponse.content.decode([RulesetSummary].self)
         XCTAssertTrue(rulesets.contains { $0.id == "dnd5e" })
         XCTAssertTrue(rulesets.contains { $0.id == "none" })
+    }
+
+    func testCampaignListAndUUIDSelectionRoute() async throws {
+        let tester = try await makeTester()
+
+        let initialCampaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(initialCampaignResponse.status, .ok)
+        let initialCampaign = try initialCampaignResponse.content.decode(CampaignState.self)
+
+        let createSecondCampaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaign",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Second Campaign", rulesetId: "pathfinder")
+            ))
+        )
+        XCTAssertEqual(createSecondCampaignResponse.status, .ok)
+        let secondCampaign = try createSecondCampaignResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(secondCampaign.name, "Second Campaign")
+        XCTAssertEqual(secondCampaign.rulesetId, "pathfinder")
+
+        let campaignsResponse = try await tester.sendRequest(.GET, "/campaigns")
+        XCTAssertEqual(campaignsResponse.status, .ok)
+        let campaigns = try campaignsResponse.content.decode([CampaignSummary].self)
+        XCTAssertEqual(campaigns.count, 2)
+        XCTAssertEqual(campaigns.first(where: { $0.id == initialCampaign.id })?.isActive, false)
+        XCTAssertEqual(campaigns.first(where: { $0.id == secondCampaign.id })?.isActive, true)
+
+        let selectResponse = try await tester.sendRequest(.POST, "/campaigns/\(initialCampaign.id.uuidString)/select")
+        XCTAssertEqual(selectResponse.status, .ok)
+        let selectedCampaign = try selectResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(selectedCampaign.id, initialCampaign.id)
+        XCTAssertEqual(selectedCampaign.name, initialCampaign.name)
+        XCTAssertEqual(selectedCampaign.rulesetId, initialCampaign.rulesetId)
+
+        let campaignsAfterSelectResponse = try await tester.sendRequest(.GET, "/campaigns")
+        XCTAssertEqual(campaignsAfterSelectResponse.status, .ok)
+        let campaignsAfterSelect = try campaignsAfterSelectResponse.content.decode([CampaignSummary].self)
+        XCTAssertEqual(campaignsAfterSelect.first(where: { $0.id == initialCampaign.id })?.isActive, true)
+        XCTAssertEqual(campaignsAfterSelect.first(where: { $0.id == secondCampaign.id })?.isActive, false)
+    }
+
+    func testCampaignCreateAndEditRoutesDoNotActivateCampaign() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+
+        let travellerLibrary = try RuleSetLibraryLoader.loadLibrary(id: "traveller")
+        let pathfinderLibrary = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
+
+        let createAlphaResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Ancients!", rulesetId: travellerLibrary.id)
+            ))
+        )
+        XCTAssertEqual(createAlphaResponse.status, .ok)
+        let alphaCampaign = try createAlphaResponse.content.decode(CampaignSummary.self)
+        XCTAssertFalse(alphaCampaign.isActive)
+
+        let noCampaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(noCampaignResponse.status, .conflict)
+
+        let selectAlphaResponse = try await tester.sendRequest(.POST, "/campaigns/\(alphaCampaign.id.uuidString)/select")
+        XCTAssertEqual(selectAlphaResponse.status, .ok)
+        let selectedAlpha = try selectAlphaResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(selectedAlpha.id, alphaCampaign.id)
+
+        let createBetaResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Hell's Vengance", rulesetId: pathfinderLibrary.id)
+            ))
+        )
+        XCTAssertEqual(createBetaResponse.status, .ok)
+        let betaCampaign = try createBetaResponse.content.decode(CampaignSummary.self)
+        XCTAssertFalse(betaCampaign.isActive)
+
+        let editBetaResponse = try await tester.sendRequest(
+            .PATCH,
+            "/campaigns/\(betaCampaign.id.uuidString)",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Hell's Vengance Revised", rulesetId: pathfinderLibrary.id)
+            ))
+        )
+        XCTAssertEqual(editBetaResponse.status, .ok)
+        let updatedBeta = try editBetaResponse.content.decode(CampaignSummary.self)
+        XCTAssertEqual(updatedBeta.id, betaCampaign.id)
+        XCTAssertEqual(updatedBeta.name, "Hell's Vengance Revised")
+        XCTAssertFalse(updatedBeta.isActive)
+
+        let activeCampaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(activeCampaignResponse.status, .ok)
+        let activeCampaign = try activeCampaignResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(activeCampaign.id, alphaCampaign.id)
+        XCTAssertEqual(activeCampaign.name, "Ancients!")
+        XCTAssertEqual(activeCampaign.rulesetId, travellerLibrary.id)
+
+        let campaignsResponse = try await tester.sendRequest(.GET, "/campaigns")
+        XCTAssertEqual(campaignsResponse.status, .ok)
+        let campaigns = try campaignsResponse.content.decode([CampaignSummary].self)
+        XCTAssertEqual(campaigns.first(where: { $0.id == alphaCampaign.id })?.isActive, true)
+        XCTAssertEqual(campaigns.first(where: { $0.id == betaCampaign.id })?.isActive, false)
+        XCTAssertEqual(campaigns.first(where: { $0.id == betaCampaign.id })?.name, "Hell's Vengance Revised")
     }
 
     func testCharacterStateAndEncounterFlowRoutes() async throws {
@@ -112,10 +221,24 @@ final class ServerRoutesTests: XCTestCase {
 
         let tester = try app.testable()
         let response = try await tester.sendRequest(.GET, "/campaign")
-        XCTAssertEqual(response.status, .ok)
-        let campaign = try response.content.decode(CampaignState.self)
-        XCTAssertEqual(campaign.name, "Bootstrap Smoke")
-        XCTAssertEqual(campaign.rulesetId, "dnd5e")
+        XCTAssertEqual(response.status, .conflict)
+        XCTAssertTrue(response.body.string.contains("No campaign selected"))
+    }
+
+    func testLegacyRoutesRejectRequestsWithoutActiveCampaign() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+
+        let stateResponse = try await tester.sendRequest(.GET, "/state")
+        XCTAssertEqual(stateResponse.status, .conflict)
+        XCTAssertTrue(stateResponse.body.string.contains("No campaign selected"))
+
+        let usersResponse = try await tester.sendRequest(.GET, "/users")
+        XCTAssertEqual(usersResponse.status, .conflict)
+        XCTAssertTrue(usersResponse.body.string.contains("No campaign selected"))
+
+        let campaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(campaignResponse.status, .conflict)
+        XCTAssertTrue(campaignResponse.body.string.contains("No campaign selected"))
     }
 
     func testCharacterPersistsAcrossRestartWithSQLite() async throws {
@@ -135,6 +258,7 @@ final class ServerRoutesTests: XCTestCase {
         let app1 = try await Application.make(.testing)
         try await ServerBootstrap.configure(app1, options: options, library: library)
         let tester1 = try app1.testable()
+        try await activateCampaign(tester1, name: "Persist Smoke", rulesetId: library.id)
 
         let payload = CharacterInput(
             id: nil,
@@ -168,6 +292,7 @@ final class ServerRoutesTests: XCTestCase {
         let app2 = try await Application.make(.testing)
         try await ServerBootstrap.configure(app2, options: options, library: library)
         let tester2 = try app2.testable()
+        try await activateCampaign(tester2, name: "Persist Smoke", rulesetId: library.id)
 
         let usersResponse = try await tester2.sendRequest(.GET, "/users")
         XCTAssertEqual(usersResponse.status, .ok)
@@ -199,11 +324,13 @@ final class ServerRoutesTests: XCTestCase {
         let tester = try app.testable()
 
         let response = try await tester.sendRequest(.GET, "/campaign")
-        XCTAssertEqual(response.status, .ok)
-        let campaign = try response.content.decode(CampaignState.self)
-        XCTAssertEqual(campaign.name, "Packaged Smoke")
-        XCTAssertEqual(campaign.rulesetId, "dnd5e")
-        XCTAssertEqual(campaign.encounterState, .new)
+        XCTAssertEqual(response.status, .conflict)
+        XCTAssertTrue(response.body.string.contains("No campaign selected"))
+
+        let campaignsResponse = try await tester.sendRequest(.GET, "/campaigns")
+        XCTAssertEqual(campaignsResponse.status, .ok)
+        let campaigns = try campaignsResponse.content.decode([CampaignSummary].self)
+        XCTAssertTrue(campaigns.isEmpty)
 
         XCTAssertTrue(FileManager.default.fileExists(atPath: databaseURL.path))
 
@@ -230,6 +357,7 @@ final class ServerRoutesTests: XCTestCase {
 
         try await ServerBootstrap.configure(app, options: options, library: initialLibrary)
         let tester = try app.testable()
+        try await activateCampaign(tester, name: "Ancients!", rulesetId: initialLibrary.id)
 
         let ownerId = UUID()
         let payload = CharacterInput(
@@ -334,6 +462,7 @@ final class ServerRoutesTests: XCTestCase {
         let app1 = try await Application.make(.testing)
         try await ServerBootstrap.configure(app1, options: makeOptions(campaignName: "Ancients!"), library: travellerLibrary)
         let tester1 = try app1.testable()
+        try await activateCampaign(tester1, name: "Ancients!", rulesetId: travellerLibrary.id)
 
         let travellerCharacter = CharacterInput(
             id: nil,
@@ -413,6 +542,7 @@ final class ServerRoutesTests: XCTestCase {
         let app2 = try await Application.make(.testing)
         try await ServerBootstrap.configure(app2, options: makeOptions(campaignName: "Ancients!"), library: travellerLibrary)
         let tester2 = try app2.testable()
+        try await activateCampaign(tester2, name: "Ancients!", rulesetId: travellerLibrary.id)
 
         let restoredTravellerCampaignResponse = try await tester2.sendRequest(.GET, "/campaign")
         XCTAssertEqual(restoredTravellerCampaignResponse.status, .ok)
@@ -434,6 +564,7 @@ final class ServerRoutesTests: XCTestCase {
         let app3 = try await Application.make(.testing)
         try await ServerBootstrap.configure(app3, options: makeOptions(campaignName: "Hell's Vengance"), library: pathfinderLibrary)
         let tester3 = try app3.testable()
+        try await activateCampaign(tester3, name: "Hell's Vengance", rulesetId: pathfinderLibrary.id)
 
         let restoredPathfinderCampaignResponse = try await tester3.sendRequest(.GET, "/campaign")
         XCTAssertEqual(restoredPathfinderCampaignResponse.status, .ok)
@@ -471,6 +602,7 @@ final class ServerRoutesTests: XCTestCase {
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
+        try await activateCampaign(tester, name: "Ancients!", rulesetId: travellerLibrary.id)
 
         let ancientCharacter = CharacterInput(
             id: nil,
@@ -575,6 +707,104 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
+    func testDeletedCurrentTurnFallsBackToRemainingCharacterOnRestart() async throws {
+        let databaseURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-turn-fallback-\(UUID().uuidString).sqlite3")
+
+        let travellerLibrary = try RuleSetLibraryLoader.loadLibrary(id: "traveller")
+
+        let app1 = try await Application.make(.testing)
+        var options = ServerBootstrapOptions.production
+        options.hostname = "127.0.0.1"
+        options.port = 0
+        options.campaignName = "Ancients!"
+        options.databaseFileURL = databaseURL
+        options.restorePersistedState = true
+        options.persistChanges = true
+        options.launchBrowser = false
+
+        try await ServerBootstrap.configure(app1, options: options, library: travellerLibrary)
+        let tester1 = try app1.testable()
+        try await activateCampaign(tester1, name: "Ancients!", rulesetId: travellerLibrary.id)
+
+        let firstCharacter = CharacterInput(
+            id: nil,
+            campaignName: "Ancients!",
+            ownerId: UUID(),
+            ownerName: "Referee",
+            name: "Lead Scout",
+            initiative: 15,
+            stats: [StatEntry(key: "STR", current: 8, max: 8)],
+            revealStats: true,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        let secondCharacter = CharacterInput(
+            id: nil,
+            campaignName: "Ancients!",
+            ownerId: UUID(),
+            ownerName: "Referee",
+            name: "Backup Scout",
+            initiative: 10,
+            stats: [StatEntry(key: "STR", current: 7, max: 7)],
+            revealStats: true,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        let firstCreateResponse = try await tester1.sendRequest(
+            .POST,
+            "/characters",
+            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(firstCharacter))
+        )
+        XCTAssertEqual(firstCreateResponse.status, .ok)
+        let firstView = try firstCreateResponse.content.decode(PlayerView.self)
+
+        let secondCreateResponse = try await tester1.sendRequest(
+            .POST,
+            "/characters",
+            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(secondCharacter))
+        )
+        XCTAssertEqual(secondCreateResponse.status, .ok)
+        let secondView = try secondCreateResponse.content.decode(PlayerView.self)
+
+        let startResponse = try await tester1.sendRequest(.POST, "/encounter/start")
+        XCTAssertEqual(startResponse.status, .ok)
+        let startedState = try startResponse.content.decode(GameState.self)
+        XCTAssertEqual(startedState.currentTurnId, firstView.id)
+
+        let deleteResponse = try await tester1.sendRequest(.DELETE, "/characters/\(firstView.id.uuidString)")
+        XCTAssertEqual(deleteResponse.status, .ok)
+
+        try await app1.asyncShutdown()
+        await userStore.resetMemoryForTesting()
+
+        let app2 = try await Application.make(.testing)
+        try await ServerBootstrap.configure(app2, options: options, library: travellerLibrary)
+        let tester2 = try app2.testable()
+        try await activateCampaign(tester2, name: "Ancients!", rulesetId: travellerLibrary.id)
+
+        let restoredStateResponse = try await tester2.sendRequest(.GET, "/state?view=referee")
+        XCTAssertEqual(restoredStateResponse.status, .ok)
+        let restoredState = try restoredStateResponse.content.decode(GameState.self)
+        XCTAssertEqual(restoredState.currentTurnId, secondView.id)
+        XCTAssertEqual(restoredState.currentTurnName, "Backup Scout")
+        XCTAssertEqual(restoredState.players.map(\.name), ["Backup Scout"])
+
+        try await app2.asyncShutdown()
+    }
+
     func testRenamingOwnerOnlyAffectsCurrentCampaign() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-rename-\(UUID().uuidString).sqlite3")
@@ -594,6 +824,7 @@ final class ServerRoutesTests: XCTestCase {
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
+        try await activateCampaign(tester, name: "Ancients!", rulesetId: travellerLibrary.id)
 
         let sharedOwnerId = UUID()
         let ancientCharacter = CharacterInput(
@@ -713,6 +944,7 @@ final class ServerRoutesTests: XCTestCase {
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
+        try await activateCampaign(tester, name: "Ancients!", rulesetId: travellerLibrary.id)
 
         let ancientCharacter = CharacterInput(
             id: nil,
@@ -828,6 +1060,7 @@ final class ServerRoutesTests: XCTestCase {
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
+        try await activateCampaign(tester, name: "Ancients!", rulesetId: travellerLibrary.id)
 
         let ancientCharacter = CharacterInput(
             id: nil,
@@ -931,17 +1164,50 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
-    private func makeTester() async throws -> XCTApplicationTester {
+    private func activateCampaign(
+        _ tester: XCTApplicationTester,
+        name: String,
+        rulesetId: String
+    ) async throws {
+        let response = try await tester.sendRequest(
+            .POST,
+            "/campaign",
+            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: name, rulesetId: rulesetId)
+            ))
+        )
+        XCTAssertEqual(response.status, .ok)
+    }
+
+    private func makeTester(selectDefaultCampaign: Bool = true) async throws -> XCTApplicationTester {
         await userStore.clear()
         app = try await Application.make(.testing)
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
-        let campaignStore = CampaignStore(
-            defaultLibrary: library,
-            defaultName: "Route Smoke",
-            restorePersistedState: false,
-            persistChanges: false
-        )
-        try routes(app, campaignStore: campaignStore)
-        return try app.testable()
+        var options = ServerBootstrapOptions.production
+        options.hostname = "127.0.0.1"
+        options.port = 0
+        options.campaignName = "Route Smoke"
+        options.databaseFileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-route-smoke-\(UUID().uuidString).sqlite3")
+        options.restorePersistedState = false
+        options.persistChanges = true
+        options.launchBrowser = false
+        try await ServerBootstrap.configure(app, options: options, library: library)
+        let tester = try app.testable()
+
+        if selectDefaultCampaign {
+            let response = try await tester.sendRequest(
+                .POST,
+                "/campaign",
+                headers: HTTPHeaders([("Content-Type", "application/json")]),
+                body: ByteBuffer(data: try JSONEncoder().encode(
+                    CampaignUpdateInput(name: "Route Smoke", rulesetId: library.id)
+                ))
+            )
+            XCTAssertEqual(response.status, .ok)
+        }
+
+        return tester
     }
 }

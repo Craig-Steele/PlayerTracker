@@ -15,6 +15,7 @@ actor UserStore {
     private struct TurnState {
         var roundIndex: Int
         var turnIndex: Int
+        var currentTurnID: UUID?
     }
 
     func resetMemoryForTesting() {
@@ -29,9 +30,9 @@ actor UserStore {
 
     private func configuredCampaignTurnState() -> TurnState {
         guard let campaignName = currentCampaignName else {
-            return TurnState(roundIndex: 1, turnIndex: 0)
+            return TurnState(roundIndex: 1, turnIndex: 0, currentTurnID: nil)
         }
-        return campaignTurns[campaignName] ?? TurnState(roundIndex: 1, turnIndex: 0)
+        return campaignTurns[campaignName] ?? TurnState(roundIndex: 1, turnIndex: 0, currentTurnID: nil)
     }
 
     private func persistConfiguredCampaignCharacters() async throws {
@@ -64,7 +65,7 @@ actor UserStore {
             encounterState: currentEncounterState,
             roundIndex: turnState.roundIndex,
             turnIndex: turnState.turnIndex,
-            currentTurnID: currentTurnID,
+            currentTurnID: currentTurnID ?? turnState.currentTurnID,
             on: database
         )
         currentCampaignID = campaignID
@@ -86,7 +87,7 @@ actor UserStore {
                 on: database
             )
             storage.removeAll()
-            campaignTurns[campaignName] = TurnState(roundIndex: 1, turnIndex: 0)
+            campaignTurns[campaignName] = TurnState(roundIndex: 1, turnIndex: 0, currentTurnID: nil)
             currentEncounterState = .new
             return
         }
@@ -94,7 +95,11 @@ actor UserStore {
         currentCampaignID = loaded.id
         currentRulesetId = loaded.rulesetId
         currentEncounterState = loaded.encounterState
-        campaignTurns[campaignName] = TurnState(roundIndex: loaded.roundIndex, turnIndex: loaded.turnIndex)
+        campaignTurns[campaignName] = TurnState(
+            roundIndex: loaded.roundIndex,
+            turnIndex: loaded.turnIndex,
+            currentTurnID: loaded.currentTurnID
+        )
 
         let loadedCharacters = try await DatabasePersistence.loadCharacters(
             campaignID: loaded.id,
@@ -103,6 +108,28 @@ actor UserStore {
         )
 
         storage = Dictionary(uniqueKeysWithValues: loadedCharacters.map { ($0.id, $0) })
+    }
+
+    func rebindActiveCampaign(from oldName: String, to newName: String, rulesetId: String) {
+        guard oldName != newName else {
+            currentCampaignName = newName
+            currentRulesetId = rulesetId
+            return
+        }
+
+        currentCampaignName = newName
+        currentRulesetId = rulesetId
+
+        if let turnState = campaignTurns.removeValue(forKey: oldName) {
+            campaignTurns[newName] = turnState
+        }
+
+        let affectedIDs = storage.values.filter { $0.campaignName == oldName }.map(\.id)
+        for id in affectedIDs {
+            guard var state = storage[id] else { continue }
+            state.campaignName = newName
+            storage[id] = state
+        }
     }
 
     private func parseStandardDie(_ spec: String?) -> (count: Int, sides: Int)? {
@@ -250,9 +277,25 @@ actor UserStore {
         if let existing = campaignTurns[campaignName] {
             return existing
         }
-        let initial = TurnState(roundIndex: 1, turnIndex: 0)
+        let initial = TurnState(roundIndex: 1, turnIndex: 0, currentTurnID: nil)
         campaignTurns[campaignName] = initial
         return initial
+    }
+
+    private func alignTurnStateToCurrentTurnID(
+        turnState: inout TurnState,
+        candidates: [CharacterState]
+    ) {
+        guard !candidates.isEmpty else { return }
+
+        if let currentTurnID = turnState.currentTurnID,
+           let index = candidates.firstIndex(where: { $0.id == currentTurnID }) {
+            turnState.turnIndex = index
+        }
+
+        if turnState.turnIndex >= candidates.count {
+            turnState.turnIndex = 0
+        }
     }
 
     private func saveTurnState(_ state: TurnState, for campaignName: String) {
@@ -318,7 +361,7 @@ actor UserStore {
     }
 
     func resetTurnState(campaignName: String, roundIndex: Int = 1, turnIndex: Int = 0) {
-        let updated = TurnState(roundIndex: roundIndex, turnIndex: turnIndex)
+        let updated = TurnState(roundIndex: roundIndex, turnIndex: turnIndex, currentTurnID: nil)
         saveTurnState(updated, for: campaignName)
     }
 
@@ -484,7 +527,8 @@ actor UserStore {
         )
         let previousTurnState = turnState(for: campaignName)
         let previousIndex = min(previousTurnState.turnIndex, max(previousCandidates.count - 1, 0))
-        let previousCurrentId = previousCandidates.isEmpty ? nil : previousCandidates[previousIndex].id
+        let previousCurrentId = previousTurnState.currentTurnID
+            ?? (previousCandidates.isEmpty ? nil : previousCandidates[previousIndex].id)
         if state.ownerName.caseInsensitiveCompare("Referee") != .orderedSame {
             state.isHidden = false
             state.revealOnTurn = false
@@ -514,10 +558,12 @@ actor UserStore {
             if let newIndex = updatedCandidates.firstIndex(where: { $0.id == previousCurrentId }) {
                 var updatedTurnState = previousTurnState
                 updatedTurnState.turnIndex = newIndex
+                updatedTurnState.currentTurnID = previousCurrentId
                 saveTurnState(updatedTurnState, for: campaignName)
             } else if updatedCandidates.isEmpty {
                 var updatedTurnState = previousTurnState
                 updatedTurnState.turnIndex = 0
+                updatedTurnState.currentTurnID = nil
                 saveTurnState(updatedTurnState, for: campaignName)
             }
         }
@@ -550,6 +596,7 @@ actor UserStore {
         if let index = candidates.firstIndex(where: { $0.id == target.id }) {
             var turnState = turnState(for: campaignName)
             turnState.turnIndex = index
+            turnState.currentTurnID = target.id
             saveTurnState(turnState, for: campaignName)
         }
 
@@ -653,6 +700,7 @@ actor UserStore {
         var players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
         let turnCandidates = visibleTurnCandidates(campaignName: campaignName)
         var turnState = turnState(for: campaignName)
+        alignTurnStateToCurrentTurnID(turnState: &turnState, candidates: turnCandidates)
 
         if encounterState == .new {
             if campaignName == currentCampaignName {
@@ -674,6 +722,7 @@ actor UserStore {
         if turnCandidates.isEmpty {
             turnState.roundIndex = 1
             turnState.turnIndex = 0
+            turnState.currentTurnID = nil
             saveTurnState(turnState, for: campaignName)
             if campaignName == currentCampaignName {
                 do {
@@ -693,10 +742,12 @@ actor UserStore {
 
         if turnState.turnIndex >= turnCandidates.count {
             turnState.turnIndex = 0
+            turnState.currentTurnID = turnCandidates.first?.id
         }
 
         if encounterState == .active,
            !advanceTurnStatePastAutoSkip(&turnState, candidates: turnCandidates) {
+            turnState.currentTurnID = nil
             saveTurnState(turnState, for: campaignName)
             if campaignName == currentCampaignName {
                 do {
@@ -714,16 +765,25 @@ actor UserStore {
             )
         }
 
-        var currentPlayer = turnCandidates[turnState.turnIndex]
+        guard turnState.turnIndex < turnCandidates.count else {
+            return GameState(
+                round: turnState.roundIndex,
+                encounterState: encounterState,
+                currentTurnId: nil,
+                currentTurnName: nil,
+                players: players
+            )
+        }
+        let currentPlayer = turnCandidates[turnState.turnIndex]
         if encounterState == .active && currentPlayer.isHidden && currentPlayer.revealOnTurn {
             var updated = currentPlayer
             updated.isHidden = false
             updated.revealOnTurn = false
             storage[updated.id] = updated
-            currentPlayer = updated
             players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
         }
 
+        turnState.currentTurnID = currentPlayer.id
         saveTurnState(turnState, for: campaignName)
         let currentView = view(from: currentPlayer)
         if campaignName == currentCampaignName {
@@ -748,10 +808,12 @@ actor UserStore {
         var players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
         let turnCandidates = visibleTurnCandidates(campaignName: campaignName)
         var turnState = turnState(for: campaignName)
+        alignTurnStateToCurrentTurnID(turnState: &turnState, candidates: turnCandidates)
 
         if turnCandidates.isEmpty {
             turnState.roundIndex = 1
             turnState.turnIndex = 0
+            turnState.currentTurnID = nil
             saveTurnState(turnState, for: campaignName)
             return GameState(
                 round: turnState.roundIndex,
@@ -771,6 +833,7 @@ actor UserStore {
 
         if encounterState == .active,
            !advanceTurnStatePastAutoSkip(&turnState, candidates: turnCandidates) {
+            turnState.currentTurnID = nil
             saveTurnState(turnState, for: campaignName)
             return GameState(
                 round: turnState.roundIndex,
@@ -781,16 +844,25 @@ actor UserStore {
             )
         }
 
-        var currentPlayer = turnCandidates[turnState.turnIndex]
+        guard turnState.turnIndex < turnCandidates.count else {
+            return GameState(
+                round: turnState.roundIndex,
+                encounterState: encounterState,
+                currentTurnId: nil,
+                currentTurnName: nil,
+                players: players
+            )
+        }
+        let currentPlayer = turnCandidates[turnState.turnIndex]
         if currentPlayer.isHidden && currentPlayer.revealOnTurn {
             var updated = currentPlayer
             updated.isHidden = false
             updated.revealOnTurn = false
             storage[updated.id] = updated
-            currentPlayer = updated
             players = sortedViews(campaignName: campaignName, includeHidden: includeHidden)
         }
 
+        turnState.currentTurnID = currentPlayer.id
         saveTurnState(turnState, for: campaignName)
         let currentView = view(from: currentPlayer)
         if campaignName == currentCampaignName {

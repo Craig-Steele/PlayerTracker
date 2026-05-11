@@ -1,15 +1,22 @@
 import Foundation
 import Vapor
 
+private func requireActiveCampaign(_ campaignStore: CampaignStore) async throws -> CampaignState {
+    guard let activeCampaign = await campaignStore.activeCampaign() else {
+        throw Abort(.conflict, reason: "No campaign selected")
+    }
+    return activeCampaign
+}
+
 func routes(_ app: Application, campaignStore: CampaignStore) throws {
     app.post("conditions") { req async throws -> HTTPStatus in
         let input = try req.content.decode(ConditionsInput.self)
         logConnection(req, action: "set-conditions", identifier: input.name)
-        let campaignName = await campaignStore.currentCampaignName()
+        let campaign = try await requireActiveCampaign(campaignStore)
         await userStore.setConditions(
             name: input.name,
             conditions: Set(input.conditions),
-            campaignName: campaignName
+            campaignName: campaign.name
         )
         return .ok
     }
@@ -20,15 +27,15 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             throw Abort(.badRequest)
         }
 
-        let campaignName = await campaignStore.currentCampaignName()
-        let initiative = await userStore.get(name: name, campaignName: campaignName)?.initiative
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let initiative = await userStore.get(name: name, campaignName: campaign.name)?.initiative
         return UserData(name: name, initiative: initiative)
     }
 
     // GET /users
     app.get("users") { req async throws -> [UserData] in
-        let campaignName = await campaignStore.currentCampaignName()
-        let all = await userStore.all(campaignName: campaignName)
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let all = await userStore.all(campaignName: campaign.name)
         return all.map { (key, value) in
             UserData(name: key, initiative: value.initiative)
         }
@@ -63,22 +70,22 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
 
     // GET /state - full game state (round, current turn, players)
     app.get("state") { req async throws -> GameState in
-        let campaignName = await campaignStore.currentCampaignName()
+        let campaign = try await requireActiveCampaign(campaignStore)
         let viewMode = req.query[String.self, at: "view"] ?? "player"
         let includeHidden = viewMode == "referee"
-        let encounterState = await campaignStore.encounterState()
         return await userStore.state(
-            campaignName: campaignName,
+            campaignName: campaign.name,
             includeHidden: includeHidden,
-            encounterState: encounterState
+            encounterState: campaign.encounterState
         )
     }
 
     // POST /turn-complete - advance to next turn
     app.post("turn-complete") { req async throws -> GameState in
         logConnection(req, action: "turn-complete")
-        let campaignName = await campaignStore.currentCampaignName()
-        let encounterState = await campaignStore.encounterState()
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
+        let encounterState = campaign.encounterState
         guard encounterState == .active else {
             throw Abort(.conflict, reason: "Encounter is not active.")
         }
@@ -95,8 +102,9 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             throw Abort(.badRequest)
         }
         logConnection(req, action: "turn-set", identifier: id.uuidString)
-        let campaignName = await campaignStore.currentCampaignName()
-        let encounterState = await campaignStore.encounterState()
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
+        let encounterState = campaign.encounterState
         guard encounterState == .active else {
             throw Abort(.conflict, reason: "Encounter is not active.")
         }
@@ -109,7 +117,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
 
     app.post("encounter", "new") { req async throws -> GameState in
         logConnection(req, action: "encounter-new")
-        let campaignName = await campaignStore.currentCampaignName()
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
         await userStore.resetForNewEncounter(campaignName: campaignName)
         await campaignStore.setEncounterState(.new)
         return await userStore.state(
@@ -121,7 +130,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
 
     app.post("encounter", "start") { req async throws -> GameState in
         logConnection(req, action: "encounter-start")
-        let campaignName = await campaignStore.currentCampaignName()
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
         let library = await campaignStore.library()
         await userStore.autoRollUnsetInitiativeForReferee(
             campaignName: campaignName,
@@ -138,7 +148,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
 
     app.post("encounter", "suspend") { req async throws -> GameState in
         logConnection(req, action: "encounter-suspend")
-        let campaignName = await campaignStore.currentCampaignName()
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
         await campaignStore.setEncounterState(.suspended)
         return await userStore.state(
             campaignName: campaignName,
@@ -154,12 +165,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         else {
             throw Abort(.badRequest)
         }
-        let campaignName: String
-        if let queryCampaign = req.query[String.self, at: "campaign"] {
-            campaignName = queryCampaign
-        } else {
-            campaignName = await campaignStore.currentCampaignName()
-        }
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
         return await userStore.characters(for: ownerId, campaignName: campaignName)
     }
 
@@ -171,7 +178,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             throw Abort(.badRequest)
         }
         let input = try req.content.decode(CharacterRenameInput.self)
-        let campaignName = await campaignStore.currentCampaignName()
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
         let previousName = await userStore.ownerName(for: ownerId, campaignName: campaignName) ?? "unknown"
         let renameIdentifier = "\(ownerId.uuidString) owner=\(previousName)->\(input.name)"
         logConnection(req, action: "rename-owner", identifier: renameIdentifier)
@@ -181,12 +189,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
 
     app.post("characters") { req async throws -> PlayerView in
         let input = try req.content.decode(CharacterInput.self)
-        let campaignName: String
-        if let providedName = input.campaignName {
-            campaignName = providedName
-        } else {
-            campaignName = await campaignStore.currentCampaignName()
-        }
+        let campaign = try await requireActiveCampaign(campaignStore)
+        let campaignName = campaign.name
         let resolvedOwnerId: UUID
         if let providedOwnerId = input.ownerId {
             resolvedOwnerId = providedOwnerId
@@ -271,7 +275,10 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
     }
 
     app.get("campaign") { req async throws -> CampaignState in
-        return await campaignStore.state()
+        guard let campaign = await campaignStore.activeCampaign() else {
+            throw Abort(.conflict, reason: "No campaign selected")
+        }
+        return campaign
     }
 
     app.post("campaign") { req async throws -> CampaignState in
@@ -284,6 +291,54 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             on: req.application.db
         )
         return updated
+    }
+
+    app.post("campaigns") { req async throws -> CampaignSummary in
+        let input = try req.content.decode(CampaignUpdateInput.self)
+        logConnection(req, action: "create-campaign", identifier: input.name)
+        return try await campaignStore.createCampaign(name: input.name, rulesetId: input.rulesetId)
+    }
+
+    app.get("campaigns") { req async throws -> [CampaignSummary] in
+        try await campaignStore.campaigns()
+    }
+
+    app.patch("campaigns", ":id") { req async throws -> CampaignSummary in
+        guard let idString = req.parameters.get("id"),
+              let campaignID = UUID(uuidString: idString) else {
+            throw Abort(.badRequest)
+        }
+        let input = try req.content.decode(CampaignUpdateInput.self)
+        logConnection(req, action: "edit-campaign", identifier: campaignID.uuidString)
+        let previousActiveCampaign = await campaignStore.activeCampaign()
+        let updated = try await campaignStore.updateCampaign(
+            id: campaignID,
+            name: input.name,
+            rulesetId: input.rulesetId
+        )
+        if previousActiveCampaign?.id == campaignID {
+            await userStore.rebindActiveCampaign(
+                from: previousActiveCampaign?.name ?? updated.name,
+                to: updated.name,
+                rulesetId: updated.rulesetId
+            )
+        }
+        return updated
+    }
+
+    app.post("campaigns", ":id", "select") { req async throws -> CampaignState in
+        guard let idString = req.parameters.get("id"),
+              let campaignID = UUID(uuidString: idString) else {
+            throw Abort(.badRequest)
+        }
+        logConnection(req, action: "select-campaign", identifier: campaignID.uuidString)
+        let selected = try await campaignStore.selectCampaign(id: campaignID)
+        try await userStore.configure(
+            campaignName: selected.name,
+            rulesetId: selected.rulesetId,
+            on: req.application.db
+        )
+        return selected
     }
 
     app.get("rulesets") { req async throws -> [RulesetSummary] in

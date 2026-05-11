@@ -24,7 +24,7 @@
         <div id="ref-encounter-state" class="player-campaign-meta">Encounter: New</div>
       </div>
       <div class="referee-card-actions">
-        <button type="button" id="ref-campaign-settings" class="referee-settings-button" aria-label="Campaign settings"></button>
+        <a href="admin.html" id="ref-campaign-settings" class="referee-settings-button" aria-label="Campaign admin"></a>
       </div>
     </div>
   </div>
@@ -177,37 +177,9 @@
     </section>
   </div>
 
-  <div id="ref-campaign-panel" class="conditions-modal hidden" aria-hidden="true">
-    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-campaign-dialog-title">
-      <div class="conditions-dialog-header">
-        <h2 id="ref-campaign-dialog-title">Campaign Settings</h2>
-        <div class="conditions-dialog-actions">
-          <button type="button" id="ref-campaign-cancel" class="secondary">Cancel</button>
-          <button type="button" id="ref-campaign-save">Save</button>
-        </div>
-      </div>
-      <div class="form-section-block property-group">
-        <label class="property-row">
-          <span class="property-label">Campaign Name</span>
-          <span class="property-control">
-            <input type="text" id="ref-campaign-name-input" required />
-          </span>
-        </label>
-        <label class="property-row">
-          <span class="property-label">Ruleset</span>
-          <span class="property-control">
-            <select id="ref-ruleset-select" required></select>
-          </span>
-        </label>
-      </div>
-      <div id="ref-campaign-summary" class="subtitle"></div>
-      <div id="ref-campaign-status"></div>
-    </div>
-  </div>
-
   <script src="shared.js?v=2"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=6"></script>
+  <script src="referee.js?v=9"></script>
 </body>
 </html>

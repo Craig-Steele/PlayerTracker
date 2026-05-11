@@ -1,6 +1,16 @@
 import Fluent
 import Vapor
 
+struct CampaignPersistenceState {
+    let id: UUID
+    let name: String
+    let rulesetId: String
+    let encounterState: EncounterState
+    let roundIndex: Int
+    let turnIndex: Int
+    let currentTurnID: UUID?
+}
+
 final class CampaignRow: Model, @unchecked Sendable {
     static let schema = "campaigns"
 
@@ -226,7 +236,7 @@ enum DatabasePersistence {
     static func loadCampaign(
         named campaignName: String,
         on database: any Database
-    ) async throws -> (id: UUID, rulesetId: String, encounterState: EncounterState, roundIndex: Int, turnIndex: Int, currentTurnID: UUID?)? {
+    ) async throws -> CampaignPersistenceState? {
         guard let campaign = try await CampaignRow.query(on: database)
             .filter(\.$name == campaignName)
             .first(),
@@ -242,7 +252,72 @@ enum DatabasePersistence {
         let roundIndex = encounter?.roundIndex ?? 1
         let turnIndex = encounter?.turnIndex ?? 0
         let currentTurnID = encounter?.currentCharacterID
-        return (campaignID, campaign.rulesetId, encounterState, roundIndex, turnIndex, currentTurnID)
+        return CampaignPersistenceState(
+            id: campaignID,
+            name: campaign.name,
+            rulesetId: campaign.rulesetId,
+            encounterState: encounterState,
+            roundIndex: roundIndex,
+            turnIndex: turnIndex,
+            currentTurnID: currentTurnID
+        )
+    }
+
+    static func loadCampaign(
+        id campaignID: UUID,
+        on database: any Database
+    ) async throws -> CampaignPersistenceState? {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first(),
+              let resolvedID = campaign.id else {
+            return nil
+        }
+
+        let encounter = try await CampaignEncounterRow.query(on: database)
+            .filter(\.$campaignID == resolvedID)
+            .first()
+
+        let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
+        let roundIndex = encounter?.roundIndex ?? 1
+        let turnIndex = encounter?.turnIndex ?? 0
+        let currentTurnID = encounter?.currentCharacterID
+        return CampaignPersistenceState(
+            id: resolvedID,
+            name: campaign.name,
+            rulesetId: campaign.rulesetId,
+            encounterState: encounterState,
+            roundIndex: roundIndex,
+            turnIndex: turnIndex,
+            currentTurnID: currentTurnID
+        )
+    }
+
+    static func loadCampaigns(on database: any Database) async throws -> [CampaignPersistenceState] {
+        let campaigns = try await CampaignRow.query(on: database).all()
+        let encounters = try await CampaignEncounterRow.query(on: database).all()
+        let encountersByCampaign = Dictionary(grouping: encounters) { $0.campaignID }
+
+        return campaigns.compactMap { campaign in
+            guard let campaignID = campaign.id else { return nil }
+            let encounter = encountersByCampaign[campaignID]?.first
+            let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
+            let roundIndex = encounter?.roundIndex ?? 1
+            let turnIndex = encounter?.turnIndex ?? 0
+            let currentTurnID = encounter?.currentCharacterID
+            return CampaignPersistenceState(
+                id: campaignID,
+                name: campaign.name,
+                rulesetId: campaign.rulesetId,
+                encounterState: encounterState,
+                roundIndex: roundIndex,
+                turnIndex: turnIndex,
+                currentTurnID: currentTurnID
+            )
+        }
+        .sorted { lhs, rhs in
+            lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
     }
 
     static func upsertCampaignMetadata(
@@ -267,6 +342,62 @@ enum DatabasePersistence {
             throw Abort(.internalServerError, reason: "Failed to create campaign record.")
         }
         return id
+    }
+
+    static func createCampaignMetadata(
+        name: String,
+        rulesetId: String,
+        isArchived: Bool = false,
+        on database: any Database
+    ) async throws -> UUID {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            throw Abort(.badRequest, reason: "Campaign name is required.")
+        }
+        if let existing = try await CampaignRow.query(on: database)
+            .filter(\.$name == trimmedName)
+            .first(),
+           existing.id != nil {
+            throw Abort(.conflict, reason: "Campaign name already exists.")
+        }
+        let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
+        let campaign = CampaignRow(name: trimmedName, rulesetId: library.id, isArchived: isArchived)
+        try await campaign.create(on: database)
+        guard let id = campaign.id else {
+            throw Abort(.internalServerError, reason: "Failed to create campaign record.")
+        }
+        return id
+    }
+
+    static func updateCampaignMetadata(
+        id campaignID: UUID,
+        name: String,
+        rulesetId: String,
+        on database: any Database
+    ) async throws -> UUID {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else {
+            throw Abort(.badRequest, reason: "Campaign name is required.")
+        }
+
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+
+        if let duplicate = try await CampaignRow.query(on: database)
+            .filter(\.$name == trimmedName)
+            .first(),
+           duplicate.id != campaignID {
+            throw Abort(.conflict, reason: "Campaign name already exists.")
+        }
+
+        let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
+        campaign.name = trimmedName
+        campaign.rulesetId = library.id
+        try await campaign.save(on: database)
+        return campaignID
     }
 
     static func renameCampaign(

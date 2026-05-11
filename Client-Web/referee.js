@@ -1,6 +1,7 @@
 const REFRESH_INTERVAL_MS = 5000;
-const { QR_CODE_SIZE, rollStandardDie, formatInitiative } = window.PlayerTrackerShared || {
+const { QR_CODE_SIZE, isAdminHost, rollStandardDie, formatInitiative } = window.PlayerTrackerShared || {
   QR_CODE_SIZE: 96,
+  isAdminHost: () => false,
   rollStandardDie: () => null,
   formatInitiative: () => 'X'
 };
@@ -51,13 +52,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const refereeRulesetLicenseWrap = document.getElementById('ref-ruleset-license-wrap');
   const refereeRulesetIcon = document.getElementById('ref-ruleset-icon');
   const campaignSettingsBtn = document.getElementById('ref-campaign-settings');
-  const campaignPanel = document.getElementById('ref-campaign-panel');
-  const campaignNameInput = document.getElementById('ref-campaign-name-input');
-  const campaignRulesetSelect = document.getElementById('ref-ruleset-select');
-  const campaignStatusDiv = document.getElementById('ref-campaign-status');
-  const campaignSummaryDiv = document.getElementById('ref-campaign-summary');
-  const campaignCancelBtn = document.getElementById('ref-campaign-cancel');
-  const campaignSaveBtn = document.getElementById('ref-campaign-save');
 
   const form = document.getElementById('ref-add-panel');
   const nameInput = document.getElementById('ref-name');
@@ -117,7 +111,10 @@ window.addEventListener('DOMContentLoaded', () => {
   let hidePlayers = true;
   let detailsDirty = false;
   let conditionsDirty = false;
-  let availableRulesets = [];
+
+  if (campaignSettingsBtn && !isAdminHost()) {
+    campaignSettingsBtn.style.display = 'none';
+  }
 
   function updateRulesetLink(labelText, baseUrl) {
     updateRulesetLinks([refereeRulesetLink], labelText, baseUrl);
@@ -136,107 +133,8 @@ window.addEventListener('DOMContentLoaded', () => {
     updateRulesetIcons([refereeRulesetIcon], iconUrl, labelText);
   }
 
-  function setCampaignPanelOpen(open) {
-    if (!campaignPanel) return;
-    campaignPanel.classList.toggle('hidden', !open);
-    campaignPanel.classList.toggle('conditions-panel-open', open);
-    campaignPanel.setAttribute('aria-hidden', (!open).toString());
-  }
-
-  function setCampaignStatus(message, isError = false) {
-    if (!campaignStatusDiv) return;
-    campaignStatusDiv.textContent = message;
-    campaignStatusDiv.style.color = isError ? '#b00020' : '';
-  }
-
-  function setCampaignSummary(campaign) {
-    if (!campaignSummaryDiv) return;
-    if (!campaign) {
-      campaignSummaryDiv.textContent = '';
-      return;
-    }
-    const label = campaign.rulesetLabel ? campaign.rulesetLabel : 'No Conditions';
-    campaignSummaryDiv.textContent = `Current: ${campaign.name} - ${label}`;
-  }
-
-  function populateCampaignRulesets(rulesets) {
-    if (!campaignRulesetSelect) return;
-    campaignRulesetSelect.innerHTML = '';
-    if (Array.isArray(rulesets) && rulesets.length > 0) {
-      rulesets.forEach((ruleset) => {
-        const option = document.createElement('option');
-        option.value = ruleset.id;
-        option.textContent = ruleset.label || ruleset.id;
-        campaignRulesetSelect.appendChild(option);
-      });
-      return;
-    }
-    const option = document.createElement('option');
-    option.value = 'none';
-    option.textContent = 'No Conditions';
-    campaignRulesetSelect.appendChild(option);
-  }
-
-  async function fetchJson(url, options) {
-    const res = await fetch(url, options);
-    if (!res.ok) {
-      throw new Error(`Server returned ${res.status}`);
-    }
-    return res.json();
-  }
-
-  async function loadCampaignSettings() {
-    if (!campaignNameInput || !campaignRulesetSelect) return;
-    try {
-      const [rulesets, campaign] = await Promise.all([
-        fetchJson('/rulesets'),
-        fetchJson('/campaign')
-      ]);
-      availableRulesets = Array.isArray(rulesets) ? rulesets : [];
-      populateCampaignRulesets(availableRulesets);
-      if (campaign) {
-        campaignNameInput.value = campaign.name || '';
-        if (campaign.rulesetId) {
-          campaignRulesetSelect.value = campaign.rulesetId;
-        }
-        setCampaignSummary(campaign);
-      }
-      setCampaignStatus('');
-    } catch (err) {
-      setCampaignStatus(`Failed to load campaign data: ${err.message}`, true);
-    }
-  }
-
-  async function saveCampaignSettings() {
-    if (!campaignNameInput || !campaignRulesetSelect) return false;
-    const name = campaignNameInput.value.trim();
-    const rulesetId = campaignRulesetSelect.value;
-    if (!name) {
-      setCampaignStatus('Campaign name is required.', true);
-      return false;
-    }
-    try {
-      setCampaignStatus('Saving...');
-      const campaign = await fetchJson('/campaign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, rulesetId })
-      });
-      currentCampaignName = campaign.name || '';
-      if (refereeCampaignName) {
-        refereeCampaignName.textContent = currentCampaignName || 'Campaign';
-      }
-      setCampaignSummary(campaign);
-      setCampaignStatus('Campaign updated.');
-      await loadCampaign();
-      await loadConditionLibrary();
-      await loadState();
-      return true;
-    } catch (err) {
-      setCampaignStatus(`Failed to update campaign: ${err.message}`, true);
-      return false;
-    }
-  }
+  let activeCampaignId = null;
+  function setCampaignSummary() {}
 
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
     if (!refereeEncounterState) return;
@@ -434,24 +332,46 @@ window.addEventListener('DOMContentLoaded', () => {
   async function loadCampaign() {
     try {
       const res = await fetch('/campaign');
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 409) {
+          currentCampaignName = '';
+          activeCampaignId = null;
+          if (refereeCampaignName) {
+            refereeCampaignName.textContent = 'Campaign';
+          }
+          if (refereeEncounterState) {
+            refereeEncounterState.textContent = 'No campaign selected';
+          }
+          setCampaignSummary(null);
+          updateRulesetLink('', null);
+          setRulesetIcon(null, '');
+          updateRulesetLicense(null);
+          document.title = 'Turn Track';
+          return false;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       const campaign = await res.json();
       currentCampaignName = campaign.name || '';
+      activeCampaignId = campaign.id || null;
       if (refereeCampaignName) {
         refereeCampaignName.textContent = currentCampaignName || 'Campaign';
       }
+      setCampaignSummary(campaign);
       updateRulesetLink(campaign.rulesetLabel || '', null);
       if (currentCampaignName) {
         document.title = `${currentCampaignName} - Referee`;
       } else {
         document.title = 'Turn Track';
       }
+      return true;
     } catch (err) {
       console.error('Failed to load campaign:', err);
       if (refereeCampaignName) {
         refereeCampaignName.textContent = currentCampaignName || 'Campaign';
       }
       document.title = 'Turn Track';
+      return false;
     }
   }
 
@@ -1432,9 +1352,11 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function init() {
-    await loadCampaign();
+    const hasActiveCampaign = await loadCampaign();
     await loadConditionLibrary();
-    await loadState();
+    if (hasActiveCampaign) {
+      await loadState();
+    }
     setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
   }
 
@@ -1443,7 +1365,10 @@ window.addEventListener('DOMContentLoaded', () => {
       skipRefresh = false;
       return;
     }
-    loadState();
+    loadCampaign();
+    if (activeCampaignId) {
+      loadState();
+    }
   }
 
   if (form) {
@@ -1565,31 +1490,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
       setConditionsPanelOpen(false);
-    });
-  }
-  if (campaignSettingsBtn) {
-    campaignSettingsBtn.addEventListener('click', async () => {
-      await loadCampaignSettings();
-      setCampaignPanelOpen(true);
-    });
-  }
-  if (campaignCancelBtn) {
-    campaignCancelBtn.addEventListener('click', () => {
-      setCampaignPanelOpen(false);
-    });
-  }
-  if (campaignSaveBtn) {
-    campaignSaveBtn.addEventListener('click', async () => {
-      const saved = await saveCampaignSettings();
-      if (saved) {
-        setCampaignPanelOpen(false);
-      }
-    });
-  }
-  if (campaignPanel) {
-    campaignPanel.addEventListener('click', (event) => {
-      if (event.target !== campaignPanel) return;
-      setCampaignPanelOpen(false);
     });
   }
   if (addButton) {

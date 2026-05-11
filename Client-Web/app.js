@@ -1472,6 +1472,14 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (!currentCampaignName) {
+      myCharacters = [];
+      selectedCharacterId = null;
+      renderCharacterList();
+      updateConditionsAvailability();
+      return;
+    }
+
     try {
       await ensureOwnerId();
       const campaignQuery = currentCampaignName
@@ -1500,7 +1508,28 @@ window.addEventListener('DOMContentLoaded', () => {
   async function loadCampaign() {
     try {
       const res = await fetch('/campaign');
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 409) {
+          currentCampaignName = '';
+          currentRulesetId = '';
+          localStorage.removeItem('campaignName');
+          if (campaignNameLabel) {
+            campaignNameLabel.textContent = 'Campaign';
+          }
+          if (playerCampaignName) {
+            playerCampaignName.textContent = 'Campaign';
+          }
+          if (displayCampaignName) {
+            displayCampaignName.textContent = 'Campaign';
+          }
+          updateRulesetLink('', null);
+          updateWindowTitle();
+          await loadConditionLibraryFromServer();
+          await loadCharactersForOwner(getOwnerName());
+          return false;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       const campaign = await res.json();
       currentCampaignName = campaign.name || '';
       currentRulesetId = campaign.rulesetId || '';
@@ -1516,6 +1545,9 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       updateRulesetLink(campaign.rulesetLabel || '', null);
       updateWindowTitle();
+      await loadConditionLibraryFromServer();
+      await loadCharactersForOwner(getOwnerName());
+      return true;
     } catch (err) {
       console.error('Failed to load campaign:', err);
       currentCampaignName = localStorage.getItem('campaignName') || '';
@@ -1529,10 +1561,10 @@ window.addEventListener('DOMContentLoaded', () => {
         displayCampaignName.textContent = currentCampaignName || 'Campaign';
       }
       updateWindowTitle();
+      await loadConditionLibraryFromServer();
+      await loadCharactersForOwner(getOwnerName());
+      return false;
     }
-
-    await loadConditionLibraryFromServer();
-    await loadCharactersForOwner(getOwnerName());
   }
 
   async function loadConditionLibraryFromServer() {
@@ -1912,7 +1944,22 @@ window.addEventListener('DOMContentLoaded', () => {
   async function loadState() {
     try {
       const res = await fetch('/state');
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 409) {
+          currentTurnId = null;
+          encounterState = 'new';
+          myCharacters = [];
+          selectedCharacterId = null;
+          lastTurnId = null;
+          lastStateJson = null;
+          renderCharacterList();
+          renderTurnTable([]);
+          updateEncounterStateDisplay();
+          updateConditionsAvailability();
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
 
       const state = await res.json();
       const players = state.players || [];

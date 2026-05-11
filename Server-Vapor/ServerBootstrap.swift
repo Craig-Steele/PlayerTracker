@@ -59,12 +59,6 @@ enum ServerBootstrap {
             persistChanges: options.persistChanges
         )
         try await campaignStore.configure(database: app.db)
-        let campaignState = await campaignStore.state()
-        try await userStore.configure(
-            campaignName: campaignState.name,
-            rulesetId: campaignState.rulesetId,
-            on: app.db
-        )
         print("Loaded default ruleset:", conditionLibrary.label)
         print("Connection logs:", await connectionLogPath())
         await logServerEvent("startup host=\(options.hostname) port=\(options.port)")

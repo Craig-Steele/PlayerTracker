@@ -12,6 +12,15 @@ struct RulesetSummary: Content {
     let label: String
 }
 
+struct CampaignSummary: Content {
+    let id: UUID
+    let name: String
+    let rulesetId: String
+    let rulesetLabel: String
+    let encounterState: EncounterState
+    let isActive: Bool
+}
+
 struct StatEntry: Content {
     let key: String
     let current: Int
@@ -25,6 +34,7 @@ enum EncounterState: String, Content, Codable {
 }
 
 struct CampaignState: Content {
+    let id: UUID
     let name: String
     let rulesetId: String
     let rulesetLabel: String

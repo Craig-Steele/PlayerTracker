@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Campaign Admin</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin-page">
+  <div class="display-page-header">
+    <div class="player-campaign-card display-campaign-card admin-campaign-card">
+      <img id="admin-ruleset-icon" class="ruleset-icon" alt="" />
+      <div class="player-campaign-text">
+        <div id="admin-campaign-name" class="player-campaign-name">Campaign Admin</div>
+        <div class="ruleset-meta player-ruleset-meta">
+          <a id="admin-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
+          <span id="admin-ruleset-license-wrap" class="ruleset-license-wrap">
+            (<a id="admin-ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
+          </span>
+        </div>
+        <div id="admin-active-summary" class="player-campaign-meta">No campaign selected.</div>
+      </div>
+      <div class="display-header-side admin-header-side">
+        <div class="admin-nav">
+          <a href="referee.html">Referee</a>
+          <a href="display.html">Display</a>
+          <a href="index.html">Player</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <section class="detail-panel admin-panel">
+      <div class="admin-toolbar">
+        <button type="button" id="admin-campaign-new">New Campaign</button>
+        <button type="button" id="admin-campaign-edit" disabled>Edit Campaign Details</button>
+      </div>
+
+      <div class="form-section-block property-group">
+        <div class="form-section-title">Campaigns</div>
+        <div id="admin-campaign-list" class="admin-campaign-list" aria-label="Campaign list"></div>
+      </div>
+
+      <div class="subtitle admin-help">
+        Click to select. Double-click to activate.
+      </div>
+
+      <div id="admin-campaign-status" class="subtitle"></div>
+    </section>
+  </div>
+
+  <div id="admin-campaign-modal" class="conditions-modal hidden" aria-hidden="true">
+    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-campaign-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="admin-campaign-dialog-title">Campaign Details</h2>
+        <div class="conditions-dialog-actions">
+          <button type="button" id="admin-campaign-cancel" class="secondary">Cancel</button>
+          <button type="button" id="admin-campaign-save" disabled>Save</button>
+        </div>
+      </div>
+      <div id="admin-campaign-modal-summary" class="subtitle"></div>
+      <div class="form-section-block property-group">
+        <label class="property-row">
+          <span class="property-label">Campaign Name</span>
+          <span class="property-control">
+            <input type="text" id="admin-campaign-name-input" required />
+          </span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Ruleset</span>
+          <span class="property-control">
+            <select id="admin-ruleset-select" required></select>
+          </span>
+        </label>
+      </div>
+      <div id="admin-campaign-modal-status"></div>
+    </div>
+  </div>
+
+  <script src="shared.js?v=2"></script>
+  <script src="ruleset.js?v=1"></script>
+  <script src="admin.js?v=2"></script>
+</body>
+</html>
