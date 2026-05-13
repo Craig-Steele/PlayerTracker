@@ -65,9 +65,11 @@ Impact:
 
 Launch authentication decision:
 
-- use email/password accounts at launch
-- plan for password reset as part of the initial auth system
-- defer magic-link and social login until after the core account model is stable
+- use a local server-owner/admin account at launch
+- use campaign-local display names for players on the local server
+- let players reclaim unclaimed characters previously tied to the same display name when they reconnect
+- use invite- or join-based campaign entry on the local server
+- defer email/password, magic-link, and social login until the core local identity model is proven
 
 ### 3. Multiple Devices Per User
 
@@ -113,12 +115,13 @@ Likely join paths:
 - invite link
 - invite code
 - QR join flow
+- display-name join/reclaim flow
 
 Impact:
 
 - campaign membership lifecycle must exist early
 - auth and campaign selection must work together
-- invite acceptance should not feel bolted on
+- invite acceptance and character reclaim should not feel bolted on
 
 ### 6. Real-Time Synchronization Strategy
 
@@ -766,20 +769,21 @@ Acceptance:
 
 ### M4: Accounts and Sessions
 
-Goal: introduce durable authenticated identity within each licensed server.
+Goal: introduce durable local server-owner identity and session handling within each licensed server.
 
 Work:
 
-- add `User` model
+- add `User` model for the server owner/admin
 - add `Session` model
 - add password hashing
-- implement email/password signup and login as the launch auth method
+- implement server-owner signup and login as the launch auth method
+- add lightweight local player join/session bootstrap for campaign membership keyed by campaign-local display name
 - add auth endpoints:
   - `POST /auth/signup`
   - `POST /auth/login`
   - `POST /auth/logout`
   - `GET /auth/session`
-  - password reset endpoints once `M11` hardening begins
+  - password reset endpoints once `M11` hardening begins, if the final product model needs them
 
 Web auth:
 
@@ -793,9 +797,11 @@ Mobile auth:
 
 Acceptance:
 
-- user can sign up, log in, restore session, and log out
+- the server owner can sign up, log in, restore session, and log out
+- local players can join the chosen server without requiring email addresses
+- players can reclaim unclaimed characters previously tied to the same campaign-local display name
 - identity no longer depends on local `ownerId`
-- the initial auth system is explicitly email/password on a per-server basis, not passwordless or social login
+- the initial auth system is explicitly local-server based, not tied to a central Roll4Initiative cloud account
 - auth/session ownership constraints are tightened here, after the M2 persistence foundation is in place
 
 ### M5: Authorization and Ownership Rewrite
@@ -806,9 +812,9 @@ This is the biggest behavioral change.
 
 Work:
 
-- derive current user from session on the server
+- derive current owner/admin from session on the server
 - remove client authority over `ownerId`
-- convert player routes to authenticated account routes:
+- convert player routes to session-backed campaign-local claim routes:
   - `GET /me`
   - `PATCH /me`
   - `GET /campaigns/:campaignId/me/characters`
@@ -818,7 +824,8 @@ Work:
 - add membership enforcement for:
   - player
   - admin
-- define which campaign operations are available to any authenticated campaign member versus campaign admins
+- define which campaign operations are available to any authenticated campaign participant versus campaign admins
+- add campaign-local claim tracking so a player display name can reclaim previously assigned characters on reconnect
 - add session-mode tracking so a logged-in campaign member can enter or leave referee mode without changing stored membership
 - define referee-facing encounter cloning/template operations so any campaign member currently in referee mode can use them
 - define referee-mode concurrency as fully equal control among campaign members currently using referee mode
@@ -826,14 +833,14 @@ Work:
 
 Acceptance:
 
-- players can edit only their own characters
+- players can reclaim and edit only the characters currently tied to their own display-name session
 - campaign members can switch into referee mode for their current session without changing account roles
 - the server can surface which campaign members are currently in referee mode
 - display-oriented clients can render the current referee(s) from that presence data
 - referee-facing encounter cloning/template operations are defined separately from full campaign export and are available to campaign members currently in referee mode
 - campaign members concurrently in referee mode have fully equal control
 - encounter snapshots are created manually by referee-mode users rather than automatically at launch
-- all ownership comes from server session + campaign membership
+- all ownership comes from server session + campaign membership + current character claim
 - no gameplay write route trusts raw client identity
 
 ### M6: Campaign Creation, Invites, and Membership Management
@@ -979,9 +986,9 @@ Goal: transition current users cleanly.
 
 Work:
 
-- use a hard cutover from anonymous identity to account-based identity
-- remove anonymous write access when authenticated identity ships
-- communicate that pre-release anonymous identities are not migrated forward
+- use a hard cutover from anonymous browser-local identity to campaign-local display-name claims
+- remove anonymous write access when the claim/session model ships
+- communicate that pre-release anonymous browser state is not migrated forward
 
 Acceptance:
 
@@ -994,7 +1001,8 @@ Goal: make the paid server app safe to distribute and practical to operate.
 
 Work:
 
-- implement annual server-license entitlement checks through store receipts or the store account model available on each platform
+- implement annual server-license entitlement checks through store receipts or store-account entitlement where available on each platform
+- exchange store entitlement for a signed, time-limited local server license lease
 - add a grace-period model so temporary receipt-validation failures do not interrupt active sessions
 - define expiry behavior:
   - preserve read/export access
@@ -1014,6 +1022,7 @@ Work:
 Acceptance:
 
 - license status is enforced without adding player-account subscriptions
+- the local server can validate store entitlement and cache a signed lease for offline/temporary-disconnected use
 - expiry behavior is predictable and does not trap user data
 - core auth operations are hardened
 - operations and recovery are realistic for a commercially distributed server app
@@ -1101,10 +1110,11 @@ The real-time sync decision is already made:
 
 The launch authentication decision is already made:
 
-- use email/password accounts
-- include password reset in the commercial auth plan
-- defer magic-link and social login for later evaluation
-- accounts are scoped to a chosen server, not a central SaaS identity system
+- use a local server-owner/admin account
+- use invite- or join-based local player identities
+- include password reset only if the later product model needs it
+- defer email/password, magic-link, and social login for later evaluation
+- identities are scoped to a chosen server, not a central SaaS identity system
 
 The launch campaign mode decision is already made:
 
@@ -1117,8 +1127,9 @@ The launch campaign mode decision is already made:
 The launch billing decision is already made:
 
 - sell the server app on an annual license, tentatively `$5/year`
-- distribute the paid server through Apple and Microsoft storefronts
+- distribute the paid server through Apple and Microsoft storefronts where they fit
 - keep iOS and Android player clients free
+- validate store entitlement and exchange it for a signed local server license lease
 - do not introduce launch caps for campaign count or player count
 - on expiry, preserve read/export access and block new hosted sessions until renewal
 - use a grace period so receipt-validation problems do not interrupt play
@@ -1162,8 +1173,8 @@ The launch conflict policy decision is already made:
 
 The launch migration decision is already made:
 
-- use a hard cutover from anonymous identity to account-based identity
-- do not provide a legacy claim/migration flow for pre-release anonymous users
+- use a hard cutover from anonymous browser-local identity to campaign-local display-name claims
+- do not provide a legacy claim/migration flow for pre-release anonymous browser state
 
 The next feature-planning priorities are:
 
