@@ -1953,7 +1953,14 @@ window.addEventListener('DOMContentLoaded', () => {
           lastTurnId = null;
           lastStateJson = null;
           renderCharacterList();
-          renderTurnTable([]);
+          if (playersBody) {
+            playersBody.innerHTML = '';
+            playersBody.appendChild(createEmptyEncounterRow(conditionLibrary.length > 0 ? 4 : 3));
+          }
+          if (currentActor) {
+            currentActor.textContent = '';
+            currentActor.classList.remove('current-actor-mine');
+          }
           updateEncounterStateDisplay();
           updateConditionsAvailability();
           return;
