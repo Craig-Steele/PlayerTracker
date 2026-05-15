@@ -769,6 +769,8 @@ Acceptance:
 
 ### M4: Accounts and Sessions
 
+Status: complete
+
 Goal: introduce durable local server-owner identity and session handling within each licensed server.
 
 Work:
@@ -777,7 +779,8 @@ Work:
 - add `Session` model
 - add password hashing
 - implement server-owner signup and login as the launch auth method
-- add lightweight local player join/session bootstrap for campaign membership keyed by campaign-local display name
+- add lightweight local player join/session bootstrap for campaign membership keyed by a stable campaign-local player session with a mutable display name
+- add rename support that changes only the display name, not the underlying player identity
 - add auth endpoints:
   - `POST /auth/signup`
   - `POST /auth/login`
@@ -799,7 +802,8 @@ Acceptance:
 
 - the server owner can sign up, log in, restore session, and log out
 - local players can join the chosen server without requiring email addresses
-- players can reclaim unclaimed characters previously tied to the same campaign-local display name
+- renaming a player changes only the visible display name, not the player identity
+- player session identity is stable even when the visible display name changes
 - identity no longer depends on local `ownerId`
 - the initial auth system is explicitly local-server based, not tied to a central Roll4Initiative cloud account
 - auth/session ownership constraints are tightened here, after the M2 persistence foundation is in place
@@ -825,7 +829,12 @@ Work:
   - player
   - admin
 - define which campaign operations are available to any authenticated campaign participant versus campaign admins
-- add campaign-local claim tracking so a player display name can reclaim previously assigned characters on reconnect
+- add campaign-local claim tracking so a player session and its display-name aliases can reclaim previously assigned characters on reconnect
+- define the character claim lifecycle explicitly:
+  - unclaimed
+  - claimed by the current player session
+  - temporarily retained for reconnect
+  - explicitly released or handed off
 - add session-mode tracking so a logged-in campaign member can enter or leave referee mode without changing stored membership
 - define referee-facing encounter cloning/template operations so any campaign member currently in referee mode can use them
 - define referee-mode concurrency as fully equal control among campaign members currently using referee mode
@@ -833,7 +842,9 @@ Work:
 
 Acceptance:
 
-- players can reclaim and edit only the characters currently tied to their own display-name session
+- players can reclaim and edit only the characters currently tied to their own campaign-local player session
+- display-name changes do not change character claim ownership or player identity
+- reconnect restores the same player session and claim state when the character is still eligible
 - campaign members can switch into referee mode for their current session without changing account roles
 - the server can surface which campaign members are currently in referee mode
 - display-oriented clients can render the current referee(s) from that presence data
@@ -858,6 +869,7 @@ Work:
 - add invite flow:
   - `POST /campaigns/:campaignId/invites`
   - `POST /invites/:token/accept`
+- make the join screen show unclaimed characters plus characters previously claimed by the same campaign-local player session when a reconnect is possible
 - add campaign list route:
   - `GET /me/campaigns`
 
@@ -871,6 +883,7 @@ Acceptance:
 - campaign members currently in referee mode can clone encounters and create or apply reusable encounter templates inside a campaign
 - encounter templates are reusable across campaigns that use the same ruleset
 - the last 20 manually created encounter snapshots are retained per campaign
+- the join flow can show previously claimed characters that are eligible for reclaim by the same campaign-local player session
 - no launch behavior depends on subscription plan caps or active-campaign counting
 
 ### M6A: Server-Sent Events Real-Time Layer
@@ -885,6 +898,7 @@ Work:
   - turn changes
   - character updates
   - condition changes
+  - active campaign selection changes
   - campaign metadata changes
   - referee-mode presence changes
 - add reconnect semantics using event IDs or equivalent resume logic where useful
@@ -895,6 +909,7 @@ Acceptance:
 
 - web can subscribe to live campaign updates without polling as the primary mechanism
 - iOS and Android can consume the same event model
+- active campaign selection changes propagate to all clients in real time
 - disconnect/reconnect behavior is understood and implemented
 - ordinary writes still use normal HTTP endpoints
 - display clients can receive current-referee presence updates in real time

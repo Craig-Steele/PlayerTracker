@@ -46,6 +46,42 @@ struct CampaignUpdateInput: Content {
     let rulesetId: String
 }
 
+struct AuthSignupInput: Content {
+    let email: String
+    let password: String
+    let displayName: String?
+}
+
+struct AuthLoginInput: Content {
+    let email: String
+    let password: String
+}
+
+struct AuthUserResponse: Content {
+    let id: UUID
+    let email: String
+    let displayName: String?
+}
+
+struct AuthSessionResponse: Content {
+    let user: AuthUserResponse
+}
+
+struct PlayerJoinInput: Content {
+    let displayName: String
+}
+
+struct PlayerIdentityResponse: Content {
+    let id: UUID
+    let campaignID: UUID
+    let displayName: String
+}
+
+struct PlayerSessionResponse: Content {
+    let player: PlayerIdentityResponse
+    let campaign: CampaignState
+}
+
 struct UserData: Content {
     let name: String
     let initiative: Double?

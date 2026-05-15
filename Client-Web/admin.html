@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Campaign Admin</title>
+  <title>Roll4Initiative</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="admin-page">
+  <div class="container">
   <div class="display-page-header">
     <div class="player-campaign-card display-campaign-card admin-campaign-card">
       <img id="admin-ruleset-icon" class="ruleset-icon" alt="" />
       <div class="player-campaign-text">
-        <div id="admin-campaign-name" class="player-campaign-name">Campaign Admin</div>
+        <div id="admin-campaign-name" class="player-campaign-name">Roll4Initiative</div>
         <div class="ruleset-meta player-ruleset-meta">
           <a id="admin-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
           <span id="admin-ruleset-license-wrap" class="ruleset-license-wrap">
@@ -53,6 +54,77 @@
     </section>
   </div>
 
+  <div class="display-page-header admin-owner-header">
+    <div class="player-campaign-card display-campaign-card admin-owner-card">
+      <div class="admin-owner-group">
+        <div id="admin-auth-credentials">
+          <div class="form-section-block property-group">
+            <label class="property-row">
+              <span class="property-label">Email</span>
+              <span class="property-control">
+                <input type="email" id="admin-auth-email" autocomplete="username" />
+              </span>
+            </label>
+            <label class="property-row">
+              <span class="property-label">Password</span>
+              <span class="property-control">
+                <input type="password" id="admin-auth-password" autocomplete="current-password" />
+              </span>
+            </label>
+          </div>
+          <div class="admin-auth-submit-row">
+            <button type="button" id="admin-auth-signup" class="secondary">Sign Up</button>
+            <button type="button" id="admin-auth-login">Log In</button>
+          </div>
+        </div>
+        <div class="admin-auth-footer-row">
+          <div id="admin-auth-summary" class="player-campaign-meta">Not signed in.</div>
+          <div id="admin-auth-session-actions" class="admin-toolbar admin-auth-toolbar hidden">
+            <button type="button" id="admin-auth-logout" class="secondary" disabled>Log Out</button>
+            <button type="button" id="admin-auth-shutdown" class="secondary" disabled>Shutdown</button>
+          </div>
+        </div>
+      </div>
+      <div id="admin-auth-status" class="subtitle"></div>
+    </div>
+  </div>
+
+  <div id="admin-signup-modal" class="conditions-modal hidden" aria-hidden="true">
+    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-signup-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="admin-signup-dialog-title">Create Account</h2>
+        <div class="conditions-dialog-actions">
+          <button type="button" id="admin-signup-cancel" class="secondary">Cancel</button>
+          <button type="button" id="admin-signup-save" disabled>Sign Up</button>
+        </div>
+      </div>
+      <div id="admin-signup-modal-summary" class="subtitle">
+        Create the local server owner account.
+      </div>
+      <div class="form-section-block property-group">
+        <label class="property-row">
+          <span class="property-label">Email</span>
+          <span class="property-control">
+            <input type="email" id="admin-signup-email" autocomplete="username" />
+          </span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Password</span>
+          <span class="property-control">
+            <input type="password" id="admin-signup-password" autocomplete="new-password" />
+          </span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Display Name</span>
+          <span class="property-control">
+            <input type="text" id="admin-signup-display-name" autocomplete="name" />
+          </span>
+        </label>
+      </div>
+      <div id="admin-signup-modal-status"></div>
+    </div>
+  </div>
+
   <div id="admin-campaign-modal" class="conditions-modal hidden" aria-hidden="true">
     <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-campaign-dialog-title">
       <div class="conditions-dialog-header">
@@ -83,6 +155,6 @@
 
   <script src="shared.js?v=2"></script>
   <script src="ruleset.js?v=1"></script>
-  <script src="admin.js?v=2"></script>
+  <script src="admin.js?v=3"></script>
 </body>
 </html>

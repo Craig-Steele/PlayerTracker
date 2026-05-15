@@ -60,20 +60,20 @@ enum BrowserLauncher {
 
     static func shouldLaunchByDefault(environment: [String: String]) -> Bool {
         guard let rawValue = environment["ROLL4INITIATIVE_LAUNCH_BROWSER"] else {
-            return launchCommand(for: "http://localhost:8080/display.html") != nil
+            return launchCommand(for: "http://localhost:8080/admin.html") != nil
         }
 
         switch rawValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "1", "true", "yes", "on":
-            return launchCommand(for: "http://localhost:8080/display.html") != nil
+            return launchCommand(for: "http://localhost:8080/admin.html") != nil
         case "0", "false", "no", "off":
             return false
         default:
-            return launchCommand(for: "http://localhost:8080/display.html") != nil
+            return launchCommand(for: "http://localhost:8080/admin.html") != nil
         }
     }
 
-    static func launchDisplayPage(url: String = "http://localhost:8080/display.html") {
+    static func launchDisplayPage(url: String = "http://localhost:8080/admin.html") {
         guard let command = launchCommand(for: url) else {
             fputs("No supported browser launcher is available for this platform.\n", stderr)
             return

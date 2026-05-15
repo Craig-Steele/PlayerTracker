@@ -1348,6 +1348,29 @@ body.admin-page .admin-campaign-card {
   border-radius: 0 0 12px 12px;
 }
 
+body.admin-page .admin-owner-header {
+  margin-top: 1.2rem;
+}
+
+body.admin-page .admin-owner-card {
+  margin-top: 0;
+  padding-top: 0.85rem;
+  border-radius: 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+body.admin-page .display-page-header.admin-owner-header .admin-owner-card {
+  border-radius: 12px;
+}
+
+body.admin-page .admin-owner-card .admin-owner-group {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
 .player-campaign-card .ruleset-icon {
   width: 72px;
   height: 72px;
@@ -1815,6 +1838,84 @@ body.admin-page .admin-campaign-card {
   gap: 0.9rem;
 }
 
+.admin-page .admin-auth-panel {
+  margin-top: 0.4rem;
+}
+
+.admin-page .admin-auth-panel .form-section-block {
+  margin-bottom: 0;
+}
+
+.admin-owner-group {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 1rem 0.95rem;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  background: var(--bg-panel);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.admin-owner-title {
+  display: inline-block;
+  margin: 0 0 0.55rem;
+  padding: 0 0.4rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.admin-auth-toolbar {
+  align-items: center;
+}
+
+.admin-auth-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
+}
+
+.admin-auth-submit-row button:last-child {
+  margin-left: auto;
+}
+
+.admin-auth-session-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-page-footer {
+  max-width: none;
+  width: 100%;
+  margin: 0 auto 1rem;
+  padding: 0;
+}
+
+.admin-page-footer .admin-auth-panel {
+  margin-top: 0.4rem;
+  width: 100%;
+}
+
+.admin-auth-footer-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.admin-owner-group .admin-auth-footer-row {
+  margin-top: 0.15rem;
+}
+
 .admin-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -1854,6 +1955,11 @@ body.admin-page .admin-campaign-card {
   background: transparent;
   border-radius: 0;
   text-align: left;
+}
+
+.admin-campaign-row:disabled {
+  cursor: default;
+  opacity: 0.55;
 }
 
 .admin-campaign-list-item.selected .admin-campaign-row {

@@ -38,6 +38,29 @@ struct CreateSessions: AsyncMigration {
     }
 }
 
+struct CreateCampaignPlayerSessions: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.schema("campaign_player_sessions")
+            .id()
+            .field("campaign_id", .uuid, .required)
+            .field("display_name", .string, .required)
+            .field("display_name_normalized", .string, .required)
+            .field("previous_display_names_json", .string)
+            .field("token_hash", .string, .required)
+            .field("expires_at", .datetime, .required)
+            .field("revoked_at", .datetime)
+            .field("created_at", .datetime)
+            .field("updated_at", .datetime)
+            .unique(on: "campaign_id", "display_name_normalized")
+            .unique(on: "token_hash")
+            .create()
+    }
+
+    func revert(on database: any Database) async throws {
+        try await database.schema("campaign_player_sessions").delete()
+    }
+}
+
 struct CreateCampaigns: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema("campaigns")
@@ -158,6 +181,7 @@ enum DatabaseMigrations {
     static func register(on app: Application) {
         app.migrations.add(CreateUsers())
         app.migrations.add(CreateSessions())
+        app.migrations.add(CreateCampaignPlayerSessions())
         app.migrations.add(CreateCampaigns())
         app.migrations.add(CreateCampaignMemberships())
         app.migrations.add(CreateCharacters())

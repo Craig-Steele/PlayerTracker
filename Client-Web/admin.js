@@ -1,18 +1,45 @@
 const REFRESH_INTERVAL_MS = 5000;
 
-const { updateRulesetIcons, updateRulesetLinks, updateRulesetLicenses } = window.PlayerTrackerRuleset || {
-  updateRulesetIcons: () => {},
-  updateRulesetLinks: () => {},
-  updateRulesetLicenses: () => {}
+const {
+  APP_ICON_URL,
+  updateCampaignHeader
+} = window.PlayerTrackerShared || {
+  APP_ICON_URL: '/favicon-512.png',
+  updateCampaignHeader: () => {}
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+  const authSummary = document.getElementById('admin-auth-summary');
+  const authStatus = document.getElementById('admin-auth-status');
+  const authEmailInput = document.getElementById('admin-auth-email');
+  const authPasswordInput = document.getElementById('admin-auth-password');
+  const authSignupBtn = document.getElementById('admin-auth-signup');
+  const authLoginBtn = document.getElementById('admin-auth-login');
+  const authLogoutBtn = document.getElementById('admin-auth-logout');
+  const authShutdownBtn = document.getElementById('admin-auth-shutdown');
+  const authCredentials = document.getElementById('admin-auth-credentials');
+  const authSessionActions = document.getElementById('admin-auth-session-actions');
+  const signupModal = document.getElementById('admin-signup-modal');
+  const signupModalStatus = document.getElementById('admin-signup-modal-status');
+  const signupModalSummary = document.getElementById('admin-signup-modal-summary');
+  const signupModalCancelBtn = document.getElementById('admin-signup-cancel');
+  const signupModalSaveBtn = document.getElementById('admin-signup-save');
+  const signupEmailInput = document.getElementById('admin-signup-email');
+  const signupPasswordInput = document.getElementById('admin-signup-password');
+  const signupDisplayNameInput = document.getElementById('admin-signup-display-name');
+
   const adminCampaignName = document.getElementById('admin-campaign-name');
   const adminRulesetLink = document.getElementById('admin-ruleset-link');
   const adminRulesetLicense = document.getElementById('admin-ruleset-license');
   const adminRulesetLicenseWrap = document.getElementById('admin-ruleset-license-wrap');
   const adminRulesetIcon = document.getElementById('admin-ruleset-icon');
   const adminActiveSummary = document.getElementById('admin-active-summary');
+  const adminHeaderNameTargets = [adminCampaignName];
+  const adminHeaderIconTargets = [adminRulesetIcon];
+  const adminHeaderLinkTargets = [adminRulesetLink];
+  const adminHeaderLicenseTargets = [
+    { linkEl: adminRulesetLicense, wrapEl: adminRulesetLicenseWrap }
+  ];
 
   const campaignList = document.getElementById('admin-campaign-list');
   const campaignStatusDiv = document.getElementById('admin-campaign-status');
@@ -37,15 +64,71 @@ window.addEventListener('DOMContentLoaded', () => {
   let editorOriginalName = '';
   let editorOriginalRulesetId = '';
   let refreshToken = 0;
+  let authRefreshToken = 0;
+  let authUser = null;
+  const adminEmailStorageKey = 'adminEmail';
+
+  if (authEmailInput) {
+    authEmailInput.value = localStorage.getItem(adminEmailStorageKey) || '';
+  }
 
   function fetchJson(url, options) {
     return fetch(url, options).then(async (res) => {
+      if (!res.ok) {
+        const message = await res.text().catch(() => '');
+        throw new Error(formatServerError(message, res.status));
+      }
+      return res.json();
+    });
+  }
+
+  function fetchMaybeJson(url, options) {
+    return fetch(url, options).then(async (res) => {
+      if (res.status === 401) {
+        return null;
+      }
       if (!res.ok) {
         const message = await res.text().catch(() => '');
         throw new Error(message || `Server returned ${res.status}`);
       }
       return res.json();
     });
+  }
+
+  function fetchVoid(url, options) {
+    return fetch(url, options).then(async (res) => {
+      if (!res.ok) {
+        const message = await res.text().catch(() => '');
+        throw new Error(formatServerError(message, res.status));
+      }
+      return null;
+    });
+  }
+
+  function formatServerError(rawMessage, status) {
+    if (rawMessage) {
+      try {
+        const payload = JSON.parse(rawMessage);
+        const reason = typeof payload.reason === 'string' ? payload.reason : '';
+        if (reason === 'User already exists.') {
+          return 'An account with that email already exists.';
+        }
+        if (reason) {
+          return reason;
+        }
+      } catch (_) {
+        if (rawMessage.trim()) {
+          return rawMessage.trim();
+        }
+      }
+    }
+    return `Server returned ${status}`;
+  }
+
+  function setAuthStatus(message, isError = false) {
+    if (!authStatus) return;
+    authStatus.textContent = message;
+    authStatus.style.color = isError ? '#b00020' : '';
   }
 
   function setStatus(message, isError = false) {
@@ -60,42 +143,93 @@ window.addEventListener('DOMContentLoaded', () => {
     modalStatus.style.color = isError ? '#b00020' : '';
   }
 
-  function setRulesetLink(labelText, baseUrl) {
-    updateRulesetLinks([adminRulesetLink], labelText, baseUrl);
-  }
-
-  function setRulesetLicense(licenseUrl) {
-    updateRulesetLicenses([{ linkEl: adminRulesetLicense, wrapEl: adminRulesetLicenseWrap }], licenseUrl);
-  }
-
-  function setRulesetIcon(iconUrl, labelText) {
-    updateRulesetIcons([adminRulesetIcon], iconUrl, labelText);
+  function setSignupModalStatus(message, isError = false) {
+    if (!signupModalStatus) return;
+    signupModalStatus.textContent = message;
+    signupModalStatus.style.color = isError ? '#b00020' : '';
   }
 
   function updateHeader(activeCampaign, library) {
-    if (!activeCampaign) {
-      if (adminCampaignName) {
-        adminCampaignName.textContent = 'Campaign Admin';
-      }
-      if (adminActiveSummary) {
+    updateCampaignHeader(
+      {
+        nameTargets: adminHeaderNameTargets,
+        iconTargets: adminHeaderIconTargets,
+        linkTargets: adminHeaderLinkTargets,
+        licenseTargets: adminHeaderLicenseTargets
+      },
+      activeCampaign
+        ? {
+            campaignName: activeCampaign.name || 'Campaign Admin',
+            rulesetLabel: library?.label || activeCampaign.rulesetLabel || activeCampaign.rulesetId || 'No Conditions',
+            rulesBaseUrl: library?.rulesBaseUrl || null,
+            licenseUrl: library?.license || null,
+            iconUrl: library?.icon || null
+          }
+        : {
+            campaignName: null,
+            rulesetLabel: '',
+            rulesBaseUrl: null,
+            licenseUrl: null,
+            iconUrl: APP_ICON_URL
+          }
+    );
+    if (adminActiveSummary) {
+      if (!activeCampaign) {
         adminActiveSummary.textContent = 'No campaign selected.';
+      } else {
+        const label = library?.label || activeCampaign.rulesetLabel || activeCampaign.rulesetId || 'No Conditions';
+        adminActiveSummary.textContent = `Active: ${activeCampaign.name} - ${label}`;
       }
-      setRulesetLink('', null);
-      setRulesetLicense(null);
-      setRulesetIcon(null, '');
+    }
+  }
+
+  function updateAuthSummary() {
+    if (!authSummary) return;
+    if (!authUser) {
+      authSummary.textContent = 'Not signed in.';
       return;
     }
+    const parts = [authUser.email];
+    if (authUser.displayName) {
+      parts.push(`(${authUser.displayName})`);
+    }
+    authSummary.textContent = `Signed in as ${parts.join(' ')}`;
+  }
 
-    const label = activeCampaign.rulesetLabel || library?.label || activeCampaign.rulesetId || 'No Conditions';
-    if (adminCampaignName) {
-      adminCampaignName.textContent = activeCampaign.name || 'Campaign Admin';
+  function setCampaignUiEnabled(enabled) {
+    if (newCampaignBtn) newCampaignBtn.disabled = !enabled;
+    if (editSelectedBtn) editSelectedBtn.disabled = !enabled || !selectedCampaignId;
+    if (campaignList) campaignList.toggleAttribute('aria-disabled', !enabled);
+    campaignList?.querySelectorAll('.admin-campaign-row').forEach((button) => {
+      button.disabled = !enabled;
+    });
+  }
+
+  function updateAuthUi() {
+    updateAuthSummary();
+    if (authLogoutBtn) {
+      authLogoutBtn.disabled = !authUser;
     }
-    if (adminActiveSummary) {
-      adminActiveSummary.textContent = `Active: ${activeCampaign.name} - ${label}`;
+    if (authShutdownBtn) {
+      authShutdownBtn.disabled = !authUser;
     }
-    setRulesetLink(library?.label || activeCampaign.rulesetLabel || '', library?.rulesBaseUrl || null);
-    setRulesetLicense(library?.license || null);
-    setRulesetIcon(library?.icon || null, library?.label || activeCampaign.rulesetLabel || '');
+    if (authCredentials) {
+      authCredentials.classList.toggle('hidden', Boolean(authUser));
+    }
+    if (authSessionActions) {
+      authSessionActions.classList.toggle('hidden', !authUser);
+    }
+    setCampaignUiEnabled(Boolean(authUser));
+  }
+
+  function clearCampaignState() {
+    availableRulesets = [];
+    campaignSummaries = [];
+    activeCampaignId = null;
+    selectedCampaignId = null;
+    renderCampaignList();
+    updateHeader(null, null);
+    setStatus(authUser ? 'Create or activate a campaign.' : 'Sign in to manage campaigns.');
   }
 
   function populateRulesetSelect(rulesets) {
@@ -116,11 +250,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function getCampaignLabel(campaign) {
-    if (!campaign) return 'Campaign';
-    return campaign.name || 'Campaign';
-  }
-
   function renderCampaignList() {
     if (!campaignList) return;
     campaignList.innerHTML = '';
@@ -128,7 +257,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!campaignSummaries.length) {
       const empty = document.createElement('div');
       empty.className = 'subtitle';
-      empty.textContent = 'No campaigns yet.';
+      empty.textContent = authUser ? 'No campaigns yet.' : 'Sign in to load campaigns.';
       campaignList.appendChild(empty);
       updateEditButtonState();
       return;
@@ -148,12 +277,14 @@ window.addEventListener('DOMContentLoaded', () => {
       button.type = 'button';
       button.className = 'admin-campaign-row';
       button.addEventListener('click', () => {
+        if (!authUser) return;
         selectedCampaignId = campaign.id;
         updateCampaignListSelection();
         updateEditButtonState();
         updateSelectionStatus();
       });
       button.addEventListener('dblclick', () => {
+        if (!authUser) return;
         selectedCampaignId = campaign.id;
         activateCampaign(campaign.id);
       });
@@ -187,6 +318,10 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateSelectionStatus() {
+    if (!authUser) {
+      setStatus('Sign in to manage campaigns.');
+      return;
+    }
     const selected = campaignSummaries.find((campaign) => campaign.id === selectedCampaignId) || null;
     if (!selected) {
       setStatus(activeCampaignId ? 'Select a campaign to edit or double-click to activate it.' : 'Create or activate a campaign.');
@@ -198,45 +333,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function updateEditButtonState() {
     if (!editSelectedBtn) return;
-    editSelectedBtn.disabled = !selectedCampaignId;
-  }
-
-  function openModal(mode, campaign = null) {
-    if (!modal || !campaignNameInput || !campaignRulesetSelect) return;
-    editorMode = mode;
-    editorCampaignId = campaign?.id || null;
-    editorOriginalName = campaign?.name || '';
-    editorOriginalRulesetId = campaign?.rulesetId || '';
-
-    if (modalTitle) {
-      modalTitle.textContent = mode === 'new' ? 'New Campaign' : 'Edit Campaign Details';
-    }
-
-    if (modalSummary) {
-      modalSummary.textContent = mode === 'new'
-        ? 'Create a new campaign record. Activate it later from the list.'
-        : `Editing ${campaign?.name || 'Campaign'}.`;
-    }
-
-    campaignNameInput.value = campaign?.name || '';
-    campaignRulesetSelect.value = campaign?.rulesetId || availableRulesets[0]?.id || 'none';
-
-    setModalStatus('');
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden', 'false');
-    validateModal();
-  }
-
-  function closeModal() {
-    if (!modal) return;
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
-    editorMode = null;
-    editorCampaignId = null;
-    editorOriginalName = '';
-    editorOriginalRulesetId = '';
-    setModalStatus('');
-    validateModal();
+    editSelectedBtn.disabled = !authUser || !selectedCampaignId;
   }
 
   function normalizeName(name) {
@@ -280,6 +377,94 @@ window.addEventListener('DOMContentLoaded', () => {
     modalSaveBtn.disabled = !(valid && changed);
   }
 
+  function openModal(mode, campaign = null) {
+    if (!modal || !campaignNameInput || !campaignRulesetSelect) return;
+    editorMode = mode;
+    editorCampaignId = campaign?.id || null;
+    editorOriginalName = campaign?.name || '';
+    editorOriginalRulesetId = campaign?.rulesetId || '';
+
+    if (modalTitle) {
+      modalTitle.textContent = mode === 'new' ? 'New Campaign' : 'Edit Campaign Details';
+    }
+
+    if (modalSummary) {
+      modalSummary.textContent = mode === 'new'
+        ? 'Create a new campaign record. Activate it later from the list.'
+        : `Editing ${campaign?.name || 'Campaign'}.`;
+    }
+
+    campaignNameInput.value = campaign?.name || '';
+    campaignRulesetSelect.value = campaign?.rulesetId || availableRulesets[0]?.id || 'none';
+
+    setModalStatus('');
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    validateModal();
+  }
+
+  function openSignupModal() {
+    if (!signupModal) return;
+    if (signupEmailInput) {
+      signupEmailInput.value = authEmailInput ? authEmailInput.value.trim() : '';
+    }
+    if (signupPasswordInput) {
+      signupPasswordInput.value = '';
+    }
+    if (signupDisplayNameInput) {
+      signupDisplayNameInput.value = '';
+    }
+    if (signupModalSummary) {
+      signupModalSummary.textContent = 'Create the local server owner account.';
+    }
+    setSignupModalStatus('');
+    signupModal.classList.remove('hidden');
+    signupModal.setAttribute('aria-hidden', 'false');
+    validateSignupModal();
+  }
+
+  function closeSignupModal() {
+    if (!signupModal) return;
+    signupModal.classList.add('hidden');
+    signupModal.setAttribute('aria-hidden', 'true');
+    setSignupModalStatus('');
+    validateSignupModal();
+  }
+
+  function signupHasChanges() {
+    const email = (signupEmailInput?.value || '').trim();
+    const password = signupPasswordInput?.value || '';
+    const displayName = (signupDisplayNameInput?.value || '').trim();
+    return Boolean(email || password || displayName);
+  }
+
+  function isSignupValid() {
+    const email = (signupEmailInput?.value || '').trim();
+    const password = signupPasswordInput?.value || '';
+    return Boolean(email && password);
+  }
+
+  function validateSignupModal() {
+    if (!signupModalSaveBtn) return;
+    signupModalSaveBtn.disabled = !(isSignupValid() && signupHasChanges());
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    editorMode = null;
+    editorCampaignId = null;
+    editorOriginalName = '';
+    editorOriginalRulesetId = '';
+    setModalStatus('');
+    validateModal();
+  }
+
+  async function fetchAuthSession() {
+    return fetchMaybeJson('/auth/session');
+  }
+
   async function fetchHeader() {
     const [campaign, library] = await Promise.all([
       fetch('/campaign').then(async (res) => {
@@ -305,7 +490,29 @@ window.addEventListener('DOMContentLoaded', () => {
     return Array.isArray(rulesets) ? rulesets : [];
   }
 
-  async function refreshAll() {
+  async function refreshAuth() {
+    const token = ++authRefreshToken;
+    try {
+      const session = await fetchAuthSession();
+      if (token !== authRefreshToken) return false;
+      authUser = session?.user || null;
+      updateAuthUi();
+      return Boolean(authUser);
+    } catch (err) {
+      if (token !== authRefreshToken) return false;
+      authUser = null;
+      updateAuthUi();
+      setAuthStatus(`Failed to load auth session: ${err.message}`, true);
+      return false;
+    }
+  }
+
+  async function refreshCampaignData() {
+    if (!authUser) {
+      clearCampaignState();
+      return;
+    }
+
     const token = ++refreshToken;
     try {
       const [rulesets, campaigns, header] = await Promise.all([
@@ -325,8 +532,133 @@ window.addEventListener('DOMContentLoaded', () => {
       renderCampaignList();
       updateCampaignListSelection();
       updateSelectionStatus();
+      updateEditButtonState();
     } catch (err) {
+      if (String(err.message).includes('401') || String(err.message).toLowerCase().includes('not signed in')) {
+        authUser = null;
+        updateAuthUi();
+        clearCampaignState();
+        setAuthStatus('Session expired. Please sign in again.', true);
+        return;
+      }
       setStatus(`Failed to load campaign data: ${err.message}`, true);
+    }
+  }
+
+  async function refreshAll() {
+    const signedIn = await refreshAuth();
+    if (!signedIn) {
+      clearCampaignState();
+      return;
+    }
+    await refreshCampaignData();
+  }
+
+  async function authenticate(path) {
+    if (!authEmailInput || !authPasswordInput) return;
+    const email = (authEmailInput.value || '').trim();
+    const password = authPasswordInput.value || '';
+    if (!email) {
+      setAuthStatus('Email is required.', true);
+      return;
+    }
+    if (!password) {
+      setAuthStatus('Password is required.', true);
+      return;
+    }
+    try {
+      setAuthStatus(path.endsWith('signup') ? 'Creating account...' : 'Signing in...');
+      await fetchJson(path, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          displayName: null
+        })
+      });
+      const session = await fetchAuthSession();
+      authUser = session?.user || null;
+      authPasswordInput.value = '';
+      if (authUser?.email) {
+        authEmailInput.value = authUser.email;
+        localStorage.setItem(adminEmailStorageKey, authUser.email);
+      } else if (email) {
+        localStorage.setItem(adminEmailStorageKey, email);
+      }
+      updateAuthUi();
+      await refreshCampaignData();
+    } catch (err) {
+      setAuthStatus(`Auth failed: ${err.message}`, true);
+    }
+  }
+
+  async function createAccount() {
+    if (!signupEmailInput || !signupPasswordInput) return;
+    const email = (signupEmailInput.value || '').trim();
+    const password = signupPasswordInput.value || '';
+    const displayName = signupDisplayNameInput ? (signupDisplayNameInput.value || '').trim() : '';
+    if (!email) {
+      setSignupModalStatus('Email is required.', true);
+      return;
+    }
+    if (!password) {
+      setSignupModalStatus('Password is required.', true);
+      return;
+    }
+    try {
+      setSignupModalStatus('Creating account...');
+      await fetchJson('/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          displayName: displayName || null
+        })
+      });
+      const session = await fetchAuthSession();
+      authUser = session?.user || null;
+      authPasswordInput.value = '';
+      if (authEmailInput) {
+        authEmailInput.value = email;
+      }
+      localStorage.setItem(adminEmailStorageKey, email);
+      if (signupPasswordInput) signupPasswordInput.value = '';
+      if (authUser?.email) {
+        authEmailInput.value = authUser.email;
+        localStorage.setItem(adminEmailStorageKey, authUser.email);
+      }
+      updateAuthUi();
+      closeSignupModal();
+      await refreshCampaignData();
+    } catch (err) {
+      setSignupModalStatus(`Sign up failed: ${err.message}`, true);
+    }
+  }
+
+  async function logout() {
+    try {
+      await fetchVoid('/auth/logout', { method: 'POST' });
+    } catch (err) {
+      setAuthStatus(`Logout failed: ${err.message}`, true);
+      return;
+    }
+    authUser = null;
+    updateAuthUi();
+    clearCampaignState();
+  }
+
+  async function shutdownServer() {
+    if (!authUser) return;
+    const confirmed = window.confirm('Shut down the server now?');
+    if (!confirmed) return;
+    try {
+      await fetchVoid('/admin/shutdown', { method: 'POST' });
+      setAuthStatus('Shutdown requested.');
+      setStatus('Shutdown requested.');
+    } catch (err) {
+      setAuthStatus(`Shutdown failed: ${err.message}`, true);
     }
   }
 
@@ -336,7 +668,7 @@ window.addEventListener('DOMContentLoaded', () => {
         method: 'POST'
       });
       selectedCampaignId = selected.id;
-      await refreshAll();
+      await refreshCampaignData();
       setStatus(`Activated ${selected.name}.`);
     } catch (err) {
       setStatus(`Failed to activate campaign: ${err.message}`, true);
@@ -358,7 +690,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         selectedCampaignId = created.id;
         closeModal();
-        await refreshAll();
+        await refreshCampaignData();
         setStatus(`Created ${created.name}.`);
       } catch (err) {
         setModalStatus(`Failed to create campaign: ${err.message}`, true);
@@ -375,7 +707,7 @@ window.addEventListener('DOMContentLoaded', () => {
         });
         selectedCampaignId = updated.id;
         closeModal();
-        await refreshAll();
+        await refreshCampaignData();
         setStatus(`Updated ${updated.name}.`);
       } catch (err) {
         setModalStatus(`Failed to update campaign: ${err.message}`, true);
@@ -385,12 +717,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (newCampaignBtn) {
     newCampaignBtn.addEventListener('click', () => {
+      if (!authUser) return;
       openModal('new');
     });
   }
 
   if (editSelectedBtn) {
     editSelectedBtn.addEventListener('click', () => {
+      if (!authUser) return;
       const selected = campaignSummaries.find((campaign) => campaign.id === selectedCampaignId) || null;
       if (!selected) return;
       openModal('edit', selected);
@@ -428,6 +762,86 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (authSignupBtn) {
+    authSignupBtn.addEventListener('click', () => {
+      openSignupModal();
+    });
+  }
+
+  if (authLoginBtn) {
+    authLoginBtn.addEventListener('click', () => {
+      authenticate('/auth/login');
+    });
+  }
+
+  if (authLogoutBtn) {
+    authLogoutBtn.addEventListener('click', () => {
+      logout();
+    });
+  }
+
+  if (authShutdownBtn) {
+    authShutdownBtn.addEventListener('click', () => {
+      shutdownServer();
+    });
+  }
+
+  if (authEmailInput) {
+    authEmailInput.addEventListener('input', () => setAuthStatus(''));
+  }
+
+  if (authPasswordInput) {
+    authPasswordInput.addEventListener('input', () => setAuthStatus(''));
+  }
+
+  if (authEmailInput) {
+    authEmailInput.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      authPasswordInput?.focus();
+    });
+  }
+
+  if (authPasswordInput) {
+    authPasswordInput.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      authenticate('/auth/login');
+    });
+  }
+
+  if (signupModalCancelBtn) {
+    signupModalCancelBtn.addEventListener('click', () => {
+      closeSignupModal();
+    });
+  }
+
+  if (signupModalSaveBtn) {
+    signupModalSaveBtn.addEventListener('click', () => {
+      createAccount();
+    });
+  }
+
+  if (signupModal) {
+    signupModal.addEventListener('click', (event) => {
+      if (event.target !== signupModal) return;
+      closeSignupModal();
+    });
+  }
+
+  if (signupEmailInput) {
+    signupEmailInput.addEventListener('input', () => validateSignupModal());
+  }
+
+  if (signupPasswordInput) {
+    signupPasswordInput.addEventListener('input', () => validateSignupModal());
+  }
+
+  if (signupDisplayNameInput) {
+    signupDisplayNameInput.addEventListener('input', () => validateSignupModal());
+  }
+
+  updateAuthUi();
   refreshAll();
   setInterval(refreshAll, REFRESH_INTERVAL_MS);
 });

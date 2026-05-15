@@ -1,3 +1,4 @@
+import CryptoKit
 import Fluent
 import Vapor
 
@@ -9,6 +10,162 @@ struct CampaignPersistenceState {
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
+}
+
+struct UserPersistenceState {
+    let id: UUID
+    let email: String
+    let passwordHash: String
+    let displayName: String?
+}
+
+struct SessionPersistenceState {
+    let id: UUID
+    let userID: UUID
+    let expiresAt: Date
+    let revokedAt: Date?
+}
+
+struct PlayerSessionPersistenceState {
+    let id: UUID
+    let campaignID: UUID
+    let displayName: String
+    let previousDisplayNames: [String]
+    let token: String
+    let expiresAt: Date
+}
+
+final class UserRow: Model, @unchecked Sendable {
+    static let schema = "users"
+
+    @ID(key: .id)
+    var id: UUID?
+
+    @Field(key: "email")
+    var email: String
+
+    @Field(key: "password_hash")
+    var passwordHash: String
+
+    @OptionalField(key: "display_name")
+    var displayName: String?
+
+    @OptionalField(key: "created_at")
+    var createdAt: Date?
+
+    @OptionalField(key: "updated_at")
+    var updatedAt: Date?
+
+    init() {}
+
+    init(
+        id: UUID? = nil,
+        email: String,
+        passwordHash: String,
+        displayName: String? = nil
+    ) {
+        self.id = id
+        self.email = email
+        self.passwordHash = passwordHash
+        self.displayName = displayName
+    }
+}
+
+final class SessionRow: Model, @unchecked Sendable {
+    static let schema = "sessions"
+
+    @ID(key: .id)
+    var id: UUID?
+
+    @Field(key: "user_id")
+    var userID: UUID
+
+    @Field(key: "token_hash")
+    var tokenHash: String
+
+    @Field(key: "expires_at")
+    var expiresAt: Date
+
+    @OptionalField(key: "revoked_at")
+    var revokedAt: Date?
+
+    @OptionalField(key: "created_at")
+    var createdAt: Date?
+
+    @OptionalField(key: "updated_at")
+    var updatedAt: Date?
+
+    init() {}
+
+    init(
+        id: UUID? = nil,
+        userID: UUID,
+        tokenHash: String,
+        expiresAt: Date,
+        revokedAt: Date? = nil
+    ) {
+        self.id = id
+        self.userID = userID
+        self.tokenHash = tokenHash
+        self.expiresAt = expiresAt
+        self.revokedAt = revokedAt
+    }
+}
+
+final class PlayerSessionRow: Model, @unchecked Sendable {
+    static let schema = "campaign_player_sessions"
+
+    @ID(key: .id)
+    var id: UUID?
+
+    @Field(key: "campaign_id")
+    var campaignID: UUID
+
+    @Field(key: "display_name")
+    var displayName: String
+
+    @Field(key: "display_name_normalized")
+    var displayNameNormalized: String
+
+    @OptionalField(key: "previous_display_names_json")
+    var previousDisplayNamesJSON: String?
+
+    @Field(key: "token_hash")
+    var tokenHash: String
+
+    @Field(key: "expires_at")
+    var expiresAt: Date
+
+    @OptionalField(key: "revoked_at")
+    var revokedAt: Date?
+
+    @OptionalField(key: "created_at")
+    var createdAt: Date?
+
+    @OptionalField(key: "updated_at")
+    var updatedAt: Date?
+
+    init() {}
+
+    init(
+        id: UUID? = nil,
+        campaignID: UUID,
+        displayName: String,
+        displayNameNormalized: String,
+        previousDisplayNamesJSON: String? = nil,
+        tokenHash: String,
+        expiresAt: Date,
+        revokedAt: Date? = nil
+    ) {
+        self.id = id
+        self.campaignID = campaignID
+        self.displayName = displayName
+        self.displayNameNormalized = displayNameNormalized
+        self.previousDisplayNamesJSON = previousDisplayNamesJSON
+        self.tokenHash = tokenHash
+        self.expiresAt = expiresAt
+        self.revokedAt = revokedAt
+    }
 }
 
 final class CampaignRow: Model, @unchecked Sendable {
@@ -233,6 +390,337 @@ final class CharacterConditionRow: Model, @unchecked Sendable {
 }
 
 enum DatabasePersistence {
+    private static func randomSessionToken() -> String {
+        let parts = [UUID().uuidString, UUID().uuidString, UUID().uuidString]
+        return parts
+            .joined()
+            .replacingOccurrences(of: "-", with: "")
+    }
+
+    private static func hashSessionToken(_ token: String) -> String {
+        let digest = SHA256.hash(data: Data(token.utf8))
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static func normalizedDisplayName(_ displayName: String) -> String {
+        displayName
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+    }
+
+    private static func decodePreviousDisplayNames(_ json: String?) -> [String] {
+        guard let json,
+              let data = json.data(using: .utf8),
+              let names = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return names
+    }
+
+    private static func encodePreviousDisplayNames(_ names: [String]) throws -> String? {
+        let normalized = names
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !normalized.isEmpty else { return nil }
+        let unique = Array(Set(normalized)).sorted { lhs, rhs in
+            lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+        }
+        let data = try JSONEncoder().encode(unique)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    static func loadUser(
+        email: String,
+        on database: any Database
+    ) async throws -> UserPersistenceState? {
+        guard let row = try await UserRow.query(on: database)
+            .filter(\.$email == email)
+            .first(),
+              let id = row.id else {
+            return nil
+        }
+
+        return UserPersistenceState(
+            id: id,
+            email: row.email,
+            passwordHash: row.passwordHash,
+            displayName: row.displayName
+        )
+    }
+
+    static func loadUser(id userID: UUID, on database: any Database) async throws -> UserPersistenceState? {
+        guard let row = try await UserRow.query(on: database)
+            .filter(\.$id == userID)
+            .first(),
+              let id = row.id else {
+            return nil
+        }
+
+        return UserPersistenceState(
+            id: id,
+            email: row.email,
+            passwordHash: row.passwordHash,
+            displayName: row.displayName
+        )
+    }
+
+    static func createUser(
+        email: String,
+        passwordHash: String,
+        displayName: String? = nil,
+        on database: any Database
+    ) async throws -> UUID {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty else {
+            throw Abort(.badRequest, reason: "Email is required.")
+        }
+        if let existing = try await UserRow.query(on: database)
+            .filter(\.$email == trimmedEmail)
+            .first(),
+           existing.id != nil {
+            throw Abort(.conflict, reason: "User already exists.")
+        }
+
+        let row = UserRow(email: trimmedEmail, passwordHash: passwordHash, displayName: displayName)
+        try await row.create(on: database)
+        guard let id = row.id else {
+            throw Abort(.internalServerError, reason: "Failed to create user record.")
+        }
+        return id
+    }
+
+    static func createSession(
+        userID: UUID,
+        expiresAt: Date = Date().addingTimeInterval(60 * 60 * 24 * 30),
+        on database: any Database
+    ) async throws -> String {
+        let token = randomSessionToken()
+        let row = SessionRow(
+            userID: userID,
+            tokenHash: hashSessionToken(token),
+            expiresAt: expiresAt
+        )
+        try await row.create(on: database)
+        return token
+    }
+
+    static func loadSession(
+        token: String,
+        on database: any Database
+    ) async throws -> SessionPersistenceState? {
+        let tokenHash = hashSessionToken(token)
+        guard let row = try await SessionRow.query(on: database)
+            .filter(\.$tokenHash == tokenHash)
+            .filter(\.$revokedAt == nil)
+            .filter(\.$expiresAt > Date())
+            .first(),
+              let id = row.id else {
+            return nil
+        }
+
+        return SessionPersistenceState(
+            id: id,
+            userID: row.userID,
+            expiresAt: row.expiresAt,
+            revokedAt: row.revokedAt
+        )
+    }
+
+    static func revokeSession(
+        token: String,
+        on database: any Database
+    ) async throws {
+        let tokenHash = hashSessionToken(token)
+        guard let row = try await SessionRow.query(on: database)
+            .filter(\.$tokenHash == tokenHash)
+            .first() else {
+            return
+        }
+        row.revokedAt = Date()
+        try await row.save(on: database)
+    }
+
+    static func sessionUser(
+        token: String,
+        on database: any Database
+    ) async throws -> UserPersistenceState? {
+        guard let session = try await loadSession(token: token, on: database) else {
+            return nil
+        }
+        return try await loadUser(id: session.userID, on: database)
+    }
+
+    static func loadPlayerSessions(
+        campaignID: UUID,
+        on database: any Database
+    ) async throws -> [PlayerSessionPersistenceState] {
+        let rows = try await PlayerSessionRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .all()
+
+        return rows.compactMap { row in
+            guard let id = row.id else { return nil }
+            return PlayerSessionPersistenceState(
+                id: id,
+                campaignID: row.campaignID,
+                displayName: row.displayName,
+                previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
+                token: "",
+                expiresAt: row.expiresAt
+            )
+        }
+    }
+
+    static func loadPlayerSession(
+        campaignID: UUID,
+        displayName: String,
+        on database: any Database
+    ) async throws -> PlayerSessionPersistenceState? {
+        let normalized = normalizedDisplayName(displayName)
+        let sessions = try await loadPlayerSessions(campaignID: campaignID, on: database)
+        return sessions.first(where: { session in
+            normalizedDisplayName(session.displayName) == normalized ||
+            session.previousDisplayNames.contains(where: { normalizedDisplayName($0) == normalized })
+        })
+    }
+
+    static func renamePlayerSession(
+        token: String,
+        to displayName: String,
+        on database: any Database
+    ) async throws -> PlayerSessionPersistenceState? {
+        let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedDisplayName.isEmpty else {
+            throw Abort(.badRequest, reason: "Display name is required.")
+        }
+        let tokenHash = hashSessionToken(token)
+        guard let row = try await PlayerSessionRow.query(on: database)
+            .filter(\.$tokenHash == tokenHash)
+            .filter(\.$revokedAt == nil)
+            .filter(\.$expiresAt > Date())
+            .first(),
+              let id = row.id else {
+            return nil
+        }
+
+        var previous = decodePreviousDisplayNames(row.previousDisplayNamesJSON)
+        if row.displayName.caseInsensitiveCompare(trimmedDisplayName) != .orderedSame {
+            previous.append(row.displayName)
+        }
+        row.displayName = trimmedDisplayName
+        row.displayNameNormalized = normalizedDisplayName(trimmedDisplayName)
+        row.previousDisplayNamesJSON = try encodePreviousDisplayNames(previous)
+        try await row.save(on: database)
+        return PlayerSessionPersistenceState(
+            id: id,
+            campaignID: row.campaignID,
+            displayName: row.displayName,
+            previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
+            token: token,
+            expiresAt: row.expiresAt
+        )
+    }
+
+    static func createOrRefreshPlayerSession(
+        campaignID: UUID,
+        displayName: String,
+        expiresAt: Date = Date().addingTimeInterval(60 * 60 * 24 * 30),
+        on database: any Database
+    ) async throws -> PlayerSessionPersistenceState {
+        let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedDisplayName.isEmpty else {
+            throw Abort(.badRequest, reason: "Display name is required.")
+        }
+
+        let normalized = normalizedDisplayName(trimmedDisplayName)
+        if let row = try await PlayerSessionRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .all()
+            .first(where: { row in
+                row.displayNameNormalized == normalized ||
+                decodePreviousDisplayNames(row.previousDisplayNamesJSON).contains(where: { normalizedDisplayName($0) == normalized })
+            }) {
+            let token = randomSessionToken()
+            row.tokenHash = hashSessionToken(token)
+            row.expiresAt = expiresAt
+            row.revokedAt = nil
+            try await row.save(on: database)
+            guard let id = row.id else {
+                throw Abort(.internalServerError, reason: "Failed to load player session record.")
+            }
+            return PlayerSessionPersistenceState(
+                id: id,
+                campaignID: row.campaignID,
+                displayName: row.displayName,
+                previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
+                token: token,
+                expiresAt: row.expiresAt
+            )
+        }
+
+        let token = randomSessionToken()
+        let tokenHash = hashSessionToken(token)
+
+        let row = PlayerSessionRow(
+            campaignID: campaignID,
+            displayName: trimmedDisplayName,
+            displayNameNormalized: normalized,
+            previousDisplayNamesJSON: nil,
+            tokenHash: tokenHash,
+            expiresAt: expiresAt
+        )
+        try await row.create(on: database)
+        guard let id = row.id else {
+            throw Abort(.internalServerError, reason: "Failed to create player session record.")
+        }
+        return PlayerSessionPersistenceState(
+            id: id,
+            campaignID: row.campaignID,
+            displayName: row.displayName,
+            previousDisplayNames: [],
+            token: token,
+            expiresAt: row.expiresAt
+        )
+    }
+
+    static func loadPlayerSession(
+        token: String,
+        on database: any Database
+    ) async throws -> PlayerSessionPersistenceState? {
+        let tokenHash = hashSessionToken(token)
+        guard let row = try await PlayerSessionRow.query(on: database)
+            .filter(\.$tokenHash == tokenHash)
+            .filter(\.$revokedAt == nil)
+            .filter(\.$expiresAt > Date())
+            .first(),
+              let id = row.id else {
+            return nil
+        }
+
+        return PlayerSessionPersistenceState(
+            id: id,
+            campaignID: row.campaignID,
+            displayName: row.displayName,
+            previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
+            token: token,
+            expiresAt: row.expiresAt
+        )
+    }
+
+    static func revokePlayerSession(
+        token: String,
+        on database: any Database
+    ) async throws {
+        let tokenHash = hashSessionToken(token)
+        guard let row = try await PlayerSessionRow.query(on: database)
+            .filter(\.$tokenHash == tokenHash)
+            .first() else {
+            return
+        }
+        row.revokedAt = Date()
+        try await row.save(on: database)
+    }
+
     static func loadCampaign(
         named campaignName: String,
         on database: any Database

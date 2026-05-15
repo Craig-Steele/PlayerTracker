@@ -69,7 +69,7 @@ enum ServerBootstrap {
             Task {
                 // Give the HTTP listener a moment to bind before opening the browser.
                 try? await Task.sleep(for: .milliseconds(400))
-                BrowserLauncher.launchDisplayPage()
+                BrowserLauncher.launchDisplayPage(url: "http://localhost:8080/admin.html")
             }
         }
     }
