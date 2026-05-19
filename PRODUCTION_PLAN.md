@@ -955,6 +955,8 @@ Work:
 - add encounter cloning for referee/GM workflows
 - add reusable encounter templates, ruleset-scoped where that makes sense
 - import creature templates from each ruleset's system reference documents where available
+- support ruleset-specific enemy stat blocks, including alternate layouts such as a single health pool instead of STR/DEX/END when the ruleset uses that structure
+- use `Client-Web/rulesets/traveller2.json` as the design example for polymorphic Traveller-style enemy stat blocks
 - add manual encounter snapshots and restore operations if the workflow still needs them
 - leave room for future GM-only tools without forcing them into the core auth/membership milestones
 
@@ -962,6 +964,7 @@ Acceptance:
 
 - designated GMs can clone encounters and apply reusable encounter templates
 - ruleset-provided creature templates can be imported into campaign workflows
+- referee-created enemy characters can use the stat structure required by the active ruleset
 - snapshot/restore exists only if it still adds value after continuous persistence is in place
 - additional GM-only workflows can be added here later without reopening M5/M6
 
