@@ -1,9 +1,20 @@
 const REFRESH_INTERVAL_MS = 5000;
-const { QR_CODE_SIZE, isAdminHost, rollStandardDie, formatInitiative } = window.PlayerTrackerShared || {
+const {
+  APP_NAME,
+  APP_ICON_URL,
+  QR_CODE_SIZE,
+  isAdminHost,
+  rollStandardDie,
+  formatInitiative,
+  updateCampaignHeader
+} = window.PlayerTrackerShared || {
+  APP_NAME: 'Roll4Initiative',
+  APP_ICON_URL: '/favicon-512.png',
   QR_CODE_SIZE: 96,
   isAdminHost: () => false,
   rollStandardDie: () => null,
-  formatInitiative: () => 'X'
+  formatInitiative: () => 'X',
+  updateCampaignHeader: () => {}
 };
 const {
   normalizeConditionEntry,
@@ -31,12 +42,6 @@ const {
     return tr;
   }
 };
-const { updateRulesetIcons, updateRulesetLinks, updateRulesetLicenses } = window.PlayerTrackerRuleset || {
-  updateRulesetIcons: () => {},
-  updateRulesetLinks: () => {},
-  updateRulesetLicenses: () => {}
-};
-
 window.addEventListener('DOMContentLoaded', () => {
   const playersBody = document.getElementById('players-body');
   const turnCompleteBtn = document.getElementById('turn-complete');
@@ -66,7 +71,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const visibleToggle = document.getElementById('ref-visible');
   const addCurrentStats = document.getElementById('ref-add-current-stats');
   const addButton = document.getElementById('ref-add-button');
-  const removeButton = document.getElementById('ref-remove-button');
   const addCancelBtn = document.getElementById('ref-add-cancel');
   const editorEmpty = document.getElementById('ref-editor-empty');
   const editorForm = document.getElementById('ref-editor');
@@ -90,6 +94,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const revealNowBtn = document.getElementById('ref-reveal-now');
   const revealTurnBtn = document.getElementById('ref-reveal-turn');
   const hideBtn = document.getElementById('ref-hide-character');
+  const overflowToggle = document.getElementById('ref-overflow-toggle');
+  const overflowMenu = document.getElementById('ref-overflow-menu');
+  const claimCharacterBtn = document.getElementById('ref-claim-character');
+  const releaseCharacterBtn = document.getElementById('ref-release-character');
+  const deleteCharacterBtn = document.getElementById('ref-delete-character');
   const hidePcsToggle = document.getElementById('ref-hide-pcs');
 
   let currentCampaignName = '';
@@ -111,26 +120,15 @@ window.addEventListener('DOMContentLoaded', () => {
   let hidePlayers = true;
   let detailsDirty = false;
   let conditionsDirty = false;
+  const refereeHeaderNameTargets = [refereeCampaignName];
+  const refereeHeaderIconTargets = [refereeRulesetIcon];
+  const refereeHeaderLinkTargets = [refereeRulesetLink];
+  const refereeHeaderLicenseTargets = [
+    { linkEl: refereeRulesetLicense, wrapEl: refereeRulesetLicenseWrap }
+  ];
 
   if (campaignSettingsBtn && !isAdminHost()) {
     campaignSettingsBtn.style.display = 'none';
-  }
-
-  function updateRulesetLink(labelText, baseUrl) {
-    updateRulesetLinks([refereeRulesetLink], labelText, baseUrl);
-  }
-
-  function updateRulesetLicense(licenseUrl) {
-    updateRulesetLicenses(
-      [
-        { linkEl: refereeRulesetLicense, wrapEl: refereeRulesetLicenseWrap }
-      ],
-      licenseUrl
-    );
-  }
-
-  function setRulesetIcon(iconUrl, labelText) {
-    updateRulesetIcons([refereeRulesetIcon], iconUrl, labelText);
   }
 
   let activeCampaignId = null;
@@ -153,6 +151,29 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!editorInitiativeBonusInput || !editorInitiativeBonusWrap) return;
     editorInitiativeBonusInput.disabled = false;
     editorInitiativeBonusWrap.classList.remove('disabled');
+  }
+
+  function closeOverflowMenu() {
+    if (!overflowMenu || !overflowToggle) return;
+    overflowMenu.classList.add('hidden');
+    overflowMenu.setAttribute('aria-hidden', 'true');
+    overflowToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function openOverflowMenu() {
+    if (!overflowMenu || !overflowToggle) return;
+    overflowMenu.classList.remove('hidden');
+    overflowMenu.setAttribute('aria-hidden', 'false');
+    overflowToggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function toggleOverflowMenu() {
+    if (!overflowMenu || !overflowToggle) return;
+    if (overflowMenu.classList.contains('hidden')) {
+      openOverflowMenu();
+    } else {
+      closeOverflowMenu();
+    }
   }
 
   function buildStatsFields() {
@@ -336,17 +357,26 @@ window.addEventListener('DOMContentLoaded', () => {
         if (res.status === 409) {
           currentCampaignName = '';
           activeCampaignId = null;
-          if (refereeCampaignName) {
-            refereeCampaignName.textContent = 'Campaign';
-          }
+          updateCampaignHeader(
+            {
+              nameTargets: refereeHeaderNameTargets,
+              iconTargets: refereeHeaderIconTargets,
+              linkTargets: refereeHeaderLinkTargets,
+              licenseTargets: refereeHeaderLicenseTargets
+            },
+            {
+              campaignName: null,
+              rulesetLabel: '',
+              rulesBaseUrl: null,
+              licenseUrl: null,
+              iconUrl: APP_ICON_URL
+            }
+          );
           if (refereeEncounterState) {
             refereeEncounterState.textContent = 'No campaign selected';
           }
           setCampaignSummary(null);
-          updateRulesetLink('', null);
-          setRulesetIcon(null, '');
-          updateRulesetLicense(null);
-          document.title = 'Turn Track';
+          document.title = APP_NAME;
           return false;
         }
         throw new Error('Server returned ' + res.status);
@@ -354,23 +384,44 @@ window.addEventListener('DOMContentLoaded', () => {
       const campaign = await res.json();
       currentCampaignName = campaign.name || '';
       activeCampaignId = campaign.id || null;
-      if (refereeCampaignName) {
-        refereeCampaignName.textContent = currentCampaignName || 'Campaign';
-      }
+      updateCampaignHeader(
+        {
+          nameTargets: refereeHeaderNameTargets,
+          linkTargets: refereeHeaderLinkTargets,
+          licenseTargets: refereeHeaderLicenseTargets
+        },
+        {
+          campaignName: currentCampaignName || null,
+          rulesetLabel: campaign.rulesetLabel || '',
+          rulesBaseUrl: null,
+          licenseUrl: null
+        }
+      );
       setCampaignSummary(campaign);
-      updateRulesetLink(campaign.rulesetLabel || '', null);
       if (currentCampaignName) {
         document.title = `${currentCampaignName} - Referee`;
       } else {
-        document.title = 'Turn Track';
+        document.title = APP_NAME;
       }
       return true;
     } catch (err) {
       console.error('Failed to load campaign:', err);
-      if (refereeCampaignName) {
-        refereeCampaignName.textContent = currentCampaignName || 'Campaign';
-      }
-      document.title = 'Turn Track';
+      updateCampaignHeader(
+        {
+          nameTargets: refereeHeaderNameTargets,
+          iconTargets: currentCampaignName ? undefined : refereeHeaderIconTargets,
+          linkTargets: refereeHeaderLinkTargets,
+          licenseTargets: refereeHeaderLicenseTargets
+        },
+        {
+          campaignName: currentCampaignName || null,
+          rulesetLabel: '',
+          rulesBaseUrl: null,
+          licenseUrl: null,
+          iconUrl: currentCampaignName ? undefined : APP_ICON_URL
+        }
+      );
+      document.title = currentCampaignName ? `${currentCampaignName} - Referee` : APP_NAME;
       return false;
     }
   }
@@ -402,18 +453,60 @@ window.addEventListener('DOMContentLoaded', () => {
           ? json.rulesBaseUrl.trim()
           : null;
       const rulesetLabel = json?.label || '';
-      updateRulesetLink(rulesetLabel, baseUrl);
-      setRulesetIcon(json?.icon || null, rulesetLabel);
-      updateRulesetLicense(json?.license || null);
+      if (currentCampaignName) {
+        updateCampaignHeader(
+          {
+            nameTargets: refereeHeaderNameTargets,
+            iconTargets: refereeHeaderIconTargets,
+            linkTargets: refereeHeaderLinkTargets,
+            licenseTargets: refereeHeaderLicenseTargets
+          },
+          {
+            campaignName: currentCampaignName,
+            rulesetLabel,
+            rulesBaseUrl: baseUrl,
+            licenseUrl: json?.license || null,
+            iconUrl: json?.icon || null
+          }
+        );
+      } else {
+        updateCampaignHeader(
+          {
+            nameTargets: refereeHeaderNameTargets,
+            iconTargets: refereeHeaderIconTargets,
+            linkTargets: refereeHeaderLinkTargets,
+            licenseTargets: refereeHeaderLicenseTargets
+          },
+          {
+            campaignName: null,
+            rulesetLabel: '',
+            rulesBaseUrl: null,
+            licenseUrl: null,
+            iconUrl: APP_ICON_URL
+          }
+        );
+      }
       const normalized = (json?.conditions ?? []).map((entry) => normalizeConditionEntry(entry)).filter(Boolean);
       conditionLibrary = normalized;
       conditionLookup = new Map(normalized.map((entry) => [entry.name, entry]));
       renderEditorConditions(editorConditionFilter ? editorConditionFilter.value : '');
     } catch (err) {
       console.warn('Unable to load condition library:', err);
-      updateRulesetLink('', null);
-      setRulesetIcon(null, '');
-      updateRulesetLicense(null);
+      updateCampaignHeader(
+        {
+          nameTargets: refereeHeaderNameTargets,
+          iconTargets: refereeHeaderIconTargets,
+          linkTargets: refereeHeaderLinkTargets,
+          licenseTargets: refereeHeaderLicenseTargets
+        },
+        {
+          campaignName: currentCampaignName || null,
+          rulesetLabel: '',
+          rulesBaseUrl: null,
+          licenseUrl: null,
+          iconUrl: currentCampaignName ? null : APP_ICON_URL
+        }
+      );
       allowNegativeHealth = false;
       supportsTempHp = false;
       currentStandardDie = null;
@@ -430,7 +523,7 @@ window.addEventListener('DOMContentLoaded', () => {
     encounterState = state.encounterState || 'new';
     const round = state.round || 1;
     const currentTurnPlayer = currentTurnId ? players.find((player) => player.id === currentTurnId) : null;
-    const isRefTurn = (currentTurnPlayer?.ownerName || '').toLowerCase() === 'referee';
+    const isRefTurn = Boolean(currentTurnPlayer?.isReferee);
     updateEncounterStateDisplay(round, currentTurnPlayer || null, isRefTurn);
     renderTurnTable(players, state.currentTurnId);
     renderCharacterList(players, state.currentTurnId);
@@ -514,6 +607,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function getCharacterControllerName(character) {
+    if (!character) return '';
+    const claimedDisplayName = typeof character.claimedDisplayName === 'string'
+      ? character.claimedDisplayName.trim()
+      : '';
+    if (claimedDisplayName) return claimedDisplayName;
+    if (character.isReferee) return 'Referee';
+    return '';
+  }
+
   function renderTurnTable(players, currentTurnId) {
     if (!playersBody) return;
     playersBody.innerHTML = '';
@@ -539,10 +642,11 @@ window.addEventListener('DOMContentLoaded', () => {
       const nameLine = document.createElement('span');
       nameLine.textContent = p.name;
       nameTd.appendChild(nameLine);
-      if (p.ownerName) {
+      const controllerName = getCharacterControllerName(p);
+      if (controllerName) {
         const ownerLine = document.createElement('span');
         ownerLine.classList.add('player-owner');
-        ownerLine.textContent = ` (${p.ownerName})`;
+        ownerLine.textContent = ` (${controllerName})`;
         nameTd.appendChild(ownerLine);
       }
 
@@ -589,11 +693,11 @@ window.addEventListener('DOMContentLoaded', () => {
   function renderCharacterList(players, activeTurnId) {
     if (!characterList) return;
     characterList.innerHTML = '';
-    if (selectionToolbarAnchor && detailsToggle?.parentElement) {
-      selectionToolbarAnchor.appendChild(detailsToggle.parentElement);
+    if (selectionToolbarAnchor) {
+      selectionToolbarAnchor.classList.add('hidden');
     }
     const filteredPlayers = hidePlayers
-      ? players.filter((player) => (player.ownerName || '').toLowerCase() === 'referee')
+      ? players.filter((player) => Boolean(player.isReferee))
       : players;
     if (filteredPlayers.length === 0) {
       const empty = document.createElement('div');
@@ -625,16 +729,15 @@ window.addEventListener('DOMContentLoaded', () => {
       name.textContent = player.name;
       const meta = document.createElement('div');
       meta.className = 'character-meta';
-      const isReferee = (player.ownerName || '').toLowerCase() === 'referee';
       let statusLabel = '';
-      if (isReferee) {
+      if (player.isReferee) {
         statusLabel = player.isHidden
           ? player.revealOnTurn
             ? 'Hidden (Reveal on Turn)'
             : 'Hidden'
           : 'Visible';
       } else {
-        statusLabel = player.ownerName || 'Player';
+        statusLabel = getCharacterControllerName(player) || 'Unclaimed';
       }
       const initiativeButton = document.createElement('button');
       initiativeButton.type = 'button';
@@ -702,6 +805,8 @@ window.addEventListener('DOMContentLoaded', () => {
         item.appendChild(conditionsList);
       }
 
+      const isReferee = Boolean(player?.isReferee);
+
       const needsInitiativeAction =
         encounterState === 'active' &&
         isReferee &&
@@ -740,8 +845,9 @@ window.addEventListener('DOMContentLoaded', () => {
         item.appendChild(actions);
       }
 
-      if (player.id === selectedCharacterId && detailsToggle?.parentElement) {
-        item.appendChild(detailsToggle.parentElement);
+      if (player.id === selectedCharacterId && selectionToolbarAnchor) {
+        selectionToolbarAnchor.classList.remove('hidden');
+        item.appendChild(selectionToolbarAnchor);
       }
 
       item.addEventListener('click', () => {
@@ -827,9 +933,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function setSelectedCharacter(player) {
     if (!player) return;
+    const selectionChanged = selectedCharacterId !== player.id;
     selectedCharacterId = player.id;
     detailsDirty = false;
     conditionsDirty = false;
+    if (selectionChanged) {
+      closeOverflowMenu();
+    }
     if (editorEmpty) editorEmpty.classList.add('hidden');
     if (editorForm) editorForm.classList.remove('hidden');
     if (editorNameInput) editorNameInput.value = player.name || '';
@@ -907,8 +1017,11 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateActionButtons(player) {
-    const isReferee = (player?.ownerName || '').toLowerCase() === 'referee';
+    const isReferee = Boolean(player?.isReferee);
     const isHidden = Boolean(player?.isHidden);
+    const canClaim = Boolean(player && !isReferee && !player.claimedSessionId);
+    const canRelease = Boolean(player && !isReferee && player.claimedSessionId);
+    const canDelete = Boolean(player);
     if (revealNowBtn) {
       revealNowBtn.classList.toggle('hidden', !isHidden || !isReferee);
       revealNowBtn.disabled = !isHidden || !isReferee;
@@ -920,6 +1033,29 @@ window.addEventListener('DOMContentLoaded', () => {
     if (hideBtn) {
       hideBtn.classList.toggle('hidden', !isReferee || isHidden);
       hideBtn.disabled = !isReferee || isHidden;
+    }
+    if (claimCharacterBtn) {
+      claimCharacterBtn.classList.toggle('hidden', !canClaim);
+      claimCharacterBtn.disabled = !canClaim;
+      claimCharacterBtn.setAttribute('aria-disabled', (!canClaim).toString());
+    }
+    if (releaseCharacterBtn) {
+      releaseCharacterBtn.classList.toggle('hidden', !canRelease);
+      releaseCharacterBtn.disabled = !canRelease;
+      releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
+    }
+    if (deleteCharacterBtn) {
+      deleteCharacterBtn.disabled = !canDelete;
+      deleteCharacterBtn.setAttribute('aria-disabled', (!canDelete).toString());
+    }
+    if (overflowToggle) {
+      const hasAction = canClaim || canRelease || canDelete;
+      overflowToggle.classList.toggle('hidden', !hasAction);
+      overflowToggle.disabled = !hasAction;
+      overflowToggle.setAttribute('aria-disabled', (!hasAction).toString());
+      if (!hasAction) {
+        closeOverflowMenu();
+      }
     }
   }
 
@@ -938,9 +1074,8 @@ window.addEventListener('DOMContentLoaded', () => {
         button.classList.add('hidden');
       }
     });
-    if (removeButton) {
-      removeButton.disabled = !hasSelection;
-      removeButton.setAttribute('aria-disabled', (!hasSelection).toString());
+    if (!hasSelection) {
+      closeOverflowMenu();
     }
   }
 
@@ -950,9 +1085,11 @@ window.addEventListener('DOMContentLoaded', () => {
     conditionsDirty = false;
     if (editorForm) editorForm.classList.add('hidden');
     if (editorEmpty) editorEmpty.classList.remove('hidden');
+    closeOverflowMenu();
     setDetailsPanelOpen(false);
     setConditionsPanelOpen(false);
     updateSelectionControls();
+    updateActionButtons(null);
     renderCharacterList(currentPlayers, currentTurnId);
   }
 
@@ -1332,11 +1469,89 @@ window.addEventListener('DOMContentLoaded', () => {
         updateVisibility(selectedCharacterId, true, true);
       });
     }
-    if (hideBtn) {
-      hideBtn.addEventListener('click', () => {
-        if (!selectedCharacterId) return;
-        updateVisibility(selectedCharacterId, true, false);
-      });
+  if (hideBtn) {
+    hideBtn.addEventListener('click', () => {
+      if (!selectedCharacterId) return;
+      updateVisibility(selectedCharacterId, true, false);
+    });
+  }
+
+  if (overflowToggle) {
+    overflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (!selectedCharacterId) return;
+      toggleOverflowMenu();
+    });
+  }
+
+  if (overflowMenu) {
+    overflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+  }
+
+  if (claimCharacterBtn) {
+    claimCharacterBtn.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      closeOverflowMenu();
+      const selected = selectedCharacterId
+        ? currentPlayers.find((player) => player.id === selectedCharacterId)
+        : null;
+      if (!selected || selected.isReferee || selected.claimedSessionId) return;
+      await claimCharacter(selected);
+    });
+  }
+
+  if (releaseCharacterBtn) {
+    releaseCharacterBtn.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      closeOverflowMenu();
+      const selected = selectedCharacterId
+        ? currentPlayers.find((player) => player.id === selectedCharacterId)
+        : null;
+      if (!selected || selected.isReferee || !selected.claimedSessionId) return;
+      await forceReleaseCharacter(selected);
+    });
+  }
+
+  document.addEventListener('click', () => {
+    closeOverflowMenu();
+  });
+  }
+
+  async function forceReleaseCharacter(player) {
+    if (!player || !activeCampaignId) return;
+    try {
+      statusDiv.textContent = 'Releasing character...';
+      const res = await fetch(
+        `/referee/campaigns/${encodeURIComponent(activeCampaignId)}/characters/${encodeURIComponent(player.id)}/release`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        throw new Error('Server returned ' + res.status);
+      }
+      statusDiv.textContent = '';
+      await loadState();
+    } catch (err) {
+      if (statusDiv) statusDiv.textContent = `Release failed: ${err.message}`;
+    }
+  }
+
+  async function claimCharacter(player) {
+    if (!player || !activeCampaignId) return;
+    try {
+      statusDiv.textContent = 'Claiming character...';
+      const res = await fetch(
+        `/referee/campaigns/${encodeURIComponent(activeCampaignId)}/characters/${encodeURIComponent(player.id)}/claim`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        throw new Error('Server returned ' + res.status);
+      }
+      statusDiv.textContent = '';
+      await loadState();
+    } catch (err) {
+      if (statusDiv) statusDiv.textContent = `Claim failed: ${err.message}`;
     }
   }
 
@@ -1497,8 +1712,9 @@ window.addEventListener('DOMContentLoaded', () => {
       showAddForm();
     });
   }
-  if (removeButton) {
-    removeButton.addEventListener('click', () => {
+  if (deleteCharacterBtn) {
+    deleteCharacterBtn.addEventListener('click', () => {
+      closeOverflowMenu();
       if (!selectedCharacterId) return;
       const current = currentPlayers.find((player) => player.id === selectedCharacterId);
       if (!current) return;

@@ -114,12 +114,6 @@
             <input type="password" id="admin-signup-password" autocomplete="new-password" />
           </span>
         </label>
-        <label class="property-row">
-          <span class="property-label">Display Name</span>
-          <span class="property-control">
-            <input type="text" id="admin-signup-display-name" autocomplete="name" />
-          </span>
-        </label>
       </div>
       <div id="admin-signup-modal-status"></div>
     </div>
@@ -148,6 +142,27 @@
             <select id="admin-ruleset-select" required></select>
           </span>
         </label>
+        <div class="property-row admin-campaign-claim-mode-row">
+          <span class="property-label">Claim Timeout</span>
+          <div class="property-control admin-campaign-claim-mode">
+            <label class="radio-row">
+              <input type="radio" name="claim-timeout-mode" id="admin-campaign-claim-timeout-manual" value="manual" />
+              <span>Explicit Release Only</span>
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="claim-timeout-mode" id="admin-campaign-claim-timeout-timed" value="timed" checked />
+              <span>Release after</span>
+              <input type="number" id="admin-campaign-claim-timeout-input" min="0" step="1" />
+              <span>minutes</span>
+            </label>
+          </div>
+        </div>
+        <div class="property-row admin-campaign-members-row">
+          <span class="property-label">Referees</span>
+          <div class="property-control admin-campaign-members-control">
+            <div id="admin-campaign-members" class="admin-campaign-members"></div>
+          </div>
+        </div>
       </div>
       <div id="admin-campaign-modal-status"></div>
     </div>

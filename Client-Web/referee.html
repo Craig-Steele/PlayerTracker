@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Campaign - Referee</title>
+  <title>Roll4Initiative</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -14,7 +14,7 @@
     <div class="player-campaign-card referee-campaign-card">
       <img id="ref-ruleset-icon" class="ruleset-icon" alt="" />
       <div class="player-campaign-text">
-        <div id="ref-campaign-name" class="player-campaign-name">Campaign</div>
+        <div id="ref-campaign-name" class="player-campaign-name">Roll4Initiative</div>
         <div class="ruleset-meta player-ruleset-meta">
           <a id="ref-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
           <span id="ref-ruleset-license-wrap" class="ruleset-license-wrap">
@@ -54,12 +54,15 @@
 
     <section class="detail-panel referee-panel">
       <div class="character-drawer referee-drawer">
-        <label class="ref-filter">
-          <input type="checkbox" id="ref-hide-pcs" checked />
-          Show NPCs only
-        </label>
+        <div class="character-list-actions referee-list-actions">
+          <button type="button" id="ref-add-button" class="icon-button" aria-label="Add character">Add Character</button>
+          <label class="ref-filter">
+            <input type="checkbox" id="ref-hide-pcs" checked />
+            Show NPCs only
+          </label>
+        </div>
         <div id="referee-character-list" class="character-list"></div>
-        <div id="ref-selection-toolbar-anchor" class="hidden">
+        <div id="ref-selection-toolbar-anchor" class="hidden character-selection-toolbar">
           <div class="details-toggles referee-toggles">
             <button type="button" id="ref-details-toggle" class="details-toggle" aria-expanded="false">
               Details
@@ -77,10 +80,14 @@
               Hide
             </button>
           </div>
-        </div>
-        <div class="character-list-actions referee-list-actions">
-          <button type="button" id="ref-add-button" class="icon-button" aria-label="Add character">+</button>
-          <button type="button" id="ref-remove-button" class="icon-button" aria-label="Remove selected character">−</button>
+          <div class="character-overflow">
+            <button type="button" id="ref-overflow-toggle" class="icon-button character-overflow-toggle" aria-label="Character actions" aria-haspopup="menu" aria-expanded="false">⋯</button>
+            <div id="ref-overflow-menu" class="character-overflow-menu hidden" role="menu" aria-hidden="true">
+              <button type="button" id="ref-claim-character" class="secondary hidden" role="menuitem">Claim Character</button>
+              <button type="button" id="ref-release-character" class="secondary hidden" role="menuitem">Release Character</button>
+              <button type="button" id="ref-delete-character" class="secondary" role="menuitem">Delete Character</button>
+            </div>
+          </div>
         </div>
         <form id="ref-add-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
           <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-add-dialog-title">

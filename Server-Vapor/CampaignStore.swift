@@ -7,6 +7,7 @@ actor CampaignStore {
     private var currentRulesetId: String
     private var currentLibrary: RuleSetLibrary
     private var currentEncounterState: EncounterState
+    private var currentClaimTimeoutMinutes: Int
     private var currentCampaignID: UUID?
     private var database: (any Database)?
     private let restorePersistedState: Bool
@@ -24,6 +25,7 @@ actor CampaignStore {
         self.currentRulesetId = defaultLibrary.id
         self.currentLibrary = defaultLibrary
         self.currentEncounterState = .new
+        self.currentClaimTimeoutMinutes = 5
         self.currentCampaignID = nil
     }
 
@@ -35,6 +37,7 @@ actor CampaignStore {
             currentRulesetId = loaded.rulesetId
             currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
             currentEncounterState = loaded.encounterState
+            currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
             currentCampaignID = nil
         }
     }
@@ -48,7 +51,8 @@ actor CampaignStore {
             name: currentName,
             rulesetId: currentRulesetId,
             rulesetLabel: currentLibrary.label,
-            encounterState: currentEncounterState
+            encounterState: currentEncounterState,
+            claimTimeoutMinutes: currentClaimTimeoutMinutes
         )
     }
 
@@ -82,18 +86,24 @@ actor CampaignStore {
                 rulesetId: $0.rulesetId,
                 rulesetLabel: (try? RuleSetLibraryLoader.loadLibrary(id: $0.rulesetId).label) ?? $0.rulesetId,
                 encounterState: $0.encounterState,
-                isActive: $0.id == currentCampaignID
+                isActive: $0.id == currentCampaignID,
+                claimTimeoutMinutes: $0.claimTimeoutMinutes
             )
         }
     }
 
-    func createCampaign(name: String, rulesetId: String) async throws -> CampaignSummary {
+    func createCampaign(
+        name: String,
+        rulesetId: String,
+        claimTimeoutMinutes: Int? = nil
+    ) async throws -> CampaignSummary {
         guard let database else {
             throw Abort(.internalServerError, reason: "Database is not configured.")
         }
         let campaignID = try await DatabasePersistence.createCampaignMetadata(
             name: name,
             rulesetId: rulesetId,
+            claimTimeoutMinutes: claimTimeoutMinutes ?? currentClaimTimeoutMinutes,
             on: database
         )
         guard let created = try await DatabasePersistence.loadCampaign(id: campaignID, on: database) else {
@@ -105,11 +115,17 @@ actor CampaignStore {
             rulesetId: created.rulesetId,
             rulesetLabel: (try? RuleSetLibraryLoader.loadLibrary(id: created.rulesetId).label) ?? created.rulesetId,
             encounterState: created.encounterState,
-            isActive: created.id == currentCampaignID
+            isActive: created.id == currentCampaignID,
+            claimTimeoutMinutes: created.claimTimeoutMinutes
         )
     }
 
-    func updateCampaign(id campaignID: UUID, name: String, rulesetId: String) async throws -> CampaignSummary {
+    func updateCampaign(
+        id campaignID: UUID,
+        name: String,
+        rulesetId: String,
+        claimTimeoutMinutes: Int? = nil
+    ) async throws -> CampaignSummary {
         guard let database else {
             throw Abort(.internalServerError, reason: "Database is not configured.")
         }
@@ -117,15 +133,17 @@ actor CampaignStore {
             id: campaignID,
             name: name,
             rulesetId: rulesetId,
+            claimTimeoutMinutes: claimTimeoutMinutes,
             on: database
         )
+        guard let updated = try await DatabasePersistence.loadCampaign(id: updatedID, on: database) else {
+            throw Abort(.internalServerError, reason: "Failed to load updated campaign.")
+        }
         if currentCampaignID == updatedID {
             currentName = name.trimmingCharacters(in: .whitespacesAndNewlines)
             currentRulesetId = rulesetId
             currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
-        }
-        guard let updated = try await DatabasePersistence.loadCampaign(id: updatedID, on: database) else {
-            throw Abort(.internalServerError, reason: "Failed to load updated campaign.")
+            currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
         }
         return CampaignSummary(
             id: updated.id,
@@ -133,7 +151,8 @@ actor CampaignStore {
             rulesetId: updated.rulesetId,
             rulesetLabel: (try? RuleSetLibraryLoader.loadLibrary(id: updated.rulesetId).label) ?? updated.rulesetId,
             encounterState: updated.encounterState,
-            isActive: updated.id == currentCampaignID
+            isActive: updated.id == currentCampaignID,
+            claimTimeoutMinutes: updated.claimTimeoutMinutes
         )
     }
 
@@ -155,19 +174,35 @@ actor CampaignStore {
         currentRulesetId = loaded.rulesetId
         currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
         currentEncounterState = loaded.encounterState
+        currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
         return state()!
     }
 
-    func update(name: String, rulesetId: String) async throws -> CampaignState {
+    func update(
+        name: String,
+        rulesetId: String,
+        claimTimeoutMinutes: Int? = nil
+    ) async throws -> CampaignState {
         currentName = name
         if restorePersistedState,
            let database,
            let loaded = try await DatabasePersistence.loadCampaign(named: name, on: database) {
-            currentCampaignID = loaded.id
-            currentName = loaded.name
-            currentRulesetId = loaded.rulesetId
-            currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
-            currentEncounterState = loaded.encounterState
+            let updatedID = try await DatabasePersistence.updateCampaignMetadata(
+                id: loaded.id,
+                name: name,
+                rulesetId: rulesetId,
+                claimTimeoutMinutes: claimTimeoutMinutes ?? loaded.claimTimeoutMinutes,
+                on: database
+            )
+            guard let updated = try await DatabasePersistence.loadCampaign(id: updatedID, on: database) else {
+                throw Abort(.internalServerError, reason: "Failed to load updated campaign.")
+            }
+            currentCampaignID = updated.id
+            currentName = updated.name
+            currentRulesetId = updated.rulesetId
+            currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: updated.rulesetId)
+            currentEncounterState = updated.encounterState
+            currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
             return state()!
         }
 
@@ -175,6 +210,7 @@ actor CampaignStore {
         currentRulesetId = library.id
         currentLibrary = library
         currentEncounterState = .new
+        currentClaimTimeoutMinutes = max(-1, claimTimeoutMinutes ?? 5)
         await savePersistedStateIfNeeded()
         return state()!
     }
@@ -185,6 +221,7 @@ actor CampaignStore {
             currentCampaignID = try await DatabasePersistence.upsertCampaignMetadata(
                 name: currentName,
                 rulesetId: currentRulesetId,
+                claimTimeoutMinutes: currentClaimTimeoutMinutes,
                 on: database
             )
         } catch {

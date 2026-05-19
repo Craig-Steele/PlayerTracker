@@ -26,7 +26,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const signupModalSaveBtn = document.getElementById('admin-signup-save');
   const signupEmailInput = document.getElementById('admin-signup-email');
   const signupPasswordInput = document.getElementById('admin-signup-password');
-  const signupDisplayNameInput = document.getElementById('admin-signup-display-name');
 
   const adminCampaignName = document.getElementById('admin-campaign-name');
   const adminRulesetLink = document.getElementById('admin-ruleset-link');
@@ -54,6 +53,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const modalSaveBtn = document.getElementById('admin-campaign-save');
   const campaignNameInput = document.getElementById('admin-campaign-name-input');
   const campaignRulesetSelect = document.getElementById('admin-ruleset-select');
+  const campaignClaimTimeoutManualInput = document.getElementById('admin-campaign-claim-timeout-manual');
+  const campaignClaimTimeoutTimedInput = document.getElementById('admin-campaign-claim-timeout-timed');
+  const campaignClaimTimeoutInput = document.getElementById('admin-campaign-claim-timeout-input');
+  const campaignMembersList = document.getElementById('admin-campaign-members');
 
   let availableRulesets = [];
   let campaignSummaries = [];
@@ -63,9 +66,16 @@ window.addEventListener('DOMContentLoaded', () => {
   let editorCampaignId = null;
   let editorOriginalName = '';
   let editorOriginalRulesetId = '';
+  let editorOriginalClaimTimeoutMinutes = 5;
+  let editorOriginalClaimTimeoutMode = 'timed';
+  let editorOriginalRefereeSessionIds = new Set();
+  let editorSelectedRefereeSessionIds = new Set();
+  let campaignMembers = [];
+  let campaignMembersLoaded = true;
   let refreshToken = 0;
   let authRefreshToken = 0;
   let authUser = null;
+  const defaultClaimTimeoutMinutes = 5;
   const adminEmailStorageKey = 'adminEmail';
 
   if (authEmailInput) {
@@ -178,7 +188,7 @@ window.addEventListener('DOMContentLoaded', () => {
         adminActiveSummary.textContent = 'No campaign selected.';
       } else {
         const label = library?.label || activeCampaign.rulesetLabel || activeCampaign.rulesetId || 'No Conditions';
-        adminActiveSummary.textContent = `Active: ${activeCampaign.name} - ${label}`;
+        adminActiveSummary.textContent = `Active: ${activeCampaign.name} - ${label} · ${claimTimeoutLabel(activeCampaign.claimTimeoutMinutes)}`;
       }
     }
   }
@@ -189,11 +199,7 @@ window.addEventListener('DOMContentLoaded', () => {
       authSummary.textContent = 'Not signed in.';
       return;
     }
-    const parts = [authUser.email];
-    if (authUser.displayName) {
-      parts.push(`(${authUser.displayName})`);
-    }
-    authSummary.textContent = `Signed in as ${parts.join(' ')}`;
+    authSummary.textContent = `Signed in as ${authUser.email}`;
   }
 
   function setCampaignUiEnabled(enabled) {
@@ -232,6 +238,10 @@ window.addEventListener('DOMContentLoaded', () => {
     setStatus(authUser ? 'Create or activate a campaign.' : 'Sign in to manage campaigns.');
   }
 
+  function isCampaignModalOpen() {
+    return Boolean(modal && !modal.classList.contains('hidden'));
+  }
+
   function populateRulesetSelect(rulesets) {
     if (!campaignRulesetSelect) return;
     campaignRulesetSelect.innerHTML = '';
@@ -247,6 +257,116 @@ window.addEventListener('DOMContentLoaded', () => {
       option.value = 'none';
       option.textContent = 'No Conditions';
       campaignRulesetSelect.appendChild(option);
+    }
+  }
+
+  function setEquals(left, right) {
+    if (left.size !== right.size) return false;
+    for (const value of left) {
+      if (!right.has(value)) return false;
+    }
+    return true;
+  }
+
+  function updateRefereeSelection(id, checked) {
+    if (!id) return;
+    if (checked) {
+      editorSelectedRefereeSessionIds.add(id);
+    } else {
+      editorSelectedRefereeSessionIds.delete(id);
+    }
+    validateModal();
+  }
+
+  function renderCampaignMembers() {
+    if (!campaignMembersList) return;
+    campaignMembersList.innerHTML = '';
+
+    if (editorMode !== 'edit') {
+      const empty = document.createElement('div');
+      empty.className = 'subtitle';
+      empty.textContent = 'Assign referees while editing an existing campaign.';
+      campaignMembersList.appendChild(empty);
+      return;
+    }
+
+    if (!campaignMembersLoaded) {
+      const empty = document.createElement('div');
+      empty.className = 'subtitle';
+      empty.textContent = 'Loading current users...';
+      campaignMembersList.appendChild(empty);
+      return;
+    }
+
+    if (!campaignMembers.length) {
+      const empty = document.createElement('div');
+      empty.className = 'subtitle';
+      empty.textContent = 'No current users in this campaign.';
+      campaignMembersList.appendChild(empty);
+      return;
+    }
+
+    campaignMembers.forEach((member) => {
+      const row = document.createElement('label');
+      row.className = 'admin-campaign-member-row';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = editorSelectedRefereeSessionIds.has(member.id);
+      checkbox.addEventListener('change', () => {
+        updateRefereeSelection(member.id, checkbox.checked);
+      });
+
+      const textWrap = document.createElement('span');
+      textWrap.className = 'admin-campaign-member-text';
+
+      const name = document.createElement('span');
+      name.className = 'admin-campaign-member-name';
+      name.textContent = member.displayName;
+      textWrap.appendChild(name);
+
+      if (member.isReferee) {
+        const badge = document.createElement('span');
+        badge.className = 'admin-campaign-member-badge';
+        badge.textContent = 'Referee';
+        textWrap.appendChild(badge);
+      }
+
+      row.appendChild(checkbox);
+      row.appendChild(textWrap);
+      campaignMembersList.appendChild(row);
+    });
+  }
+
+  async function fetchCampaignMembers(campaignId) {
+    if (!campaignId) {
+      campaignMembers = [];
+      editorOriginalRefereeSessionIds = new Set();
+      editorSelectedRefereeSessionIds = new Set();
+      campaignMembersLoaded = true;
+      renderCampaignMembers();
+      return;
+    }
+    campaignMembersLoaded = false;
+    renderCampaignMembers();
+    try {
+      const members = await fetchJson(`/campaigns/${campaignId}/members`);
+      if (editorCampaignId !== campaignId || !isCampaignModalOpen()) return;
+      campaignMembers = Array.isArray(members) ? members : [];
+      const selected = new Set(campaignMembers.filter((member) => member.isReferee).map((member) => member.id));
+      editorOriginalRefereeSessionIds = new Set(selected);
+      editorSelectedRefereeSessionIds = new Set(selected);
+      campaignMembersLoaded = true;
+      renderCampaignMembers();
+      validateModal();
+    } catch (err) {
+      if (editorCampaignId !== campaignId || !isCampaignModalOpen()) return;
+      campaignMembers = [];
+      editorOriginalRefereeSessionIds = new Set();
+      editorSelectedRefereeSessionIds = new Set();
+      campaignMembersLoaded = false;
+      renderCampaignMembers();
+      setModalStatus(`Failed to load campaign members: ${err.message}`, true);
     }
   }
 
@@ -296,7 +416,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const meta = document.createElement('span');
       meta.className = 'admin-campaign-meta';
       const ruleset = campaign.rulesetLabel || campaign.rulesetId || 'No Conditions';
-      meta.textContent = `${ruleset}${campaign.isActive ? ' · Active' : ''}`;
+      meta.textContent = `${ruleset} · ${claimTimeoutLabel(campaign.claimTimeoutMinutes)}${campaign.isActive ? ' · Active' : ''}`;
 
       button.appendChild(name);
       button.appendChild(meta);
@@ -340,6 +460,44 @@ window.addEventListener('DOMContentLoaded', () => {
     return (name || '').trim();
   }
 
+  function normalizeClaimTimeoutMinutes(value) {
+    const parsed = Number.parseInt(String(value || '').trim(), 10);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return null;
+    }
+    return parsed;
+  }
+
+  function claimTimeoutLabel(minutes) {
+    if (!Number.isInteger(minutes)) {
+      return `${defaultClaimTimeoutMinutes}m claim timeout`;
+    }
+    if (minutes < 0) return 'Explicit release only';
+    if (minutes === 0) return 'Release immediately on disconnect';
+    return `${minutes}m claim timeout`;
+  }
+
+  function getClaimTimeoutMode() {
+    if (campaignClaimTimeoutManualInput?.checked) {
+      return 'manual';
+    }
+    return 'timed';
+  }
+
+  function getClaimTimeoutMinutes() {
+    return getClaimTimeoutMode() === 'manual'
+      ? -1
+      : (normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value) ?? defaultClaimTimeoutMinutes);
+  }
+
+  function syncClaimTimeoutUi() {
+    const manual = getClaimTimeoutMode() === 'manual';
+    if (campaignClaimTimeoutInput) {
+      campaignClaimTimeoutInput.disabled = manual;
+      campaignClaimTimeoutInput.classList.toggle('hidden', manual);
+    }
+  }
+
   function nameExists(name, ignoreId = null) {
     const normalized = normalizeName(name).toLowerCase();
     return campaignSummaries.some((campaign) => {
@@ -352,18 +510,28 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!campaignNameInput || !campaignRulesetSelect) return false;
     const name = normalizeName(campaignNameInput.value);
     const rulesetId = campaignRulesetSelect.value;
-    if (editorMode === 'new') {
-      return Boolean(name);
-    }
-    return name !== editorOriginalName || rulesetId !== editorOriginalRulesetId;
+    const claimTimeoutMode = getClaimTimeoutMode();
+    const claimTimeoutMinutes = getClaimTimeoutMinutes();
+    return (
+      name !== editorOriginalName ||
+      rulesetId !== editorOriginalRulesetId ||
+      claimTimeoutMinutes !== editorOriginalClaimTimeoutMinutes ||
+      claimTimeoutMode !== editorOriginalClaimTimeoutMode ||
+      !setEquals(editorSelectedRefereeSessionIds, editorOriginalRefereeSessionIds)
+    );
   }
 
   function isEditorValid() {
     if (!campaignNameInput || !campaignRulesetSelect) return false;
     const name = normalizeName(campaignNameInput.value);
     const rulesetId = campaignRulesetSelect.value;
+    const claimTimeoutMode = getClaimTimeoutMode();
+    const claimTimeoutMinutes = claimTimeoutMode === 'manual'
+      ? -1
+      : normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value);
     if (!name) return false;
     if (campaignRulesetSelect.options.length > 0 && !rulesetId) return false;
+    if (claimTimeoutMode !== 'manual' && claimTimeoutMinutes === null) return false;
     if (editorMode === 'new') {
       return !nameExists(name);
     }
@@ -374,7 +542,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!modalSaveBtn) return;
     const valid = isEditorValid();
     const changed = hasEditorChanges();
-    modalSaveBtn.disabled = !(valid && changed);
+    modalSaveBtn.disabled = !(valid && changed && (editorMode !== 'edit' || campaignMembersLoaded));
   }
 
   function openModal(mode, campaign = null) {
@@ -382,7 +550,14 @@ window.addEventListener('DOMContentLoaded', () => {
     editorMode = mode;
     editorCampaignId = campaign?.id || null;
     editorOriginalName = campaign?.name || '';
-    editorOriginalRulesetId = campaign?.rulesetId || '';
+    editorOriginalRulesetId = campaign?.rulesetId || availableRulesets[0]?.id || 'none';
+    editorOriginalClaimTimeoutMinutes = Number.isInteger(campaign?.claimTimeoutMinutes)
+      ? campaign.claimTimeoutMinutes
+      : defaultClaimTimeoutMinutes;
+    editorOriginalClaimTimeoutMode = editorOriginalClaimTimeoutMinutes < 0 ? 'manual' : 'timed';
+    editorOriginalRefereeSessionIds = new Set();
+    editorSelectedRefereeSessionIds = new Set();
+    campaignMembersLoaded = mode !== 'edit';
 
     if (modalTitle) {
       modalTitle.textContent = mode === 'new' ? 'New Campaign' : 'Edit Campaign Details';
@@ -395,12 +570,36 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     campaignNameInput.value = campaign?.name || '';
-    campaignRulesetSelect.value = campaign?.rulesetId || availableRulesets[0]?.id || 'none';
+    campaignRulesetSelect.value = editorOriginalRulesetId;
+    if (campaignClaimTimeoutManualInput) {
+      campaignClaimTimeoutManualInput.checked = editorOriginalClaimTimeoutMode === 'manual';
+    }
+    if (campaignClaimTimeoutTimedInput) {
+      campaignClaimTimeoutTimedInput.checked = editorOriginalClaimTimeoutMode !== 'manual';
+    }
+    if (campaignClaimTimeoutInput) {
+      campaignClaimTimeoutInput.value = String(
+        Number.isInteger(editorOriginalClaimTimeoutMinutes)
+          ? Math.max(0, editorOriginalClaimTimeoutMinutes)
+          : defaultClaimTimeoutMinutes
+      );
+    }
+    syncClaimTimeoutUi();
+    renderCampaignMembers();
 
     setModalStatus('');
     modal.classList.remove('hidden');
     modal.setAttribute('aria-hidden', 'false');
     validateModal();
+    if (mode === 'edit' && editorCampaignId) {
+      fetchCampaignMembers(editorCampaignId);
+    } else {
+      campaignMembers = [];
+      editorOriginalRefereeSessionIds = new Set();
+      editorSelectedRefereeSessionIds = new Set();
+      campaignMembersLoaded = true;
+      renderCampaignMembers();
+    }
   }
 
   function openSignupModal() {
@@ -410,9 +609,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (signupPasswordInput) {
       signupPasswordInput.value = '';
-    }
-    if (signupDisplayNameInput) {
-      signupDisplayNameInput.value = '';
     }
     if (signupModalSummary) {
       signupModalSummary.textContent = 'Create the local server owner account.';
@@ -434,8 +630,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function signupHasChanges() {
     const email = (signupEmailInput?.value || '').trim();
     const password = signupPasswordInput?.value || '';
-    const displayName = (signupDisplayNameInput?.value || '').trim();
-    return Boolean(email || password || displayName);
+    return Boolean(email || password);
   }
 
   function isSignupValid() {
@@ -457,6 +652,13 @@ window.addEventListener('DOMContentLoaded', () => {
     editorCampaignId = null;
     editorOriginalName = '';
     editorOriginalRulesetId = '';
+    editorOriginalClaimTimeoutMinutes = defaultClaimTimeoutMinutes;
+    editorOriginalClaimTimeoutMode = 'timed';
+    editorOriginalRefereeSessionIds = new Set();
+    editorSelectedRefereeSessionIds = new Set();
+    campaignMembers = [];
+    campaignMembersLoaded = true;
+    renderCampaignMembers();
     setModalStatus('');
     validateModal();
   }
@@ -522,7 +724,9 @@ window.addEventListener('DOMContentLoaded', () => {
       ]);
       if (token !== refreshToken) return;
       availableRulesets = rulesets;
-      populateRulesetSelect(availableRulesets);
+      if (!isCampaignModalOpen()) {
+        populateRulesetSelect(availableRulesets);
+      }
       campaignSummaries = campaigns;
       activeCampaignId = header.campaign?.id || null;
       updateHeader(header.campaign, header.library);
@@ -573,8 +777,7 @@ window.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
-          password,
-          displayName: null
+          password
         })
       });
       const session = await fetchAuthSession();
@@ -597,7 +800,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!signupEmailInput || !signupPasswordInput) return;
     const email = (signupEmailInput.value || '').trim();
     const password = signupPasswordInput.value || '';
-    const displayName = signupDisplayNameInput ? (signupDisplayNameInput.value || '').trim() : '';
     if (!email) {
       setSignupModalStatus('Email is required.', true);
       return;
@@ -613,8 +815,7 @@ window.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
-          password,
-          displayName: displayName || null
+          password
         })
       });
       const session = await fetchAuthSession();
@@ -677,16 +878,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function saveCampaign() {
     if (!campaignNameInput || !campaignRulesetSelect) return;
+    if (editorMode === 'edit' && !campaignMembersLoaded) {
+      setModalStatus('Loading current users...', true);
+      return;
+    }
 
     const name = normalizeName(campaignNameInput.value);
     const rulesetId = campaignRulesetSelect.value;
+    const claimTimeoutMinutes = getClaimTimeoutMinutes();
 
     if (editorMode === 'new') {
       try {
         const created = await fetchJson('/campaigns', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, rulesetId })
+          body: JSON.stringify({ name, rulesetId, claimTimeoutMinutes })
         });
         selectedCampaignId = created.id;
         closeModal();
@@ -703,7 +909,12 @@ window.addEventListener('DOMContentLoaded', () => {
         const updated = await fetchJson(`/campaigns/${editorCampaignId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, rulesetId })
+          body: JSON.stringify({
+            name,
+            rulesetId,
+            claimTimeoutMinutes,
+            refereeSessionIds: Array.from(editorSelectedRefereeSessionIds)
+          })
         });
         selectedCampaignId = updated.id;
         closeModal();
@@ -758,6 +969,26 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (campaignRulesetSelect) {
     campaignRulesetSelect.addEventListener('change', () => {
+      validateModal();
+    });
+  }
+
+  if (campaignClaimTimeoutManualInput) {
+    campaignClaimTimeoutManualInput.addEventListener('change', () => {
+      syncClaimTimeoutUi();
+      validateModal();
+    });
+  }
+
+  if (campaignClaimTimeoutTimedInput) {
+    campaignClaimTimeoutTimedInput.addEventListener('change', () => {
+      syncClaimTimeoutUi();
+      validateModal();
+    });
+  }
+
+  if (campaignClaimTimeoutInput) {
+    campaignClaimTimeoutInput.addEventListener('input', () => {
       validateModal();
     });
   }
@@ -835,10 +1066,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (signupPasswordInput) {
     signupPasswordInput.addEventListener('input', () => validateSignupModal());
-  }
-
-  if (signupDisplayNameInput) {
-    signupDisplayNameInput.addEventListener('input', () => validateSignupModal());
   }
 
   updateAuthUi();

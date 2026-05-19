@@ -23,7 +23,6 @@ final class UserPersistenceTests: XCTestCase {
         let userID = try await DatabasePersistence.createUser(
             email: "owner@example.com",
             passwordHash: "hash-value",
-            displayName: "Parent",
             on: app.db
         )
 
@@ -36,7 +35,6 @@ final class UserPersistenceTests: XCTestCase {
         XCTAssertEqual(loaded?.id, userID)
         XCTAssertEqual(loaded?.email, "owner@example.com")
         XCTAssertEqual(loaded?.passwordHash, "hash-value")
-        XCTAssertEqual(loaded?.displayName, "Parent")
 
         try await app.asyncShutdown()
     }

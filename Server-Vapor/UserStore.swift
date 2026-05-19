@@ -11,6 +11,8 @@ actor UserStore {
     private var currentCampaignName: String?
     private var currentRulesetId: String?
     private var currentEncounterState: EncounterState = .new
+    private var currentRefereeSessionIDs: Set<UUID> = []
+    private let immediateDisconnectGraceSeconds: TimeInterval = 6
 
     private struct TurnState {
         var roundIndex: Int
@@ -26,6 +28,7 @@ actor UserStore {
         currentCampaignName = nil
         currentRulesetId = nil
         currentEncounterState = .new
+        currentRefereeSessionIDs = []
     }
 
     private func configuredCampaignTurnState() -> TurnState {
@@ -89,6 +92,7 @@ actor UserStore {
             storage.removeAll()
             campaignTurns[campaignName] = TurnState(roundIndex: 1, turnIndex: 0, currentTurnID: nil)
             currentEncounterState = .new
+            currentRefereeSessionIDs = []
             return
         }
 
@@ -107,7 +111,16 @@ actor UserStore {
             on: database
         )
 
+        currentRefereeSessionIDs = try await DatabasePersistence.loadCampaignRefereeSessionIDs(
+            campaignID: loaded.id,
+            on: database
+        )
         storage = Dictionary(uniqueKeysWithValues: loadedCharacters.map { ($0.id, $0) })
+        applyRefereeFlags()
+        await expireStaleClaims(
+            campaignName: campaignName,
+            claimTimeoutMinutes: loaded.claimTimeoutMinutes
+        )
     }
 
     func rebindActiveCampaign(from oldName: String, to newName: String, rulesetId: String) {
@@ -132,6 +145,15 @@ actor UserStore {
         }
     }
 
+    func setCampaignRefereeSessionIDs(
+        campaignName: String,
+        refereeSessionIDs: Set<UUID>
+    ) async {
+        guard campaignName == currentCampaignName else { return }
+        currentRefereeSessionIDs = refereeSessionIDs
+        applyRefereeFlags(for: campaignName)
+    }
+
     private func parseStandardDie(_ spec: String?) -> (count: Int, sides: Int)? {
         guard let spec,
               let match = spec.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -151,7 +173,7 @@ actor UserStore {
         guard let die = parseStandardDie(standardDie) else { return }
         for (id, var state) in storage {
             guard state.campaignName == campaignName else { continue }
-            guard state.ownerName.caseInsensitiveCompare("Referee") == .orderedSame else { continue }
+            guard state.isReferee else { continue }
             guard state.initiative == nil else { continue }
             guard state.useAppInitiativeRoll else { continue }
             let roll = (0..<die.count).reduce(0) { partialResult, _ in
@@ -166,6 +188,24 @@ actor UserStore {
             } catch {
                 print("Failed to persist referee initiative rolls:", error)
             }
+        }
+    }
+
+    private func isRefereeSession(_ ownerId: UUID) -> Bool {
+        currentRefereeSessionIDs.contains(ownerId)
+    }
+
+    private func applyRefereeFlags(for campaignName: String? = nil) {
+        let targetCampaignName = campaignName ?? currentCampaignName
+        for (id, var state) in storage {
+            guard targetCampaignName == nil || state.campaignName == targetCampaignName else { continue }
+            let isReferee = isRefereeSession(state.ownerId)
+            state.isReferee = isReferee
+            if !isReferee {
+                state.isHidden = false
+                state.revealOnTurn = false
+            }
+            storage[id] = state
         }
     }
 
@@ -191,6 +231,10 @@ actor UserStore {
             campaignName: campaignName,
             ownerId: ownerId,
             ownerName: ownerName,
+            claimedSessionId: nil,
+            claimedDisplayName: nil,
+            claimedAt: nil,
+            isReferee: isRefereeSession(ownerId),
             characterName: characterName,
             initiative: initiative,
             stats: stats.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.key, $0) }) } ?? [:],
@@ -229,12 +273,18 @@ actor UserStore {
         if let revealOnTurn {
             state.revealOnTurn = revealOnTurn
         }
-        if state.ownerName.caseInsensitiveCompare("Referee") != .orderedSame {
+        state.isReferee = isRefereeSession(ownerId)
+        if !state.isReferee {
             state.isHidden = false
             state.revealOnTurn = false
         }
         if let conditions {
             state.conditions = conditions
+        }
+        if state.claimedSessionId == nil, !state.isReferee {
+            state.claimedSessionId = ownerId
+            state.claimedDisplayName = ownerName
+            state.claimedAt = Date()
         }
 
         storage[resolvedId] = state
@@ -306,10 +356,14 @@ actor UserStore {
         storage.values
             .filter {
                 $0.campaignName == campaignName &&
-                $0.ownerId == ownerId
+                $0.claimedSessionId == ownerId
             }
             .map { view(from: $0) }
             .sorted { $0.name < $1.name }
+    }
+
+    func allCharacters(campaignName: String) -> [PlayerView] {
+        sortedViews(campaignName: campaignName, includeHidden: true)
     }
 
     func get(name: String, campaignName: String) -> CharacterState? {
@@ -340,7 +394,7 @@ actor UserStore {
         let entries = storage.filter { $0.value.campaignName == campaignName }
         var idsToRemove: [UUID] = []
         for (id, var state) in entries {
-            if state.ownerName.caseInsensitiveCompare("Referee") == .orderedSame {
+            if state.isReferee {
                 idsToRemove.append(id)
                 continue
             }
@@ -397,6 +451,9 @@ actor UserStore {
         for (id, var state) in storage {
             guard state.campaignName == campaignName, state.ownerId == ownerId else { continue }
             state.ownerName = newName
+            if state.claimedSessionId == ownerId {
+                state.claimedDisplayName = newName
+            }
             storage[id] = state
         }
         if campaignName == currentCampaignName {
@@ -404,6 +461,155 @@ actor UserStore {
                 try await persistConfiguredCampaignCharacters()
             } catch {
                 print("Failed to persist owner rename:", error)
+            }
+        }
+    }
+
+    func claimCharacter(id: UUID, ownerId: UUID, ownerName: String, campaignName: String) async throws -> PlayerView {
+        guard var state = storage[id], state.campaignName == campaignName else {
+            throw Abort(.notFound)
+        }
+        if let claimedSessionId = state.claimedSessionId, claimedSessionId != ownerId {
+            throw Abort(.conflict, reason: "Character is already claimed.")
+        }
+        state.ownerId = ownerId
+        state.lastPlayedByName = ownerName
+        state.claimedSessionId = ownerId
+        state.claimedDisplayName = ownerName
+        state.claimedAt = Date()
+        state.isReferee = isRefereeSession(ownerId)
+        storage[id] = state
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist character claim:", error)
+            }
+        }
+        return view(from: state)
+    }
+
+    func releaseCharacter(id: UUID, ownerId: UUID, campaignName: String) async throws -> PlayerView {
+        guard var state = storage[id], state.campaignName == campaignName else {
+            throw Abort(.notFound)
+        }
+        guard state.claimedSessionId == ownerId else {
+            throw Abort(.conflict, reason: "Character is not claimed by the current session.")
+        }
+        state.claimedSessionId = nil
+        state.claimedDisplayName = nil
+        state.claimedAt = nil
+        storage[id] = state
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist character release:", error)
+            }
+        }
+        return view(from: state)
+    }
+
+    func forceReleaseCharacter(id: UUID, campaignName: String) async throws -> PlayerView {
+        guard var state = storage[id], state.campaignName == campaignName else {
+            throw Abort(.notFound)
+        }
+        state.claimedSessionId = nil
+        state.claimedDisplayName = nil
+        state.claimedAt = nil
+        storage[id] = state
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist forced character release:", error)
+            }
+        }
+        return view(from: state)
+    }
+
+    func releaseClaims(for ownerId: UUID, campaignName: String) async {
+        var changed = false
+        for (id, var state) in storage {
+            guard state.campaignName == campaignName, state.claimedSessionId == ownerId else { continue }
+            state.claimedSessionId = nil
+            state.claimedDisplayName = nil
+            state.claimedAt = nil
+            storage[id] = state
+            changed = true
+        }
+        if changed, campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist released claims:", error)
+            }
+        }
+    }
+
+    func debugSetClaimTimestamp(id: UUID, claimedAt: Date?) async {
+        guard var state = storage[id] else { return }
+        state.claimedAt = claimedAt
+        storage[id] = state
+        if state.campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist debug claim timestamp:", error)
+            }
+        }
+    }
+
+    func touchClaims(
+        for ownerId: UUID,
+        campaignName: String,
+        claimTimeoutMinutes: Int
+    ) async {
+        var changed = false
+        for (id, var state) in storage {
+            guard state.campaignName == campaignName, state.claimedSessionId == ownerId else { continue }
+            if claimTimeoutMinutes == 0 {
+                state.claimedAt = Date().addingTimeInterval(immediateDisconnectGraceSeconds)
+            } else {
+                state.claimedAt = Date()
+            }
+            storage[id] = state
+            changed = true
+        }
+        if changed, campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist touched claims:", error)
+            }
+        }
+    }
+
+    func expireStaleClaims(campaignName: String, claimTimeoutMinutes: Int) async {
+        guard claimTimeoutMinutes >= 0 else {
+            return
+        }
+        let cutoff = claimTimeoutMinutes == 0
+            ? Date()
+            : Date().addingTimeInterval(-Double(claimTimeoutMinutes * 60))
+        var changed = false
+        for (id, var state) in storage {
+            guard state.campaignName == campaignName else { continue }
+            guard state.claimedSessionId != nil else { continue }
+            if let claimedAt = state.claimedAt, claimedAt > cutoff {
+                continue
+            }
+            state.claimedSessionId = nil
+            state.claimedDisplayName = nil
+            state.claimedAt = nil
+            storage[id] = state
+            changed = true
+        }
+        if changed, campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist expired claims:", error)
             }
         }
     }
@@ -529,7 +735,7 @@ actor UserStore {
         let previousIndex = min(previousTurnState.turnIndex, max(previousCandidates.count - 1, 0))
         let previousCurrentId = previousTurnState.currentTurnID
             ?? (previousCandidates.isEmpty ? nil : previousCandidates[previousIndex].id)
-        if state.ownerName.caseInsensitiveCompare("Referee") != .orderedSame {
+        if !state.isReferee {
             state.isHidden = false
             state.revealOnTurn = false
             storage[id] = state
@@ -608,6 +814,10 @@ actor UserStore {
             id: state.id,
             ownerId: state.ownerId,
             ownerName: state.ownerName,
+            lastPlayedByName: state.lastPlayedByName,
+            claimedSessionId: state.claimedSessionId,
+            claimedDisplayName: state.claimedDisplayName,
+            claimedAt: state.claimedAt,
             name: state.characterName,
             initiative: state.initiative,
             stats: state.stats.values.sorted { $0.key < $1.key },
@@ -617,7 +827,8 @@ actor UserStore {
             initiativeBonus: state.initiativeBonus,
             isHidden: state.isHidden,
             revealOnTurn: state.revealOnTurn,
-            conditions: Array(state.conditions).sorted()
+            conditions: Array(state.conditions).sorted(),
+            isReferee: state.isReferee
         )
     }
 

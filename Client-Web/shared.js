@@ -1,5 +1,12 @@
 (function () {
+  const APP_NAME = 'Roll4Initiative';
+  const APP_ICON_URL = '/favicon-512.png';
   const QR_CODE_SIZE = 96;
+
+  function toArray(targets) {
+    if (!targets) return [];
+    return Array.isArray(targets) ? targets : [targets];
+  }
 
   function isAdminHost() {
     const host = window.location.hostname;
@@ -33,11 +40,61 @@
     return Number.isInteger(value) ? String(value) : String(value);
   }
 
+  function updateCampaignHeader(targets = {}, state = {}) {
+    const {
+      nameTargets,
+      iconTargets,
+      linkTargets,
+      licenseTargets
+    } = targets;
+    const {
+      campaignName,
+      rulesetLabel,
+      rulesBaseUrl,
+      licenseUrl,
+      iconUrl,
+      fallbackName = APP_NAME,
+      fallbackIconUrl = APP_ICON_URL
+    } = state;
+
+    const hasCampaignName = Boolean(typeof campaignName === 'string' && campaignName.trim());
+    const displayName = hasCampaignName ? campaignName.trim() : fallbackName;
+    toArray(nameTargets).forEach((target) => {
+      if (target) target.textContent = displayName;
+    });
+
+    if (linkTargets) {
+      const resolvedLabel = hasCampaignName ? (rulesetLabel || '') : '';
+      const resolvedBaseUrl = hasCampaignName ? (rulesBaseUrl ?? null) : null;
+      window.PlayerTrackerRuleset?.updateRulesetLinks(toArray(linkTargets), resolvedLabel, resolvedBaseUrl);
+    }
+
+    if (licenseTargets) {
+      const resolvedLicenseUrl = hasCampaignName ? (licenseUrl ?? null) : null;
+      window.PlayerTrackerRuleset?.updateRulesetLicenses(toArray(licenseTargets), resolvedLicenseUrl);
+    }
+
+    if (iconTargets) {
+      const resolvedIconUrl = hasCampaignName
+        ? iconUrl
+        : fallbackIconUrl;
+      if (resolvedIconUrl !== undefined) {
+        const resolvedLabel = hasCampaignName ? (rulesetLabel || displayName) : fallbackName;
+        window.PlayerTrackerRuleset?.updateRulesetIcons(toArray(iconTargets), resolvedIconUrl, resolvedLabel);
+      }
+    }
+
+    return { hasCampaignName, displayName };
+  }
+
   window.PlayerTrackerShared = {
+    APP_NAME,
+    APP_ICON_URL,
     QR_CODE_SIZE,
     isAdminHost,
     parseStandardDie,
     rollStandardDie,
-    formatInitiative
+    formatInitiative,
+    updateCampaignHeader
   };
 })();

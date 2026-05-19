@@ -66,6 +66,8 @@ Impact:
 Launch authentication decision:
 
 - use a local server-owner/admin account at launch
+- keep the server-owner/admin account separate from player membership; admin login does not create a player identity
+- the server-owner/admin account does not need a display name
 - use campaign-local display names for players on the local server
 - let players reclaim unclaimed characters previously tied to the same display name when they reconnect
 - use invite- or join-based campaign entry on the local server
@@ -88,12 +90,13 @@ Impact:
 
 ### 4. Campaign Membership and Role Model
 
-A user may have different permissions in different campaigns, but referee behavior at launch is a session UX mode rather than a separate authorization role.
+A user may have different permissions in different campaigns, and referee is a campaign-scoped role granted to one or more designated players in that campaign.
 
 At minimum:
 
 - player
 - admin/owner
+- referee
 
 Likely later:
 
@@ -102,9 +105,10 @@ Likely later:
 Impact:
 
 - membership permissions must be campaign-specific, not global
-- any campaign player may enter referee mode for their current session
-- referee mode is UX-only at launch, not a separate permission boundary
-- the system needs session-presence tracking so both the referee view and display view can show which players are currently using referee mode
+- the server-owner/admin account is not itself a campaign player account
+- referee is a superset of player, not a separate global account type
+- only campaign members designated as referees can open the referee view for that campaign
+- the system needs session-presence tracking so both the referee view and display view can show which designated referee(s) are currently connected
 
 ### 5. Invitation and Onboarding Flow
 
@@ -536,7 +540,7 @@ Authoritative shared player state in SQLite:
 - conditions
 - initiative values
 - reveal flags
-- referee-mode presence for active sessions
+- referee-role presence for active sessions
 
 Per-install local server state on disk:
 
@@ -818,6 +822,7 @@ Work:
 
 - derive current owner/admin from session on the server
 - remove client authority over `ownerId`
+- enforce campaign-scoped referee authorization so referee-only routes and views require the designated referee role
 - convert player routes to session-backed campaign-local claim routes:
   - `GET /me`
   - `PATCH /me`
@@ -835,24 +840,22 @@ Work:
   - claimed by the current player session
   - temporarily retained for reconnect
   - explicitly released or handed off
-- add session-mode tracking so a logged-in campaign member can enter or leave referee mode without changing stored membership
-- define referee-facing encounter cloning/template operations so any campaign member currently in referee mode can use them
-- define referee-mode concurrency as fully equal control among campaign members currently using referee mode
-- define encounter snapshot creation and restore operations as referee manual actions
+- add referee-role tracking so campaign membership can mark one or more designated referees without changing the underlying player identity
+- define referee-role concurrency as fully equal control among campaign members currently designated as referees
 
 Acceptance:
 
 - players can reclaim and edit only the characters currently tied to their own campaign-local player session
 - display-name changes do not change character claim ownership or player identity
 - reconnect restores the same player session and claim state when the character is still eligible
-- campaign members can switch into referee mode for their current session without changing account roles
-- the server can surface which campaign members are currently in referee mode
+- referee is a campaign-scoped role and the referee view is only available to designated referees
+- the server can surface which campaign members are currently designated as referees and whether they are connected
 - display-oriented clients can render the current referee(s) from that presence data
-- referee-facing encounter cloning/template operations are defined separately from full campaign export and are available to campaign members currently in referee mode
-- campaign members concurrently in referee mode have fully equal control
-- encounter snapshots are created manually by referee-mode users rather than automatically at launch
+- campaign members concurrently designated as referees have fully equal control
 - all ownership comes from server session + campaign membership + current character claim
 - no gameplay write route trusts raw client identity
+
+Status: complete
 
 ### M6: Campaign Creation, Invites, and Membership Management
 
@@ -862,10 +865,8 @@ Work:
 
 - add campaign creation
 - add campaign membership permissions per campaign
+- add referee-role assignment and revocation per campaign
 - add campaign archive and unarchive support
-- add encounter cloning and template support for referee-facing workflows
-- make encounter templates ruleset-scoped so they can be reused by any campaign using the same ruleset
-- retain the last 20 manually created encounter snapshots per campaign for restore/testing purposes
 - add invite flow:
   - `POST /campaigns/:campaignId/invites`
   - `POST /invites/:token/accept`
@@ -877,12 +878,9 @@ Acceptance:
 
 - users can create and join multiple campaigns
 - permissions are enforced per campaign
-- campaign members can enter referee mode without changing membership records
-- the referee UI can show the set of players currently acting in referee mode
+- referee assignment and revocation are campaign membership operations
+- the referee UI can show the set of campaign members designated as referees and currently connected
 - the display UI can show the current referee(s) for the active campaign/session
-- campaign members currently in referee mode can clone encounters and create or apply reusable encounter templates inside a campaign
-- encounter templates are reusable across campaigns that use the same ruleset
-- the last 20 manually created encounter snapshots are retained per campaign
 - the join flow can show previously claimed characters that are eligible for reclaim by the same campaign-local player session
 - no launch behavior depends on subscription plan caps or active-campaign counting
 
@@ -893,6 +891,7 @@ Goal: replace the current polling-first model with campaign-scoped server push.
 Work:
 
 - add authenticated SSE endpoints for campaign-scoped event streams
+- add a lightweight authenticated keepalive route for active clients and claims
 - define event types for:
   - encounter state changes
   - turn changes
@@ -900,9 +899,10 @@ Work:
   - condition changes
   - active campaign selection changes
   - campaign metadata changes
-  - referee-mode presence changes
+  - referee-role presence changes
 - add reconnect semantics using event IDs or equivalent resume logic where useful
 - keep polling as a fallback path during migration and failure handling
+- use the keepalive route to refresh player/session claim liveness while SSE is the primary live-update channel
 - make emitted payloads stable enough for all three clients to consume
 
 Acceptance:
@@ -910,7 +910,9 @@ Acceptance:
 - web can subscribe to live campaign updates without polling as the primary mechanism
 - iOS and Android can consume the same event model
 - active campaign selection changes propagate to all clients in real time
+- referee-role presence changes propagate to referee and display clients in real time
 - disconnect/reconnect behavior is understood and implemented
+- client liveness is maintained by keepalive requests rather than polling loops
 - ordinary writes still use normal HTTP endpoints
 - display clients can receive current-referee presence updates in real time
 
@@ -943,6 +945,25 @@ Acceptance:
 - web no longer depends on persistent browser identity for ownership
 - live state updates arrive via SSE in normal operation
 - display mode surfaces the current referee(s)
+
+### M7A: GM Tools
+
+Goal: add referee/GM workflow tools once the core web migration is in place, and leave room for future GM-only capabilities.
+
+Work:
+
+- add encounter cloning for referee/GM workflows
+- add reusable encounter templates, ruleset-scoped where that makes sense
+- import creature templates from each ruleset's system reference documents where available
+- add manual encounter snapshots and restore operations if the workflow still needs them
+- leave room for future GM-only tools without forcing them into the core auth/membership milestones
+
+Acceptance:
+
+- designated GMs can clone encounters and apply reusable encounter templates
+- ruleset-provided creature templates can be imported into campaign workflows
+- snapshot/restore exists only if it still adds value after continuous persistence is in place
+- additional GM-only workflows can be added here later without reopening M5/M6
 
 ### M8: iOS Migration
 
@@ -1075,11 +1096,12 @@ Acceptance:
 6. `M6`
 7. `M6A`
 8. `M7`
-9. `M8`
-10. `M9`
-11. `M10`
-12. `M11`
-13. `M12`
+9. `M7A`
+10. `M8`
+11. `M9`
+12. `M10`
+13. `M11`
+14. `M12`
 
 ## Why This Order
 
@@ -1115,6 +1137,8 @@ That yields:
 
 That is the first version that starts looking like a product instead of a LAN tool.
 
+If the goal includes GM workflow polish, add `M7A` after `M7`.
+
 ## Early Product Decisions
 
 All high-impact launch product decisions listed here have now been made.
@@ -1126,6 +1150,8 @@ The real-time sync decision is already made:
 The launch authentication decision is already made:
 
 - use a local server-owner/admin account
+- keep the server-owner/admin account separate from player membership; admin login does not count as a player session
+- the server-owner/admin account does not need a display name
 - use invite- or join-based local player identities
 - include password reset only if the later product model needs it
 - defer email/password, magic-link, and social login for later evaluation
@@ -1133,11 +1159,10 @@ The launch authentication decision is already made:
 
 The launch campaign mode decision is already made:
 
-- membership permissions at launch are `player` and `admin`
-- referee is a UX mode, not a separate authorization role
-- any campaign member may enter referee mode for their current session
-- the referee view should show which campaign members are currently using referee mode
-- display mode should also show the current referee(s)
+- membership permissions at launch are `player`, `referee`, and `admin`
+- referee is a campaign-scoped role granted to one or more designated players
+- the referee view should only open for campaign members designated as referees
+- the referee and display views should show which designated referee(s) are currently connected
 
 The launch billing decision is already made:
 
@@ -1176,9 +1201,9 @@ The launch snapshot/restore decision is already made:
 - retain the last 20 snapshots per campaign
 - keep retention policy under evaluation during testing
 
-The launch referee-mode concurrency decision is already made:
+The launch referee-role concurrency decision is already made:
 
-- campaign members currently in referee mode have fully equal control
+- campaign members concurrently designated as referees have fully equal control
 
 The launch conflict policy decision is already made:
 
@@ -1194,6 +1219,7 @@ The launch migration decision is already made:
 The next feature-planning priorities are:
 
 - launch-critical: ruleset upload validation and immutable versioning for user-supplied rulesets
+- high-value near-term: GM workflow tools in `M7A`
 - high-value near-term: encounter templates/cloning
 - high-value near-term: undo/restore from encounter snapshots
 - later portability feature: character import/export

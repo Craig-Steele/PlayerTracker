@@ -1,5 +1,6 @@
 import Fluent
 import Vapor
+import SQLKit
 
 struct CreateUsers: AsyncMigration {
     func prepare(on database: any Database) async throws {
@@ -7,7 +8,6 @@ struct CreateUsers: AsyncMigration {
             .id()
             .field("email", .string, .required)
             .field("password_hash", .string, .required)
-            .field("display_name", .string)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
             .unique(on: "email")
@@ -16,6 +16,64 @@ struct CreateUsers: AsyncMigration {
 
     func revert(on database: any Database) async throws {
         try await database.schema("users").delete()
+    }
+}
+
+struct RemoveUserDisplayName: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(users)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            guard columns.contains(where: { $0.name == "display_name" }) else {
+                return
+            }
+
+            try await sqlDatabase.raw("PRAGMA foreign_keys = OFF").run()
+
+            try await sqlDatabase.raw("DROP TABLE IF EXISTS users_without_display_name").run()
+            try await sqlDatabase
+                .raw("""
+                     CREATE TABLE users_without_display_name (
+                         id UUID PRIMARY KEY,
+                         email TEXT NOT NULL,
+                         password_hash TEXT NOT NULL,
+                         created_at REAL,
+                         updated_at REAL,
+                         CONSTRAINT "uq:users.email" UNIQUE ("email")
+                     )
+                     """)
+                .run()
+            try await sqlDatabase
+                .raw("""
+                     INSERT INTO users_without_display_name (
+                         id,
+                         email,
+                         password_hash,
+                         created_at,
+                         updated_at
+                     )
+                     SELECT
+                         id,
+                         email,
+                         password_hash,
+                         created_at,
+                         updated_at
+                     FROM users
+                     """)
+                .run()
+            try await sqlDatabase.raw("DROP TABLE users").run()
+            try await sqlDatabase.raw("ALTER TABLE users_without_display_name RENAME TO users").run()
+            try await sqlDatabase.raw("PRAGMA foreign_keys = ON").run()
+            connection.logger.notice("Removed users.display_name from legacy database.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
     }
 }
 
@@ -38,11 +96,12 @@ struct CreateSessions: AsyncMigration {
     }
 }
 
-struct CreateCampaignPlayerSessions: AsyncMigration {
+struct CreatePlayers: AsyncMigration {
     func prepare(on database: any Database) async throws {
-        try await database.schema("campaign_player_sessions")
+        try await database.schema("players")
             .id()
-            .field("campaign_id", .uuid, .required)
+            .field("login_name", .string, .required)
+            .field("login_name_normalized", .string, .required)
             .field("display_name", .string, .required)
             .field("display_name_normalized", .string, .required)
             .field("previous_display_names_json", .string)
@@ -51,13 +110,259 @@ struct CreateCampaignPlayerSessions: AsyncMigration {
             .field("revoked_at", .datetime)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
-            .unique(on: "campaign_id", "display_name_normalized")
+            .unique(on: "login_name_normalized")
             .unique(on: "token_hash")
             .create()
     }
 
     func revert(on database: any Database) async throws {
-        try await database.schema("campaign_player_sessions").delete()
+        try await database.schema("players").delete()
+    }
+}
+
+private struct SQLiteTableInfoRow: Decodable {
+    let name: String
+}
+
+struct MigrateLegacyCampaignPlayerSessionsToPlayers: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let legacyColumns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaign_player_sessions)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            guard !legacyColumns.isEmpty else {
+                return
+            }
+
+            let legacyColumnNames = Set(legacyColumns.map(\.name))
+            let hasPreviousDisplayNames = legacyColumnNames.contains("previous_display_names_json")
+
+            let playerColumns = try await sqlDatabase
+                .raw("PRAGMA table_info(players)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            guard !playerColumns.isEmpty else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("""
+                     INSERT OR IGNORE INTO players (
+                         id,
+                         login_name,
+                         login_name_normalized,
+                         display_name,
+                         display_name_normalized,
+                         previous_display_names_json,
+                         token_hash,
+                         expires_at,
+                         revoked_at,
+                         created_at,
+                         updated_at
+                     )
+                     SELECT
+                         id,
+                         display_name,
+                         display_name_normalized,
+                         display_name,
+                         display_name_normalized,
+                         \(unsafeRaw: hasPreviousDisplayNames ? "previous_display_names_json" : "NULL"),
+                         token_hash,
+                         expires_at,
+                         revoked_at,
+                         created_at,
+                         updated_at
+                     FROM campaign_player_sessions
+                     """)
+                .run()
+            connection.logger.notice("Patched players from legacy campaign_player_sessions.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
+struct AddCharacterClaimColumnsToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            if columns.contains(where: { $0.name == "claimed_session_id" }) == false {
+                try await sqlDatabase
+                    .raw("ALTER TABLE characters ADD COLUMN claimed_session_id UUID")
+                    .run()
+            }
+            if columns.contains(where: { $0.name == "claimed_display_name" }) == false {
+                try await sqlDatabase
+                    .raw("ALTER TABLE characters ADD COLUMN claimed_display_name TEXT")
+                    .run()
+            }
+            if columns.contains(where: { $0.name == "claimed_at" }) == false {
+                try await sqlDatabase
+                    .raw("ALTER TABLE characters ADD COLUMN claimed_at REAL")
+                    .run()
+            }
+            if columns.contains(where: { $0.name == "last_played_by_name" }) == false {
+                try await sqlDatabase
+                    .raw("ALTER TABLE characters ADD COLUMN last_played_by_name TEXT")
+                    .run()
+            }
+
+            try await sqlDatabase
+                .raw("""
+                     UPDATE characters
+                     SET claimed_session_id = owner_id,
+                         claimed_display_name = owner_name,
+                         claimed_at = COALESCE(claimed_at, created_at)
+                     WHERE claimed_session_id IS NULL
+                       AND owner_name != 'Referee'
+                     """)
+                .run()
+            connection.logger.notice("Patched characters with claim columns.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
+struct AddLastPlayedByNameToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "last_played_by_name" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE characters ADD COLUMN last_played_by_name TEXT")
+                .run()
+            connection.logger.notice("Patched characters with last_played_by_name.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
+struct AddClaimTimeoutMinutesToCampaigns: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaigns)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "claim_timeout_minutes" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE campaigns ADD COLUMN claim_timeout_minutes INTEGER")
+                .run()
+            try await sqlDatabase
+                .raw("UPDATE campaigns SET claim_timeout_minutes = 5 WHERE claim_timeout_minutes IS NULL")
+                .run()
+            connection.logger.notice("Patched campaigns with claim_timeout_minutes.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
+struct DatabaseShapeVerification {
+    static func verify(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(players)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            let requiredPlayerColumns = [
+                "login_name",
+                "login_name_normalized",
+                "display_name",
+                "display_name_normalized",
+                "previous_display_names_json",
+                "token_hash",
+                "expires_at"
+            ]
+            let missingPlayerColumns = requiredPlayerColumns.filter { required in
+                columns.contains(where: { $0.name == required }) == false
+            }
+            guard missingPlayerColumns.isEmpty else {
+                throw Abort(
+                    .internalServerError,
+                    reason: "Database schema is missing players columns: \(missingPlayerColumns.joined(separator: ", "))."
+                )
+            }
+
+            let userColumns = try await sqlDatabase
+                .raw("PRAGMA table_info(users)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            let removedUserColumns = ["display_name"].filter { removed in
+                userColumns.contains(where: { $0.name == removed })
+            }
+            guard removedUserColumns.isEmpty else {
+                throw Abort(
+                    .internalServerError,
+                    reason: "Database schema still contains removed users columns: \(removedUserColumns.joined(separator: ", "))."
+                )
+            }
+
+            let characterColumns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            let requiredCharacterColumns = [
+                "claimed_session_id",
+                "claimed_display_name",
+                "claimed_at",
+                "last_played_by_name"
+            ]
+            let missingCharacterColumns = requiredCharacterColumns.filter { required in
+                characterColumns.contains(where: { $0.name == required }) == false
+            }
+            guard missingCharacterColumns.isEmpty else {
+                throw Abort(
+                    .internalServerError,
+                    reason: "Database schema is missing characters claim columns: \(missingCharacterColumns.joined(separator: ", "))."
+                )
+            }
+
+            let campaignColumns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaigns)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            guard campaignColumns.contains(where: { $0.name == "claim_timeout_minutes" }) else {
+                throw Abort(
+                    .internalServerError,
+                    reason: "Database schema is missing campaigns.claim_timeout_minutes."
+                )
+            }
+        }
     }
 }
 
@@ -68,6 +373,7 @@ struct CreateCampaigns: AsyncMigration {
             .field("name", .string, .required)
             .field("ruleset_id", .string, .required)
             .field("is_archived", .bool, .required)
+            .field("claim_timeout_minutes", .int)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
             .create()
@@ -180,13 +486,22 @@ struct CreateCampaignEncounters: AsyncMigration {
 enum DatabaseMigrations {
     static func register(on app: Application) {
         app.migrations.add(CreateUsers())
+        app.migrations.add(RemoveUserDisplayName())
         app.migrations.add(CreateSessions())
-        app.migrations.add(CreateCampaignPlayerSessions())
+        app.migrations.add(CreatePlayers())
+        app.migrations.add(MigrateLegacyCampaignPlayerSessionsToPlayers())
         app.migrations.add(CreateCampaigns())
+        app.migrations.add(AddClaimTimeoutMinutesToCampaigns())
         app.migrations.add(CreateCampaignMemberships())
         app.migrations.add(CreateCharacters())
+        app.migrations.add(AddCharacterClaimColumnsToCharacters())
+        app.migrations.add(AddLastPlayedByNameToCharacters())
         app.migrations.add(CreateCharacterStats())
         app.migrations.add(CreateCharacterConditions())
         app.migrations.add(CreateCampaignEncounters())
+    }
+
+    static func verifyShape(on database: any Database) async throws {
+        try await DatabaseShapeVerification.verify(on: database)
     }
 }

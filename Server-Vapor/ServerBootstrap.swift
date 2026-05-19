@@ -50,6 +50,7 @@ enum ServerBootstrap {
         app.databases.use(.sqlite(.file(options.databaseFileURL.path)), as: .sqlite)
         DatabaseMigrations.register(on: app)
         try await app.autoMigrate()
+        try await DatabaseMigrations.verifyShape(on: app.db)
 
         let conditionLibrary = try library ?? RuleSetLibraryLoader.loadDefault()
         let campaignStore = CampaignStore(

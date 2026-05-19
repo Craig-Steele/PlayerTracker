@@ -19,6 +19,7 @@ struct CampaignSummary: Content {
     let rulesetLabel: String
     let encounterState: EncounterState
     let isActive: Bool
+    let claimTimeoutMinutes: Int
 }
 
 struct StatEntry: Content {
@@ -39,17 +40,31 @@ struct CampaignState: Content {
     let rulesetId: String
     let rulesetLabel: String
     let encounterState: EncounterState
+    let claimTimeoutMinutes: Int
 }
 
 struct CampaignUpdateInput: Content {
     let name: String
     let rulesetId: String
+    let claimTimeoutMinutes: Int?
+    let refereeSessionIds: [UUID]?
+
+    init(
+        name: String,
+        rulesetId: String,
+        claimTimeoutMinutes: Int? = nil,
+        refereeSessionIds: [UUID]? = nil
+    ) {
+        self.name = name
+        self.rulesetId = rulesetId
+        self.claimTimeoutMinutes = claimTimeoutMinutes
+        self.refereeSessionIds = refereeSessionIds
+    }
 }
 
 struct AuthSignupInput: Content {
     let email: String
     let password: String
-    let displayName: String?
 }
 
 struct AuthLoginInput: Content {
@@ -60,7 +75,6 @@ struct AuthLoginInput: Content {
 struct AuthUserResponse: Content {
     let id: UUID
     let email: String
-    let displayName: String?
 }
 
 struct AuthSessionResponse: Content {
@@ -74,7 +88,14 @@ struct PlayerJoinInput: Content {
 struct PlayerIdentityResponse: Content {
     let id: UUID
     let campaignID: UUID
+    let loginName: String
     let displayName: String
+}
+
+struct CampaignMemberSummary: Content {
+    let id: UUID
+    let displayName: String
+    let isReferee: Bool
 }
 
 struct PlayerSessionResponse: Content {
@@ -92,6 +113,11 @@ struct CharacterState {
     var campaignName: String
     var ownerId: UUID
     var ownerName: String
+    var lastPlayedByName: String?
+    var claimedSessionId: UUID?
+    var claimedDisplayName: String?
+    var claimedAt: Date?
+    var isReferee: Bool
     var characterName: String
     var initiative: Double?
     var stats: [String: StatEntry]
@@ -108,6 +134,10 @@ struct PlayerView: Content {
     let id: UUID
     let ownerId: UUID
     let ownerName: String
+    let lastPlayedByName: String?
+    let claimedSessionId: UUID?
+    let claimedDisplayName: String?
+    let claimedAt: Date?
     let name: String
     let initiative: Double?
     let stats: [StatEntry]
@@ -118,6 +148,7 @@ struct PlayerView: Content {
     let isHidden: Bool
     let revealOnTurn: Bool
     let conditions: [String]
+    let isReferee: Bool
 }
 
 struct GameState: Content {

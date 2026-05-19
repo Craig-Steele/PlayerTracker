@@ -31,6 +31,10 @@ let package = Package(
             dependencies: [
                 "PlayerTracker",
                 .product(name: "XCTVapor", package: "vapor")
+            ],
+            exclude: [
+                "Fixtures/hells_vengeance.sqlite3",
+                "Fixtures/hells_vengeance_seed.sql"
             ]
         ),
     ]

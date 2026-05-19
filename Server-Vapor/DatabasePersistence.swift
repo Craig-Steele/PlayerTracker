@@ -7,6 +7,7 @@ struct CampaignPersistenceState {
     let name: String
     let rulesetId: String
     let encounterState: EncounterState
+    let claimTimeoutMinutes: Int
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
@@ -16,7 +17,6 @@ struct UserPersistenceState {
     let id: UUID
     let email: String
     let passwordHash: String
-    let displayName: String?
 }
 
 struct SessionPersistenceState {
@@ -28,7 +28,7 @@ struct SessionPersistenceState {
 
 struct PlayerSessionPersistenceState {
     let id: UUID
-    let campaignID: UUID
+    let loginName: String
     let displayName: String
     let previousDisplayNames: [String]
     let token: String
@@ -47,9 +47,6 @@ final class UserRow: Model, @unchecked Sendable {
     @Field(key: "password_hash")
     var passwordHash: String
 
-    @OptionalField(key: "display_name")
-    var displayName: String?
-
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -61,13 +58,11 @@ final class UserRow: Model, @unchecked Sendable {
     init(
         id: UUID? = nil,
         email: String,
-        passwordHash: String,
-        displayName: String? = nil
+        passwordHash: String
     ) {
         self.id = id
         self.email = email
         self.passwordHash = passwordHash
-        self.displayName = displayName
     }
 }
 
@@ -113,13 +108,16 @@ final class SessionRow: Model, @unchecked Sendable {
 }
 
 final class PlayerSessionRow: Model, @unchecked Sendable {
-    static let schema = "campaign_player_sessions"
+    static let schema = "players"
 
     @ID(key: .id)
     var id: UUID?
 
-    @Field(key: "campaign_id")
-    var campaignID: UUID
+    @Field(key: "login_name")
+    var loginName: String
+
+    @Field(key: "login_name_normalized")
+    var loginNameNormalized: String
 
     @Field(key: "display_name")
     var displayName: String
@@ -149,7 +147,8 @@ final class PlayerSessionRow: Model, @unchecked Sendable {
 
     init(
         id: UUID? = nil,
-        campaignID: UUID,
+        loginName: String,
+        loginNameNormalized: String,
         displayName: String,
         displayNameNormalized: String,
         previousDisplayNamesJSON: String? = nil,
@@ -158,7 +157,8 @@ final class PlayerSessionRow: Model, @unchecked Sendable {
         revokedAt: Date? = nil
     ) {
         self.id = id
-        self.campaignID = campaignID
+        self.loginName = loginName
+        self.loginNameNormalized = loginNameNormalized
         self.displayName = displayName
         self.displayNameNormalized = displayNameNormalized
         self.previousDisplayNamesJSON = previousDisplayNamesJSON
@@ -183,6 +183,9 @@ final class CampaignRow: Model, @unchecked Sendable {
     @Field(key: "is_archived")
     var isArchived: Bool
 
+    @OptionalField(key: "claim_timeout_minutes")
+    var claimTimeoutMinutes: Int?
+
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -191,11 +194,54 @@ final class CampaignRow: Model, @unchecked Sendable {
 
     init() {}
 
-    init(id: UUID? = nil, name: String, rulesetId: String, isArchived: Bool = false) {
+    init(
+        id: UUID? = nil,
+        name: String,
+        rulesetId: String,
+        isArchived: Bool = false,
+        claimTimeoutMinutes: Int? = nil
+    ) {
         self.id = id
         self.name = name
         self.rulesetId = rulesetId
         self.isArchived = isArchived
+        self.claimTimeoutMinutes = claimTimeoutMinutes
+    }
+}
+
+final class CampaignMembershipRow: Model, @unchecked Sendable {
+    static let schema = "campaign_memberships"
+
+    @ID(key: .id)
+    var id: UUID?
+
+    @Field(key: "campaign_id")
+    var campaignID: UUID
+
+    @Field(key: "user_id")
+    var userID: UUID
+
+    @Field(key: "role")
+    var role: String
+
+    @OptionalField(key: "created_at")
+    var createdAt: Date?
+
+    @OptionalField(key: "updated_at")
+    var updatedAt: Date?
+
+    init() {}
+
+    init(
+        id: UUID? = nil,
+        campaignID: UUID,
+        userID: UUID,
+        role: String
+    ) {
+        self.id = id
+        self.campaignID = campaignID
+        self.userID = userID
+        self.role = role
     }
 }
 
@@ -260,6 +306,18 @@ final class CharacterRow: Model, @unchecked Sendable {
     @Field(key: "owner_name")
     var ownerName: String
 
+    @OptionalField(key: "last_played_by_name")
+    var lastPlayedByName: String?
+
+    @OptionalField(key: "claimed_session_id")
+    var claimedSessionID: UUID?
+
+    @OptionalField(key: "claimed_display_name")
+    var claimedDisplayName: String?
+
+    @OptionalField(key: "claimed_at")
+    var claimedAt: Date?
+
     @Field(key: "name")
     var name: String
 
@@ -297,6 +355,10 @@ final class CharacterRow: Model, @unchecked Sendable {
         campaignID: UUID,
         ownerID: UUID,
         ownerName: String,
+        lastPlayedByName: String? = nil,
+        claimedSessionID: UUID? = nil,
+        claimedDisplayName: String? = nil,
+        claimedAt: Date? = nil,
         name: String,
         initiative: Double?,
         revealStats: Bool,
@@ -310,6 +372,10 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.campaignID = campaignID
         self.ownerID = ownerID
         self.ownerName = ownerName
+        self.lastPlayedByName = lastPlayedByName
+        self.claimedSessionID = claimedSessionID
+        self.claimedDisplayName = claimedDisplayName
+        self.claimedAt = claimedAt
         self.name = name
         self.initiative = initiative
         self.revealStats = revealStats
@@ -390,6 +456,8 @@ final class CharacterConditionRow: Model, @unchecked Sendable {
 }
 
 enum DatabasePersistence {
+    private static let defaultClaimTimeoutMinutes = 5
+
     private static func randomSessionToken() -> String {
         let parts = [UUID().uuidString, UUID().uuidString, UUID().uuidString]
         return parts
@@ -406,6 +474,15 @@ enum DatabasePersistence {
         displayName
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
+    }
+
+    private static func sanitizeDisplayName(_ displayName: String) -> String {
+        let trimmed = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Player" : trimmed
+    }
+
+    private static func resolvedClaimTimeoutMinutes(_ campaign: CampaignRow) -> Int {
+        max(-1, campaign.claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
     }
 
     private static func decodePreviousDisplayNames(_ json: String?) -> [String] {
@@ -443,8 +520,7 @@ enum DatabasePersistence {
         return UserPersistenceState(
             id: id,
             email: row.email,
-            passwordHash: row.passwordHash,
-            displayName: row.displayName
+            passwordHash: row.passwordHash
         )
     }
 
@@ -459,15 +535,13 @@ enum DatabasePersistence {
         return UserPersistenceState(
             id: id,
             email: row.email,
-            passwordHash: row.passwordHash,
-            displayName: row.displayName
+            passwordHash: row.passwordHash
         )
     }
 
     static func createUser(
         email: String,
         passwordHash: String,
-        displayName: String? = nil,
         on database: any Database
     ) async throws -> UUID {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -481,7 +555,7 @@ enum DatabasePersistence {
             throw Abort(.conflict, reason: "User already exists.")
         }
 
-        let row = UserRow(email: trimmedEmail, passwordHash: passwordHash, displayName: displayName)
+        let row = UserRow(email: trimmedEmail, passwordHash: passwordHash)
         try await row.create(on: database)
         guard let id = row.id else {
             throw Abort(.internalServerError, reason: "Failed to create user record.")
@@ -550,19 +624,14 @@ enum DatabasePersistence {
         return try await loadUser(id: session.userID, on: database)
     }
 
-    static func loadPlayerSessions(
-        campaignID: UUID,
-        on database: any Database
-    ) async throws -> [PlayerSessionPersistenceState] {
-        let rows = try await PlayerSessionRow.query(on: database)
-            .filter(\.$campaignID == campaignID)
-            .all()
+    static func loadPlayerSessions(on database: any Database) async throws -> [PlayerSessionPersistenceState] {
+        let rows = try await PlayerSessionRow.query(on: database).all()
 
         return rows.compactMap { row in
             guard let id = row.id else { return nil }
             return PlayerSessionPersistenceState(
                 id: id,
-                campaignID: row.campaignID,
+                loginName: row.loginName,
                 displayName: row.displayName,
                 previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
                 token: "",
@@ -571,16 +640,120 @@ enum DatabasePersistence {
         }
     }
 
-    static func loadPlayerSession(
+    static func loadPlayers(
+        ids: [UUID],
+        on database: any Database
+    ) async throws -> [PlayerSessionPersistenceState] {
+        guard !ids.isEmpty else { return [] }
+        let rows = try await PlayerSessionRow.query(on: database)
+            .filter(\.$id ~~ ids)
+            .all()
+
+        return rows.compactMap { row in
+            guard let id = row.id else { return nil }
+            return PlayerSessionPersistenceState(
+                id: id,
+                loginName: row.loginName,
+                displayName: row.displayName,
+                previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
+                token: "",
+                expiresAt: row.expiresAt
+            )
+        }
+    }
+
+    static func loadCampaignRefereeSessionIDs(
         campaignID: UUID,
-        displayName: String,
+        on database: any Database
+    ) async throws -> Set<UUID> {
+        let rows = try await CampaignMembershipRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .filter(\.$role == "referee")
+            .all()
+        return Set(rows.compactMap(\.userID))
+    }
+
+    static func setCampaignRefereeSessionIDs(
+        campaignID: UUID,
+        refereeSessionIDs: [UUID],
+        on database: any Database
+    ) async throws {
+        let existingRows = try await CampaignMembershipRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .all()
+        let selectedIDs = Set(refereeSessionIDs)
+        let existingIDs = Set(existingRows.compactMap(\.userID))
+        for row in existingRows {
+            row.role = selectedIDs.contains(row.userID) ? "referee" : "player"
+            try await row.save(on: database)
+        }
+        for refereeID in selectedIDs where !existingIDs.contains(refereeID) {
+            let row = CampaignMembershipRow(
+                campaignID: campaignID,
+                userID: refereeID,
+                role: "referee"
+            )
+            try await row.create(on: database)
+        }
+    }
+
+    static func loadCampaignMembers(
+        campaignID: UUID,
+        on database: any Database
+    ) async throws -> [CampaignMemberSummary] {
+        let memberships = try await CampaignMembershipRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .all()
+        let playerIDs = memberships.compactMap(\.userID)
+        let players = try await loadPlayers(ids: playerIDs, on: database)
+        let playersByID = Dictionary(uniqueKeysWithValues: players.map { ($0.id, $0) })
+
+        return memberships.compactMap { membership in
+            guard let player = playersByID[membership.userID] else { return nil }
+            return CampaignMemberSummary(
+                id: player.id,
+                displayName: player.displayName,
+                isReferee: membership.role == "referee"
+            )
+        }
+        .sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+    }
+
+    static func ensureCampaignMember(
+        campaignID: UUID,
+        playerID: UUID,
+        role: String = "player",
+        on database: any Database
+    ) async throws {
+        if let row = try await CampaignMembershipRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .filter(\.$userID == playerID)
+            .first() {
+            if row.role != "referee" || role == "referee" {
+                row.role = role
+                try await row.save(on: database)
+            }
+            return
+        }
+
+        let row = CampaignMembershipRow(
+            campaignID: campaignID,
+            userID: playerID,
+            role: role
+        )
+        try await row.create(on: database)
+    }
+
+    static func loadPlayerSession(
+        loginName: String,
         on database: any Database
     ) async throws -> PlayerSessionPersistenceState? {
-        let normalized = normalizedDisplayName(displayName)
-        let sessions = try await loadPlayerSessions(campaignID: campaignID, on: database)
+        let normalized = normalizedDisplayName(loginName)
+        let sessions = try await loadPlayerSessions(on: database)
         return sessions.first(where: { session in
-            normalizedDisplayName(session.displayName) == normalized ||
-            session.previousDisplayNames.contains(where: { normalizedDisplayName($0) == normalized })
+            normalizedDisplayName(session.loginName) == normalized
         })
     }
 
@@ -613,7 +786,7 @@ enum DatabasePersistence {
         try await row.save(on: database)
         return PlayerSessionPersistenceState(
             id: id,
-            campaignID: row.campaignID,
+            loginName: row.loginName,
             displayName: row.displayName,
             previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
             token: token,
@@ -622,35 +795,38 @@ enum DatabasePersistence {
     }
 
     static func createOrRefreshPlayerSession(
-        campaignID: UUID,
-        displayName: String,
+        loginName: String,
+        displayName: String? = nil,
         expiresAt: Date = Date().addingTimeInterval(60 * 60 * 24 * 30),
         on database: any Database
     ) async throws -> PlayerSessionPersistenceState {
-        let trimmedDisplayName = displayName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedDisplayName.isEmpty else {
-            throw Abort(.badRequest, reason: "Display name is required.")
+        let trimmedLoginName = loginName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedLoginName.isEmpty else {
+            throw Abort(.badRequest, reason: "Login name is required.")
         }
+        let trimmedDisplayName = sanitizeDisplayName(displayName ?? trimmedLoginName)
+        let loginNormalized = normalizedDisplayName(trimmedLoginName)
 
-        let normalized = normalizedDisplayName(trimmedDisplayName)
         if let row = try await PlayerSessionRow.query(on: database)
-            .filter(\.$campaignID == campaignID)
             .all()
             .first(where: { row in
-                row.displayNameNormalized == normalized ||
-                decodePreviousDisplayNames(row.previousDisplayNamesJSON).contains(where: { normalizedDisplayName($0) == normalized })
+                row.loginNameNormalized == loginNormalized
             }) {
             let token = randomSessionToken()
             row.tokenHash = hashSessionToken(token)
             row.expiresAt = expiresAt
             row.revokedAt = nil
+            if row.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                row.displayName = trimmedDisplayName
+                row.displayNameNormalized = normalizedDisplayName(trimmedDisplayName)
+            }
             try await row.save(on: database)
             guard let id = row.id else {
                 throw Abort(.internalServerError, reason: "Failed to load player session record.")
             }
             return PlayerSessionPersistenceState(
                 id: id,
-                campaignID: row.campaignID,
+                loginName: row.loginName,
                 displayName: row.displayName,
                 previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
                 token: token,
@@ -662,9 +838,10 @@ enum DatabasePersistence {
         let tokenHash = hashSessionToken(token)
 
         let row = PlayerSessionRow(
-            campaignID: campaignID,
+            loginName: trimmedLoginName,
+            loginNameNormalized: loginNormalized,
             displayName: trimmedDisplayName,
-            displayNameNormalized: normalized,
+            displayNameNormalized: normalizedDisplayName(trimmedDisplayName),
             previousDisplayNamesJSON: nil,
             tokenHash: tokenHash,
             expiresAt: expiresAt
@@ -675,7 +852,7 @@ enum DatabasePersistence {
         }
         return PlayerSessionPersistenceState(
             id: id,
-            campaignID: row.campaignID,
+            loginName: row.loginName,
             displayName: row.displayName,
             previousDisplayNames: [],
             token: token,
@@ -699,7 +876,7 @@ enum DatabasePersistence {
 
         return PlayerSessionPersistenceState(
             id: id,
-            campaignID: row.campaignID,
+            loginName: row.loginName,
             displayName: row.displayName,
             previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
             token: token,
@@ -721,6 +898,29 @@ enum DatabasePersistence {
         try await row.save(on: database)
     }
 
+    static func renamePlayerDisplayName(
+        playerID: UUID,
+        newDisplayName: String,
+        on database: any Database
+    ) async throws {
+        let trimmedDisplayName = newDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedDisplayName.isEmpty else {
+            throw Abort(.badRequest, reason: "Display name is required.")
+        }
+
+        let rows = try await CharacterRow.query(on: database)
+            .filter(\.$ownerID == playerID)
+            .all()
+        for row in rows {
+            row.ownerName = trimmedDisplayName
+            if row.claimedSessionID == playerID {
+                row.claimedDisplayName = trimmedDisplayName
+                row.lastPlayedByName = trimmedDisplayName
+            }
+            try await row.save(on: database)
+        }
+    }
+
     static func loadCampaign(
         named campaignName: String,
         on database: any Database
@@ -737,6 +937,7 @@ enum DatabasePersistence {
             .first()
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
+        let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
         let roundIndex = encounter?.roundIndex ?? 1
         let turnIndex = encounter?.turnIndex ?? 0
         let currentTurnID = encounter?.currentCharacterID
@@ -745,6 +946,7 @@ enum DatabasePersistence {
             name: campaign.name,
             rulesetId: campaign.rulesetId,
             encounterState: encounterState,
+            claimTimeoutMinutes: claimTimeoutMinutes,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -767,6 +969,7 @@ enum DatabasePersistence {
             .first()
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
+        let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
         let roundIndex = encounter?.roundIndex ?? 1
         let turnIndex = encounter?.turnIndex ?? 0
         let currentTurnID = encounter?.currentCharacterID
@@ -775,6 +978,7 @@ enum DatabasePersistence {
             name: campaign.name,
             rulesetId: campaign.rulesetId,
             encounterState: encounterState,
+            claimTimeoutMinutes: claimTimeoutMinutes,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -790,6 +994,7 @@ enum DatabasePersistence {
             guard let campaignID = campaign.id else { return nil }
             let encounter = encountersByCampaign[campaignID]?.first
             let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
+            let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
             let roundIndex = encounter?.roundIndex ?? 1
             let turnIndex = encounter?.turnIndex ?? 0
             let currentTurnID = encounter?.currentCharacterID
@@ -798,6 +1003,7 @@ enum DatabasePersistence {
                 name: campaign.name,
                 rulesetId: campaign.rulesetId,
                 encounterState: encounterState,
+                claimTimeoutMinutes: claimTimeoutMinutes,
                 roundIndex: roundIndex,
                 turnIndex: turnIndex,
                 currentTurnID: currentTurnID
@@ -812,6 +1018,7 @@ enum DatabasePersistence {
         name: String,
         rulesetId: String,
         isArchived: Bool = false,
+        claimTimeoutMinutes: Int? = nil,
         on database: any Database
     ) async throws -> UUID {
         if let campaign = try await CampaignRow.query(on: database)
@@ -820,11 +1027,21 @@ enum DatabasePersistence {
            let id = campaign.id {
             campaign.rulesetId = rulesetId
             campaign.isArchived = isArchived
+            if let claimTimeoutMinutes {
+                campaign.claimTimeoutMinutes = max(-1, claimTimeoutMinutes)
+            } else if campaign.claimTimeoutMinutes == nil {
+                campaign.claimTimeoutMinutes = defaultClaimTimeoutMinutes
+            }
             try await campaign.save(on: database)
             return id
         }
 
-        let campaign = CampaignRow(name: name, rulesetId: rulesetId, isArchived: isArchived)
+        let campaign = CampaignRow(
+            name: name,
+            rulesetId: rulesetId,
+            isArchived: isArchived,
+            claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
+        )
         try await campaign.create(on: database)
         guard let id = campaign.id else {
             throw Abort(.internalServerError, reason: "Failed to create campaign record.")
@@ -836,6 +1053,7 @@ enum DatabasePersistence {
         name: String,
         rulesetId: String,
         isArchived: Bool = false,
+        claimTimeoutMinutes: Int? = nil,
         on database: any Database
     ) async throws -> UUID {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -849,7 +1067,12 @@ enum DatabasePersistence {
             throw Abort(.conflict, reason: "Campaign name already exists.")
         }
         let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
-        let campaign = CampaignRow(name: trimmedName, rulesetId: library.id, isArchived: isArchived)
+        let campaign = CampaignRow(
+            name: trimmedName,
+            rulesetId: library.id,
+            isArchived: isArchived,
+            claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
+        )
         try await campaign.create(on: database)
         guard let id = campaign.id else {
             throw Abort(.internalServerError, reason: "Failed to create campaign record.")
@@ -861,6 +1084,7 @@ enum DatabasePersistence {
         id campaignID: UUID,
         name: String,
         rulesetId: String,
+        claimTimeoutMinutes: Int? = nil,
         on database: any Database
     ) async throws -> UUID {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -884,6 +1108,11 @@ enum DatabasePersistence {
         let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
         campaign.name = trimmedName
         campaign.rulesetId = library.id
+        if let claimTimeoutMinutes {
+            campaign.claimTimeoutMinutes = max(-1, claimTimeoutMinutes)
+        } else if campaign.claimTimeoutMinutes == nil {
+            campaign.claimTimeoutMinutes = defaultClaimTimeoutMinutes
+        }
         try await campaign.save(on: database)
         return campaignID
     }
@@ -892,31 +1121,48 @@ enum DatabasePersistence {
         existingName: String,
         newName: String,
         rulesetId: String,
+        claimTimeoutMinutes: Int? = nil,
         on database: any Database
     ) async throws -> UUID {
         if let campaign = try await CampaignRow.query(on: database)
             .filter(\.$name == existingName)
             .first(),
-           let id = campaign.id {
+            let id = campaign.id {
             campaign.name = newName
             campaign.rulesetId = rulesetId
+            if let claimTimeoutMinutes {
+                campaign.claimTimeoutMinutes = max(-1, claimTimeoutMinutes)
+            } else if campaign.claimTimeoutMinutes == nil {
+                campaign.claimTimeoutMinutes = defaultClaimTimeoutMinutes
+            }
             try await campaign.save(on: database)
             return id
         }
 
-        return try await upsertCampaignMetadata(name: newName, rulesetId: rulesetId, on: database)
+        return try await upsertCampaignMetadata(
+            name: newName,
+            rulesetId: rulesetId,
+            claimTimeoutMinutes: claimTimeoutMinutes,
+            on: database
+        )
     }
 
     static func upsertCampaign(
         name: String,
         rulesetId: String,
+        claimTimeoutMinutes: Int? = nil,
         encounterState: EncounterState,
         roundIndex: Int,
         turnIndex: Int,
         currentTurnID: UUID?,
         on database: any Database
     ) async throws {
-        let campaignID = try await upsertCampaignMetadata(name: name, rulesetId: rulesetId, on: database)
+        let campaignID = try await upsertCampaignMetadata(
+            name: name,
+            rulesetId: rulesetId,
+            claimTimeoutMinutes: claimTimeoutMinutes,
+            on: database
+        )
         try await upsertEncounter(
             campaignID: campaignID,
             encounterState: encounterState,
@@ -987,6 +1233,11 @@ enum DatabasePersistence {
                 campaignName: campaignName,
                 ownerId: row.ownerID,
                 ownerName: row.ownerName,
+                lastPlayedByName: row.lastPlayedByName,
+                claimedSessionId: row.claimedSessionID,
+                claimedDisplayName: row.claimedDisplayName,
+                claimedAt: row.claimedAt,
+                isReferee: false,
                 characterName: row.name,
                 initiative: row.initiative,
                 stats: characterStats,
@@ -1014,6 +1265,10 @@ enum DatabasePersistence {
                 row.campaignID = campaignID
                 row.ownerID = state.ownerId
                 row.ownerName = state.ownerName
+                row.lastPlayedByName = state.lastPlayedByName
+                row.claimedSessionID = state.claimedSessionId
+                row.claimedDisplayName = state.claimedDisplayName
+                row.claimedAt = state.claimedAt
                 row.name = state.characterName
                 row.initiative = state.initiative
                 row.revealStats = state.revealStats
@@ -1033,6 +1288,10 @@ enum DatabasePersistence {
                     campaignID: campaignID,
                     ownerID: state.ownerId,
                     ownerName: state.ownerName,
+                    lastPlayedByName: state.lastPlayedByName,
+                    claimedSessionID: state.claimedSessionId,
+                    claimedDisplayName: state.claimedDisplayName,
+                    claimedAt: state.claimedAt,
                     name: state.characterName,
                     initiative: state.initiative,
                     revealStats: state.revealStats,

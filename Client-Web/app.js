@@ -3,11 +3,22 @@ let lastStateJson = null;
 const REFRESH_INTERVAL_MS = 5000;
 let skipRefresh = false;
 
-const { QR_CODE_SIZE, isAdminHost, rollStandardDie, formatInitiative } = window.PlayerTrackerShared || {
+const {
+  APP_NAME,
+  APP_ICON_URL,
+  QR_CODE_SIZE,
+  isAdminHost,
+  rollStandardDie,
+  formatInitiative,
+  updateCampaignHeader
+} = window.PlayerTrackerShared || {
+  APP_NAME: 'Roll4Initiative',
+  APP_ICON_URL: '/favicon-512.png',
   QR_CODE_SIZE: 96,
   isAdminHost: () => false,
   rollStandardDie: () => null,
-  formatInitiative: () => 'X'
+  formatInitiative: () => 'X',
+  updateCampaignHeader: () => {}
 };
 const {
   normalizeConditionEntry,
@@ -39,11 +50,6 @@ const {
     return tr;
   }
 };
-const { updateRulesetIcons, updateRulesetLinks, updateRulesetLicenses } = window.PlayerTrackerRuleset || {
-  updateRulesetIcons: () => {},
-  updateRulesetLinks: () => {},
-  updateRulesetLicenses: () => {}
-};
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
 
@@ -54,8 +60,47 @@ const EMPTY_CONDITION_SET = {
   conditions: []
 };
 
+const campaignHeaderNameTargets = [];
+const campaignHeaderIconTargets = [];
+const campaignHeaderLinkTargets = [];
+const campaignHeaderLicenseTargets = [];
+
 function normalizePlayerName(name) {
   return (name || '').trim().toLowerCase();
+}
+
+function isUuidLike(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    (value || '').trim()
+  );
+}
+
+function sanitizePlayerDisplayName(value) {
+  const trimmed = (value || '').trim();
+  if (!trimmed || isUuidLike(trimmed)) {
+    return '';
+  }
+  return trimmed;
+}
+
+function hasRealPlayerName(value) {
+  const trimmed = sanitizePlayerDisplayName(value);
+  if (!trimmed) return false;
+  return normalizePlayerName(trimmed) !== 'player';
+}
+
+function getPlayerLoginName() {
+  const savedLogin =
+    localStorage.getItem('playerLoginName') ||
+    localStorage.getItem('playerName');
+  if (hasRealPlayerName(savedLogin)) return sanitizePlayerDisplayName(savedLogin);
+  return '';
+}
+
+function getBootstrapPlayerName() {
+  const loginName = getPlayerLoginName();
+  if (hasRealPlayerName(loginName)) return loginName;
+  return '';
 }
 
 function isDisplayPath() {
@@ -63,10 +108,15 @@ function isDisplayPath() {
   return path === '/display.html' || path.endsWith('/display.html');
 }
 
+function isJoinPage() {
+  const path = window.location.pathname || '';
+  return path === '/index.html' || path === '/' || path.endsWith('/index.html');
+}
+
 const shouldRedirectToDisplay =
   isAdminHost() &&
   !isDisplayPath() &&
-  (window.location.pathname === '/' || window.location.pathname.endsWith('/index.html'));
+  window.location.pathname === '/';
 
 if (shouldRedirectToDisplay) {
   window.location.replace('/display.html');
@@ -158,6 +208,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerNameEditBtn = document.getElementById('edit-player-name');
   const playerNameSaveBtn = document.getElementById('player-name-save');
   const playerNameCancelBtn = document.getElementById('player-name-cancel');
+  const playerNameNudge = document.getElementById('player-name-nudge');
   const nameInput = document.getElementById('name');
   const useAppInitiativeRollInput = document.getElementById('use-app-initiative-roll');
   const initiativeBonusInput = document.getElementById('initiative-bonus');
@@ -191,6 +242,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerRulesetIcon = document.getElementById('player-ruleset-icon');
   const displayRulesetIcon = document.getElementById('display-ruleset-icon');
   const characterList = document.getElementById('character-list');
+  const claimableCharacterPanel = document.getElementById('claimable-character-panel');
+  const claimableCharacterList = document.getElementById('claimable-character-list');
   const addCharacterBtn = document.getElementById('character-add');
   const removeCharacterBtn = document.getElementById('character-remove');
   const addForm = document.getElementById('add-character-form');
@@ -223,6 +276,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerListSection = document.querySelector('.player-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
   const characterListActions = document.querySelector('.character-list-actions');
+  const releaseCharacterBtn = document.getElementById('character-release');
+  const characterOverflowToggle = document.getElementById('character-overflow-toggle');
+  const characterOverflowMenu = document.getElementById('character-overflow-menu');
   const selectionToolbarAnchor = document.getElementById('player-selection-toolbar-anchor');
 
   let selectedConditions = new Set();
@@ -241,6 +297,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentRulesetId = '';
   let encounterState = 'new';
   let statKeys = ['HP'];
+  let playerNameRequired = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
   let currentStandardDie = null;
@@ -251,25 +308,17 @@ window.addEventListener('DOMContentLoaded', () => {
   let isCreatingCharacter = false;
   let conditionsPanelOpen = false;
   let initiativeEditorCharacterId = null;
+  let currentCampaignId = '';
+  let claimableCharacters = [];
 
-  function updateRulesetLink(labelText, baseUrl) {
-    updateRulesetLinks([rulesetLink, playerRulesetLink, displayRulesetLink], labelText, baseUrl);
-  }
-
-  function updateRulesetLicense(licenseUrl) {
-    updateRulesetLicenses(
-      [
-        { linkEl: rulesetLicense, wrapEl: rulesetLicenseWrap },
-        { linkEl: playerRulesetLicense, wrapEl: playerRulesetLicenseWrap },
-        { linkEl: displayRulesetLicense, wrapEl: displayRulesetLicenseWrap }
-      ],
-      licenseUrl
-    );
-  }
-
-  function setRulesetIcon(iconUrl, labelText) {
-    updateRulesetIcons([rulesetIcon, playerRulesetIcon, displayRulesetIcon], iconUrl, labelText);
-  }
+  campaignHeaderNameTargets.push(campaignNameLabel, playerCampaignName, displayCampaignName);
+  campaignHeaderIconTargets.push(rulesetIcon, playerRulesetIcon, displayRulesetIcon);
+  campaignHeaderLinkTargets.push(rulesetLink, playerRulesetLink, displayRulesetLink);
+  campaignHeaderLicenseTargets.push(
+    { linkEl: rulesetLicense, wrapEl: rulesetLicenseWrap },
+    { linkEl: playerRulesetLicense, wrapEl: playerRulesetLicenseWrap },
+    { linkEl: displayRulesetLicense, wrapEl: displayRulesetLicenseWrap }
+  );
 
   const displayOnly = isDisplayPath();
   const viewMode = new URLSearchParams(window.location.search).get('view');
@@ -379,12 +428,103 @@ window.addEventListener('DOMContentLoaded', () => {
     setConditionsPanelOpen(conditionsPanelOpen);
   }
 
+  function updateReleaseButtonState() {
+    if (!releaseCharacterBtn) return;
+    const selected = selectedCharacterId
+      ? myCharacters.find((character) => character.id === selectedCharacterId)
+      : null;
+    const canRelease = Boolean(selected && selected.claimedSessionId === ownerId);
+    releaseCharacterBtn.classList.toggle('hidden', !canRelease);
+    releaseCharacterBtn.disabled = !canRelease;
+    releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
+    if (removeCharacterBtn) {
+      const canRemove = Boolean(selected);
+      removeCharacterBtn.disabled = !canRemove;
+      removeCharacterBtn.setAttribute('aria-disabled', (!canRemove).toString());
+      removeCharacterBtn.classList.toggle('hidden', !canRemove);
+    }
+    if (characterOverflowToggle) {
+      const hasSelection = Boolean(selected);
+      characterOverflowToggle.classList.toggle('hidden', !hasSelection);
+      characterOverflowToggle.disabled = !hasSelection;
+      characterOverflowToggle.setAttribute('aria-disabled', (!hasSelection).toString());
+    }
+    if (!selected) {
+      closeCharacterOverflowMenu();
+    }
+  }
+
+  function closeCharacterOverflowMenu() {
+    if (!characterOverflowMenu || !characterOverflowToggle) return;
+    characterOverflowMenu.classList.add('hidden');
+    characterOverflowMenu.setAttribute('aria-hidden', 'true');
+    characterOverflowToggle.setAttribute('aria-expanded', 'false');
+  }
+
+  function openCharacterOverflowMenu() {
+    if (!characterOverflowMenu || !characterOverflowToggle) return;
+    characterOverflowMenu.classList.remove('hidden');
+    characterOverflowMenu.setAttribute('aria-hidden', 'false');
+    characterOverflowToggle.setAttribute('aria-expanded', 'true');
+  }
+
+  function toggleCharacterOverflowMenu() {
+    if (!characterOverflowMenu || !characterOverflowToggle) return;
+    const isOpen = !characterOverflowMenu.classList.contains('hidden');
+    if (isOpen) {
+      closeCharacterOverflowMenu();
+    } else {
+      openCharacterOverflowMenu();
+    }
+  }
+
+  function updatePlayerEntryGate() {
+    const ownerName = getOwnerName();
+    playerNameRequired = !ownerName;
+    if (playerNameNudge) {
+      playerNameNudge.classList.toggle('hidden', Boolean(ownerName));
+    }
+    if (playerNameInput) {
+      playerNameInput.readOnly = Boolean(ownerName);
+      playerNameInput.placeholder = ownerName ? '' : 'Enter your player name';
+    }
+    if (playerNameEditBtn) {
+      playerNameEditBtn.classList.toggle('hidden', !ownerName);
+    }
+    if (playerNameCancelBtn) {
+      playerNameCancelBtn.classList.toggle('hidden', !ownerName);
+    }
+    if (playerNameEdit) {
+      playerNameEdit.classList.toggle('visible', !ownerName);
+    }
+    if (characterListActions) {
+      characterListActions.querySelectorAll('button').forEach((button) => {
+        button.disabled = !ownerName;
+        button.setAttribute('aria-disabled', (!ownerName).toString());
+      });
+    }
+    if (detailsToggle) {
+      detailsToggle.disabled = !ownerName;
+      detailsToggle.setAttribute('aria-disabled', (!ownerName).toString());
+    }
+    if (conditionsToggle) {
+      conditionsToggle.disabled = !ownerName;
+      conditionsToggle.setAttribute('aria-disabled', (!ownerName).toString());
+    }
+    updateReleaseButtonState();
+    if (!ownerName && playerNameInput) {
+      playerNameInput.focus();
+      playerNameInput.select();
+    }
+  }
+
   function updatePlayerNameDisplay() {
     if (!playerNameInput) return;
     const ownerName = getOwnerName();
     playerNameInput.value = ownerName ? ownerName : 'Player';
     playerNameInput.classList.toggle('player-name-placeholder', !ownerName);
     document.body.classList.toggle('no-player-name', !ownerName);
+    updatePlayerEntryGate();
     if (playerCardPlayerName) {
       playerCardPlayerName.textContent = `Player: ${ownerName || 'Player'}`;
     }
@@ -396,7 +536,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const campaignName = currentCampaignName ? currentCampaignName.trim() : '';
     const ownerName = getOwnerName();
     if (!campaignName) {
-      document.title = 'Turn Track';
+      document.title = APP_NAME;
       return;
     }
     if (displayOnly) {
@@ -959,9 +1099,21 @@ window.addEventListener('DOMContentLoaded', () => {
       conditionLibrary = [];
       conditionLookup = new Map();
       conditionLibraryLabel = '';
-      updateRulesetLink('', null);
-      setRulesetIcon(null, '');
-      updateRulesetLicense(null);
+      updateCampaignHeader(
+        {
+          nameTargets: campaignHeaderNameTargets,
+          iconTargets: campaignHeaderIconTargets,
+          linkTargets: campaignHeaderLinkTargets,
+          licenseTargets: campaignHeaderLicenseTargets
+        },
+        {
+          campaignName: currentCampaignName || null,
+          rulesetLabel: '',
+          rulesBaseUrl: null,
+          licenseUrl: null,
+          iconUrl: currentCampaignName ? null : APP_ICON_URL
+        }
+      );
       document.body.classList.add('no-conditions');
       renderConditionGrid(conditionFilterInput ? conditionFilterInput.value : '');
       return;
@@ -970,10 +1122,21 @@ window.addEventListener('DOMContentLoaded', () => {
     conditionLibrary = normalizedEntries;
     conditionLookup = new Map(normalizedEntries.map((entry) => [entry.name, entry]));
     conditionLibraryLabel = conditionSet?.label || '';
-
-    updateRulesetLink(conditionLibraryLabel, baseUrl);
-    setRulesetIcon(conditionSet?.icon || null, conditionLibraryLabel);
-    updateRulesetLicense(conditionSet?.license || null);
+    updateCampaignHeader(
+      {
+        nameTargets: campaignHeaderNameTargets,
+        iconTargets: campaignHeaderIconTargets,
+        linkTargets: campaignHeaderLinkTargets,
+        licenseTargets: campaignHeaderLicenseTargets
+      },
+      {
+        campaignName: currentCampaignName || null,
+        rulesetLabel: conditionLibraryLabel,
+        rulesBaseUrl: baseUrl,
+        licenseUrl: conditionSet?.license || null,
+        iconUrl: currentCampaignName ? (conditionSet?.icon || null) : APP_ICON_URL
+      }
+    );
 
     document.body.classList.remove('no-conditions');
     renderConditionGrid(conditionFilterInput ? conditionFilterInput.value : '');
@@ -1000,42 +1163,122 @@ window.addEventListener('DOMContentLoaded', () => {
     );
   }
 
-  async function ensureOwnerId() {
-    const hadStoredId = Boolean(localStorage.getItem('playerId'));
-    if (!ownerId || !isValidUuid(ownerId)) {
-      ownerId = generateUuid();
-    }
-    let attempts = 0;
-    while (attempts < 5) {
-      try {
-        const campaignQuery = currentCampaignName
-          ? `?campaign=${encodeURIComponent(currentCampaignName)}`
-          : '';
-        const res = await fetch(
-          `/players/${encodeURIComponent(ownerId)}/characters${campaignQuery}`
-        );
-        if (!res.ok) break;
-        const existing = await res.json();
-        const savedName = localStorage.getItem('ownerName') || '';
-        if (Array.isArray(existing) && existing.length > 0 && !savedName && !hadStoredId) {
-          ownerId = generateUuid();
-          attempts += 1;
-          continue;
-        }
-      } catch {
-        break;
+  async function responseErrorMessage(res) {
+    const fallback = `Server returned ${res.status}`;
+    try {
+      const text = await res.text();
+      if (!text) {
+        return fallback;
       }
-      break;
+      const payload = JSON.parse(text);
+      return payload?.reason || payload?.message || text || fallback;
+    } catch (_err) {
+      return fallback;
+    }
+  }
+
+  async function joinPlayerSession(displayName) {
+    const trimmedName = sanitizePlayerDisplayName(displayName) || 'Player';
+    const res = await fetch('/player/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ displayName: trimmedName })
+    });
+    if (!res.ok) {
+      throw new Error('Server returned ' + res.status);
+    }
+    const payload = await res.json();
+    const player = payload.player || {};
+    ownerId = player.id || ownerId;
+    const loginName = sanitizePlayerDisplayName(player.loginName || trimmedName) || trimmedName;
+    const displayNameValue = sanitizePlayerDisplayName(player.displayName) || loginName;
+    localStorage.setItem('playerId', ownerId);
+    localStorage.setItem('playerLoginName', loginName);
+    localStorage.setItem('ownerName', displayNameValue);
+    if (ownerInput) ownerInput.value = displayNameValue;
+    if (playerNameInput) playerNameInput.value = displayNameValue;
+    updatePlayerNameDisplay();
+    return payload;
+  }
+
+  async function bootstrapPlayerSession() {
+    try {
+      const res = await fetch('/player/session');
+      if (!res.ok) {
+        ownerId = '';
+        localStorage.removeItem('playerId');
+        return false;
+      }
+      const payload = await res.json();
+      const player = payload.player || {};
+      ownerId = player.id || ownerId;
+      const loginName = sanitizePlayerDisplayName(player.loginName);
+      const displayName = sanitizePlayerDisplayName(player.displayName);
+      if (loginName) {
+        localStorage.setItem('playerLoginName', loginName);
+      }
+      if (ownerInput) {
+        ownerInput.value = displayName;
+      }
+      if (playerNameInput) {
+        playerNameInput.value = displayName;
+      }
+      if (displayName) {
+        localStorage.setItem('ownerName', displayName);
+      }
+      if (ownerId) {
+        localStorage.setItem('playerId', ownerId);
+      }
+      updatePlayerNameDisplay();
+      return true;
+    } catch (err) {
+      ownerId = '';
+      localStorage.removeItem('playerId');
+      return false;
+    }
+  }
+
+  async function isRefereeSession() {
+    try {
+      const res = await fetch('/state?view=referee');
+      return res.ok;
+    } catch (_err) {
+      return false;
+    }
+  }
+
+  async function ensureOwnerId() {
+    if (!ownerId || !isValidUuid(ownerId)) {
+      const loginName = getPlayerLoginName();
+      if (currentCampaignName && loginName) {
+        try {
+          await joinPlayerSession(loginName);
+          return ownerId;
+        } catch (err) {
+          console.error('Failed to join player session:', err);
+        }
+      }
+      throw new Error('Player login name is required.');
     }
     localStorage.setItem('playerId', ownerId);
     return ownerId;
   }
 
+  function getCharacterControllerName(character) {
+    if (!character) return '';
+    const claimedDisplayName = typeof character.claimedDisplayName === 'string'
+      ? character.claimedDisplayName.trim()
+      : '';
+    if (claimedDisplayName) return claimedDisplayName;
+    if (character.isReferee) return 'Referee';
+    return '';
+  }
+
   function renderCharacterList() {
     if (!characterList) return;
     characterList.innerHTML = '';
-    if (selectionToolbarAnchor && detailsToggles) {
-      selectionToolbarAnchor.appendChild(detailsToggles);
+    if (selectionToolbarAnchor) {
+      selectionToolbarAnchor.classList.add('hidden');
     }
 
     if (myCharacters.length === 0) {
@@ -1170,8 +1413,9 @@ window.addEventListener('DOMContentLoaded', () => {
         item.appendChild(initiativeActions);
       }
 
-      if (character.id === selectedCharacterId && detailsToggles) {
-        item.appendChild(detailsToggles);
+      if (character.id === selectedCharacterId && selectionToolbarAnchor) {
+        selectionToolbarAnchor.classList.remove('hidden');
+        item.appendChild(selectionToolbarAnchor);
       }
 
       item.addEventListener('click', () => {
@@ -1186,6 +1430,80 @@ window.addEventListener('DOMContentLoaded', () => {
       removeCharacterBtn.disabled = !canRemove;
       removeCharacterBtn.setAttribute('aria-disabled', (!canRemove).toString());
     }
+    updateReleaseButtonState();
+
+    renderClaimableCharacterList();
+  }
+
+  function renderClaimableCharacterList() {
+    if (!claimableCharacterList) return;
+    claimableCharacterList.innerHTML = '';
+
+    if (!currentCampaignId) {
+      if (claimableCharacterPanel) {
+        claimableCharacterPanel.classList.add('hidden');
+        claimableCharacterPanel.setAttribute('aria-hidden', 'true');
+      }
+      return;
+    }
+
+    if (claimableCharacterPanel) {
+      claimableCharacterPanel.classList.toggle('hidden', displayOnly);
+      claimableCharacterPanel.setAttribute('aria-hidden', displayOnly.toString());
+    }
+
+    const unclaimedCharacters = claimableCharacters.filter((character) =>
+      !character.isReferee && !character.claimedSessionId
+    );
+
+    if (unclaimedCharacters.length === 0) {
+      if (claimableCharacterPanel) {
+        claimableCharacterPanel.classList.add('hidden');
+        claimableCharacterPanel.setAttribute('aria-hidden', 'true');
+      }
+      return;
+    }
+
+    if (claimableCharacterPanel) {
+      claimableCharacterPanel.classList.remove('hidden');
+      claimableCharacterPanel.setAttribute('aria-hidden', 'false');
+    }
+
+    unclaimedCharacters.forEach((character) => {
+      const item = document.createElement('div');
+      item.className = 'claimable-character-item unclaimed';
+
+      const name = document.createElement('div');
+      name.className = 'claimable-character-name';
+      name.textContent = character.name || 'Unnamed Character';
+      item.appendChild(name);
+
+      const meta = document.createElement('div');
+      meta.className = 'claimable-character-meta';
+      const metaParts = ['Unclaimed'];
+      if (character.ownerName) {
+        metaParts.push(`created by ${character.ownerName}`);
+      }
+      if (character.lastPlayedByName) {
+        metaParts.push(`last played by ${character.lastPlayedByName}`);
+      }
+      meta.textContent = metaParts.join(' • ');
+      item.appendChild(meta);
+
+      const actions = document.createElement('div');
+      actions.className = 'claimable-character-actions';
+      const claimButton = document.createElement('button');
+      claimButton.type = 'button';
+      claimButton.textContent = 'Claim';
+      claimButton.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        await claimCharacter(character);
+      });
+      actions.appendChild(claimButton);
+      item.appendChild(actions);
+
+      claimableCharacterList.appendChild(item);
+    });
   }
 
   function clearPendingCharacterSaveTimers() {
@@ -1370,6 +1688,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function clearCharacterSelection() {
     selectedCharacterId = null;
     localStorage.removeItem('selectedCharacterId');
+    closeCharacterOverflowMenu();
     nameInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.currentInput) entry.currentInput.value = '';
@@ -1472,7 +1791,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (!currentCampaignName) {
+    if (!currentCampaignId) {
       myCharacters = [];
       selectedCharacterId = null;
       renderCharacterList();
@@ -1482,11 +1801,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
       await ensureOwnerId();
-      const campaignQuery = currentCampaignName
-        ? `?campaign=${encodeURIComponent(currentCampaignName)}`
-        : '';
       const res = await fetch(
-        `/players/${encodeURIComponent(ownerId)}/characters${campaignQuery}`
+        `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters`
       );
       if (!res.ok) throw new Error('Server returned ' + res.status);
       myCharacters = await res.json();
@@ -1505,64 +1821,143 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function loadClaimableCharacters() {
+    if (!currentCampaignId || displayOnly) {
+      claimableCharacters = [];
+      renderClaimableCharacterList();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/campaigns/${encodeURIComponent(currentCampaignId)}/characters`);
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      claimableCharacters = await res.json();
+      renderClaimableCharacterList();
+    } catch (err) {
+      console.error('Failed to load claimable characters:', err);
+      claimableCharacters = [];
+      renderClaimableCharacterList();
+    }
+  }
+
+  async function refreshCharacterState(ownerName) {
+    await loadCharactersForOwner(ownerName);
+    await loadClaimableCharacters();
+  }
+
+  async function claimCharacter(character) {
+    if (!character || !currentCampaignId) return;
+    try {
+      statusDiv.textContent = 'Claiming character...';
+      const res = await fetch(
+        `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters/${encodeURIComponent(character.id)}/claim`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        throw new Error(await responseErrorMessage(res));
+      }
+      statusDiv.textContent = '';
+      await refreshCharacterState(getOwnerName());
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      statusDiv.textContent = `Claim failed: ${message}`;
+    }
+  }
+
+  async function releaseClaimForCharacter(character) {
+    if (!character || !currentCampaignId) return;
+    try {
+      statusDiv.textContent = 'Releasing character...';
+      const res = await fetch(
+        `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters/${encodeURIComponent(character.id)}/release`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        throw new Error(await responseErrorMessage(res));
+      }
+      statusDiv.textContent = '';
+      await refreshCharacterState(getOwnerName());
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      statusDiv.textContent = `Release failed: ${message}`;
+    }
+  }
+
   async function loadCampaign() {
     try {
       const res = await fetch('/campaign');
       if (!res.ok) {
         if (res.status === 409) {
           currentCampaignName = '';
+          currentCampaignId = '';
           currentRulesetId = '';
           localStorage.removeItem('campaignName');
-          if (campaignNameLabel) {
-            campaignNameLabel.textContent = 'Campaign';
-          }
-          if (playerCampaignName) {
-            playerCampaignName.textContent = 'Campaign';
-          }
-          if (displayCampaignName) {
-            displayCampaignName.textContent = 'Campaign';
-          }
-          updateRulesetLink('', null);
+          updateCampaignHeader(
+            {
+              nameTargets: campaignHeaderNameTargets,
+              iconTargets: campaignHeaderIconTargets,
+              linkTargets: campaignHeaderLinkTargets,
+              licenseTargets: campaignHeaderLicenseTargets
+            },
+            {
+              campaignName: null,
+              rulesetLabel: '',
+              rulesBaseUrl: null,
+              licenseUrl: null,
+              iconUrl: APP_ICON_URL
+            }
+          );
           updateWindowTitle();
           await loadConditionLibraryFromServer();
-          await loadCharactersForOwner(getOwnerName());
+          await refreshCharacterState(getOwnerName());
           return false;
         }
         throw new Error('Server returned ' + res.status);
       }
       const campaign = await res.json();
+      currentCampaignId = campaign.id || '';
       currentCampaignName = campaign.name || '';
       currentRulesetId = campaign.rulesetId || '';
       localStorage.setItem('campaignName', currentCampaignName);
-      if (campaignNameLabel) {
-        campaignNameLabel.textContent = currentCampaignName || 'Campaign';
-      }
-      if (playerCampaignName) {
-        playerCampaignName.textContent = currentCampaignName || 'Campaign';
-      }
-      if (displayCampaignName) {
-        displayCampaignName.textContent = currentCampaignName || 'Campaign';
-      }
-      updateRulesetLink(campaign.rulesetLabel || '', null);
+      updateCampaignHeader(
+        {
+          nameTargets: campaignHeaderNameTargets,
+          linkTargets: campaignHeaderLinkTargets,
+          licenseTargets: campaignHeaderLicenseTargets
+        },
+        {
+          campaignName: currentCampaignName || null,
+          rulesetLabel: campaign.rulesetLabel || '',
+          rulesBaseUrl: null,
+          licenseUrl: null
+        }
+      );
       updateWindowTitle();
       await loadConditionLibraryFromServer();
-      await loadCharactersForOwner(getOwnerName());
+      await refreshCharacterState(getOwnerName());
       return true;
     } catch (err) {
       console.error('Failed to load campaign:', err);
+      currentCampaignId = '';
       currentCampaignName = localStorage.getItem('campaignName') || '';
-      if (campaignNameLabel) {
-        campaignNameLabel.textContent = currentCampaignName || 'Campaign';
-      }
-      if (playerCampaignName) {
-        playerCampaignName.textContent = currentCampaignName || 'Campaign';
-      }
-      if (displayCampaignName) {
-        displayCampaignName.textContent = currentCampaignName || 'Campaign';
-      }
+      updateCampaignHeader(
+        {
+          nameTargets: campaignHeaderNameTargets,
+          iconTargets: campaignHeaderIconTargets,
+          linkTargets: campaignHeaderLinkTargets,
+          licenseTargets: campaignHeaderLicenseTargets
+        },
+        {
+          campaignName: currentCampaignName || null,
+          rulesetLabel: '',
+          rulesBaseUrl: null,
+          licenseUrl: null,
+          iconUrl: currentCampaignName ? undefined : APP_ICON_URL
+        }
+      );
       updateWindowTitle();
       await loadConditionLibraryFromServer();
-      await loadCharactersForOwner(getOwnerName());
+      await refreshCharacterState(getOwnerName());
       return false;
     }
   }
@@ -1734,10 +2129,13 @@ window.addEventListener('DOMContentLoaded', () => {
   if (ownerInput) {
     ownerInput.addEventListener('change', async () => {
       const ownerName = getOwnerName();
-      localStorage.setItem('ownerName', ownerName);
-      updatePlayerNameDisplay();
-      if (playerNameInput) playerNameInput.value = ownerName;
-      await loadCharactersForOwner(ownerName);
+      if (!ownerName) return;
+      try {
+        await joinPlayerSession(ownerName);
+        await refreshCharacterState(ownerName);
+      } catch (err) {
+        console.error('Failed to join player session:', err);
+      }
     });
   }
 
@@ -1764,6 +2162,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (playerNameCancelBtn && playerNameInput) {
     playerNameCancelBtn.addEventListener('click', () => {
+      if (!getOwnerName()) {
+        playerNameInput.focus();
+        playerNameInput.select();
+        return;
+      }
       playerNameInput.value = getOwnerName();
       updatePlayerNameDisplay();
       showPlayerNameEdit(false);
@@ -1775,24 +2178,42 @@ window.addEventListener('DOMContentLoaded', () => {
     playerNameSaveBtn.addEventListener('click', async () => {
       const newName = playerNameInput.value.trim();
       if (!newName) return;
-      await ensureOwnerId();
       try {
-        const res = await fetch(`/players/${encodeURIComponent(ownerId)}/rename`, {
-          method: 'POST',
+        let res = await fetch('/player/session', {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: newName })
+          body: JSON.stringify({ displayName: newName })
         });
-        if (!res.ok) {
-          throw new Error('Server returned ' + res.status);
+        if (res.status === 401) {
+          statusDiv.textContent = 'No player session found. Rejoining...';
+          await joinPlayerSession(newName);
+          if (ownerInput) ownerInput.value = newName;
+          if (playerNameInput) playerNameInput.value = newName;
+          updatePlayerNameDisplay();
+          await refreshCharacterState(newName);
+          showPlayerNameEdit(false);
+          return;
         }
+        if (!res.ok) {
+          throw new Error(await responseErrorMessage(res));
+        }
+        const payload = await res.json();
+        const player = payload.player || {};
+        ownerId = player.id || ownerId;
+        const savedName = player.displayName || newName;
+        localStorage.setItem('playerId', ownerId);
+        localStorage.setItem('ownerName', savedName);
+        if (ownerInput) ownerInput.value = savedName;
+        if (playerNameInput) playerNameInput.value = savedName;
+        updatePlayerNameDisplay();
+        await refreshCharacterState(savedName);
+        statusDiv.textContent = '';
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
         console.error('Failed to rename player:', err);
+        statusDiv.textContent = `Rename failed: ${message}`;
       }
-      ownerInput.value = newName;
-      localStorage.setItem('ownerName', newName);
-      updatePlayerNameDisplay();
       showPlayerNameEdit(false);
-      await loadCharactersForOwner(newName);
     });
   }
 
@@ -1818,6 +2239,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (removeCharacterBtn) {
     if (!displayOnly) {
       removeCharacterBtn.addEventListener('click', () => {
+        closeCharacterOverflowMenu();
         const selected = myCharacters.find((character) => character.id === selectedCharacterId);
         if (!selected) return;
         const confirmed = confirm(`Remove ${selected.name} from the tracker?`);
@@ -1828,6 +2250,35 @@ window.addEventListener('DOMContentLoaded', () => {
       removeCharacterBtn.style.display = 'none';
     }
   }
+
+  if (releaseCharacterBtn) {
+    releaseCharacterBtn.addEventListener('click', async () => {
+      closeCharacterOverflowMenu();
+      const selected = selectedCharacterId
+        ? myCharacters.find((character) => character.id === selectedCharacterId)
+        : null;
+      if (!selected || selected.claimedSessionId !== ownerId) return;
+      await releaseClaimForCharacter(selected);
+    });
+  }
+
+  if (characterOverflowToggle) {
+    characterOverflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (!selectedCharacterId) return;
+      toggleCharacterOverflowMenu();
+    });
+  }
+
+  if (characterOverflowMenu) {
+    characterOverflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+  }
+
+  document.addEventListener('click', () => {
+    closeCharacterOverflowMenu();
+  });
 
   updateSelectedConditionsDisplay();
 
@@ -1910,7 +2361,7 @@ window.addEventListener('DOMContentLoaded', () => {
       selectedCharacterId = savedCharacter.id;
       localStorage.setItem('selectedCharacterId', selectedCharacterId);
       hideAddForm();
-      await loadCharactersForOwner(ownerName);
+      await refreshCharacterState(ownerName);
       await loadState();
     } catch (err) {
       statusDiv.textContent = 'Error: ' + err.message;
@@ -1918,13 +2369,37 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function initApp() {
-    await ensureOwnerId();
+    const hadPlayerSession = await bootstrapPlayerSession();
+    updatePlayerEntryGate();
     if (ownerInput && !ownerInput.value.trim()) {
-      ownerInput.value = ownerId;
-      localStorage.setItem('ownerName', ownerId);
+      const savedOwnerName = sanitizePlayerDisplayName(localStorage.getItem('ownerName'));
+      ownerInput.value = savedOwnerName;
     }
     updatePlayerNameDisplay();
+    if (!displayOnly) {
+      if (!hadPlayerSession && !getBootstrapPlayerName()) {
+        if (!isJoinPage()) {
+          window.location.replace('/index.html');
+          return;
+        }
+      }
+    }
     await loadCampaign();
+    if (!displayOnly && currentCampaignName && !hadPlayerSession) {
+      const savedOwnerName = getBootstrapPlayerName();
+      if (!savedOwnerName) {
+        updatePlayerNameDisplay();
+        await loadState();
+        setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
+        return;
+      }
+      try {
+        await joinPlayerSession(savedOwnerName);
+        await refreshCharacterState(savedOwnerName);
+      } catch (err) {
+        console.error('Failed to bootstrap player session:', err);
+      }
+    }
     await loadState();
     setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
   }
@@ -2033,21 +2508,23 @@ window.addEventListener('DOMContentLoaded', () => {
             conditionsTd.classList.add('conditions-cell');
 
             initTd.textContent = formatInitiative(p.initiative);
-            if (p.ownerName && p.ownerName.toLowerCase() === 'referee') {
+            if (p.isReferee) {
               initTd.classList.add('init-referee');
             }
             nameTd.innerHTML = '';
             const nameLine = document.createElement('div');
             nameLine.textContent = p.name;
             nameTd.appendChild(nameLine);
-            if (p.ownerName) {
+            const controllerName = getCharacterControllerName(p);
+            if (controllerName) {
               const ownerLine = document.createElement('div');
               ownerLine.classList.add('player-owner');
-              ownerLine.textContent = `(${p.ownerName})`;
+              ownerLine.textContent = `(${controllerName})`;
               nameTd.appendChild(ownerLine);
             }
 
             const isMine =
+              !displayOnly &&
               Boolean(ownerId) &&
               ((p.ownerId && p.ownerId === ownerId) ||
                 myCharacters.some((character) => character.id === p.id));
@@ -2112,6 +2589,8 @@ window.addEventListener('DOMContentLoaded', () => {
         lastTurnId = currentTurnId;
       }
 
+      await loadClaimableCharacters();
+
     } catch (err) {
       statusDiv.textContent = 'Error loading state: ' + err.message;
     }
@@ -2120,12 +2599,13 @@ window.addEventListener('DOMContentLoaded', () => {
   // --- Save player (add/update this client's entry) ------------------------
 
   async function persistCharacterPayload(payload, { showStatus = true, successMessage = '' } = {}) {
-    const ownerName = payload.ownerName || getOwnerName();
-    if (showStatus) {
-      statusDiv.textContent = 'Saving...';
-    }
+      const ownerName = payload.ownerName || getOwnerName();
+      const safeOwnerName = sanitizePlayerDisplayName(ownerName) || 'Player';
+      if (showStatus) {
+        statusDiv.textContent = 'Saving...';
+      }
 
-    localStorage.setItem('ownerName', ownerName);
+    localStorage.setItem('ownerName', safeOwnerName);
 
     try {
       await ensureOwnerId();
@@ -2158,7 +2638,7 @@ window.addEventListener('DOMContentLoaded', () => {
       updateConditionsAvailability();
 
       lastStateJson = null;
-      await loadCharactersForOwner(ownerName);
+      await refreshCharacterState(safeOwnerName);
       await loadState();
       return savedCharacter;
     } catch (err) {

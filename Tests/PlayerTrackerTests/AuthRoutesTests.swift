@@ -10,8 +10,7 @@ final class AuthRoutesTests: XCTestCase {
 
         let signupPayload = AuthSignupInput(
             email: "owner@example.com",
-            password: "s3cr3t-password",
-            displayName: "Parent"
+            password: "s3cr3t-password"
         )
         let signupResponse = try await tester.sendRequest(
             .POST,
@@ -22,7 +21,6 @@ final class AuthRoutesTests: XCTestCase {
         XCTAssertEqual(signupResponse.status, .ok)
         let signupSession = try signupResponse.content.decode(AuthSessionResponse.self)
         XCTAssertEqual(signupSession.user.email, "owner@example.com")
-        XCTAssertEqual(signupSession.user.displayName, "Parent")
         let signupCookie = try XCTUnwrap(signupResponse.headers.first(name: .setCookie))
         let signupToken = try XCTUnwrap(signupCookie.split(separator: ";").first?.split(separator: "=").last)
 
@@ -70,8 +68,7 @@ final class AuthRoutesTests: XCTestCase {
 
         let payload = AuthSignupInput(
             email: "owner@example.com",
-            password: "s3cr3t-password",
-            displayName: "Parent"
+            password: "s3cr3t-password"
         )
 
         let firstResponse = try await tester.sendRequest(
@@ -98,8 +95,7 @@ final class AuthRoutesTests: XCTestCase {
 
         let signupPayload = AuthSignupInput(
             email: "owner@example.com",
-            password: "s3cr3t-password",
-            displayName: "Parent"
+            password: "s3cr3t-password"
         )
         let signupResponse = try await tester.sendRequest(
             .POST,
@@ -135,7 +131,6 @@ final class AuthRoutesTests: XCTestCase {
         let userID = try await DatabasePersistence.createUser(
             email: "owner@example.com",
             passwordHash: "hash-value",
-            displayName: "Parent",
             on: app.db
         )
         let token = try await DatabasePersistence.createSession(
@@ -169,8 +164,7 @@ final class AuthRoutesTests: XCTestCase {
 
         let signupPayload = AuthSignupInput(
             email: "owner@example.com",
-            password: "s3cr3t-password",
-            displayName: "Parent"
+            password: "s3cr3t-password"
         )
         let signupResponse = try await tester.sendRequest(
             .POST,

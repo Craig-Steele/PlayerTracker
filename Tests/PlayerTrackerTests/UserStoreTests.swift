@@ -89,6 +89,62 @@ final class UserStoreTests: XCTestCase {
         XCTAssertFalse(revealed.revealOnTurn)
     }
 
+    func testStaleClaimExpiresAfterClaimTimeout() async throws {
+        let store = UserStore()
+        let campaignName = "Timeout"
+        let claimed = await addCharacter(
+            to: store,
+            campaignName: campaignName,
+            ownerName: "Player",
+            characterName: "Scout",
+            initiative: 12
+        )
+
+        await store.debugSetClaimTimestamp(
+            id: claimed.id,
+            claimedAt: Date().addingTimeInterval(-10 * 60)
+        )
+        await store.expireStaleClaims(campaignName: campaignName, claimTimeoutMinutes: 5)
+
+        let updated = await store.characterState(for: claimed.id)
+        XCTAssertNil(updated?.claimedSessionId)
+        XCTAssertNil(updated?.claimedDisplayName)
+        XCTAssertNil(updated?.claimedAt)
+    }
+
+    func testZeroClaimTimeoutUsesDisconnectLease() async throws {
+        let store = UserStore()
+        let campaignName = "Disconnect"
+        let claimed = await addCharacter(
+            to: store,
+            campaignName: campaignName,
+            ownerName: "Player",
+            characterName: "Scout",
+            initiative: 12
+        )
+
+        await store.touchClaims(
+            for: claimed.ownerId,
+            campaignName: campaignName,
+            claimTimeoutMinutes: 0
+        )
+        await store.expireStaleClaims(campaignName: campaignName, claimTimeoutMinutes: 0)
+
+        let refreshed = await store.characterState(for: claimed.id)
+        XCTAssertEqual(refreshed?.claimedSessionId, claimed.ownerId)
+
+        await store.debugSetClaimTimestamp(
+            id: claimed.id,
+            claimedAt: Date().addingTimeInterval(-10)
+        )
+        await store.expireStaleClaims(campaignName: campaignName, claimTimeoutMinutes: 0)
+
+        let expired = await store.characterState(for: claimed.id)
+        XCTAssertNil(expired?.claimedSessionId)
+        XCTAssertNil(expired?.claimedDisplayName)
+        XCTAssertNil(expired?.claimedAt)
+    }
+
     @discardableResult
     private func addCharacter(
         to store: UserStore,
