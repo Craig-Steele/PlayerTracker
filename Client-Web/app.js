@@ -60,6 +60,33 @@ const { filterClaimableCharacters } = window.PlayerTrackerClaimableCharacters ||
 const { collectStatPayloadFromInputs } = window.PlayerTrackerStatInputs || {
   collectStatPayloadFromInputs: () => []
 };
+const {
+  SESSION_EXPIRED_MESSAGE,
+  resolvePlayerNameSaveOutcome
+} = window.Roll4InitiativePlayerNameSave || {
+  SESSION_EXPIRED_MESSAGE: 'Player session expired. Please rejoin from the join page.',
+  resolvePlayerNameSaveOutcome: ({ status, responsePayload, enteredName }) => {
+    if (status === 401) {
+      return {
+        kind: 'session-expired',
+        message: 'Player session expired. Please rejoin from the join page.'
+      };
+    }
+    if (status < 200 || status >= 300) {
+      return {
+        kind: 'error',
+        message: `Server returned ${status}`
+      };
+    }
+    const player = responsePayload?.player || {};
+    return {
+      kind: 'saved',
+      playerId: player.id || '',
+      displayName: player.displayName || enteredName || '',
+      message: ''
+    };
+  }
+};
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
 
@@ -2213,21 +2240,25 @@ window.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ displayName: newName })
         });
-        if (res.status === 401) {
-          statusDiv.textContent = 'No player session found. Rejoining...';
-          await joinPlayerSession(newName);
-          if (ownerInput) ownerInput.value = newName;
-          if (playerNameInput) playerNameInput.value = newName;
-          updatePlayerNameDisplay();
-          await refreshCharacterState(newName);
+        const outcome = resolvePlayerNameSaveOutcome({
+          status: res.status,
+          responsePayload: res.status >= 200 && res.status < 300 ? await res.json().catch(() => ({})) : null,
+          enteredName: newName
+        });
+        if (outcome.kind === 'session-expired') {
+          statusDiv.textContent = SESSION_EXPIRED_MESSAGE;
+          currentPlayerSessionId = '';
+          await bootstrapPlayerSession();
           showPlayerNameEdit(false);
           return;
         }
-        if (!res.ok) {
-          throw new Error(await responseErrorMessage(res));
+        if (outcome.kind === 'error') {
+          throw new Error(outcome.message);
         }
-        const payload = await res.json();
-        const player = payload.player || {};
+        const player = (outcome && outcome.kind === 'saved') ? {
+          id: outcome.playerId,
+          displayName: outcome.displayName
+        } : {};
         currentPlayerSessionId = player.id || currentPlayerSessionId;
         const savedName = player.displayName || newName;
         if (ownerInput) ownerInput.value = savedName;
