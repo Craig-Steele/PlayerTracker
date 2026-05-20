@@ -28,7 +28,14 @@
       };
     }
 
-    if (!hasCampaignAccess(memberships, currentCampaign.id)) {
+    if (hasRefereeAccess) {
+      return {
+        state: 'forwarded',
+        destination: '/referee.html'
+      };
+    }
+
+    if (currentCampaign.isInviteOnly && !hasCampaignAccess(memberships, currentCampaign.id)) {
       return {
         state: 'denied',
         message: 'You do not have access to the active campaign on this server. Contact the server admin or campaign referee for access.'
@@ -37,7 +44,7 @@
 
     return {
       state: 'forwarded',
-      destination: hasRefereeAccess ? '/referee.html' : '/player.html'
+      destination: '/player.html'
     };
   }
 

@@ -922,23 +922,13 @@ Status: complete
 
 Goal: move the browser client from local identity to authenticated, multi-campaign identity.
 
-Current problem areas live in `Client-Web/app.js`:
+Work completed:
 
-- `localStorage.playerId`
-- `localStorage.ownerName`
-- owner-based character fetch/save
-- implicit single-campaign assumptions
-
-Work:
-
-- add auth bootstrap flow
-- add session restore flow
-- replace local `ownerId` identity with server `/auth/session` + `/me`
-- add active-campaign display and membership view
-- add SSE subscription lifecycle for the selected campaign
-- update the display web experience to show the current referee(s)
-- switch all character operations to campaign-scoped authenticated routes
-- keep local storage only for UI drafts and optional convenience state
+- removed the remaining browser-local identity assumptions from `Client-Web/app.js`
+- kept `localStorage` only for UI convenience and drafts, not authority or ownership
+- moved player session handling to the authenticated server session
+- aligned the player, referee, display, and join pages around server-driven campaign state
+- made the display experience event-driven after the initial load
 
 Acceptance:
 
@@ -947,6 +937,8 @@ Acceptance:
 - web no longer depends on persistent browser identity for ownership
 - live state updates arrive via SSE in normal operation
 - display mode surfaces the current referee(s)
+
+Status: complete
 
 ### M7A: GM Tools
 

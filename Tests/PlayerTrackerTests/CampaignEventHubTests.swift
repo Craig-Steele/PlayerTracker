@@ -73,4 +73,24 @@ final class CampaignEventHubTests: XCTestCase {
         XCTAssertEqual(message?.snapshot.gameState.round, 4)
         XCTAssertEqual(message?.snapshot.gameState.currentTurnName, "Hero")
     }
+
+    func testCampaignEventHubShutdownFinishesStreams() async throws {
+        let hub = CampaignEventHub()
+        let campaign = CampaignState(
+            id: UUID(),
+            name: "Live Campaign",
+            rulesetId: "traveller",
+            rulesetLabel: "Traveller (SRD)",
+            encounterState: .active,
+            claimTimeoutMinutes: 5,
+            isInviteOnly: false
+        )
+        let stream = await hub.subscribe(campaignID: campaign.id)
+        var iterator = stream.makeAsyncIterator()
+
+        await hub.shutdown()
+
+        let message = await iterator.next()
+        XCTAssertNil(message)
+    }
 }

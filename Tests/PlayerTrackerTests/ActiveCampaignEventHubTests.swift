@@ -29,4 +29,15 @@ final class ActiveCampaignEventHubTests: XCTestCase {
         XCTAssertEqual(message?.snapshot.campaign?.id, campaign.id)
         XCTAssertEqual(message?.snapshot.campaign?.name, "Join Campaign")
     }
+
+    func testActiveCampaignEventHubShutdownFinishesStreams() async throws {
+        let hub = ActiveCampaignEventHub()
+        let stream = await hub.subscribe()
+        var iterator = stream.makeAsyncIterator()
+
+        await hub.shutdown()
+
+        let message = await iterator.next()
+        XCTAssertNil(message)
+    }
 }

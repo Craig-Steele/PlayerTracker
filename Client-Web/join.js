@@ -80,6 +80,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let restoreCampaigns = [];
   let playerSessionReady = false;
   let currentPlayerName = '';
+  let currentPlayerIsReferee = false;
   let editingPlayerName = false;
   let currentCampaign = null;
   let accessDenied = false;
@@ -172,40 +173,13 @@ window.addEventListener('DOMContentLoaded', () => {
         throw new Error(`Server returned ${membershipsRes.status}`);
       }
       const memberships = await membershipsRes.json();
-      try {
-        const refereeRes = await fetch('/state?view=referee');
-        const outcome = resolveJoinOutcome({
-          campaignLoaded,
-          currentCampaign,
-          currentPlayerName,
-          editingPlayerName,
-          memberships,
-          hasRefereeAccess: refereeRes.ok
-        });
-
-        if (outcome.state === 'denied') {
-          accessDenied = true;
-          setCampaignPanelVisible(false);
-          setStatus(outcome.message, true);
-          return 'denied';
-        }
-
-        if (outcome.state === 'forwarded') {
-          accessDenied = false;
-          window.location.replace(outcome.destination);
-          return 'forwarded';
-        }
-      } catch (_err) {
-        // Fall through to the player page below.
-      }
-
       const outcome = resolveJoinOutcome({
         campaignLoaded,
         currentCampaign,
         currentPlayerName,
         editingPlayerName,
         memberships,
-        hasRefereeAccess: false
+        hasRefereeAccess: Boolean(currentPlayerIsReferee)
       });
 
       if (outcome.state === 'denied') {
@@ -216,7 +190,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       accessDenied = false;
-      window.location.replace('/player.html');
+      window.location.replace(outcome.destination);
       return 'forwarded';
     } catch (_err) {
       const outcome = resolveJoinOutcome({
@@ -356,7 +330,13 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       );
       currentCampaign = campaign;
+      accessDenied = false;
       setJoinEnabled(true);
+      if (previousCampaignID && previousCampaignID !== campaign.id) {
+        currentPlayerIsReferee = false;
+        await restoreSession();
+        return true;
+      }
       if (currentPlayerName && !editingPlayerName) {
         const forwardState = await maybeForwardToCurrentView();
         if (forwardState === 'forwarded') {
@@ -367,10 +347,6 @@ window.addEventListener('DOMContentLoaded', () => {
         setStatus('Invite-only campaign. Ask the server owner or a referee to add you by name.');
       } else if (!accessDenied) {
         setStatus('');
-      }
-      if (previousCampaignID && previousCampaignID !== campaign.id) {
-        window.location.reload();
-        return true;
       }
       return true;
     } catch (err) {
@@ -421,6 +397,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const player = payload.player || {};
       const loginName = sanitizePlayerDisplayName(player.loginName);
       const displayName = sanitizePlayerDisplayName(player.displayName);
+      currentPlayerIsReferee = Boolean(player.isReferee);
       if (loginName) {
         localStorage.setItem('playerLoginName', loginName);
       }
@@ -464,6 +441,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const player = payload.player || {};
     const loginName = sanitizePlayerDisplayName(player.loginName) || trimmedName;
     const joinedName = sanitizePlayerDisplayName(player.displayName) || loginName;
+    currentPlayerIsReferee = Boolean(player.isReferee);
     if (player.id) {
       localStorage.setItem('playerId', player.id);
     }
@@ -510,6 +488,7 @@ window.addEventListener('DOMContentLoaded', () => {
           const payload = await res.json();
           const player = payload.player || {};
           const savedName = sanitizePlayerDisplayName(player.displayName) || enteredName;
+          currentPlayerIsReferee = Boolean(player.isReferee);
           if (player.id) {
             localStorage.setItem('playerId', player.id);
           }
@@ -521,6 +500,7 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         const payload = await joinPlayerSession(enteredName);
         const player = payload.player || {};
+        currentPlayerIsReferee = Boolean(player.isReferee);
         if (player.displayName) {
           localStorage.setItem('ownerName', sanitizePlayerDisplayName(player.displayName));
         }

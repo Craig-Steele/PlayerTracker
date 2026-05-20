@@ -123,6 +123,7 @@ struct PlayerIdentityResponse: Content {
     let campaignID: UUID
     let loginName: String
     let displayName: String
+    let isReferee: Bool
 }
 
 struct CampaignMemberSummary: Content {

@@ -1,4 +1,5 @@
 import Foundation
+import Fluent
 import Vapor
 
 private let authSessionCookieName = "roll4_session"
@@ -44,6 +45,14 @@ private func setPlayerCookie(on response: Response, token: String, expiresAt: Da
     )
 }
 
+private func disableResponseCaching(_ response: inout Response) {
+    response.headers.replaceOrAdd(
+        name: .cacheControl,
+        value: "no-cache, no-store, must-revalidate"
+    )
+    response.headers.replaceOrAdd(name: .pragma, value: "no-cache")
+}
+
 private func clearPlayerCookie(on response: Response) {
     response.cookies[playerSessionCookieName] = .expired
 }
@@ -76,24 +85,39 @@ private func currentPlayerSession(_ req: Request) async throws -> PlayerSessionP
 
 private func playerIdentityResponse(
     from session: PlayerSessionPersistenceState,
-    campaignID: UUID
+    campaignID: UUID,
+    isReferee: Bool
 ) -> PlayerIdentityResponse {
     PlayerIdentityResponse(
         id: session.id,
         campaignID: campaignID,
         loginName: session.loginName,
-        displayName: session.displayName
+        displayName: session.displayName,
+        isReferee: isReferee
     )
 }
 
 private func playerSessionResponse(
     from session: PlayerSessionPersistenceState,
-    campaign: CampaignState
+    campaign: CampaignState,
+    isReferee: Bool
 ) -> PlayerSessionResponse {
     PlayerSessionResponse(
-        player: playerIdentityResponse(from: session, campaignID: campaign.id),
+        player: playerIdentityResponse(from: session, campaignID: campaign.id, isReferee: isReferee),
         campaign: campaign
     )
+}
+
+private func isRefereeSession(
+    _ session: PlayerSessionPersistenceState,
+    in campaignID: UUID,
+    on database: any Database
+) async throws -> Bool {
+    let refereeIDs = try await DatabasePersistence.loadCampaignRefereeSessionIDs(
+        campaignID: campaignID,
+        on: database
+    )
+    return refereeIDs.contains(session.id)
 }
 
 private func requireActiveCampaignSession(
@@ -318,6 +342,8 @@ func routes(
         let user = try await requireAuthenticatedUser(req)
         logConnection(req, action: "shutdown", identifier: user.email)
         Task {
+            await eventHub.shutdown()
+            await activeCampaignEventHub.shutdown()
             try? await Task.sleep(for: .milliseconds(200))
             try? await app.asyncShutdown()
         }
@@ -351,17 +377,22 @@ func routes(
                 on: req.db
             )
         }
+        let refereeAccess = try await isRefereeSession(session, in: campaign.id, on: req.db)
         let response = Response(status: .ok)
-        try response.content.encode(playerSessionResponse(from: session, campaign: campaign))
+        try response.content.encode(playerSessionResponse(from: session, campaign: campaign, isReferee: refereeAccess))
         setPlayerCookie(on: response, token: session.token, expiresAt: session.expiresAt)
         return response
     }
 
-    app.get("player", "session") { req async throws -> PlayerSessionResponse in
+    app.get("player", "session") { req async throws -> Response in
         let campaign = try await requireActiveCampaign(campaignStore)
         let session = try await requirePlayerSession(req)
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
-        return playerSessionResponse(from: session, campaign: campaign)
+        let refereeAccess = try await isRefereeSession(session, in: campaign.id, on: req.db)
+        var response = Response(status: .ok)
+        disableResponseCaching(&response)
+        try response.content.encode(playerSessionResponse(from: session, campaign: campaign, isReferee: refereeAccess))
+        return response
     }
 
     app.patch("player", "session") { req async throws -> Response in
@@ -389,26 +420,34 @@ func routes(
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: updated, userStore: userStore)
         await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
+        let refereeAccess = try await isRefereeSession(updated, in: campaign.id, on: req.db)
         let response = Response(status: .ok)
-        try response.content.encode(playerSessionResponse(from: updated, campaign: campaign))
+        try response.content.encode(playerSessionResponse(from: updated, campaign: campaign, isReferee: refereeAccess))
         setPlayerCookie(on: response, token: token, expiresAt: updated.expiresAt)
         return response
     }
 
-    app.get("me") { req async throws -> PlayerIdentityResponse in
+    app.get("me") { req async throws -> Response in
         let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
-        return playerIdentityResponse(from: session, campaignID: campaign.id)
+        let refereeAccess = try await isRefereeSession(session, in: campaign.id, on: req.db)
+        var response = Response(status: .ok)
+        disableResponseCaching(&response)
+        try response.content.encode(playerIdentityResponse(from: session, campaignID: campaign.id, isReferee: refereeAccess))
+        return response
     }
 
-    app.get("me", "campaigns") { req async throws -> [CampaignSummary] in
+    app.get("me", "campaigns") { req async throws -> Response in
         let session = try await requirePlayerSession(req)
         let campaignIDs = try await DatabasePersistence.loadCampaignIDs(
             for: session.id,
             on: req.db
         )
         let campaigns = try await campaignStore.campaigns()
-        return campaigns.filter { campaignIDs.contains($0.id) }
+        var response = Response(status: .ok)
+        disableResponseCaching(&response)
+        try response.content.encode(campaigns.filter { campaignIDs.contains($0.id) })
+        return response
     }
 
     app.get("campaigns", ":campaignId", "events") { req async throws -> Response in
@@ -486,7 +525,8 @@ func routes(
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: updated, userStore: userStore)
         await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
-        return playerIdentityResponse(from: updated, campaignID: campaign.id)
+        let refereeAccess = try await isRefereeSession(updated, in: campaign.id, on: req.db)
+        return playerIdentityResponse(from: updated, campaignID: campaign.id, isReferee: refereeAccess)
     }
 
     app.post("player", "logout") { req async throws -> Response in
@@ -1018,11 +1058,14 @@ func routes(
         return await campaignStore.library()
     }
 
-    app.get("campaign") { req async throws -> CampaignState in
+    app.get("campaign") { req async throws -> Response in
         guard let campaign = await campaignStore.activeCampaign() else {
             throw Abort(.conflict, reason: "No campaign selected")
         }
-        return campaign
+        var response = Response(status: .ok)
+        disableResponseCaching(&response)
+        try response.content.encode(campaign)
+        return response
     }
 
     app.get("campaign", "events") { req async throws -> Response in

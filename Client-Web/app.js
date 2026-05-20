@@ -51,6 +51,12 @@ const {
     return tr;
   }
 };
+const { filterClaimableCharacters } = window.PlayerTrackerClaimableCharacters || {
+  filterClaimableCharacters: (characters) =>
+    Array.isArray(characters)
+      ? characters.filter((character) => !character?.isReferee && !character?.claimedSessionId)
+      : []
+};
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
 
@@ -88,20 +94,6 @@ function hasRealPlayerName(value) {
   const trimmed = sanitizePlayerDisplayName(value);
   if (!trimmed) return false;
   return normalizePlayerName(trimmed) !== 'player';
-}
-
-function getPlayerLoginName() {
-  const savedLogin =
-    localStorage.getItem('playerLoginName') ||
-    localStorage.getItem('playerName');
-  if (hasRealPlayerName(savedLogin)) return sanitizePlayerDisplayName(savedLogin);
-  return '';
-}
-
-function getBootstrapPlayerName() {
-  const loginName = getPlayerLoginName();
-  if (hasRealPlayerName(loginName)) return loginName;
-  return '';
 }
 
 function isDisplayPath() {
@@ -302,7 +294,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let allowNegativeHealth = false;
   let supportsTempHp = false;
   let currentStandardDie = null;
-  let ownerId = localStorage.getItem('playerId') || '';
+  let currentPlayerSessionId = '';
   let statInputs = new Map();
   let addStatInputs = new Map();
   const perCharacterSaveTimers = new Map();
@@ -455,7 +447,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const selected = selectedCharacterId
       ? myCharacters.find((character) => character.id === selectedCharacterId)
       : null;
-    const canRelease = Boolean(selected && selected.claimedSessionId === ownerId);
+    const canRelease = Boolean(selected && selected.claimedSessionId === currentPlayerSessionId);
     releaseCharacterBtn.classList.toggle('hidden', !canRelease);
     releaseCharacterBtn.disabled = !canRelease;
     releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
@@ -592,19 +584,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (qrContainer) qrContainer.innerHTML = '';
   }
 
-  // Restore last-used owner name
-  const savedOwner =
-    localStorage.getItem('ownerName') || localStorage.getItem('playerName');
-  if (savedOwner && ownerInput) {
-    ownerInput.value = savedOwner;
-    localStorage.setItem('ownerName', savedOwner);
-  }
   updatePlayerNameDisplay();
   updateInitiativeBonusAvailability();
   updateAddInitiativeBonusAvailability();
-  if (playerNameInput && savedOwner) {
-    playerNameInput.value = savedOwner;
-  }
 
   if (nameInput) {
     nameInput.addEventListener('input', () => {
@@ -1032,10 +1014,10 @@ window.addEventListener('DOMContentLoaded', () => {
   async function saveCharacterEntry(character) {
     if (!character) return;
     try {
-      await ensureOwnerId();
+      await ensurePlayerSessionId();
       const payload = {
         id: character.id,
-        ownerId,
+        ownerId: currentPlayerSessionId,
         ownerName: character.ownerName,
         name: character.name,
         initiative: character.initiative,
@@ -1233,12 +1215,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const payload = await res.json();
     const player = payload.player || {};
-    ownerId = player.id || ownerId;
+    currentPlayerSessionId = player.id || currentPlayerSessionId;
     const loginName = sanitizePlayerDisplayName(player.loginName || trimmedName) || trimmedName;
     const displayNameValue = sanitizePlayerDisplayName(player.displayName) || loginName;
-    localStorage.setItem('playerId', ownerId);
-    localStorage.setItem('playerLoginName', loginName);
-    localStorage.setItem('ownerName', displayNameValue);
     if (ownerInput) ownerInput.value = displayNameValue;
     if (playerNameInput) playerNameInput.value = displayNameValue;
     updatePlayerNameDisplay();
@@ -1249,63 +1228,42 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/player/session');
       if (!res.ok) {
-        ownerId = '';
-        localStorage.removeItem('playerId');
+        currentPlayerSessionId = '';
         return false;
       }
       const payload = await res.json();
       const player = payload.player || {};
-      ownerId = player.id || ownerId;
+      currentPlayerSessionId = player.id || currentPlayerSessionId;
       const loginName = sanitizePlayerDisplayName(player.loginName);
       const displayName = sanitizePlayerDisplayName(player.displayName);
-      if (loginName) {
-        localStorage.setItem('playerLoginName', loginName);
-      }
       if (ownerInput) {
         ownerInput.value = displayName;
       }
       if (playerNameInput) {
         playerNameInput.value = displayName;
       }
-      if (displayName) {
-        localStorage.setItem('ownerName', displayName);
-      }
-      if (ownerId) {
-        localStorage.setItem('playerId', ownerId);
-      }
       updatePlayerNameDisplay();
       return true;
     } catch (err) {
-      ownerId = '';
-      localStorage.removeItem('playerId');
+      currentPlayerSessionId = '';
       return false;
     }
   }
 
-  async function isRefereeSession() {
-    try {
-      const res = await fetch('/state?view=referee');
-      return res.ok;
-    } catch (_err) {
-      return false;
-    }
-  }
-
-  async function ensureOwnerId() {
-    if (!ownerId || !isValidUuid(ownerId)) {
-      const loginName = getPlayerLoginName();
+  async function ensurePlayerSessionId() {
+    if (!currentPlayerSessionId || !isValidUuid(currentPlayerSessionId)) {
+      const loginName = getOwnerName();
       if (currentCampaignName && loginName) {
         try {
           await joinPlayerSession(loginName);
-          return ownerId;
+          return currentPlayerSessionId;
         } catch (err) {
           console.error('Failed to join player session:', err);
         }
       }
       throw new Error('Player login name is required.');
     }
-    localStorage.setItem('playerId', ownerId);
-    return ownerId;
+    return currentPlayerSessionId;
   }
 
   function getCharacterControllerName(character) {
@@ -1496,9 +1454,7 @@ window.addEventListener('DOMContentLoaded', () => {
       claimableCharacterPanel.setAttribute('aria-hidden', displayOnly.toString());
     }
 
-    const unclaimedCharacters = claimableCharacters.filter((character) =>
-      !character.isReferee && !character.claimedSessionId
-    );
+    const unclaimedCharacters = filterClaimableCharacters(claimableCharacters);
 
     if (unclaimedCharacters.length === 0) {
       if (claimableCharacterPanel) {
@@ -1557,7 +1513,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function syncMyCharacterStatsFromState(players) {
     if (displayOnly) return;
-    if (typeof ownerId === 'undefined' || !ownerId || !Array.isArray(players)) return;
+    if (typeof currentPlayerSessionId === 'undefined' || !currentPlayerSessionId || !Array.isArray(players)) return;
     if (encounterState === 'new') {
       clearPendingCharacterSaveTimers();
       myCharacters = myCharacters.map((character) => ({
@@ -1577,7 +1533,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const byId = new Map(
       players
-        .filter((player) => player.ownerId && player.ownerId === ownerId)
+        .filter((player) => player.ownerId && player.ownerId === currentPlayerSessionId)
         .map((player) => [player.id, player])
     );
     if (byId.size === 0) return;
@@ -1692,7 +1648,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     selectedCharacterId = found.id;
     isCreatingCharacter = false;
-    localStorage.setItem('selectedCharacterId', selectedCharacterId);
     nameInput.value = found.name;
     if (Array.isArray(found.stats)) {
       const statsByKey = new Map(found.stats.map((stat) => [stat.key, stat]));
@@ -1731,7 +1686,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function clearCharacterSelection() {
     selectedCharacterId = null;
-    localStorage.removeItem('selectedCharacterId');
     closeCharacterOverflowMenu();
     nameInput.value = '';
     statInputs.forEach((entry) => {
@@ -1844,7 +1798,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      await ensureOwnerId();
+      await ensurePlayerSessionId();
       const res = await fetch(
         `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters`
       );
@@ -1857,10 +1811,8 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       myCharacters = await res.json();
       applyDraftsToCharacters(ownerName, myCharacters);
-      const savedCharacterId = localStorage.getItem('selectedCharacterId');
-      if (savedCharacterId && myCharacters.some((c) => c.id === savedCharacterId)) {
-        selectedCharacterId = savedCharacterId;
-        selectCharacter(savedCharacterId);
+      if (selectedCharacterId && myCharacters.some((c) => c.id === selectedCharacterId)) {
+        selectCharacter(selectedCharacterId);
       } else if (myCharacters.length > 0) {
         selectCharacter(myCharacters[0].id);
       } else {
@@ -1960,7 +1912,6 @@ window.addEventListener('DOMContentLoaded', () => {
           currentCampaignName = '';
           currentCampaignId = '';
           currentRulesetId = '';
-          localStorage.removeItem('campaignName');
           updateCampaignHeader(
             {
               nameTargets: campaignHeaderNameTargets,
@@ -1988,7 +1939,6 @@ window.addEventListener('DOMContentLoaded', () => {
       currentCampaignId = campaign.id || '';
       currentCampaignName = campaign.name || '';
       currentRulesetId = campaign.rulesetId || '';
-          localStorage.setItem('campaignName', currentCampaignName);
       updateCampaignHeader(
         {
           nameTargets: campaignHeaderNameTargets,
@@ -2014,7 +1964,7 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Failed to load campaign:', err);
       currentCampaignId = '';
-      currentCampaignName = localStorage.getItem('campaignName') || '';
+      currentCampaignName = '';
       updateCampaignHeader(
         {
           nameTargets: campaignHeaderNameTargets,
@@ -2275,10 +2225,8 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         const payload = await res.json();
         const player = payload.player || {};
-        ownerId = player.id || ownerId;
+        currentPlayerSessionId = player.id || currentPlayerSessionId;
         const savedName = player.displayName || newName;
-        localStorage.setItem('playerId', ownerId);
-        localStorage.setItem('ownerName', savedName);
         if (ownerInput) ownerInput.value = savedName;
         if (playerNameInput) playerNameInput.value = savedName;
         updatePlayerNameDisplay();
@@ -2333,7 +2281,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const selected = selectedCharacterId
         ? myCharacters.find((character) => character.id === selectedCharacterId)
         : null;
-      if (!selected || selected.claimedSessionId !== ownerId) return;
+      if (!selected || selected.claimedSessionId !== currentPlayerSessionId) return;
       await releaseClaimForCharacter(selected);
     });
   }
@@ -2400,7 +2348,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      await ensureOwnerId();
+      await ensurePlayerSessionId();
       const conditionList = [];
       const initiativeBonusRaw = addInitiativeBonusInput ? addInitiativeBonusInput.value.trim() : '0';
       const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
@@ -2409,7 +2357,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const payload = {
-        ownerId,
+        ownerId: currentPlayerSessionId,
         ownerName,
         name,
         initiative: null,
@@ -2445,7 +2393,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const savedCharacter = await characterRes.json();
       selectedCharacterId = savedCharacter.id;
-      localStorage.setItem('selectedCharacterId', selectedCharacterId);
       hideAddForm();
       await refreshCharacterState(ownerName);
       await loadState();
@@ -2457,13 +2404,9 @@ window.addEventListener('DOMContentLoaded', () => {
   async function initApp() {
     const hadPlayerSession = await bootstrapPlayerSession();
     updatePlayerEntryGate();
-    if (ownerInput && !ownerInput.value.trim()) {
-      const savedOwnerName = sanitizePlayerDisplayName(localStorage.getItem('ownerName'));
-      ownerInput.value = savedOwnerName;
-    }
     updatePlayerNameDisplay();
     if (!displayOnly) {
-      if (!hadPlayerSession && !getBootstrapPlayerName()) {
+      if (!hadPlayerSession && !getOwnerName()) {
         if (!isJoinPage()) {
           window.location.replace('/index.html');
           return;
@@ -2472,7 +2415,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     await loadCampaign();
     if (!displayOnly && currentCampaignName && !hadPlayerSession) {
-      const savedOwnerName = getBootstrapPlayerName();
+      const savedOwnerName = getOwnerName();
       if (!savedOwnerName) {
         updatePlayerNameDisplay();
         await loadState();
@@ -2612,8 +2555,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
             const isMine =
               !displayOnly &&
-              Boolean(ownerId) &&
-              ((p.ownerId && p.ownerId === ownerId) ||
+              Boolean(currentPlayerSessionId) &&
+              ((p.ownerId && p.ownerId === currentPlayerSessionId) ||
                 myCharacters.some((character) => character.id === p.id));
             if (isMine) {
               initTd.classList.add('init-mine');
@@ -2676,11 +2619,10 @@ window.addEventListener('DOMContentLoaded', () => {
         lastTurnId = currentTurnId;
       }
 
-      await loadClaimableCharacters();
-
     } catch (err) {
       statusDiv.textContent = 'Error loading state: ' + err.message;
     } finally {
+      await loadClaimableCharacters();
       loadStateInFlight = false;
       if (loadStateRefreshQueued) {
         loadStateRefreshQueued = false;
@@ -2698,12 +2640,10 @@ window.addEventListener('DOMContentLoaded', () => {
         statusDiv.textContent = 'Saving...';
       }
 
-    localStorage.setItem('ownerName', safeOwnerName);
-
     try {
-      await ensureOwnerId();
+      await ensurePlayerSessionId();
       if (!payload.ownerId) {
-        payload.ownerId = ownerId;
+        payload.ownerId = currentPlayerSessionId;
       }
       if (currentCampaignName) {
         payload.campaignName = currentCampaignName;
@@ -2730,7 +2670,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const savedCharacter = await characterRes.json();
       selectedCharacterId = savedCharacter.id;
-      localStorage.setItem('selectedCharacterId', selectedCharacterId);
 
       if (showStatus) {
         statusDiv.textContent = successMessage;
@@ -2767,7 +2706,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const payload = {
       id: selectedCharacterId,
-      ownerId,
+      ownerId: currentPlayerSessionId,
       ownerName,
       name,
       initiative,
@@ -2797,7 +2736,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const conditionList = Array.from(selectedConditions);
     const payload = {
       id: selectedCharacterId,
-      ownerId,
+      ownerId: currentPlayerSessionId,
       ownerName,
       name: selectedCharacter.name,
       initiative: selectedCharacter.initiative,

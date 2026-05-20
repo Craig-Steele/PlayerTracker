@@ -2,10 +2,15 @@ import Foundation
 
 actor CampaignEventHub {
     private var subscribers: [UUID: [UUID: AsyncStream<CampaignStreamMessage>.Continuation]] = [:]
+    private var isShutdown = false
 
     func subscribe(campaignID: UUID) -> AsyncStream<CampaignStreamMessage> {
         let subscriberID = UUID()
         let (stream, continuation) = AsyncStream<CampaignStreamMessage>.makeStream()
+        guard !isShutdown else {
+            continuation.finish()
+            return stream
+        }
         var currentSubscribers = subscribers[campaignID] ?? [:]
         currentSubscribers[subscriberID] = continuation
         subscribers[campaignID] = currentSubscribers
@@ -18,6 +23,9 @@ actor CampaignEventHub {
     }
 
     func publish(campaignID: UUID, message: CampaignStreamMessage) {
+        guard !isShutdown else {
+            return
+        }
         guard let currentSubscribers = subscribers[campaignID] else {
             return
         }
@@ -26,7 +34,24 @@ actor CampaignEventHub {
         }
     }
 
+    func shutdown() {
+        guard !isShutdown else {
+            return
+        }
+        isShutdown = true
+        let currentSubscribers = subscribers
+        subscribers.removeAll()
+        for continuations in currentSubscribers.values {
+            for continuation in continuations.values {
+                continuation.finish()
+            }
+        }
+    }
+
     private func removeSubscriber(campaignID: UUID, subscriberID: UUID) {
+        guard !isShutdown else {
+            return
+        }
         guard var currentSubscribers = subscribers[campaignID] else {
             return
         }
