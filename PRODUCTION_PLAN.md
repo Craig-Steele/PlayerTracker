@@ -70,7 +70,7 @@ Launch authentication decision:
 - the server-owner/admin account does not need a display name
 - use campaign-local display names for players on the local server
 - let players reclaim unclaimed characters previously tied to the same display name when they reconnect
-- use invite- or join-based campaign entry on the local server
+- use name-based campaign entry on the local server, with admin/referee-managed membership for invite-only campaigns
 - defer email/password, magic-link, and social login until the core local identity model is proven
 
 ### 3. Multiple Devices Per User
@@ -116,16 +116,15 @@ Joining a campaign must be simple enough for normal users.
 
 Likely join paths:
 
-- invite link
-- invite code
-- QR join flow
+- direct name-based join after an admin or referee adds the player to the campaign
+- optional invite-link/QR helpers if we still want them later
 - display-name join/reclaim flow
 
 Impact:
 
 - campaign membership lifecycle must exist early
 - auth and campaign selection must work together
-- invite acceptance and character reclaim should not feel bolted on
+- campaign admission and character reclaim should not feel bolted on
 
 ### 6. Real-Time Synchronization Strategy
 
@@ -141,7 +140,7 @@ Impact:
 
 - turn changes
 - HP/condition updates
-- campaign switching
+- active-campaign changes
 - multi-device consistency
 
 Implementation direction:
@@ -607,14 +606,14 @@ Constrained by:
 
 - `M4` Accounts and sessions
 - `M5` Authorization and ownership rewrite
-- `M6` Campaign invites and memberships
+- `M6` Campaign membership and onboarding
 
 Constrained by:
 
 - durable account identity
 - multiple devices per user
 - campaign role model
-- onboarding/invite flow
+- onboarding and campaign membership flow
 - support/admin needs
 - per-server account model rather than a global SaaS account system
 
@@ -628,7 +627,7 @@ Constrained by:
 
 - Private Browsing compatibility
 - multi-device session behavior
-- campaign switching UX
+- active-campaign UX
 - degraded-network behavior
 - SSE client support and reconnect behavior
 - Apple TV/tvOS may be a future display-only client, but not a stable server target because the server needs long-lived uptime and tvOS background behavior is too constrained for that role
@@ -761,7 +760,7 @@ Acceptance:
 - if the previously active campaign still exists on startup, it is preselected in the chooser
 - active-campaign selection does not persist across restart
 - the referee page remains focused on active-campaign gameplay
-- the admin surface handles campaign selection and active-campaign switching
+- the admin surface handles campaign activation; players only join the active campaign
 - each campaign has independent round/turn/encounter/ruleset
 - one user can belong to multiple campaigns
 - switching the active campaign does not mutate another campaign's state
@@ -866,10 +865,8 @@ Work:
 - add campaign creation
 - add campaign membership permissions per campaign
 - add referee-role assignment and revocation per campaign
-- add campaign archive and unarchive support
-- add invite flow:
-  - `POST /campaigns/:campaignId/invites`
-  - `POST /invites/:token/accept`
+- add direct membership-by-name flow for admins/referees:
+  - `POST /campaigns/:campaignId/members`
 - make the join screen show unclaimed characters plus characters previously claimed by the same campaign-local player session when a reconnect is possible
 - add campaign list route:
   - `GET /me/campaigns`
@@ -879,10 +876,13 @@ Acceptance:
 - users can create and join multiple campaigns
 - permissions are enforced per campaign
 - referee assignment and revocation are campaign membership operations
+- campaign referees and admins can add players to their campaign by name
 - the referee UI can show the set of campaign members designated as referees and currently connected
 - the display UI can show the current referee(s) for the active campaign/session
 - the join flow can show previously claimed characters that are eligible for reclaim by the same campaign-local player session
 - no launch behavior depends on subscription plan caps or active-campaign counting
+
+Status: complete
 
 ### M6A: Server-Sent Events Real-Time Layer
 
@@ -932,7 +932,7 @@ Work:
 - add auth bootstrap flow
 - add session restore flow
 - replace local `ownerId` identity with server `/auth/session` + `/me`
-- add campaign chooser
+- add active-campaign display and membership view
 - add SSE subscription lifecycle for the selected campaign
 - update the display web experience to show the current referee(s)
 - switch all character operations to campaign-scoped authenticated routes
@@ -941,7 +941,7 @@ Work:
 Acceptance:
 
 - Private Browsing reconnect works via login
-- campaign switching is explicit
+- active-campaign activation is explicit and admin-controlled
 - web no longer depends on persistent browser identity for ownership
 - live state updates arrive via SSE in normal operation
 - display mode surfaces the current referee(s)
@@ -990,7 +990,7 @@ Work:
 Acceptance:
 
 - user can sign in and recover all campaigns/characters
-- same user can switch between campaigns on iPhone
+- same user can view joined campaigns and join the active campaign on iPhone
 - account identity survives app reinstall if credentials/session are re-entered
 - live state updates arrive via SSE in normal operation
 
@@ -1009,7 +1009,7 @@ Work:
 - add auth API calls
 - add login/signup/logout/session restore
 - remove `ownerId` as primary identity
-- add campaign chooser
+- add active-campaign display and membership view
 - add SSE client handling for selected campaign updates
 - move auth state into secure storage
 
@@ -1074,7 +1074,7 @@ Work:
 
 - server tests for auth, authorization, campaign scoping, and ownership
 - route tests for per-campaign access
-- client tests for auth bootstrap and campaign switching
+- client tests for auth bootstrap and active-campaign activation
 - end-to-end tests for:
   - sign up
   - create/join two campaigns
@@ -1155,7 +1155,7 @@ The launch authentication decision is already made:
 - use a local server-owner/admin account
 - keep the server-owner/admin account separate from player membership; admin login does not count as a player session
 - the server-owner/admin account does not need a display name
-- use invite- or join-based local player identities
+- use name-based local player identities with campaign membership on top
 - include password reset only if the later product model needs it
 - defer email/password, magic-link, and social login for later evaluation
 - identities are scoped to a chosen server, not a central SaaS identity system
