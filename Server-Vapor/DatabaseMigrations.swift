@@ -291,6 +291,32 @@ struct AddClaimTimeoutMinutesToCampaigns: AsyncMigration {
     }
 }
 
+struct AddInviteOnlyToCampaigns: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaigns)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "is_invite_only" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE campaigns ADD COLUMN is_invite_only INTEGER NOT NULL DEFAULT 0")
+                .run()
+            connection.logger.notice("Patched campaigns with is_invite_only.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct DatabaseShapeVerification {
     static func verify(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -356,10 +382,38 @@ struct DatabaseShapeVerification {
             let campaignColumns = try await sqlDatabase
                 .raw("PRAGMA table_info(campaigns)")
                 .all(decoding: SQLiteTableInfoRow.self)
-            guard campaignColumns.contains(where: { $0.name == "claim_timeout_minutes" }) else {
+            let requiredCampaignColumns = [
+                "claim_timeout_minutes",
+                "is_invite_only"
+            ]
+            let missingCampaignColumns = requiredCampaignColumns.filter { required in
+                campaignColumns.contains(where: { $0.name == required }) == false
+            }
+            guard missingCampaignColumns.isEmpty else {
                 throw Abort(
                     .internalServerError,
-                    reason: "Database schema is missing campaigns.claim_timeout_minutes."
+                    reason: "Database schema is missing campaigns columns: \(missingCampaignColumns.joined(separator: ", "))."
+                )
+            }
+
+            let inviteColumns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaign_invites)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            let requiredInviteColumns = [
+                "campaign_id",
+                "created_by_user_id",
+                "token_hash",
+                "invited_player_name",
+                "accepted_player_id",
+                "accepted_at"
+            ]
+            let missingInviteColumns = requiredInviteColumns.filter { required in
+                inviteColumns.contains(where: { $0.name == required }) == false
+            }
+            guard missingInviteColumns.isEmpty else {
+                throw Abort(
+                    .internalServerError,
+                    reason: "Database schema is missing campaign_invites columns: \(missingInviteColumns.joined(separator: ", "))."
                 )
             }
         }
@@ -374,6 +428,7 @@ struct CreateCampaigns: AsyncMigration {
             .field("ruleset_id", .string, .required)
             .field("is_archived", .bool, .required)
             .field("claim_timeout_minutes", .int)
+            .field("is_invite_only", .bool, .required, .sql(.default(false)))
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
             .create()
@@ -399,6 +454,53 @@ struct CreateCampaignMemberships: AsyncMigration {
 
     func revert(on database: any Database) async throws {
         try await database.schema("campaign_memberships").delete()
+    }
+}
+
+struct CreateCampaignInvites: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.schema("campaign_invites")
+            .id()
+            .field("campaign_id", .uuid, .required)
+            .field("created_by_user_id", .uuid, .required)
+            .field("token_hash", .string, .required)
+            .field("invited_player_name", .string)
+            .field("accepted_player_id", .uuid)
+            .field("accepted_at", .datetime)
+            .field("created_at", .datetime)
+            .field("updated_at", .datetime)
+            .unique(on: "token_hash")
+            .create()
+    }
+
+    func revert(on database: any Database) async throws {
+        try await database.schema("campaign_invites").delete()
+    }
+}
+
+struct AddInviteTargetNameToCampaignInvites: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaign_invites)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "invited_player_name" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE campaign_invites ADD COLUMN invited_player_name TEXT")
+                .run()
+            connection.logger.notice("Patched campaign_invites with invited_player_name.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
     }
 }
 
@@ -492,7 +594,10 @@ enum DatabaseMigrations {
         app.migrations.add(MigrateLegacyCampaignPlayerSessionsToPlayers())
         app.migrations.add(CreateCampaigns())
         app.migrations.add(AddClaimTimeoutMinutesToCampaigns())
+        app.migrations.add(AddInviteOnlyToCampaigns())
         app.migrations.add(CreateCampaignMemberships())
+        app.migrations.add(CreateCampaignInvites())
+        app.migrations.add(AddInviteTargetNameToCampaignInvites())
         app.migrations.add(CreateCharacters())
         app.migrations.add(AddCharacterClaimColumnsToCharacters())
         app.migrations.add(AddLastPlayedByNameToCharacters())

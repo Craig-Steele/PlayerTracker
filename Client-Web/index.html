@@ -12,7 +12,7 @@
 <body class="join-page">
   <div class="display-page-header">
     <div class="player-campaign-card join-campaign-card">
-      <img id="join-ruleset-icon" class="ruleset-icon" alt="" />
+      <img id="join-ruleset-icon" class="ruleset-icon" src="/favicon-512.png" alt="Roll4Initiative icon" />
       <div class="player-campaign-text">
         <div id="join-campaign-name" class="player-campaign-name">Roll4Initiative</div>
         <div class="ruleset-meta player-ruleset-meta">
@@ -28,6 +28,16 @@
 
   <div class="container">
     <section class="detail-panel join-panel">
+      <div class="player-campaign-player-row join-player-row">
+        <div class="player-campaign-player-info">
+          <div class="player-campaign-meta">Player</div>
+          <div class="join-player-name-row">
+            <div id="join-player-name-display" class="player-campaign-player-name">Player</div>
+            <button type="button" id="join-player-name-edit-btn" class="icon-button join-player-edit-button" aria-label="Edit player name">✎</button>
+          </div>
+        </div>
+      </div>
+
       <form id="join-form" class="join-form">
         <div class="form-section-block property-group">
           <label class="property-row">
@@ -38,15 +48,24 @@
           </label>
         </div>
         <div class="join-actions">
-          <button type="submit" id="join-continue">Continue</button>
+          <button type="submit" id="join-continue">Join</button>
+          <button type="button" id="join-player-name-cancel" class="hidden">Cancel</button>
         </div>
-        <div id="join-status" class="subtitle join-status"></div>
       </form>
+      <div id="join-status" class="subtitle join-status"></div>
+    </section>
+
+    <section id="join-campaigns-panel" class="detail-panel join-panel join-campaigns-panel hidden" aria-live="polite">
+      <div class="section-header join-campaigns-header">
+        <h2>Your Campaigns</h2>
+      </div>
+      <div id="join-campaign-list" class="join-campaign-list"></div>
     </section>
   </div>
 
   <script src="shared.js?v=2"></script>
   <script src="ruleset.js?v=1"></script>
+  <script src="join-state.js?v=1"></script>
   <script src="join.js?v=1"></script>
 </body>
 </html>

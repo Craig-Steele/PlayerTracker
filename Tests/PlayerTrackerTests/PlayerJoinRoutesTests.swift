@@ -109,7 +109,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
         let cookie = "roll4_player_session=\(joinSession.cookieToken)"
         let response = try await tester.sendRequest(
             .POST,
-            "/characters",
+            "/campaigns/\(campaignID.uuidString)/me/characters",
             headers: [
                 "Content-Type": "application/json",
                 "Cookie": cookie
@@ -304,6 +304,276 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(finalListResponse.status, .ok)
         let finalCharacters = try finalListResponse.content.decode([PlayerView].self)
         XCTAssertTrue(finalCharacters.isEmpty)
+    }
+
+    func testCampaignInvitesAndMeCampaignListRoundTrip() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+
+        let firstCampaignID = try await activateCampaign(in: tester)
+        let secondCampaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignUpdateInput(
+                name: "Invite Target",
+                rulesetId: "pathfinder"
+            )))
+        )
+        XCTAssertEqual(secondCampaignResponse.status, .ok)
+        let secondCampaign = try secondCampaignResponse.content.decode(CampaignSummary.self)
+        XCTAssertEqual(secondCampaign.name, "Invite Target")
+
+        let adminCookie = try await signInOwner(in: tester)
+        let inviteResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(secondCampaign.id.uuidString)/invites",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(inviteResponse.status, .ok)
+        let invite = try inviteResponse.content.decode(CampaignInviteResponse.self)
+        XCTAssertEqual(invite.campaign.id, secondCampaign.id)
+        XCTAssertNil(invite.playerName)
+
+        let playerSession = try await join(displayName: "Alex", tester: tester)
+        let acceptResponse = try await tester.sendRequest(
+            .POST,
+            "/invites/\(invite.token)/accept",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(acceptResponse.status, .ok)
+        let acceptedCampaign = try acceptResponse.content.decode(CampaignSummary.self)
+        XCTAssertEqual(acceptedCampaign.id, secondCampaign.id)
+
+        let campaignsResponse = try await tester.sendRequest(
+            .GET,
+            "/me/campaigns",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(campaignsResponse.status, .ok)
+        let campaigns = try campaignsResponse.content.decode([CampaignSummary].self)
+        XCTAssertEqual(campaigns.count, 2)
+        XCTAssertTrue(campaigns.contains { $0.id == firstCampaignID && $0.isActive })
+        XCTAssertTrue(campaigns.contains { $0.id == secondCampaign.id && !$0.isActive })
+    }
+
+    func testNamedInviteCanTargetAPlayerAndRejectMismatchedPlayer() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+
+        let campaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignUpdateInput(
+                name: "Targeted Invite",
+                rulesetId: "pathfinder"
+            )))
+        )
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let campaign = try campaignResponse.content.decode(CampaignSummary.self)
+
+        let adminCookie = try await signInOwner(in: tester)
+        let activateResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(activateResponse.status, .ok)
+
+        let inviteResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaign.id.uuidString)/invites",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignInviteCreateInput(playerName: "Alex")))
+        )
+        XCTAssertEqual(inviteResponse.status, .ok)
+        let invite = try inviteResponse.content.decode(CampaignInviteResponse.self)
+        XCTAssertEqual(invite.playerName, "Alex")
+
+        let wrongPlayer = try await join(displayName: "Taylor", tester: tester)
+        let wrongAcceptResponse = try await tester.sendRequest(
+            .POST,
+            "/invites/\(invite.token)/accept",
+            headers: ["Cookie": "roll4_player_session=\(wrongPlayer.cookieToken)"]
+        )
+        XCTAssertEqual(wrongAcceptResponse.status, .notFound)
+
+        let correctPlayer = try await join(displayName: "Alex", tester: tester)
+        let correctAcceptResponse = try await tester.sendRequest(
+            .POST,
+            "/invites/\(invite.token)/accept",
+            headers: ["Cookie": "roll4_player_session=\(correctPlayer.cookieToken)"]
+        )
+        XCTAssertEqual(correctAcceptResponse.status, .ok)
+        let acceptedCampaign = try correctAcceptResponse.content.decode(CampaignSummary.self)
+        XCTAssertEqual(acceptedCampaign.id, campaign.id)
+    }
+
+    func testRefereeCanAddPlayerToCampaignByName() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+
+        let campaignID = try await activateCampaign(in: tester)
+        let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let inviteResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaignID.uuidString)/members",
+            headers: [
+                "Cookie": "roll4_player_session=\(refereeSession)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignMemberCreateInput(playerName: "Morgan")))
+        )
+        XCTAssertEqual(inviteResponse.status, .ok)
+        let member = try inviteResponse.content.decode(CampaignMemberSummary.self)
+        XCTAssertEqual(member.displayName, "Morgan")
+        XCTAssertFalse(member.isReferee)
+    }
+
+    func testAdminCanAddPlayerToCampaignByNameAndPlayerSessionCannot() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+
+        let campaignID = try await activateCampaign(in: tester)
+        let adminCookie = try await signInOwner(in: tester)
+        let adminResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaignID.uuidString)/members",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignMemberCreateInput(playerName: "Morgan")))
+        )
+        XCTAssertEqual(adminResponse.status, .ok)
+        let adminMember = try adminResponse.content.decode(CampaignMemberSummary.self)
+        XCTAssertEqual(adminMember.displayName, "Morgan")
+        XCTAssertFalse(adminMember.isReferee)
+
+        let playerSession = try await join(displayName: "Alex", tester: tester)
+        let playerResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaignID.uuidString)/members",
+            headers: [
+                "Cookie": "roll4_player_session=\(playerSession.cookieToken)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignMemberCreateInput(playerName: "Taylor")))
+        )
+        XCTAssertEqual(playerResponse.status, .forbidden)
+    }
+
+    func testLegacyCharacterCreateRouteIsUnavailable() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+        _ = try await activateCampaign(in: tester)
+        let playerSession = try await join(displayName: "Alex", tester: tester)
+
+        let legacyCreateResponse = try await tester.sendRequest(
+            .POST,
+            "/characters",
+            headers: [
+                "Cookie": "roll4_player_session=\(playerSession.cookieToken)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CharacterInput(
+                id: nil,
+                campaignName: nil,
+                ownerId: UUID(),
+                ownerName: "Alex",
+                name: "Legacy Scout",
+                initiative: nil,
+                stats: nil,
+                revealStats: false,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 0,
+                isHidden: false,
+                revealOnTurn: false,
+                conditions: []
+            )))
+        )
+        XCTAssertEqual(legacyCreateResponse.status, .notFound)
+    }
+
+    func testInviteOnlyCampaignRejectsPlainJoinAndAcceptsNamedMembership() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+
+        let campaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignUpdateInput(
+                name: "Invite Only",
+                rulesetId: "dnd5e",
+                isInviteOnly: true
+            )))
+        )
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let inviteOnlyCampaign = try campaignResponse.content.decode(CampaignSummary.self)
+
+        let adminCookie = try await signInOwner(in: tester)
+        let activateResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(inviteOnlyCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(activateResponse.status, .ok)
+
+        let plainJoinResponse = try await tester.sendRequest(
+            .POST,
+            "/player/join",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(PlayerJoinInput(displayName: "Alex")))
+        )
+        XCTAssertEqual(plainJoinResponse.status, .forbidden)
+
+        let memberResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(inviteOnlyCampaign.id.uuidString)/members",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignMemberCreateInput(playerName: "Alex")))
+        )
+        XCTAssertEqual(memberResponse.status, .ok)
+        let member = try memberResponse.content.decode(CampaignMemberSummary.self)
+        XCTAssertEqual(member.displayName, "Alex")
+        XCTAssertFalse(member.isReferee)
+
+        let memberJoinResponse = try await tester.sendRequest(
+            .POST,
+            "/player/join",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(PlayerJoinInput(displayName: "Alex")))
+        )
+        XCTAssertEqual(memberJoinResponse.status, .ok)
+        let joined = try memberJoinResponse.content.decode(PlayerSessionResponse.self)
+        XCTAssertEqual(joined.campaign.id, inviteOnlyCampaign.id)
+        XCTAssertEqual(joined.player.displayName, "Alex")
+        let joinCookie = try XCTUnwrap(memberJoinResponse.headers.first(name: .setCookie))
+        let joinToken = try XCTUnwrap(joinCookie.split(separator: ";").first?.split(separator: "=").last)
+
+        let campaignsResponse = try await tester.sendRequest(
+            .GET,
+            "/me/campaigns",
+            headers: ["Cookie": "roll4_player_session=\(joinToken)"]
+        )
+        XCTAssertEqual(campaignsResponse.status, .ok)
+        let campaigns = try campaignsResponse.content.decode([CampaignSummary].self)
+        XCTAssertTrue(campaigns.contains { $0.id == inviteOnlyCampaign.id })
     }
 
     func testCharacterClaimAndReleaseRoutesWorkForCurrentSession() async throws {
@@ -650,6 +920,108 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(createCharacterResponse.status, .unauthorized)
     }
 
+    func testPlayerWithoutCampaignMembershipIsForbiddenAfterActiveCampaignSwitch() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+        let firstCampaignID = try await activateCampaign(in: tester)
+        let playerSession = try await join(displayName: "Alex", tester: tester)
+        let adminCookie = try await signInOwner(in: tester)
+
+        let secondCampaignPayload = CampaignUpdateInput(name: "Player Smoke 2", rulesetId: "dnd5e")
+        let secondCampaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(secondCampaignPayload))
+        )
+        XCTAssertEqual(secondCampaignResponse.status, .ok)
+        let secondCampaign = try secondCampaignResponse.content.decode(CampaignSummary.self)
+        XCTAssertNotEqual(firstCampaignID, secondCampaign.id)
+
+        let selectResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(secondCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(selectResponse.status, .ok)
+
+        let stateResponse = try await tester.sendRequest(
+            .GET,
+            "/state",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(stateResponse.status, .forbidden)
+
+        let meCharactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(secondCampaign.id.uuidString)/me/characters",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(meCharactersResponse.status, .forbidden)
+
+        let claimableCharactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(secondCampaign.id.uuidString)/characters",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(claimableCharactersResponse.status, .forbidden)
+    }
+
+    func testRefereeWithoutCampaignMembershipIsForbiddenAfterActiveCampaignSwitch() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+        let firstCampaignID = try await activateCampaign(in: tester)
+        let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let adminCookie = try await signInOwner(in: tester)
+
+        let secondCampaignPayload = CampaignUpdateInput(name: "Referee Smoke 2", rulesetId: "dnd5e")
+        let secondCampaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(secondCampaignPayload))
+        )
+        XCTAssertEqual(secondCampaignResponse.status, .ok)
+        let secondCampaign = try secondCampaignResponse.content.decode(CampaignSummary.self)
+        XCTAssertNotEqual(firstCampaignID, secondCampaign.id)
+
+        let selectResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(secondCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(selectResponse.status, .ok)
+
+        let stateResponse = try await tester.sendRequest(
+            .GET,
+            "/state?view=referee",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
+        XCTAssertEqual(stateResponse.status, .forbidden)
+
+        let meCharactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(secondCampaign.id.uuidString)/me/characters",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
+        XCTAssertEqual(meCharactersResponse.status, .forbidden)
+
+        let claimableCharactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(secondCampaign.id.uuidString)/characters",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
+        XCTAssertEqual(claimableCharactersResponse.status, .forbidden)
+    }
+
     private func join(displayName: String, tester: XCTApplicationTester) async throws -> (session: PlayerSessionResponse, cookieToken: String) {
         let joinPayload = PlayerJoinInput(displayName: displayName)
         let joinResponse = try await tester.sendRequest(
@@ -667,6 +1039,9 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     private func createUnclaimedRefereeCharacter(in tester: XCTApplicationTester) async throws -> PlayerView {
         let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let campaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let campaignID = try campaignResponse.content.decode(CampaignState.self).id
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
@@ -685,7 +1060,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
         )
         let response = try await tester.sendRequest(
             .POST,
-            "/characters",
+            "/campaigns/\(campaignID.uuidString)/me/characters",
             headers: [
                 "Content-Type": "application/json",
                 "Cookie": "roll4_player_session=\(refereeSession)"
@@ -697,6 +1072,10 @@ final class PlayerJoinRoutesTests: XCTestCase {
     }
 
     private func createUnclaimedPlayerCharacter(in tester: XCTApplicationTester) async throws -> PlayerView {
+        let playerSession = try await join(displayName: "Alex", tester: tester)
+        let campaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let campaignID = try campaignResponse.content.decode(CampaignState.self).id
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
@@ -715,8 +1094,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         )
         let response = try await tester.sendRequest(
             .POST,
-            "/characters",
-            headers: ["Content-Type": "application/json"],
+            "/campaigns/\(campaignID.uuidString)/me/characters",
+            headers: [
+                "Content-Type": "application/json",
+                "Cookie": "roll4_player_session=\(playerSession.cookieToken)"
+            ],
             body: ByteBuffer(data: try JSONEncoder().encode(payload))
         )
         XCTAssertEqual(response.status, .ok)
@@ -734,9 +1116,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(createResponse.status, .ok)
         let created = try createResponse.content.decode(CampaignSummary.self)
 
+        let adminCookie = try await signInOwner(in: tester)
         let selectResponse = try await tester.sendRequest(
             .POST,
-            "/campaigns/\(created.id.uuidString)/select"
+            "/campaigns/\(created.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
         )
         XCTAssertEqual(selectResponse.status, .ok)
         let selected = try selectResponse.content.decode(CampaignState.self)
@@ -744,8 +1128,9 @@ final class PlayerJoinRoutesTests: XCTestCase {
     }
 
     private func signInOwner(in tester: XCTApplicationTester) async throws -> String {
+        let uniqueEmail = "owner+\(UUID().uuidString.lowercased())@example.com"
         let payload = AuthSignupInput(
-            email: "owner@example.com",
+            email: uniqueEmail,
             password: "s3cr3t-password"
         )
         let response = try await tester.sendRequest(

@@ -8,6 +8,12 @@ const {
   updateCampaignHeader: () => {}
 };
 
+const {
+  resolveJoinOutcome
+} = window.PlayerTrackerJoinState || {
+  resolveJoinOutcome: () => ({ state: 'inactive' })
+};
+
 function isUuidLike(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     (value || '').trim()
@@ -43,16 +49,27 @@ function responseErrorMessage(fallback, response, text) {
   }
 }
 
+function accessLabel(campaign) {
+  return campaign?.isInviteOnly ? 'Invite only' : 'Open join';
+}
+
+const JOIN_REFRESH_INTERVAL_MS = 5000;
+
 window.addEventListener('DOMContentLoaded', () => {
   const campaignNameEl = document.getElementById('join-campaign-name');
   const rulesetIconEl = document.getElementById('join-ruleset-icon');
   const rulesetLinkEl = document.getElementById('join-ruleset-link');
   const rulesetLicenseEl = document.getElementById('join-ruleset-license');
   const rulesetLicenseWrapEl = document.getElementById('join-ruleset-license-wrap');
+  const playerNameDisplayEl = document.getElementById('join-player-name-display');
+  const playerNameEditBtn = document.getElementById('join-player-name-edit-btn');
+  const playerNameCancelBtn = document.getElementById('join-player-name-cancel');
   const form = document.getElementById('join-form');
   const playerNameInput = document.getElementById('join-player-name');
   const continueBtn = document.getElementById('join-continue');
   const statusEl = document.getElementById('join-status');
+  const campaignsPanel = document.getElementById('join-campaigns-panel');
+  const campaignsListEl = document.getElementById('join-campaign-list');
 
   const headerNameTargets = [campaignNameEl];
   const headerIconTargets = [rulesetIconEl];
@@ -62,6 +79,13 @@ window.addEventListener('DOMContentLoaded', () => {
   ];
 
   let campaignLoaded = false;
+  let restoreCampaigns = [];
+  let playerSessionReady = false;
+  let currentPlayerName = '';
+  let editingPlayerName = false;
+  let currentCampaign = null;
+  let joinRefreshTimer = null;
+  let accessDenied = false;
 
   function setStatus(message, isError = false) {
     if (!statusEl) return;
@@ -75,6 +99,185 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (playerNameInput) {
       playerNameInput.disabled = !enabled;
+    }
+  }
+
+  function setCampaignPanelVisible(visible) {
+    if (!campaignsPanel) return;
+    campaignsPanel.classList.toggle('hidden', !visible);
+  }
+
+  function updatePlayerNameDisplay(name) {
+    currentPlayerName = sanitizePlayerDisplayName(name) || currentPlayerName || '';
+    if (playerNameDisplayEl) {
+      playerNameDisplayEl.textContent = currentPlayerName || 'Player';
+    }
+    if (playerNameInput && !editingPlayerName) {
+      playerNameInput.value = currentPlayerName || '';
+    }
+    if (playerNameEditBtn) {
+      playerNameEditBtn.classList.toggle('hidden', !currentPlayerName);
+    }
+    if (playerNameCancelBtn) {
+      playerNameCancelBtn.classList.toggle('hidden', !editingPlayerName);
+    }
+    if (form) {
+      form.classList.toggle('hidden', !editingPlayerName && Boolean(currentPlayerName));
+    }
+    if (continueBtn) {
+      continueBtn.textContent = currentPlayerName ? 'Save' : 'Join';
+    }
+    if (!currentPlayerName) {
+      setCampaignPanelVisible(false);
+    }
+  }
+
+  async function maybeForwardToCurrentView() {
+    if (!campaignLoaded || !currentCampaign || !currentPlayerName || editingPlayerName) {
+      return 'inactive';
+    }
+
+    try {
+      const membershipsRes = await fetch('/me/campaigns');
+      if (!membershipsRes.ok) {
+        throw new Error(`Server returned ${membershipsRes.status}`);
+      }
+      const memberships = await membershipsRes.json();
+      try {
+        const refereeRes = await fetch('/state?view=referee');
+        const outcome = resolveJoinOutcome({
+          campaignLoaded,
+          currentCampaign,
+          currentPlayerName,
+          editingPlayerName,
+          memberships,
+          hasRefereeAccess: refereeRes.ok
+        });
+
+        if (outcome.state === 'denied') {
+          accessDenied = true;
+          setCampaignPanelVisible(false);
+          setStatus(outcome.message, true);
+          return 'denied';
+        }
+
+        if (outcome.state === 'forwarded') {
+          accessDenied = false;
+          window.location.replace(outcome.destination);
+          return 'forwarded';
+        }
+      } catch (_err) {
+        // Fall through to the player page below.
+      }
+
+      const outcome = resolveJoinOutcome({
+        campaignLoaded,
+        currentCampaign,
+        currentPlayerName,
+        editingPlayerName,
+        memberships,
+        hasRefereeAccess: false
+      });
+
+      if (outcome.state === 'denied') {
+        accessDenied = true;
+        setCampaignPanelVisible(false);
+        setStatus(outcome.message, true);
+        return 'denied';
+      }
+
+      accessDenied = false;
+      window.location.replace('/player.html');
+      return 'forwarded';
+    } catch (_err) {
+      const outcome = resolveJoinOutcome({
+        campaignLoaded,
+        currentCampaign,
+        currentPlayerName,
+        editingPlayerName,
+        memberships: [],
+        hasRefereeAccess: false
+      });
+      accessDenied = true;
+      setCampaignPanelVisible(false);
+      setStatus(outcome.message, true);
+      return 'denied';
+    }
+  }
+
+  function setPlayerNameEditing(open) {
+    editingPlayerName = open;
+    updatePlayerNameDisplay(currentPlayerName);
+    if (playerNameInput) {
+      playerNameInput.placeholder = currentPlayerName ? 'Edit your player name' : 'Enter your player name';
+    }
+    if (open) {
+      setCampaignPanelVisible(false);
+    }
+    if (open && playerNameInput) {
+      playerNameInput.value = currentPlayerName || '';
+      playerNameInput.focus();
+      playerNameInput.select();
+    }
+  }
+
+  function renderCampaigns(campaigns) {
+    restoreCampaigns = Array.isArray(campaigns) ? campaigns : [];
+    if (!campaignsListEl) return;
+
+    campaignsListEl.innerHTML = '';
+    if (!restoreCampaigns.length) {
+      const empty = document.createElement('div');
+      empty.className = 'subtitle';
+      empty.textContent = 'No campaign memberships yet.';
+      campaignsListEl.appendChild(empty);
+      setCampaignPanelVisible(true);
+      return;
+    }
+
+    restoreCampaigns.forEach((campaign) => {
+      const row = document.createElement('div');
+      row.className = 'join-campaign-row';
+
+      const nameWrap = document.createElement('div');
+      nameWrap.className = 'join-campaign-name-wrap';
+      const name = document.createElement('div');
+      name.className = 'join-campaign-name';
+      name.textContent = campaign.name || 'Campaign';
+      nameWrap.appendChild(name);
+
+      const meta = document.createElement('div');
+      meta.className = 'join-campaign-meta';
+      meta.textContent = `${campaign.rulesetLabel || campaign.rulesetId || 'No Conditions'} · ${campaign.claimTimeoutMinutes < 0 ? 'Explicit release only' : `${campaign.claimTimeoutMinutes || 5}m claim timeout`} · ${accessLabel(campaign)}`;
+      nameWrap.appendChild(meta);
+
+      const status = document.createElement('div');
+      status.className = campaign.isActive ? 'join-campaign-active' : 'join-campaign-meta';
+      status.textContent = campaign.isActive ? 'Current campaign' : 'Joined';
+
+      row.appendChild(nameWrap);
+      row.appendChild(status);
+      campaignsListEl.appendChild(row);
+    });
+    setCampaignPanelVisible(true);
+  }
+
+  async function loadPlayerCampaigns() {
+    try {
+      const res = await fetch('/me/campaigns');
+      if (!res.ok) {
+        if (res.status === 401) {
+          renderCampaigns([]);
+          return false;
+        }
+        throw new Error(`Server returned ${res.status}`);
+      }
+      const campaigns = await res.json();
+      renderCampaigns(campaigns);
+      return true;
+    } catch (_err) {
+      renderCampaigns([]);
+      return false;
     }
   }
 
@@ -106,6 +309,7 @@ window.addEventListener('DOMContentLoaded', () => {
         throw new Error(`Server returned ${res.status}`);
       }
       const campaign = await res.json();
+      const previousCampaignID = currentCampaign?.id || null;
       campaignLoaded = true;
       updateCampaignHeader(
         {
@@ -118,14 +322,31 @@ window.addEventListener('DOMContentLoaded', () => {
           campaignName: campaign.name || null,
           rulesetLabel: campaign.rulesetLabel || '',
           rulesBaseUrl: null,
-          licenseUrl: null
+          licenseUrl: null,
+          iconUrl: APP_ICON_URL
         }
       );
+      currentCampaign = campaign;
       setJoinEnabled(true);
-      setStatus('');
+      if (currentPlayerName && !editingPlayerName) {
+        const forwardState = await maybeForwardToCurrentView();
+        if (forwardState === 'forwarded') {
+          return true;
+        }
+      }
+      if (!accessDenied && campaign.isInviteOnly) {
+        setStatus('Invite-only campaign. Ask the server owner or a referee to add you by name.');
+      } else if (!accessDenied) {
+        setStatus('');
+      }
+      if (previousCampaignID && previousCampaignID !== campaign.id) {
+        window.location.reload();
+        return true;
+      }
       return true;
     } catch (err) {
       campaignLoaded = false;
+      currentCampaign = null;
       updateCampaignHeader(
         {
           nameTargets: headerNameTargets,
@@ -180,7 +401,14 @@ window.addEventListener('DOMContentLoaded', () => {
           localStorage.setItem('playerId', player.id);
         }
       }
-      await redirectForCurrentSession();
+      playerSessionReady = true;
+      accessDenied = false;
+      updatePlayerNameDisplay(displayName || loginName);
+      await loadPlayerCampaigns();
+      const forwardState = await maybeForwardToCurrentView();
+      if (forwardState === 'inactive') {
+        setStatus('Welcome back. Join the active campaign or edit your player name.');
+      }
       return true;
     } catch (_err) {
       return false;
@@ -195,7 +423,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const res = await fetch('/player/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ displayName: trimmedName })
+      body: JSON.stringify({
+        displayName: trimmedName
+      })
     });
     if (!res.ok) {
       const text = await res.text();
@@ -210,6 +440,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     localStorage.setItem('playerLoginName', loginName);
     localStorage.setItem('ownerName', joinedName);
+    playerSessionReady = true;
+    updatePlayerNameDisplay(joinedName);
     return payload;
   }
 
@@ -229,12 +461,51 @@ window.addEventListener('DOMContentLoaded', () => {
     setStatus('Joining...');
     setJoinEnabled(false);
     try {
-      const payload = await joinPlayerSession(enteredName);
-      const player = payload.player || {};
-      if (player.displayName) {
-        localStorage.setItem('ownerName', sanitizePlayerDisplayName(player.displayName));
+      if (playerSessionReady && currentPlayerName) {
+        const res = await fetch('/player/session', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ displayName: enteredName })
+        });
+        if (!res.ok) {
+          if (res.status === 401) {
+            const payload = await joinPlayerSession(enteredName);
+            const player = payload.player || {};
+            if (player.displayName) {
+              localStorage.setItem('ownerName', sanitizePlayerDisplayName(player.displayName));
+            }
+          } else {
+            throw new Error(responseErrorMessage('Save failed.', res, await res.text()));
+          }
+        } else {
+          const payload = await res.json();
+          const player = payload.player || {};
+          const savedName = sanitizePlayerDisplayName(player.displayName) || enteredName;
+          if (player.id) {
+            localStorage.setItem('playerId', player.id);
+          }
+          localStorage.setItem('playerLoginName', sanitizePlayerDisplayName(player.loginName) || enteredName);
+          localStorage.setItem('ownerName', savedName);
+          currentPlayerName = savedName;
+          accessDenied = false;
+        }
+      } else {
+        const payload = await joinPlayerSession(enteredName);
+        const player = payload.player || {};
+        if (player.displayName) {
+          localStorage.setItem('ownerName', sanitizePlayerDisplayName(player.displayName));
+        }
+        accessDenied = false;
       }
-      await redirectForCurrentSession();
+      await loadPlayerCampaigns();
+      setPlayerNameEditing(false);
+      const forwardState = await maybeForwardToCurrentView();
+      if (forwardState === 'inactive') {
+        if (!accessDenied) {
+          setStatus('Join the active campaign or edit your player name.');
+        }
+        setCampaignPanelVisible(true);
+      }
     } catch (err) {
       setStatus(`Join failed: ${err.message}`, true);
       setJoinEnabled(true);
@@ -244,23 +515,71 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function initJoinPage() {
-    if (await restoreSession()) {
-      return;
-    }
-
     await fetchCampaign();
+    if (!joinRefreshTimer) {
+      joinRefreshTimer = window.setInterval(async () => {
+        if (editingPlayerName) return;
+        try {
+          await fetchCampaign();
+        } catch (_err) {
+          // Keep the current page; the next poll will retry.
+        }
+      }, JOIN_REFRESH_INTERVAL_MS);
+    }
     const savedName =
       sanitizePlayerDisplayName(localStorage.getItem('playerLoginName')) ||
       sanitizePlayerDisplayName(localStorage.getItem('playerName'));
     if (savedName && playerNameInput) {
       playerNameInput.value = savedName;
     }
-    if (playerNameInput) {
-      playerNameInput.focus();
-      if (!savedName) {
-        playerNameInput.select();
+    if (await restoreSession()) {
+      setPlayerNameEditing(false);
+      return;
+    }
+    if (savedName) {
+      try {
+        setStatus('Restoring player session...');
+        await joinPlayerSession(savedName);
+        await loadPlayerCampaigns();
+        setPlayerNameEditing(false);
+        const forwardState = await maybeForwardToCurrentView();
+        if (forwardState === 'inactive') {
+          if (!accessDenied) {
+            setCampaignPanelVisible(true);
+            setStatus('Join the active campaign or edit your player name.');
+          }
+        }
+        return;
+      } catch (err) {
+        setStatus(`Failed to restore player session: ${err.message}`, true);
       }
     }
+
+    setPlayerNameEditing(true);
+    if (playerNameInput) {
+      playerNameInput.focus();
+      playerNameInput.select();
+    }
+  }
+
+  if (playerNameEditBtn) {
+    playerNameEditBtn.addEventListener('click', () => {
+      setPlayerNameEditing(true);
+    });
+  }
+
+  if (playerNameCancelBtn) {
+    playerNameCancelBtn.addEventListener('click', () => {
+      if (!currentPlayerName) {
+        if (playerNameInput) {
+          playerNameInput.focus();
+          playerNameInput.select();
+        }
+        return;
+      }
+      setPlayerNameEditing(false);
+      setStatus('Join the active campaign or edit your player name.');
+    });
   }
 
   if (form) {

@@ -188,6 +188,15 @@ button {
   border-radius: 6px;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  color: var(--text-muted);
+  background: var(--bg-panel);
+  border-color: var(--border-soft);
+  box-shadow: none;
+}
+
 .round-row button {
   width: auto;
 }
@@ -293,6 +302,14 @@ th, td {
   gap: 0.75rem;
 }
 
+.join-page .join-invite-panel {
+  gap: 0.75rem;
+}
+
+.join-page .join-invite-help {
+  margin-top: -0.15rem;
+}
+
 .join-page .join-form {
   display: flex;
   flex-direction: column;
@@ -309,8 +326,99 @@ th, td {
   min-width: 8rem;
 }
 
+.join-page .join-player-row {
+  align-items: center;
+}
+
+.join-page .join-player-row .player-campaign-player-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.join-page .join-player-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.join-page .join-player-edit-button {
+  flex: 0 0 auto;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.join-page .join-player-row .icon-button {
+  flex: 0 0 auto;
+}
+
 .join-page .join-status {
   min-height: 1.25rem;
+}
+
+.join-page .join-campaigns-panel {
+  gap: 0.75rem;
+}
+
+.join-page .join-campaigns-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.join-page .join-campaigns-header h2 {
+  margin: 0;
+}
+
+.join-page .join-resume-button {
+  min-width: 7rem;
+}
+
+.join-page .join-campaign-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.join-page .join-campaign-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--bg-panel-muted);
+}
+
+.join-page .join-campaign-name-wrap {
+  flex: 1 1 18rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.join-page .join-campaign-name {
+  font-weight: 700;
+}
+
+.join-page .join-campaign-meta {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.join-page .join-campaign-active {
+  color: var(--text-link);
+  font-weight: 600;
+}
+
+.join-page .join-campaign-action {
+  margin-left: auto;
+  min-width: 7rem;
 }
 
 .player-list {
@@ -572,11 +680,41 @@ th, td {
 }
 
 .admin-campaign-members-row {
-  align-items: flex-start;
+  align-items: center;
+}
+
+.admin-campaign-invite-only-row {
+  align-items: center;
+}
+
+.admin-campaign-invite-only-row .property-control {
+  display: flex;
+  align-items: center;
+}
+
+.admin-campaign-invite-only-row .checkbox-row {
+  width: fit-content;
+  margin: 0;
 }
 
 .admin-campaign-members-control {
   width: 100%;
+}
+
+.admin-campaign-invite-player-row {
+  align-items: center;
+}
+
+.admin-campaign-invite-player-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.admin-campaign-invite-player-control input[type="text"] {
+  flex: 1 1 14rem;
+  min-width: 0;
 }
 
 .admin-campaign-members {
@@ -587,38 +725,27 @@ th, td {
 }
 
 .admin-campaign-member-row {
-  display: grid;
-  grid-template-columns: 1.25rem minmax(0, 1fr);
-  column-gap: 0.65rem;
-  align-items: start;
   width: 100%;
   margin: 0;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 8px;
-  background: var(--bg-panel-muted);
+  padding: 0.1rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   cursor: pointer;
 }
 
-.admin-campaign-member-row input[type="checkbox"] {
-  grid-column: 1;
-  margin: 0;
-  justify-self: center;
-  align-self: center;
-}
-
 .admin-campaign-member-text {
-  grid-column: 2;
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .admin-campaign-member-name {
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .admin-campaign-member-badge {
@@ -1699,6 +1826,7 @@ body.admin-page .admin-owner-card .admin-owner-group {
   margin-left: auto;
   display: flex;
   align-items: flex-start;
+  gap: 0.5rem;
   align-self: stretch;
 }
 

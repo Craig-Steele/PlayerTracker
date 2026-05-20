@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Roll4Initiative</title>
+  <title>Roll4Initiative - Admin</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -15,7 +15,7 @@
     <div class="player-campaign-card display-campaign-card admin-campaign-card">
       <img id="admin-ruleset-icon" class="ruleset-icon" alt="" />
       <div class="player-campaign-text">
-        <div id="admin-campaign-name" class="player-campaign-name">Roll4Initiative</div>
+        <div id="admin-campaign-name" class="player-campaign-name">Roll4Initiative - Admin</div>
         <div class="ruleset-meta player-ruleset-meta">
           <a id="admin-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
           <span id="admin-ruleset-license-wrap" class="ruleset-license-wrap">
@@ -157,11 +157,27 @@
             </label>
           </div>
         </div>
+        <div class="property-row admin-campaign-invite-only-row">
+          <span class="property-label">Access</span>
+          <span class="property-control">
+            <label class="property-toggle-control">
+              <input type="checkbox" id="admin-campaign-invite-only" />
+              <span>Invite only</span>
+            </label>
+          </span>
+        </div>
         <div class="property-row admin-campaign-members-row">
           <span class="property-label">Referees</span>
           <div class="property-control admin-campaign-members-control">
             <div id="admin-campaign-members" class="admin-campaign-members"></div>
           </div>
+        </div>
+        <div class="property-row admin-campaign-invite-player-row">
+          <span class="property-label">Add Player</span>
+          <span class="property-control admin-campaign-invite-player-control">
+            <input type="text" id="admin-campaign-invite-player-name" placeholder="Player name" autocomplete="off" />
+            <button type="button" id="admin-campaign-invite-player-button" class="secondary">Add</button>
+          </span>
         </div>
       </div>
       <div id="admin-campaign-modal-status"></div>

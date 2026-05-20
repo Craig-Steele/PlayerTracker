@@ -8,6 +8,7 @@ struct CampaignPersistenceState {
     let rulesetId: String
     let encounterState: EncounterState
     let claimTimeoutMinutes: Int
+    let isInviteOnly: Bool
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
@@ -33,6 +34,15 @@ struct PlayerSessionPersistenceState {
     let previousDisplayNames: [String]
     let token: String
     let expiresAt: Date
+}
+
+struct CampaignInvitePersistenceState {
+    let id: UUID
+    let campaignID: UUID
+    let createdByUserID: UUID
+    let invitedPlayerName: String?
+    let acceptedPlayerID: UUID?
+    let acceptedAt: Date?
 }
 
 final class UserRow: Model, @unchecked Sendable {
@@ -186,6 +196,9 @@ final class CampaignRow: Model, @unchecked Sendable {
     @OptionalField(key: "claim_timeout_minutes")
     var claimTimeoutMinutes: Int?
 
+    @Field(key: "is_invite_only")
+    var isInviteOnly: Bool
+
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -199,13 +212,15 @@ final class CampaignRow: Model, @unchecked Sendable {
         name: String,
         rulesetId: String,
         isArchived: Bool = false,
-        claimTimeoutMinutes: Int? = nil
+        claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool = false
     ) {
         self.id = id
         self.name = name
         self.rulesetId = rulesetId
         self.isArchived = isArchived
         self.claimTimeoutMinutes = claimTimeoutMinutes
+        self.isInviteOnly = isInviteOnly
     }
 }
 
@@ -242,6 +257,57 @@ final class CampaignMembershipRow: Model, @unchecked Sendable {
         self.campaignID = campaignID
         self.userID = userID
         self.role = role
+    }
+}
+
+final class CampaignInviteRow: Model, @unchecked Sendable {
+    static let schema = "campaign_invites"
+
+    @ID(key: .id)
+    var id: UUID?
+
+    @Field(key: "campaign_id")
+    var campaignID: UUID
+
+    @Field(key: "created_by_user_id")
+    var createdByUserID: UUID
+
+    @Field(key: "token_hash")
+    var tokenHash: String
+
+    @OptionalField(key: "invited_player_name")
+    var invitedPlayerName: String?
+
+    @OptionalField(key: "accepted_player_id")
+    var acceptedPlayerID: UUID?
+
+    @OptionalField(key: "accepted_at")
+    var acceptedAt: Date?
+
+    @OptionalField(key: "created_at")
+    var createdAt: Date?
+
+    @OptionalField(key: "updated_at")
+    var updatedAt: Date?
+
+    init() {}
+
+    init(
+        id: UUID? = nil,
+        campaignID: UUID,
+        createdByUserID: UUID,
+        tokenHash: String,
+        invitedPlayerName: String? = nil,
+        acceptedPlayerID: UUID? = nil,
+        acceptedAt: Date? = nil
+    ) {
+        self.id = id
+        self.campaignID = campaignID
+        self.createdByUserID = createdByUserID
+        self.tokenHash = tokenHash
+        self.invitedPlayerName = invitedPlayerName
+        self.acceptedPlayerID = acceptedPlayerID
+        self.acceptedAt = acceptedAt
     }
 }
 
@@ -470,6 +536,10 @@ enum DatabasePersistence {
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
+    private static func hashInviteToken(_ token: String) -> String {
+        hashSessionToken(token)
+    }
+
     private static func normalizedDisplayName(_ displayName: String) -> String {
         displayName
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -673,6 +743,27 @@ enum DatabasePersistence {
         return Set(rows.compactMap(\.userID))
     }
 
+    static func loadCampaignIDs(
+        for playerID: UUID,
+        on database: any Database
+    ) async throws -> Set<UUID> {
+        let rows = try await CampaignMembershipRow.query(on: database)
+            .filter(\.$userID == playerID)
+            .all()
+        return Set(rows.compactMap(\.campaignID))
+    }
+
+    static func isCampaignMember(
+        campaignID: UUID,
+        playerID: UUID,
+        on database: any Database
+    ) async throws -> Bool {
+        try await CampaignMembershipRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .filter(\.$userID == playerID)
+            .first() != nil
+    }
+
     static func setCampaignRefereeSessionIDs(
         campaignID: UUID,
         refereeSessionIDs: [UUID],
@@ -746,6 +837,87 @@ enum DatabasePersistence {
         try await row.create(on: database)
     }
 
+    static func ensureCampaignMember(
+        campaignID: UUID,
+        playerName: String,
+        role: String = "player",
+        on database: any Database
+    ) async throws -> CampaignMemberSummary {
+        let player = try await ensurePlayerIdentity(named: playerName, on: database)
+        try await ensureCampaignMember(
+            campaignID: campaignID,
+            playerID: player.id,
+            role: role,
+            on: database
+        )
+        return CampaignMemberSummary(
+            id: player.id,
+            displayName: player.displayName,
+            isReferee: role == "referee"
+        )
+    }
+
+    static func createCampaignInvite(
+        campaignID: UUID,
+        createdByUserID: UUID,
+        invitedPlayerName: String? = nil,
+        on database: any Database
+    ) async throws -> String {
+        let token = randomSessionToken()
+        let row = CampaignInviteRow(
+            campaignID: campaignID,
+            createdByUserID: createdByUserID,
+            tokenHash: hashInviteToken(token),
+            invitedPlayerName: {
+                guard let invitedPlayerName = invitedPlayerName?.trimmingCharacters(in: .whitespacesAndNewlines),
+                      !invitedPlayerName.isEmpty else {
+                    return nil
+                }
+                return invitedPlayerName
+            }()
+        )
+        try await row.create(on: database)
+        return token
+    }
+
+    static func acceptCampaignInvite(
+        token: String,
+        playerID: UUID,
+        playerLoginName: String,
+        playerDisplayName: String,
+        on database: any Database
+    ) async throws -> UUID? {
+        let tokenHash = hashInviteToken(token)
+        guard let row = try await CampaignInviteRow.query(on: database)
+            .filter(\.$tokenHash == tokenHash)
+            .first(),
+              row.acceptedAt == nil else {
+            return nil
+        }
+
+        if let invitedPlayerName = row.invitedPlayerName?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !invitedPlayerName.isEmpty {
+            let normalizedInvited = normalizedDisplayName(invitedPlayerName)
+            let normalizedLogin = normalizedDisplayName(playerLoginName)
+            let normalizedDisplay = normalizedDisplayName(playerDisplayName)
+            guard normalizedInvited == normalizedLogin || normalizedInvited == normalizedDisplay else {
+                return nil
+            }
+        }
+
+        let campaignID = row.campaignID
+        try await ensureCampaignMember(
+            campaignID: campaignID,
+            playerID: playerID,
+            role: "player",
+            on: database
+        )
+        row.acceptedPlayerID = playerID
+        row.acceptedAt = Date()
+        try await row.save(on: database)
+        return campaignID
+    }
+
     static func loadPlayerSession(
         loginName: String,
         on database: any Database
@@ -755,6 +927,71 @@ enum DatabasePersistence {
         return sessions.first(where: { session in
             normalizedDisplayName(session.loginName) == normalized
         })
+    }
+
+    static func loadPlayerSession(
+        named playerName: String,
+        on database: any Database
+    ) async throws -> PlayerSessionPersistenceState? {
+        let normalized = normalizedDisplayName(playerName)
+        guard !normalized.isEmpty else {
+            return nil
+        }
+
+        let rows = try await PlayerSessionRow.query(on: database).all()
+        guard let row = rows.first(where: { row in
+            row.loginNameNormalized == normalized
+                || row.displayNameNormalized == normalized
+                || decodePreviousDisplayNames(row.previousDisplayNamesJSON).contains(where: {
+                    normalizedDisplayName($0) == normalized
+                })
+        }),
+        let id = row.id else {
+            return nil
+        }
+
+        return PlayerSessionPersistenceState(
+            id: id,
+            loginName: row.loginName,
+            displayName: row.displayName,
+            previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
+            token: "",
+            expiresAt: row.expiresAt
+        )
+    }
+
+    static func ensurePlayerIdentity(
+        named playerName: String,
+        on database: any Database
+    ) async throws -> PlayerSessionPersistenceState {
+        let trimmedName = sanitizeDisplayName(playerName)
+        if let existing = try await loadPlayerSession(named: trimmedName, on: database) {
+            return existing
+        }
+
+        let expiresAt = Date().addingTimeInterval(60 * 60 * 24 * 30)
+        let token = randomSessionToken()
+        let row = PlayerSessionRow(
+            loginName: trimmedName,
+            loginNameNormalized: normalizedDisplayName(trimmedName),
+            displayName: trimmedName,
+            displayNameNormalized: normalizedDisplayName(trimmedName),
+            previousDisplayNamesJSON: nil,
+            tokenHash: hashSessionToken(token),
+            expiresAt: expiresAt
+        )
+        try await row.create(on: database)
+        guard let id = row.id else {
+            throw Abort(.internalServerError, reason: "Failed to create player identity.")
+        }
+        return PlayerSessionPersistenceState(
+            id: id,
+            loginName: row.loginName,
+            displayName: row.displayName,
+            previousDisplayNames: [],
+            token: token,
+            expiresAt: row.expiresAt
+        )
     }
 
     static func renamePlayerSession(
@@ -947,6 +1184,7 @@ enum DatabasePersistence {
             rulesetId: campaign.rulesetId,
             encounterState: encounterState,
             claimTimeoutMinutes: claimTimeoutMinutes,
+            isInviteOnly: campaign.isInviteOnly,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -979,6 +1217,7 @@ enum DatabasePersistence {
             rulesetId: campaign.rulesetId,
             encounterState: encounterState,
             claimTimeoutMinutes: claimTimeoutMinutes,
+            isInviteOnly: campaign.isInviteOnly,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -1004,6 +1243,7 @@ enum DatabasePersistence {
                 rulesetId: campaign.rulesetId,
                 encounterState: encounterState,
                 claimTimeoutMinutes: claimTimeoutMinutes,
+                isInviteOnly: campaign.isInviteOnly,
                 roundIndex: roundIndex,
                 turnIndex: turnIndex,
                 currentTurnID: currentTurnID
@@ -1019,6 +1259,7 @@ enum DatabasePersistence {
         rulesetId: String,
         isArchived: Bool = false,
         claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool = false,
         on database: any Database
     ) async throws -> UUID {
         if let campaign = try await CampaignRow.query(on: database)
@@ -1027,6 +1268,7 @@ enum DatabasePersistence {
            let id = campaign.id {
             campaign.rulesetId = rulesetId
             campaign.isArchived = isArchived
+            campaign.isInviteOnly = isInviteOnly
             if let claimTimeoutMinutes {
                 campaign.claimTimeoutMinutes = max(-1, claimTimeoutMinutes)
             } else if campaign.claimTimeoutMinutes == nil {
@@ -1040,7 +1282,8 @@ enum DatabasePersistence {
             name: name,
             rulesetId: rulesetId,
             isArchived: isArchived,
-            claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
+            claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes),
+            isInviteOnly: isInviteOnly
         )
         try await campaign.create(on: database)
         guard let id = campaign.id else {
@@ -1054,6 +1297,7 @@ enum DatabasePersistence {
         rulesetId: String,
         isArchived: Bool = false,
         claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool = false,
         on database: any Database
     ) async throws -> UUID {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1071,7 +1315,8 @@ enum DatabasePersistence {
             name: trimmedName,
             rulesetId: library.id,
             isArchived: isArchived,
-            claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
+            claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes),
+            isInviteOnly: isInviteOnly
         )
         try await campaign.create(on: database)
         guard let id = campaign.id else {
@@ -1085,6 +1330,7 @@ enum DatabasePersistence {
         name: String,
         rulesetId: String,
         claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool? = nil,
         on database: any Database
     ) async throws -> UUID {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1108,6 +1354,9 @@ enum DatabasePersistence {
         let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
         campaign.name = trimmedName
         campaign.rulesetId = library.id
+        if let isInviteOnly {
+            campaign.isInviteOnly = isInviteOnly
+        }
         if let claimTimeoutMinutes {
             campaign.claimTimeoutMinutes = max(-1, claimTimeoutMinutes)
         } else if campaign.claimTimeoutMinutes == nil {
@@ -1122,6 +1371,7 @@ enum DatabasePersistence {
         newName: String,
         rulesetId: String,
         claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool? = nil,
         on database: any Database
     ) async throws -> UUID {
         if let campaign = try await CampaignRow.query(on: database)
@@ -1130,6 +1380,9 @@ enum DatabasePersistence {
             let id = campaign.id {
             campaign.name = newName
             campaign.rulesetId = rulesetId
+            if let isInviteOnly {
+                campaign.isInviteOnly = isInviteOnly
+            }
             if let claimTimeoutMinutes {
                 campaign.claimTimeoutMinutes = max(-1, claimTimeoutMinutes)
             } else if campaign.claimTimeoutMinutes == nil {
@@ -1143,6 +1396,7 @@ enum DatabasePersistence {
             name: newName,
             rulesetId: rulesetId,
             claimTimeoutMinutes: claimTimeoutMinutes,
+            isInviteOnly: isInviteOnly ?? false,
             on: database
         )
     }
@@ -1151,6 +1405,7 @@ enum DatabasePersistence {
         name: String,
         rulesetId: String,
         claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool? = nil,
         encounterState: EncounterState,
         roundIndex: Int,
         turnIndex: Int,
@@ -1161,6 +1416,7 @@ enum DatabasePersistence {
             name: name,
             rulesetId: rulesetId,
             claimTimeoutMinutes: claimTimeoutMinutes,
+            isInviteOnly: isInviteOnly ?? false,
             on: database
         )
         try await upsertEncounter(

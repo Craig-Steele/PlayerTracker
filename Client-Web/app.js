@@ -1,6 +1,7 @@
 // Shared state
 let lastStateJson = null;
 const REFRESH_INTERVAL_MS = 5000;
+const ACTIVE_CAMPAIGN_POLL_MS = 5000;
 let skipRefresh = false;
 
 const {
@@ -310,6 +311,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let initiativeEditorCharacterId = null;
   let currentCampaignId = '';
   let claimableCharacters = [];
+  let activeCampaignPollTimer = null;
 
   campaignHeaderNameTargets.push(campaignNameLabel, playerCampaignName, displayCampaignName);
   campaignHeaderIconTargets.push(rulesetIcon, playerRulesetIcon, displayRulesetIcon);
@@ -1027,12 +1029,22 @@ window.addEventListener('DOMContentLoaded', () => {
       if (currentCampaignName) {
         payload.campaignName = currentCampaignName;
       }
-      const characterRes = await fetch('/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      if (!currentCampaignId) {
+        throw new Error('No active campaign selected.');
+      }
+      const characterRes = await fetch(
+        `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
       if (!characterRes.ok) {
+        if (characterRes.status === 401 || characterRes.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         throw new Error('Server returned ' + characterRes.status);
       }
       updateDraftForCharacter(character);
@@ -1051,8 +1063,20 @@ window.addEventListener('DOMContentLoaded', () => {
   async function deleteMyCharacter(character) {
     if (!character?.id) return;
     try {
-      const res = await fetch(`/characters/${character.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!currentCampaignId) {
+        throw new Error('No active campaign selected.');
+      }
+      const res = await fetch(
+        `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters/${character.id}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       myCharacters = myCharacters.filter((entry) => entry.id !== character.id);
       if (selectedCharacterId === character.id) {
         clearCharacterSelection();
@@ -1804,7 +1828,13 @@ window.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(
         `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters`
       );
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       myCharacters = await res.json();
       applyDraftsToCharacters(ownerName, myCharacters);
       const savedCharacterId = localStorage.getItem('selectedCharacterId');
@@ -1830,7 +1860,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
       const res = await fetch(`/campaigns/${encodeURIComponent(currentCampaignId)}/characters`);
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       claimableCharacters = await res.json();
       renderClaimableCharacterList();
     } catch (err) {
@@ -1854,6 +1890,10 @@ window.addEventListener('DOMContentLoaded', () => {
         { method: 'POST' }
       );
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         throw new Error(await responseErrorMessage(res));
       }
       statusDiv.textContent = '';
@@ -1873,6 +1913,10 @@ window.addEventListener('DOMContentLoaded', () => {
         { method: 'POST' }
       );
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         throw new Error(await responseErrorMessage(res));
       }
       statusDiv.textContent = '';
@@ -1888,6 +1932,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/campaign');
       if (!res.ok) {
         if (res.status === 409) {
+          if (currentCampaignId) {
+            window.location.replace('/index.html');
+            return false;
+          }
           currentCampaignName = '';
           currentCampaignId = '';
           currentRulesetId = '';
@@ -1915,10 +1963,11 @@ window.addEventListener('DOMContentLoaded', () => {
         throw new Error('Server returned ' + res.status);
       }
       const campaign = await res.json();
+      const previousCampaignId = currentCampaignId || '';
       currentCampaignId = campaign.id || '';
       currentCampaignName = campaign.name || '';
       currentRulesetId = campaign.rulesetId || '';
-      localStorage.setItem('campaignName', currentCampaignName);
+          localStorage.setItem('campaignName', currentCampaignName);
       updateCampaignHeader(
         {
           nameTargets: campaignHeaderNameTargets,
@@ -1935,6 +1984,10 @@ window.addEventListener('DOMContentLoaded', () => {
       updateWindowTitle();
       await loadConditionLibraryFromServer();
       await refreshCharacterState(getOwnerName());
+      if (previousCampaignId && previousCampaignId !== currentCampaignId) {
+        window.location.replace('/index.html');
+        return false;
+      }
       return true;
     } catch (err) {
       console.error('Failed to load campaign:', err);
@@ -2347,13 +2400,23 @@ window.addEventListener('DOMContentLoaded', () => {
       if (currentCampaignName) {
         payload.campaignName = currentCampaignName;
       }
-      const characterRes = await fetch('/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      if (!currentCampaignId) {
+        throw new Error('No active campaign selected.');
+      }
+      const characterRes = await fetch(
+        `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!characterRes.ok) {
+        if (characterRes.status === 401 || characterRes.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         throw new Error('Server returned ' + characterRes.status);
       }
 
@@ -2376,6 +2439,26 @@ window.addEventListener('DOMContentLoaded', () => {
       ownerInput.value = savedOwnerName;
     }
     updatePlayerNameDisplay();
+    if (!activeCampaignPollTimer && !displayOnly) {
+      activeCampaignPollTimer = window.setInterval(async () => {
+        try {
+          const res = await fetch('/campaign');
+          if (!res.ok) {
+            if (currentCampaignId) {
+              window.location.replace('/index.html');
+            }
+            return;
+          }
+          const campaign = await res.json();
+          const nextCampaignId = campaign.id || '';
+          if (currentCampaignId && nextCampaignId && nextCampaignId !== currentCampaignId) {
+            window.location.replace('/index.html');
+          }
+        } catch (_err) {
+          // Keep the current page; the next poll will retry.
+        }
+      }, ACTIVE_CAMPAIGN_POLL_MS);
+    }
     if (!displayOnly) {
       if (!hadPlayerSession && !getBootstrapPlayerName()) {
         if (!isJoinPage()) {
@@ -2420,6 +2503,10 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/state');
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         if (res.status === 409) {
           currentTurnId = null;
           encounterState = 'new';
@@ -2615,13 +2702,23 @@ window.addEventListener('DOMContentLoaded', () => {
       if (currentCampaignName) {
         payload.campaignName = currentCampaignName;
       }
-      const characterRes = await fetch('/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      if (!currentCampaignId) {
+        throw new Error('No active campaign selected.');
+      }
+      const characterRes = await fetch(
+        `/campaigns/${encodeURIComponent(currentCampaignId)}/me/characters`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }
+      );
 
       if (!characterRes.ok) {
+        if (characterRes.status === 401 || characterRes.status === 403) {
+          window.location.replace('/index.html');
+          return null;
+        }
         throw new Error('Server returned ' + characterRes.status);
       }
 
@@ -2742,7 +2839,13 @@ window.addEventListener('DOMContentLoaded', () => {
   async function handleTurnComplete() {
     try {
       const res = await fetch('/turn-complete', { method: 'POST' });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
 
       lastStateJson = null;
       await loadState();

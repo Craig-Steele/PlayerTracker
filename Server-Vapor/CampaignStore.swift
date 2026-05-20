@@ -8,6 +8,7 @@ actor CampaignStore {
     private var currentLibrary: RuleSetLibrary
     private var currentEncounterState: EncounterState
     private var currentClaimTimeoutMinutes: Int
+    private var currentIsInviteOnly: Bool
     private var currentCampaignID: UUID?
     private var database: (any Database)?
     private let restorePersistedState: Bool
@@ -26,6 +27,7 @@ actor CampaignStore {
         self.currentLibrary = defaultLibrary
         self.currentEncounterState = .new
         self.currentClaimTimeoutMinutes = 5
+        self.currentIsInviteOnly = false
         self.currentCampaignID = nil
     }
 
@@ -38,6 +40,7 @@ actor CampaignStore {
             currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
             currentEncounterState = loaded.encounterState
             currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
+            currentIsInviteOnly = loaded.isInviteOnly
             currentCampaignID = nil
         }
     }
@@ -52,7 +55,8 @@ actor CampaignStore {
             rulesetId: currentRulesetId,
             rulesetLabel: currentLibrary.label,
             encounterState: currentEncounterState,
-            claimTimeoutMinutes: currentClaimTimeoutMinutes
+            claimTimeoutMinutes: currentClaimTimeoutMinutes,
+            isInviteOnly: currentIsInviteOnly
         )
     }
 
@@ -87,7 +91,8 @@ actor CampaignStore {
                 rulesetLabel: (try? RuleSetLibraryLoader.loadLibrary(id: $0.rulesetId).label) ?? $0.rulesetId,
                 encounterState: $0.encounterState,
                 isActive: $0.id == currentCampaignID,
-                claimTimeoutMinutes: $0.claimTimeoutMinutes
+                claimTimeoutMinutes: $0.claimTimeoutMinutes,
+                isInviteOnly: $0.isInviteOnly
             )
         }
     }
@@ -95,7 +100,8 @@ actor CampaignStore {
     func createCampaign(
         name: String,
         rulesetId: String,
-        claimTimeoutMinutes: Int? = nil
+        claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool = false
     ) async throws -> CampaignSummary {
         guard let database else {
             throw Abort(.internalServerError, reason: "Database is not configured.")
@@ -104,6 +110,7 @@ actor CampaignStore {
             name: name,
             rulesetId: rulesetId,
             claimTimeoutMinutes: claimTimeoutMinutes ?? currentClaimTimeoutMinutes,
+            isInviteOnly: isInviteOnly,
             on: database
         )
         guard let created = try await DatabasePersistence.loadCampaign(id: campaignID, on: database) else {
@@ -116,7 +123,8 @@ actor CampaignStore {
             rulesetLabel: (try? RuleSetLibraryLoader.loadLibrary(id: created.rulesetId).label) ?? created.rulesetId,
             encounterState: created.encounterState,
             isActive: created.id == currentCampaignID,
-            claimTimeoutMinutes: created.claimTimeoutMinutes
+            claimTimeoutMinutes: created.claimTimeoutMinutes,
+            isInviteOnly: created.isInviteOnly
         )
     }
 
@@ -124,7 +132,8 @@ actor CampaignStore {
         id campaignID: UUID,
         name: String,
         rulesetId: String,
-        claimTimeoutMinutes: Int? = nil
+        claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool? = nil
     ) async throws -> CampaignSummary {
         guard let database else {
             throw Abort(.internalServerError, reason: "Database is not configured.")
@@ -134,6 +143,7 @@ actor CampaignStore {
             name: name,
             rulesetId: rulesetId,
             claimTimeoutMinutes: claimTimeoutMinutes,
+            isInviteOnly: isInviteOnly,
             on: database
         )
         guard let updated = try await DatabasePersistence.loadCampaign(id: updatedID, on: database) else {
@@ -144,6 +154,7 @@ actor CampaignStore {
             currentRulesetId = rulesetId
             currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
             currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
+            currentIsInviteOnly = updated.isInviteOnly
         }
         return CampaignSummary(
             id: updated.id,
@@ -152,7 +163,8 @@ actor CampaignStore {
             rulesetLabel: (try? RuleSetLibraryLoader.loadLibrary(id: updated.rulesetId).label) ?? updated.rulesetId,
             encounterState: updated.encounterState,
             isActive: updated.id == currentCampaignID,
-            claimTimeoutMinutes: updated.claimTimeoutMinutes
+            claimTimeoutMinutes: updated.claimTimeoutMinutes,
+            isInviteOnly: updated.isInviteOnly
         )
     }
 
@@ -175,13 +187,15 @@ actor CampaignStore {
         currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
         currentEncounterState = loaded.encounterState
         currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
+        currentIsInviteOnly = loaded.isInviteOnly
         return state()!
     }
 
     func update(
         name: String,
         rulesetId: String,
-        claimTimeoutMinutes: Int? = nil
+        claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool? = nil
     ) async throws -> CampaignState {
         currentName = name
         if restorePersistedState,
@@ -192,6 +206,7 @@ actor CampaignStore {
                 name: name,
                 rulesetId: rulesetId,
                 claimTimeoutMinutes: claimTimeoutMinutes ?? loaded.claimTimeoutMinutes,
+                isInviteOnly: isInviteOnly ?? loaded.isInviteOnly,
                 on: database
             )
             guard let updated = try await DatabasePersistence.loadCampaign(id: updatedID, on: database) else {
@@ -203,6 +218,7 @@ actor CampaignStore {
             currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: updated.rulesetId)
             currentEncounterState = updated.encounterState
             currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
+            currentIsInviteOnly = updated.isInviteOnly
             return state()!
         }
 
@@ -211,6 +227,7 @@ actor CampaignStore {
         currentLibrary = library
         currentEncounterState = .new
         currentClaimTimeoutMinutes = max(-1, claimTimeoutMinutes ?? 5)
+        currentIsInviteOnly = isInviteOnly ?? false
         await savePersistedStateIfNeeded()
         return state()!
     }
@@ -222,6 +239,7 @@ actor CampaignStore {
                 name: currentName,
                 rulesetId: currentRulesetId,
                 claimTimeoutMinutes: currentClaimTimeoutMinutes,
+                isInviteOnly: currentIsInviteOnly,
                 on: database
             )
         } catch {

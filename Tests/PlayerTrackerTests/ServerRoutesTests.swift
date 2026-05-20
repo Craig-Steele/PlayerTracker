@@ -70,7 +70,12 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(campaigns.first(where: { $0.id == initialCampaign.id })?.isActive, false)
         XCTAssertEqual(campaigns.first(where: { $0.id == secondCampaign.id })?.isActive, true)
 
-        let selectResponse = try await tester.sendRequest(.POST, "/campaigns/\(initialCampaign.id.uuidString)/select")
+        let adminCookie = try await signInOwner(in: tester)
+        let selectResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(initialCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
         XCTAssertEqual(selectResponse.status, .ok)
         let selectedCampaign = try selectResponse.content.decode(CampaignState.self)
         XCTAssertEqual(selectedCampaign.id, initialCampaign.id)
@@ -82,6 +87,71 @@ final class ServerRoutesTests: XCTestCase {
         let campaignsAfterSelect = try campaignsAfterSelectResponse.content.decode([CampaignSummary].self)
         XCTAssertEqual(campaignsAfterSelect.first(where: { $0.id == initialCampaign.id })?.isActive, true)
         XCTAssertEqual(campaignsAfterSelect.first(where: { $0.id == secondCampaign.id })?.isActive, false)
+    }
+
+    func testCampaignSelectionRequiresAdminSession() async throws {
+        let tester = try await makeTester()
+
+        let createResponse = try await tester.sendRequest(
+            .POST,
+            "/campaign",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Player Locked", rulesetId: "pathfinder")
+            ))
+        )
+        XCTAssertEqual(createResponse.status, .ok)
+        let created = try createResponse.content.decode(CampaignState.self)
+
+        let playerSession = try await join(displayName: "Player", in: tester)
+        let selectAsPlayerResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(created.id.uuidString)/select",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(selectAsPlayerResponse.status, .unauthorized)
+
+        let adminCookie = try await signInOwner(in: tester)
+        let selectAsAdminResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(created.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(selectAsAdminResponse.status, .ok)
+        let selected = try selectAsAdminResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(selected.id, created.id)
+    }
+
+    func testLegacyCharacterCreateRouteIsUnavailable() async throws {
+        let tester = try await makeTester()
+        _ = try await activateCampaign(tester, name: "Ancients!", rulesetId: "traveller")
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+
+        let legacyCreateResponse = try await tester.sendRequest(
+            .POST,
+            "/characters",
+            headers: [
+                "Cookie": "roll4_player_session=\(refereeCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CharacterInput(
+                id: nil,
+                campaignName: nil,
+                ownerId: UUID(),
+                ownerName: "Referee",
+                name: "Legacy Scout",
+                initiative: 10,
+                stats: [StatEntry(key: "STR", current: 8, max: 8)],
+                revealStats: true,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 0,
+                isHidden: false,
+                revealOnTurn: false,
+                conditions: []
+            )))
+        )
+        XCTAssertEqual(legacyCreateResponse.status, .notFound)
     }
 
     func testCampaignCreateAndEditRoutesDoNotActivateCampaign() async throws {
@@ -105,7 +175,12 @@ final class ServerRoutesTests: XCTestCase {
         let noCampaignResponse = try await tester.sendRequest(.GET, "/campaign")
         XCTAssertEqual(noCampaignResponse.status, .conflict)
 
-        let selectAlphaResponse = try await tester.sendRequest(.POST, "/campaigns/\(alphaCampaign.id.uuidString)/select")
+        let adminCookie = try await signInOwner(in: tester)
+        let selectAlphaResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(alphaCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
         XCTAssertEqual(selectAlphaResponse.status, .ok)
         let selectedAlpha = try selectAlphaResponse.content.decode(CampaignState.self)
         XCTAssertEqual(selectedAlpha.id, alphaCampaign.id)
@@ -153,6 +228,7 @@ final class ServerRoutesTests: XCTestCase {
 
     func testCharacterStateAndEncounterFlowRoutes() async throws {
         let tester = try await makeTester()
+        let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
 
         let ownerId = UUID()
         let payload = CharacterInput(
@@ -172,32 +248,41 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let createResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: ["Content-Type": "application/json"],
-            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: refereeSession,
+            payload: payload
         )
-        XCTAssertEqual(createResponse.status, .ok)
-        let character = try createResponse.content.decode(PlayerView.self)
         XCTAssertNotEqual(character.ownerId, ownerId)
         XCTAssertEqual(character.name, "Hero")
         XCTAssertEqual(character.initiative, 12)
 
-        let initialStateResponse = try await tester.sendRequest(.GET, "/state")
+        let initialStateResponse = try await tester.sendRequest(
+            .GET,
+            "/state",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
         XCTAssertEqual(initialStateResponse.status, .ok)
         let initialState = try initialStateResponse.content.decode(GameState.self)
         XCTAssertEqual(initialState.encounterState, .new)
         XCTAssertNil(initialState.currentTurnId)
         XCTAssertEqual(initialState.players.map(\.name), ["Hero"])
 
-        let startResponse = try await tester.sendRequest(.POST, "/encounter/start")
+        let startResponse = try await tester.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
         XCTAssertEqual(startResponse.status, .ok)
         let startedState = try startResponse.content.decode(GameState.self)
         XCTAssertEqual(startedState.encounterState, .active)
         XCTAssertEqual(startedState.currentTurnName, "Hero")
 
-        let turnCompleteResponse = try await tester.sendRequest(.POST, "/turn-complete")
+        let turnCompleteResponse = try await tester.sendRequest(
+            .POST,
+            "/turn-complete",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
         XCTAssertEqual(turnCompleteResponse.status, .ok)
         let nextState = try turnCompleteResponse.content.decode(GameState.self)
         XCTAssertEqual(nextState.encounterState, .active)
@@ -207,8 +292,13 @@ final class ServerRoutesTests: XCTestCase {
 
     func testTurnCompleteRejectsInactiveEncounter() async throws {
         let tester = try await makeTester()
+        let playerSession = try await join(displayName: "Player", in: tester)
 
-        let response = try await tester.sendRequest(.POST, "/turn-complete")
+        let response = try await tester.sendRequest(
+            .POST,
+            "/turn-complete",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
         XCTAssertEqual(response.status, .conflict)
     }
 
@@ -272,6 +362,7 @@ final class ServerRoutesTests: XCTestCase {
         try await ServerBootstrap.configure(app1, options: options, library: library)
         let tester1 = try app1.testable()
         try await activateCampaign(tester1, name: "Persist Smoke", rulesetId: library.id)
+        let playerSession = try await join(displayName: "Player", in: tester1)
 
         let payload = CharacterInput(
             id: nil,
@@ -290,14 +381,11 @@ final class ServerRoutesTests: XCTestCase {
             conditions: ["Blessed"]
         )
 
-        let createResponse = try await tester1.sendRequest(
-            .POST,
-            "/characters",
-            headers: ["Content-Type": "application/json"],
-            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        _ = try await createMemberCharacter(
+            in: tester1,
+            cookieToken: playerSession.cookieToken,
+            payload: payload
         )
-        XCTAssertEqual(createResponse.status, .ok)
-        _ = try createResponse.content.decode(PlayerView.self)
 
         try await app1.asyncShutdown()
         await userStore.resetMemoryForTesting()
@@ -372,6 +460,8 @@ final class ServerRoutesTests: XCTestCase {
         let tester = try app.testable()
         try await activateCampaign(tester, name: "Ancients!", rulesetId: initialLibrary.id)
 
+        let initialRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Traveller Referee")
+
         let ownerId = UUID()
         let payload = CharacterInput(
             id: nil,
@@ -390,15 +480,12 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let createResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: ["Content-Type": "application/json"],
-            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        _ = try await createMemberCharacter(
+            in: tester,
+            cookieToken: initialRefereeCookie,
+            payload: payload
         )
-        XCTAssertEqual(createResponse.status, .ok)
 
-        let initialRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Traveller Referee")
         let beforeSwitchResponse = try await tester.sendRequest(
             .GET,
             "/state?view=referee",
@@ -408,7 +495,11 @@ final class ServerRoutesTests: XCTestCase {
         let beforeSwitchState = try beforeSwitchResponse.content.decode(GameState.self)
         XCTAssertEqual(beforeSwitchState.players.map(\.name), ["Traveller Scout"])
 
-        let startResponse = try await tester.sendRequest(.POST, "/encounter/start")
+        let startResponse = try await tester.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(initialRefereeCookie)")])
+        )
         XCTAssertEqual(startResponse.status, .ok)
         let activeState = try startResponse.content.decode(GameState.self)
         XCTAssertEqual(activeState.encounterState, .active)
@@ -490,6 +581,7 @@ final class ServerRoutesTests: XCTestCase {
         try await ServerBootstrap.configure(app1, options: makeOptions(campaignName: "Ancients!"), library: travellerLibrary)
         let tester1 = try app1.testable()
         try await activateCampaign(tester1, name: "Ancients!", rulesetId: travellerLibrary.id)
+        let travellerStartCookie = try await grantRefereeAccess(in: tester1, displayName: "Referee")
 
         let travellerCharacter = CharacterInput(
             id: nil,
@@ -508,15 +600,17 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let travellerCreateResponse = try await tester1.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(travellerCharacter))
+        _ = try await createMemberCharacter(
+            in: tester1,
+            cookieToken: travellerStartCookie,
+            payload: travellerCharacter
         )
-        XCTAssertEqual(travellerCreateResponse.status, .ok)
 
-        let travellerStartResponse = try await tester1.sendRequest(.POST, "/encounter/start")
+        let travellerStartResponse = try await tester1.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(travellerStartCookie)")])
+        )
         XCTAssertEqual(travellerStartResponse.status, .ok)
         let travellerStartedState = try travellerStartResponse.content.decode(GameState.self)
         XCTAssertEqual(travellerStartedState.encounterState, .active)
@@ -549,15 +643,18 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let pathfinderCreateResponse = try await tester1.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(pathfinderCharacter))
+        let pathfinderStartCookie = try await grantRefereeAccess(in: tester1, displayName: "Referee")
+        _ = try await createMemberCharacter(
+            in: tester1,
+            cookieToken: pathfinderStartCookie,
+            payload: pathfinderCharacter
         )
-        XCTAssertEqual(pathfinderCreateResponse.status, .ok)
 
-        let pathfinderStartResponse = try await tester1.sendRequest(.POST, "/encounter/start")
+        let pathfinderStartResponse = try await tester1.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(pathfinderStartCookie)")])
+        )
         XCTAssertEqual(pathfinderStartResponse.status, .ok)
         let pathfinderStartedState = try pathfinderStartResponse.content.decode(GameState.self)
         XCTAssertEqual(pathfinderStartedState.encounterState, .active)
@@ -578,11 +675,11 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(restoredTravellerCampaign.rulesetId, travellerLibrary.id)
         XCTAssertEqual(restoredTravellerCampaign.encounterState, .active)
 
-        let travellerRefereeCookie = try await grantRefereeAccess(in: tester2, displayName: "Referee")
+        let restoredTravellerRefereeCookie = try await grantRefereeAccess(in: tester2, displayName: "Referee")
         let restoredTravellerStateResponse = try await tester2.sendRequest(
             .GET,
             "/state?view=referee",
-            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(travellerRefereeCookie)")])
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(restoredTravellerRefereeCookie)")])
         )
         XCTAssertEqual(restoredTravellerStateResponse.status, .ok)
         let restoredTravellerState = try restoredTravellerStateResponse.content.decode(GameState.self)
@@ -640,6 +737,7 @@ final class ServerRoutesTests: XCTestCase {
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
         try await activateCampaign(tester, name: "Ancients!", rulesetId: travellerLibrary.id)
+        let ancientRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Ancients Referee")
 
         let ancientCharacter = CharacterInput(
             id: nil,
@@ -658,14 +756,11 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let ancientCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(ancientCharacter))
+        let ancientView = try await createMemberCharacter(
+            in: tester,
+            cookieToken: ancientRefereeCookie,
+            payload: ancientCharacter
         )
-        XCTAssertEqual(ancientCreateResponse.status, .ok)
-        let ancientView = try ancientCreateResponse.content.decode(PlayerView.self)
         let switchResponse = try await tester.sendRequest(
             .POST,
             "/campaign",
@@ -693,13 +788,12 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let pathfinderCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(pathfinderCharacter))
+        let pathfinderCreateCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        _ = try await createMemberCharacter(
+            in: tester,
+            cookieToken: pathfinderCreateCookie,
+            payload: pathfinderCharacter
         )
-        XCTAssertEqual(pathfinderCreateResponse.status, .ok)
 
         let switchBackResponse = try await tester.sendRequest(
             .POST,
@@ -735,7 +829,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(pathfinderUsers.contains { $0.name == "Pathfinder Scout" })
         XCTAssertFalse(pathfinderUsers.contains { $0.name == "Ancient Scout" })
 
-        let pathfinderRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let pathfinderRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Pathfinder Referee")
         let restoredStateResponse = try await tester.sendRequest(
             .GET,
             "/state?view=referee",
@@ -767,6 +861,7 @@ final class ServerRoutesTests: XCTestCase {
         try await ServerBootstrap.configure(app1, options: options, library: travellerLibrary)
         let tester1 = try app1.testable()
         try await activateCampaign(tester1, name: "Ancients!", rulesetId: travellerLibrary.id)
+        let refereeCookie = try await grantRefereeAccess(in: tester1, displayName: "Referee")
 
         let firstCharacter = CharacterInput(
             id: nil,
@@ -802,25 +897,23 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let firstCreateResponse = try await tester1.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(firstCharacter))
+        let firstView = try await createMemberCharacter(
+            in: tester1,
+            cookieToken: refereeCookie,
+            payload: firstCharacter
         )
-        XCTAssertEqual(firstCreateResponse.status, .ok)
-        let firstView = try firstCreateResponse.content.decode(PlayerView.self)
 
-        let secondCreateResponse = try await tester1.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(secondCharacter))
+        let secondView = try await createMemberCharacter(
+            in: tester1,
+            cookieToken: refereeCookie,
+            payload: secondCharacter
         )
-        XCTAssertEqual(secondCreateResponse.status, .ok)
-        let secondView = try secondCreateResponse.content.decode(PlayerView.self)
 
-        let startResponse = try await tester1.sendRequest(.POST, "/encounter/start")
+        let startResponse = try await tester1.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeCookie)")])
+        )
         XCTAssertEqual(startResponse.status, .ok)
         let startedState = try startResponse.content.decode(GameState.self)
         XCTAssertEqual(startedState.currentTurnId, firstView.id)
@@ -828,7 +921,6 @@ final class ServerRoutesTests: XCTestCase {
         let deleteResponse = try await tester1.sendRequest(.DELETE, "/characters/\(firstView.id.uuidString)")
         XCTAssertEqual(deleteResponse.status, .ok)
 
-        let refereeCookie = try await grantRefereeAccess(in: tester1, displayName: "Referee")
         try await app1.asyncShutdown()
         await userStore.resetMemoryForTesting()
 
@@ -890,32 +982,12 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let ancientCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(ancientCharacter))
+        let ancientRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Ancients Referee")
+        let ancientView = try await createMemberCharacter(
+            in: tester,
+            cookieToken: ancientRefereeCookie,
+            payload: ancientCharacter
         )
-        XCTAssertEqual(ancientCreateResponse.status, .ok)
-        let ancientView = try ancientCreateResponse.content.decode(PlayerView.self)
-        let ancientRefereeJoin = try await join(displayName: "Ancients Referee", in: tester)
-        let ancientRefereeCookie = ancientRefereeJoin.cookieToken
-        let ancientCampaignResponse = try await tester.sendRequest(.GET, "/campaign")
-        XCTAssertEqual(ancientCampaignResponse.status, .ok)
-        let ancientCampaign = try ancientCampaignResponse.content.decode(CampaignState.self)
-        let ancientRefereeUpdate = CampaignUpdateInput(
-            name: ancientCampaign.name,
-            rulesetId: ancientCampaign.rulesetId,
-            claimTimeoutMinutes: ancientCampaign.claimTimeoutMinutes,
-            refereeSessionIds: [ancientRefereeJoin.session.player.id]
-        )
-        let ancientRefereeUpdateResponse = try await tester.sendRequest(
-            .PATCH,
-            "/campaigns/\(ancientCampaign.id.uuidString)",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(ancientRefereeUpdate))
-        )
-        XCTAssertEqual(ancientRefereeUpdateResponse.status, .ok)
 
         let switchResponse = try await tester.sendRequest(
             .POST,
@@ -944,14 +1016,12 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let pathfinderCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(pathfinderCharacter))
+        let pathfinderCreateCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let pathfinderView = try await createMemberCharacter(
+            in: tester,
+            cookieToken: pathfinderCreateCookie,
+            payload: pathfinderCharacter
         )
-        XCTAssertEqual(pathfinderCreateResponse.status, .ok)
-        let pathfinderView = try pathfinderCreateResponse.content.decode(PlayerView.self)
 
         let renameResponse = try await tester.sendRequest(
             .POST,
@@ -961,7 +1031,7 @@ final class ServerRoutesTests: XCTestCase {
         )
         XCTAssertEqual(renameResponse.status, .ok)
 
-        let pathfinderRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let pathfinderRefereeCookie = pathfinderCreateCookie
         let pathfinderStateResponse = try await tester.sendRequest(
             .GET,
             "/state?view=referee",
@@ -990,7 +1060,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(restoredStateResponse.status, .ok)
         let restoredState = try restoredStateResponse.content.decode(GameState.self)
         let restoredAncient = restoredState.players.first(where: { $0.ownerId == ancientView.ownerId })
-        XCTAssertEqual(restoredAncient?.ownerName, "Shared Owner")
+        XCTAssertEqual(restoredAncient?.ownerName, "Ancients Referee")
         XCTAssertEqual(restoredAncient?.name, "Ancient Scout")
         XCTAssertFalse(restoredState.players.contains { $0.ownerName == "Referee Prime" })
 
@@ -1041,13 +1111,12 @@ final class ServerRoutesTests: XCTestCase {
             conditions: ["Bleed"]
         )
 
-        let ancientCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(ancientCharacter))
+        let ancientRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Ancients Referee")
+        _ = try await createMemberCharacter(
+            in: tester,
+            cookieToken: ancientRefereeCookie,
+            payload: ancientCharacter
         )
-        XCTAssertEqual(ancientCreateResponse.status, .ok)
 
         let switchResponse = try await tester.sendRequest(
             .POST,
@@ -1076,19 +1145,20 @@ final class ServerRoutesTests: XCTestCase {
             conditions: ["Flat-Footed"]
         )
 
-        let pathfinderCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
-            body: ByteBuffer(data: try JSONEncoder().encode(pathfinderCharacter))
+        let pathfinderRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Pathfinder Referee")
+        _ = try await createMemberCharacter(
+            in: tester,
+            cookieToken: pathfinderRefereeCookie,
+            payload: pathfinderCharacter
         )
-        XCTAssertEqual(pathfinderCreateResponse.status, .ok)
 
-        let pathfinderRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
         let setConditionsResponse = try await tester.sendRequest(
             .POST,
             "/conditions",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(pathfinderRefereeCookie)")
+            ]),
             body: ByteBuffer(data: try JSONEncoder().encode(
                 ConditionsInput(name: "Shared Scout", conditions: ["Flat-Footed", "Shaken"])
             ))
@@ -1115,7 +1185,6 @@ final class ServerRoutesTests: XCTestCase {
         )
         XCTAssertEqual(switchBackResponse.status, .ok)
 
-        let ancientRefereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
         let ancientStateResponse = try await tester.sendRequest(
             .GET,
             "/state?view=referee",
@@ -1185,17 +1254,11 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let ancientCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([
-                ("Content-Type", "application/json"),
-                ("Cookie", "roll4_player_session=\(ancientRefereeJoin.cookieToken)")
-            ]),
-            body: ByteBuffer(data: try JSONEncoder().encode(ancientCharacter))
+        let ancientView = try await createMemberCharacter(
+            in: tester,
+            cookieToken: ancientRefereeJoin.cookieToken,
+            payload: ancientCharacter
         )
-        XCTAssertEqual(ancientCreateResponse.status, .ok)
-        let ancientView = try ancientCreateResponse.content.decode(PlayerView.self)
         XCTAssertTrue(ancientView.isHidden)
         XCTAssertTrue(ancientView.revealOnTurn)
 
@@ -1244,22 +1307,19 @@ final class ServerRoutesTests: XCTestCase {
             conditions: []
         )
 
-        let pathfinderCreateResponse = try await tester.sendRequest(
-            .POST,
-            "/characters",
-            headers: HTTPHeaders([
-                ("Content-Type", "application/json"),
-                ("Cookie", "roll4_player_session=\(pathfinderRefereeJoin.cookieToken)")
-            ]),
-            body: ByteBuffer(data: try JSONEncoder().encode(pathfinderCharacter))
+        let pathfinderView = try await createMemberCharacter(
+            in: tester,
+            cookieToken: pathfinderRefereeJoin.cookieToken,
+            payload: pathfinderCharacter
         )
-        XCTAssertEqual(pathfinderCreateResponse.status, .ok)
-        let pathfinderView = try pathfinderCreateResponse.content.decode(PlayerView.self)
 
         let visibilityResponse = try await tester.sendRequest(
             .PATCH,
             "/characters/\(pathfinderView.id.uuidString)/visibility",
-            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(pathfinderRefereeJoin.cookieToken)")
+            ]),
             body: ByteBuffer(data: try JSONEncoder().encode(CharacterVisibilityInput(isHidden: true, revealOnTurn: true)))
         )
         XCTAssertEqual(visibilityResponse.status, .ok)
@@ -1390,5 +1450,48 @@ final class ServerRoutesTests: XCTestCase {
         }
 
         return tester
+    }
+
+    private func signInOwner(in tester: XCTApplicationTester) async throws -> String {
+        let uniqueEmail = "owner+\(UUID().uuidString.lowercased())@example.com"
+        let payload = AuthSignupInput(
+            email: uniqueEmail,
+            password: "s3cr3t-password"
+        )
+        let response = try await tester.sendRequest(
+            .POST,
+            "/auth/signup",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        )
+        XCTAssertEqual(response.status, .ok)
+        let cookie = try XCTUnwrap(response.headers.first(name: .setCookie))
+        return try XCTUnwrap(cookie.split(separator: ";").first?.split(separator: "=").last).description
+    }
+
+    private func createMemberCharacter(
+        in tester: XCTApplicationTester,
+        cookieToken: String,
+        payload: CharacterInput
+    ) async throws -> PlayerView {
+        let campaignResponse = try await tester.sendRequest(
+            .GET,
+            "/campaign",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(cookieToken)")])
+        )
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let campaign = try campaignResponse.content.decode(CampaignState.self)
+
+        let response = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaign.id.uuidString)/me/characters",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        )
+        XCTAssertEqual(response.status, .ok)
+        return try response.content.decode(PlayerView.self)
     }
 }

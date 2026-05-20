@@ -1,14 +1,18 @@
 const REFRESH_INTERVAL_MS = 5000;
 
 const {
+  APP_NAME,
   APP_ICON_URL,
   updateCampaignHeader
 } = window.PlayerTrackerShared || {
+  APP_NAME: 'Roll4Initiative',
   APP_ICON_URL: '/favicon-512.png',
   updateCampaignHeader: () => {}
 };
 
 window.addEventListener('DOMContentLoaded', () => {
+  document.title = `${APP_NAME} - Admin`;
+
   const authSummary = document.getElementById('admin-auth-summary');
   const authStatus = document.getElementById('admin-auth-status');
   const authEmailInput = document.getElementById('admin-auth-email');
@@ -56,7 +60,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const campaignClaimTimeoutManualInput = document.getElementById('admin-campaign-claim-timeout-manual');
   const campaignClaimTimeoutTimedInput = document.getElementById('admin-campaign-claim-timeout-timed');
   const campaignClaimTimeoutInput = document.getElementById('admin-campaign-claim-timeout-input');
+  const campaignInviteOnlyInput = document.getElementById('admin-campaign-invite-only');
   const campaignMembersList = document.getElementById('admin-campaign-members');
+  const campaignInvitePlayerNameInput = document.getElementById('admin-campaign-invite-player-name');
+  const campaignInvitePlayerButton = document.getElementById('admin-campaign-invite-player-button');
 
   let availableRulesets = [];
   let campaignSummaries = [];
@@ -68,6 +75,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let editorOriginalRulesetId = '';
   let editorOriginalClaimTimeoutMinutes = 5;
   let editorOriginalClaimTimeoutMode = 'timed';
+  let editorOriginalInviteOnly = false;
   let editorOriginalRefereeSessionIds = new Set();
   let editorSelectedRefereeSessionIds = new Set();
   let campaignMembers = [];
@@ -180,7 +188,8 @@ window.addEventListener('DOMContentLoaded', () => {
             rulesetLabel: '',
             rulesBaseUrl: null,
             licenseUrl: null,
-            iconUrl: APP_ICON_URL
+            iconUrl: APP_ICON_URL,
+            fallbackName: `${APP_NAME} - Admin`
           }
     );
     if (adminActiveSummary) {
@@ -188,7 +197,7 @@ window.addEventListener('DOMContentLoaded', () => {
         adminActiveSummary.textContent = 'No campaign selected.';
       } else {
         const label = library?.label || activeCampaign.rulesetLabel || activeCampaign.rulesetId || 'No Conditions';
-        adminActiveSummary.textContent = `Active: ${activeCampaign.name} - ${label} · ${claimTimeoutLabel(activeCampaign.claimTimeoutMinutes)}`;
+        adminActiveSummary.textContent = `Active: ${activeCampaign.name} - ${label} · ${claimTimeoutLabel(activeCampaign.claimTimeoutMinutes)} · ${accessLabel(activeCampaign)}`;
       }
     }
   }
@@ -209,6 +218,7 @@ window.addEventListener('DOMContentLoaded', () => {
     campaignList?.querySelectorAll('.admin-campaign-row').forEach((button) => {
       button.disabled = !enabled;
     });
+    updateInvitePlayerControls();
   }
 
   function updateAuthUi() {
@@ -278,6 +288,17 @@ window.addEventListener('DOMContentLoaded', () => {
     validateModal();
   }
 
+  function updateInvitePlayerControls() {
+    const enabled = Boolean(authUser && editorMode === 'edit' && editorCampaignId && campaignMembersLoaded);
+    if (campaignInvitePlayerNameInput) {
+      campaignInvitePlayerNameInput.disabled = !enabled;
+    }
+    if (campaignInvitePlayerButton) {
+      const hasName = normalizeName(campaignInvitePlayerNameInput?.value).length > 0;
+      campaignInvitePlayerButton.disabled = !enabled || !hasName;
+    }
+  }
+
   function renderCampaignMembers() {
     if (!campaignMembersList) return;
     campaignMembersList.innerHTML = '';
@@ -308,7 +329,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     campaignMembers.forEach((member) => {
       const row = document.createElement('label');
-      row.className = 'admin-campaign-member-row';
+      row.className = 'property-toggle-control admin-campaign-member-row';
 
       const checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
@@ -336,6 +357,7 @@ window.addEventListener('DOMContentLoaded', () => {
       row.appendChild(textWrap);
       campaignMembersList.appendChild(row);
     });
+    updateInvitePlayerControls();
   }
 
   async function fetchCampaignMembers(campaignId) {
@@ -367,6 +389,35 @@ window.addEventListener('DOMContentLoaded', () => {
       campaignMembersLoaded = false;
       renderCampaignMembers();
       setModalStatus(`Failed to load campaign members: ${err.message}`, true);
+    }
+  }
+
+  async function invitePlayerByName() {
+    if (editorMode !== 'edit' || !editorCampaignId) {
+      setModalStatus('Save the campaign first before adding players.', true);
+      return;
+    }
+    const playerName = normalizeName(campaignInvitePlayerNameInput?.value);
+    if (!playerName) {
+      setModalStatus('Enter a player name first.', true);
+      campaignInvitePlayerNameInput?.focus();
+      return;
+    }
+
+    setModalStatus('Adding player...');
+    try {
+      const member = await fetchJson(`/campaigns/${editorCampaignId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName })
+      });
+      const target = member.playerName || playerName;
+      setModalStatus(`Added ${target} to the campaign.`);
+      if (campaignInvitePlayerNameInput) {
+        campaignInvitePlayerNameInput.select();
+      }
+    } catch (err) {
+      setModalStatus(`Failed to add player: ${err.message}`, true);
     }
   }
 
@@ -416,7 +467,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const meta = document.createElement('span');
       meta.className = 'admin-campaign-meta';
       const ruleset = campaign.rulesetLabel || campaign.rulesetId || 'No Conditions';
-      meta.textContent = `${ruleset} · ${claimTimeoutLabel(campaign.claimTimeoutMinutes)}${campaign.isActive ? ' · Active' : ''}`;
+      meta.textContent = `${ruleset} · ${claimTimeoutLabel(campaign.claimTimeoutMinutes)} · ${accessLabel(campaign)}${campaign.isActive ? ' · Active' : ''}`;
 
       button.appendChild(name);
       button.appendChild(meta);
@@ -477,6 +528,10 @@ window.addEventListener('DOMContentLoaded', () => {
     return `${minutes}m claim timeout`;
   }
 
+  function accessLabel(campaign) {
+    return campaign?.isInviteOnly ? 'Invite only' : 'Open join';
+  }
+
   function getClaimTimeoutMode() {
     if (campaignClaimTimeoutManualInput?.checked) {
       return 'manual';
@@ -512,11 +567,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const rulesetId = campaignRulesetSelect.value;
     const claimTimeoutMode = getClaimTimeoutMode();
     const claimTimeoutMinutes = getClaimTimeoutMinutes();
+    const inviteOnly = Boolean(campaignInviteOnlyInput?.checked);
     return (
       name !== editorOriginalName ||
       rulesetId !== editorOriginalRulesetId ||
       claimTimeoutMinutes !== editorOriginalClaimTimeoutMinutes ||
       claimTimeoutMode !== editorOriginalClaimTimeoutMode ||
+      inviteOnly !== editorOriginalInviteOnly ||
       !setEquals(editorSelectedRefereeSessionIds, editorOriginalRefereeSessionIds)
     );
   }
@@ -529,6 +586,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const claimTimeoutMinutes = claimTimeoutMode === 'manual'
       ? -1
       : normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value);
+    const inviteOnly = Boolean(campaignInviteOnlyInput?.checked);
     if (!name) return false;
     if (campaignRulesetSelect.options.length > 0 && !rulesetId) return false;
     if (claimTimeoutMode !== 'manual' && claimTimeoutMinutes === null) return false;
@@ -555,6 +613,7 @@ window.addEventListener('DOMContentLoaded', () => {
       ? campaign.claimTimeoutMinutes
       : defaultClaimTimeoutMinutes;
     editorOriginalClaimTimeoutMode = editorOriginalClaimTimeoutMinutes < 0 ? 'manual' : 'timed';
+    editorOriginalInviteOnly = Boolean(campaign?.isInviteOnly);
     editorOriginalRefereeSessionIds = new Set();
     editorSelectedRefereeSessionIds = new Set();
     campaignMembersLoaded = mode !== 'edit';
@@ -584,8 +643,15 @@ window.addEventListener('DOMContentLoaded', () => {
           : defaultClaimTimeoutMinutes
       );
     }
+    if (campaignInviteOnlyInput) {
+      campaignInviteOnlyInput.checked = editorOriginalInviteOnly;
+    }
+    if (campaignInvitePlayerNameInput) {
+      campaignInvitePlayerNameInput.value = '';
+    }
     syncClaimTimeoutUi();
     renderCampaignMembers();
+    updateInvitePlayerControls();
 
     setModalStatus('');
     modal.classList.remove('hidden');
@@ -702,10 +768,16 @@ window.addEventListener('DOMContentLoaded', () => {
       return Boolean(authUser);
     } catch (err) {
       if (token !== authRefreshToken) return false;
-      authUser = null;
-      updateAuthUi();
-      setAuthStatus(`Failed to load auth session: ${err.message}`, true);
-      return false;
+      const message = String(err?.message || err || '');
+      if (message.includes('401') || message.toLowerCase().includes('not signed in')) {
+        authUser = null;
+        updateAuthUi();
+        clearCampaignState();
+        setAuthStatus('Session expired. Please sign in again.', true);
+        return false;
+      }
+      setAuthStatus(`Failed to load auth session: ${message || 'Network error.'}`, true);
+      return true;
     }
   }
 
@@ -886,13 +958,14 @@ window.addEventListener('DOMContentLoaded', () => {
     const name = normalizeName(campaignNameInput.value);
     const rulesetId = campaignRulesetSelect.value;
     const claimTimeoutMinutes = getClaimTimeoutMinutes();
+    const inviteOnly = Boolean(campaignInviteOnlyInput?.checked);
 
     if (editorMode === 'new') {
       try {
         const created = await fetchJson('/campaigns', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, rulesetId, claimTimeoutMinutes })
+          body: JSON.stringify({ name, rulesetId, claimTimeoutMinutes, isInviteOnly: inviteOnly })
         });
         selectedCampaignId = created.id;
         closeModal();
@@ -913,6 +986,7 @@ window.addEventListener('DOMContentLoaded', () => {
             name,
             rulesetId,
             claimTimeoutMinutes,
+            isInviteOnly: inviteOnly,
             refereeSessionIds: Array.from(editorSelectedRefereeSessionIds)
           })
         });
@@ -970,6 +1044,30 @@ window.addEventListener('DOMContentLoaded', () => {
   if (campaignRulesetSelect) {
     campaignRulesetSelect.addEventListener('change', () => {
       validateModal();
+    });
+  }
+
+  if (campaignInviteOnlyInput) {
+    campaignInviteOnlyInput.addEventListener('change', () => {
+      validateModal();
+    });
+  }
+
+  if (campaignInvitePlayerNameInput) {
+    campaignInvitePlayerNameInput.addEventListener('input', () => {
+      updateInvitePlayerControls();
+    });
+    campaignInvitePlayerNameInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        invitePlayerByName();
+      }
+    });
+  }
+
+  if (campaignInvitePlayerButton) {
+    campaignInvitePlayerButton.addEventListener('click', () => {
+      invitePlayerByName();
     });
   }
 

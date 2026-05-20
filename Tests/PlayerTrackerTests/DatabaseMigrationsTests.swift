@@ -24,8 +24,10 @@ final class DatabaseMigrationsTests: XCTestCase {
 
         try await CreatePlayers().prepare(on: app.db)
         try await MigrateLegacyCampaignPlayerSessionsToPlayers().prepare(on: app.db)
+        try await AddInviteOnlyToCampaigns().prepare(on: app.db)
         try await AddCharacterClaimColumnsToCharacters().prepare(on: app.db)
         try await AddLastPlayedByNameToCharacters().prepare(on: app.db)
+        try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
 
@@ -35,8 +37,10 @@ final class DatabaseMigrationsTests: XCTestCase {
 
         try await CreatePlayers().prepare(on: app.db)
         try await MigrateLegacyCampaignPlayerSessionsToPlayers().prepare(on: app.db)
+        try await AddInviteOnlyToCampaigns().prepare(on: app.db)
         try await AddCharacterClaimColumnsToCharacters().prepare(on: app.db)
         try await AddLastPlayedByNameToCharacters().prepare(on: app.db)
+        try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
 
@@ -57,7 +61,7 @@ final class DatabaseMigrationsTests: XCTestCase {
         }
     }
 
-    func testLegacyCampaignTimeoutSchemaMigrationAddsMissingColumn() async throws {
+    func testLegacyCampaignSchemaMigrationAddsInviteTable() async throws {
         let app = try await makeApp(withLegacyCampaignSchema: true)
         defer { Task { try? await app.asyncShutdown() } }
 
@@ -65,6 +69,8 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await MigrateLegacyCampaignPlayerSessionsToPlayers().prepare(on: app.db)
         try await AddCharacterClaimColumnsToCharacters().prepare(on: app.db)
         try await AddClaimTimeoutMinutesToCampaigns().prepare(on: app.db)
+        try await AddInviteOnlyToCampaigns().prepare(on: app.db)
+        try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
 

@@ -56,6 +56,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const refereeRulesetLicense = document.getElementById('ref-ruleset-license');
   const refereeRulesetLicenseWrap = document.getElementById('ref-ruleset-license-wrap');
   const refereeRulesetIcon = document.getElementById('ref-ruleset-icon');
+  const invitePlayerBtn = document.getElementById('ref-invite-player');
   const campaignSettingsBtn = document.getElementById('ref-campaign-settings');
 
   const form = document.getElementById('ref-add-panel');
@@ -130,6 +131,9 @@ window.addEventListener('DOMContentLoaded', () => {
   if (campaignSettingsBtn && !isAdminHost()) {
     campaignSettingsBtn.style.display = 'none';
   }
+  if (invitePlayerBtn) {
+    invitePlayerBtn.addEventListener('click', invitePlayer);
+  }
 
   let activeCampaignId = null;
   function setCampaignSummary() {}
@@ -151,6 +155,45 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!editorInitiativeBonusInput || !editorInitiativeBonusWrap) return;
     editorInitiativeBonusInput.disabled = false;
     editorInitiativeBonusWrap.classList.remove('disabled');
+  }
+
+  function updateInvitePlayerButtonState() {
+    if (!invitePlayerBtn) return;
+    invitePlayerBtn.disabled = !activeCampaignId;
+  }
+
+  async function invitePlayer() {
+    if (!activeCampaignId) {
+      if (statusDiv) statusDiv.textContent = 'No active campaign selected.';
+      return;
+    }
+
+    const playerName = window.prompt('Player name to add:');
+    if (playerName === null) return;
+
+    const trimmed = playerName.trim();
+    if (!trimmed) {
+      if (statusDiv) statusDiv.textContent = 'Enter a player name first.';
+      return;
+    }
+
+    if (statusDiv) statusDiv.textContent = 'Adding player...';
+    try {
+      const res = await fetch(`/campaigns/${encodeURIComponent(activeCampaignId)}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerName: trimmed })
+      });
+      if (!res.ok) {
+        const message = await res.text().catch(() => '');
+        throw new Error(message || `Server returned ${res.status}`);
+      }
+      const member = await res.json();
+      const target = member.playerName || trimmed;
+      if (statusDiv) statusDiv.textContent = `Added ${target} to the campaign.`;
+    } catch (err) {
+      if (statusDiv) statusDiv.textContent = `Failed to add player: ${err.message}`;
+    }
   }
 
   function closeOverflowMenu() {
@@ -355,6 +398,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/campaign');
       if (!res.ok) {
         if (res.status === 409) {
+          if (activeCampaignId) {
+            window.location.replace('/index.html');
+            return false;
+          }
           currentCampaignName = '';
           activeCampaignId = null;
           updateCampaignHeader(
@@ -376,12 +423,14 @@ window.addEventListener('DOMContentLoaded', () => {
             refereeEncounterState.textContent = 'No campaign selected';
           }
           setCampaignSummary(null);
+          updateInvitePlayerButtonState();
           document.title = APP_NAME;
           return false;
         }
         throw new Error('Server returned ' + res.status);
       }
       const campaign = await res.json();
+      const previousCampaignId = activeCampaignId || null;
       currentCampaignName = campaign.name || '';
       activeCampaignId = campaign.id || null;
       updateCampaignHeader(
@@ -398,6 +447,11 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       );
       setCampaignSummary(campaign);
+      updateInvitePlayerButtonState();
+      if (previousCampaignId && previousCampaignId !== activeCampaignId) {
+        window.location.replace('/index.html');
+        return false;
+      }
       if (currentCampaignName) {
         document.title = `${currentCampaignName} - Referee`;
       } else {
@@ -564,7 +618,13 @@ window.addEventListener('DOMContentLoaded', () => {
   async function loadState() {
     try {
       const res = await fetch('/state?view=referee');
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       const state = await res.json();
       applyState(state);
     } catch (err) {
@@ -598,6 +658,10 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch(path, { method: 'POST' });
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         throw new Error('Server returned ' + res.status);
       }
       const state = await res.json();
@@ -1180,7 +1244,13 @@ window.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isHidden, revealOnTurn })
       });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       await loadState();
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Failed to update visibility: ${err.message}`;
@@ -1266,12 +1336,24 @@ window.addEventListener('DOMContentLoaded', () => {
     const payload = buildEditorPayload();
     if (!payload) return false;
     try {
-      const res = await fetch('/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!activeCampaignId) {
+        throw new Error('No active campaign selected.');
+      }
+      const res = await fetch(
+        `/campaigns/${encodeURIComponent(activeCampaignId)}/me/characters`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }
+      );
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return false;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       detailsDirty = false;
       conditionsDirty = false;
       if (statusDiv) statusDiv.textContent = 'Character updated.';
@@ -1286,7 +1368,13 @@ window.addEventListener('DOMContentLoaded', () => {
   async function setTurnNow(id) {
     try {
       const res = await fetch(`/turn-set/${id}`, { method: 'POST' });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       await loadState();
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Failed to set turn: ${err.message}`;
@@ -1369,12 +1457,24 @@ window.addEventListener('DOMContentLoaded', () => {
         if (currentCampaignName) {
           payload.campaignName = currentCampaignName;
         }
-        const res = await fetch('/characters', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) throw new Error('Server returned ' + res.status);
+        if (!activeCampaignId) {
+          throw new Error('No active campaign selected.');
+        }
+        const res = await fetch(
+          `/campaigns/${encodeURIComponent(activeCampaignId)}/me/characters`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }
+        );
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            window.location.replace('/index.html');
+            return;
+          }
+          throw new Error('Server returned ' + res.status);
+        }
       }
       if (statusDiv) {
         statusDiv.textContent = shouldReveal ? 'Added visible character.' : 'Added hidden character.';
@@ -1433,12 +1533,24 @@ window.addEventListener('DOMContentLoaded', () => {
       if (currentCampaignName) {
         payload.campaignName = currentCampaignName;
       }
-      const res = await fetch('/characters', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!activeCampaignId) {
+        throw new Error('No active campaign selected.');
+      }
+      const res = await fetch(
+        `/campaigns/${encodeURIComponent(activeCampaignId)}/me/characters`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }
+      );
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       await loadState();
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Failed to update character: ${err.message}`;
@@ -1447,8 +1559,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function deleteCharacter(id) {
     try {
-      const res = await fetch(`/characters/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!activeCampaignId) {
+        throw new Error('No active campaign selected.');
+      }
+      const res = await fetch(
+        `/campaigns/${encodeURIComponent(activeCampaignId)}/me/characters/${encodeURIComponent(id)}`,
+        { method: 'DELETE' }
+      );
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       clearSelectedCharacter();
       await loadState();
     } catch (err) {
@@ -1528,6 +1652,10 @@ window.addEventListener('DOMContentLoaded', () => {
         { method: 'POST' }
       );
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         throw new Error('Server returned ' + res.status);
       }
       statusDiv.textContent = '';
@@ -1546,6 +1674,10 @@ window.addEventListener('DOMContentLoaded', () => {
         { method: 'POST' }
       );
       if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
         throw new Error('Server returned ' + res.status);
       }
       statusDiv.textContent = '';
@@ -1559,7 +1691,13 @@ window.addEventListener('DOMContentLoaded', () => {
   async function handleTurnComplete() {
     try {
       const res = await fetch('/turn-complete', { method: 'POST' });
-      if (!res.ok) throw new Error('Server returned ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
       await loadState();
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Error advancing turn: ${err.message}`;

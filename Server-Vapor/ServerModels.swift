@@ -20,6 +20,29 @@ struct CampaignSummary: Content {
     let encounterState: EncounterState
     let isActive: Bool
     let claimTimeoutMinutes: Int
+    let isInviteOnly: Bool
+}
+
+struct CampaignInviteResponse: Content {
+    let campaign: CampaignSummary
+    let token: String
+    let playerName: String?
+}
+
+struct CampaignInviteCreateInput: Content {
+    let playerName: String?
+
+    init(playerName: String? = nil) {
+        self.playerName = playerName
+    }
+}
+
+struct CampaignMemberCreateInput: Content {
+    let playerName: String
+
+    init(playerName: String) {
+        self.playerName = playerName
+    }
 }
 
 struct StatEntry: Content {
@@ -41,23 +64,27 @@ struct CampaignState: Content {
     let rulesetLabel: String
     let encounterState: EncounterState
     let claimTimeoutMinutes: Int
+    let isInviteOnly: Bool
 }
 
 struct CampaignUpdateInput: Content {
     let name: String
     let rulesetId: String
     let claimTimeoutMinutes: Int?
+    let isInviteOnly: Bool?
     let refereeSessionIds: [UUID]?
 
     init(
         name: String,
         rulesetId: String,
         claimTimeoutMinutes: Int? = nil,
+        isInviteOnly: Bool? = nil,
         refereeSessionIds: [UUID]? = nil
     ) {
         self.name = name
         self.rulesetId = rulesetId
         self.claimTimeoutMinutes = claimTimeoutMinutes
+        self.isInviteOnly = isInviteOnly
         self.refereeSessionIds = refereeSessionIds
     }
 }
@@ -83,6 +110,12 @@ struct AuthSessionResponse: Content {
 
 struct PlayerJoinInput: Content {
     let displayName: String
+    let inviteToken: String?
+
+    init(displayName: String, inviteToken: String? = nil) {
+        self.displayName = displayName
+        self.inviteToken = inviteToken
+    }
 }
 
 struct PlayerIdentityResponse: Content {
