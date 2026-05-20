@@ -192,6 +192,38 @@ struct GameState: Content {
     let players: [PlayerView]
 }
 
+struct CampaignStreamSnapshot: Content {
+    let campaign: CampaignState
+    let gameState: GameState
+}
+
+struct CampaignStreamMessage: Sendable {
+    let event: String
+    let snapshot: CampaignStreamSnapshot
+}
+
+struct ActiveCampaignStreamSnapshot: Content {
+    let campaign: CampaignState?
+
+    enum CodingKeys: String, CodingKey {
+        case campaign
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        if let campaign {
+            try container.encode(campaign, forKey: .campaign)
+        } else {
+            try container.encodeNil(forKey: .campaign)
+        }
+    }
+}
+
+struct ActiveCampaignStreamMessage: Sendable {
+    let event: String
+    let snapshot: ActiveCampaignStreamSnapshot
+}
+
 struct ConditionsInput: Content {
     let name: String
     let conditions: [String]

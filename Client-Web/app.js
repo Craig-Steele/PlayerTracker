@@ -1,8 +1,8 @@
 // Shared state
 let lastStateJson = null;
-const REFRESH_INTERVAL_MS = 5000;
-const ACTIVE_CAMPAIGN_POLL_MS = 5000;
 let skipRefresh = false;
+let loadStateInFlight = false;
+let loadStateRefreshQueued = false;
 
 const {
   APP_NAME,
@@ -311,7 +311,27 @@ window.addEventListener('DOMContentLoaded', () => {
   let initiativeEditorCharacterId = null;
   let currentCampaignId = '';
   let claimableCharacters = [];
-  let activeCampaignPollTimer = null;
+  const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
+    getCampaignId: () => currentCampaignId,
+    refresh: async () => {
+      const hasActiveCampaign = await loadCampaign();
+      if (hasActiveCampaign) {
+        await loadState();
+      }
+    },
+    shouldSkipRefresh: () => skipRefresh,
+    consumeSkipRefresh: () => {
+      skipRefresh = false;
+    }
+  }) || {
+    start() {},
+    stop() {},
+    refresh() {
+      return Promise.resolve();
+    },
+    sync() {},
+    close() {}
+  };
 
   campaignHeaderNameTargets.push(campaignNameLabel, playerCampaignName, displayCampaignName);
   campaignHeaderIconTargets.push(rulesetIcon, playerRulesetIcon, displayRulesetIcon);
@@ -1932,6 +1952,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/campaign');
       if (!res.ok) {
         if (res.status === 409) {
+          campaignLiveStream.close();
           if (currentCampaignId) {
             window.location.replace('/index.html');
             return false;
@@ -1985,6 +2006,7 @@ window.addEventListener('DOMContentLoaded', () => {
       await loadConditionLibraryFromServer();
       await refreshCharacterState(getOwnerName());
       if (previousCampaignId && previousCampaignId !== currentCampaignId) {
+        campaignLiveStream.close();
         window.location.replace('/index.html');
         return false;
       }
@@ -2011,6 +2033,7 @@ window.addEventListener('DOMContentLoaded', () => {
       updateWindowTitle();
       await loadConditionLibraryFromServer();
       await refreshCharacterState(getOwnerName());
+      campaignLiveStream.close();
       return false;
     }
   }
@@ -2439,26 +2462,6 @@ window.addEventListener('DOMContentLoaded', () => {
       ownerInput.value = savedOwnerName;
     }
     updatePlayerNameDisplay();
-    if (!activeCampaignPollTimer && !displayOnly) {
-      activeCampaignPollTimer = window.setInterval(async () => {
-        try {
-          const res = await fetch('/campaign');
-          if (!res.ok) {
-            if (currentCampaignId) {
-              window.location.replace('/index.html');
-            }
-            return;
-          }
-          const campaign = await res.json();
-          const nextCampaignId = campaign.id || '';
-          if (currentCampaignId && nextCampaignId && nextCampaignId !== currentCampaignId) {
-            window.location.replace('/index.html');
-          }
-        } catch (_err) {
-          // Keep the current page; the next poll will retry.
-        }
-      }, ACTIVE_CAMPAIGN_POLL_MS);
-    }
     if (!displayOnly) {
       if (!hadPlayerSession && !getBootstrapPlayerName()) {
         if (!isJoinPage()) {
@@ -2473,7 +2476,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!savedOwnerName) {
         updatePlayerNameDisplay();
         await loadState();
-        setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
+        campaignLiveStream.start();
         return;
       }
       try {
@@ -2484,22 +2487,19 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
     await loadState();
-    setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
+    campaignLiveStream.start();
   }
 
   initApp();
 
   // --- Load state (round + current turn + players) -------------------------
 
-  function loadStateTimer() {
-    if (skipRefresh) {
-      skipRefresh = false;
+  async function loadState() {
+    if (loadStateInFlight) {
+      loadStateRefreshQueued = true;
       return;
     }
-    loadState();
-  }
-
-  async function loadState() {
+    loadStateInFlight = true;
     try {
       const res = await fetch('/state');
       if (!res.ok) {
@@ -2680,6 +2680,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       statusDiv.textContent = 'Error loading state: ' + err.message;
+    } finally {
+      loadStateInFlight = false;
+      if (loadStateRefreshQueued) {
+        loadStateRefreshQueued = false;
+        loadState();
+      }
     }
   }
 

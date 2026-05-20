@@ -53,8 +53,6 @@ function accessLabel(campaign) {
   return campaign?.isInviteOnly ? 'Invite only' : 'Open join';
 }
 
-const JOIN_REFRESH_INTERVAL_MS = 5000;
-
 window.addEventListener('DOMContentLoaded', () => {
   const campaignNameEl = document.getElementById('join-campaign-name');
   const rulesetIconEl = document.getElementById('join-ruleset-icon');
@@ -84,8 +82,8 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentPlayerName = '';
   let editingPlayerName = false;
   let currentCampaign = null;
-  let joinRefreshTimer = null;
   let accessDenied = false;
+  let campaignEventSource = null;
 
   function setStatus(message, isError = false) {
     if (!statusEl) return;
@@ -130,6 +128,37 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!currentPlayerName) {
       setCampaignPanelVisible(false);
     }
+  }
+
+  function closeCampaignEventStream() {
+    if (campaignEventSource) {
+      campaignEventSource.close();
+      campaignEventSource = null;
+    }
+  }
+
+  function syncCampaignEventStream() {
+    if (typeof EventSource === 'undefined') {
+      closeCampaignEventStream();
+      return;
+    }
+    if (campaignEventSource) {
+      return;
+    }
+    const source = new EventSource('/campaign/events');
+    campaignEventSource = source;
+    const refreshFromCampaignChange = async () => {
+      try {
+        await fetchCampaign();
+      } catch (_err) {
+        // The next server event will retry the refresh.
+      }
+    };
+    source.addEventListener('snapshot', refreshFromCampaignChange);
+    source.addEventListener('campaign-updated', refreshFromCampaignChange);
+    source.onerror = () => {
+      // EventSource retries automatically; the next event will refresh the page state.
+    };
   }
 
   async function maybeForwardToCurrentView() {
@@ -516,16 +545,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function initJoinPage() {
     await fetchCampaign();
-    if (!joinRefreshTimer) {
-      joinRefreshTimer = window.setInterval(async () => {
-        if (editingPlayerName) return;
-        try {
-          await fetchCampaign();
-        } catch (_err) {
-          // Keep the current page; the next poll will retry.
-        }
-      }, JOIN_REFRESH_INTERVAL_MS);
-    }
+    syncCampaignEventStream();
     const savedName =
       sanitizePlayerDisplayName(localStorage.getItem('playerLoginName')) ||
       sanitizePlayerDisplayName(localStorage.getItem('playerName'));
@@ -548,7 +568,7 @@ window.addEventListener('DOMContentLoaded', () => {
             setCampaignPanelVisible(true);
             setStatus('Join the active campaign or edit your player name.');
           }
-        }
+      }
         return;
       } catch (err) {
         setStatus(`Failed to restore player session: ${err.message}`, true);
@@ -581,6 +601,8 @@ window.addEventListener('DOMContentLoaded', () => {
       setStatus('Join the active campaign or edit your player name.');
     });
   }
+
+  window.addEventListener('beforeunload', closeCampaignEventStream);
 
   if (form) {
     form.addEventListener('submit', handleJoinSubmit);

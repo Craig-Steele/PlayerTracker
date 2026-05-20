@@ -71,8 +71,10 @@ Implementation note: this likely needs a temporary-directory injection point sim
 
 Goal: catch DTO and HTTP behavior regressions that actor tests miss.
 
-- `POST /characters` creates and updates characters.
+- `POST /campaigns/:campaignId/me/characters` creates and updates player-owned characters.
 - `GET /state` respects player versus referee visibility.
+- `GET /campaign/events` snapshots the current active campaign and publishes active-campaign changes.
+- `GET /campaigns/:campaignId/events` streams campaign-scoped updates for authorized members.
 - `POST /encounter/start` rolls unset referee initiatives and activates the encounter.
 - `POST /turn-complete` rejects inactive encounters.
 - `POST /campaign` updates campaign name and ruleset.
@@ -109,6 +111,8 @@ Implementation note: this likely needs a small connection-logging service protoc
 ### Web
 
 - Add small JavaScript tests for `shared.js` dice parsing/rolling helpers.
+- Test `live-stream.js` refresh coalescing and stream subscription behavior.
+- Test join-page forward/deny decision helpers.
 - Test encounter health-status labels and stat ordering helpers.
 - Test ruleset link/icon URL handling.
 

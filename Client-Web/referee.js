@@ -1,4 +1,3 @@
-const REFRESH_INTERVAL_MS = 5000;
 const {
   APP_NAME,
   APP_ICON_URL,
@@ -115,6 +114,8 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentTurnId = null;
   let encounterState = 'new';
   let skipRefresh = false;
+  let loadStateInFlight = false;
+  let loadStateRefreshQueued = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
   let currentStandardDie = null;
@@ -136,6 +137,27 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   let activeCampaignId = null;
+  const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
+    getCampaignId: () => activeCampaignId,
+    refresh: async () => {
+      const hasActiveCampaign = await loadCampaign();
+      if (hasActiveCampaign) {
+        await loadState();
+      }
+    },
+    shouldSkipRefresh: () => skipRefresh,
+    consumeSkipRefresh: () => {
+      skipRefresh = false;
+    }
+  }) || {
+    start() {},
+    stop() {},
+    refresh() {
+      return Promise.resolve();
+    },
+    sync() {},
+    close() {}
+  };
   function setCampaignSummary() {}
 
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
@@ -424,6 +446,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
           setCampaignSummary(null);
           updateInvitePlayerButtonState();
+          campaignLiveStream.close();
           document.title = APP_NAME;
           return false;
         }
@@ -449,6 +472,7 @@ window.addEventListener('DOMContentLoaded', () => {
       setCampaignSummary(campaign);
       updateInvitePlayerButtonState();
       if (previousCampaignId && previousCampaignId !== activeCampaignId) {
+        campaignLiveStream.close();
         window.location.replace('/index.html');
         return false;
       }
@@ -475,6 +499,7 @@ window.addEventListener('DOMContentLoaded', () => {
           iconUrl: currentCampaignName ? undefined : APP_ICON_URL
         }
       );
+      campaignLiveStream.close();
       document.title = currentCampaignName ? `${currentCampaignName} - Referee` : APP_NAME;
       return false;
     }
@@ -616,6 +641,11 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function loadState() {
+    if (loadStateInFlight) {
+      loadStateRefreshQueued = true;
+      return;
+    }
+    loadStateInFlight = true;
     try {
       const res = await fetch('/state?view=referee');
       if (!res.ok) {
@@ -629,6 +659,12 @@ window.addEventListener('DOMContentLoaded', () => {
       applyState(state);
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Error loading state: ${err.message}`;
+    } finally {
+      loadStateInFlight = false;
+      if (loadStateRefreshQueued) {
+        loadStateRefreshQueued = false;
+        loadState();
+      }
     }
   }
 
@@ -1710,18 +1746,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (hasActiveCampaign) {
       await loadState();
     }
-    setInterval(loadStateTimer, REFRESH_INTERVAL_MS);
-  }
-
-  function loadStateTimer() {
-    if (skipRefresh) {
-      skipRefresh = false;
-      return;
-    }
-    loadCampaign();
-    if (activeCampaignId) {
-      loadState();
-    }
+    campaignLiveStream.start();
   }
 
   if (form) {

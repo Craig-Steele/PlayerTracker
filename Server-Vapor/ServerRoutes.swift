@@ -178,7 +178,64 @@ private func refreshPlayerClaimActivity(
     )
 }
 
-func routes(_ app: Application, campaignStore: CampaignStore) throws {
+private func serverSentEvent<T: Encodable>(
+    event: String,
+    payload: T
+) throws -> String {
+    let encoder = JSONEncoder()
+    let data = try encoder.encode(payload)
+    let json = String(decoding: data, as: UTF8.self)
+    return "event: \(event)\ndata: \(json)\n\n"
+}
+
+private func campaignStreamSnapshot(
+    campaign: CampaignState,
+    userStore: UserStore
+) async -> CampaignStreamSnapshot {
+    let gameState = await userStore.state(
+        campaignName: campaign.name,
+        includeHidden: true,
+        encounterState: campaign.encounterState
+    )
+    return CampaignStreamSnapshot(campaign: campaign, gameState: gameState)
+}
+
+private func activeCampaignStreamSnapshot(
+    campaignStore: CampaignStore
+) async -> ActiveCampaignStreamSnapshot {
+    ActiveCampaignStreamSnapshot(campaign: await campaignStore.activeCampaign())
+}
+
+private func publishCampaignUpdate(
+    campaign: CampaignState,
+    userStore: UserStore,
+    eventHub: CampaignEventHub,
+    event: String = "campaign-updated"
+) async {
+    let snapshot = await campaignStreamSnapshot(campaign: campaign, userStore: userStore)
+        await eventHub.publish(
+            campaignID: campaign.id,
+            message: CampaignStreamMessage(event: event, snapshot: snapshot)
+        )
+}
+
+private func publishActiveCampaignUpdate(
+    campaignStore: CampaignStore,
+    eventHub: ActiveCampaignEventHub,
+    event: String = "campaign-updated"
+) async {
+    let snapshot = await activeCampaignStreamSnapshot(campaignStore: campaignStore)
+    await eventHub.publish(
+        message: ActiveCampaignStreamMessage(event: event, snapshot: snapshot)
+    )
+}
+
+func routes(
+    _ app: Application,
+    campaignStore: CampaignStore,
+    eventHub: CampaignEventHub,
+    activeCampaignEventHub: ActiveCampaignEventHub
+) throws {
     app.post("auth", "signup") { req async throws -> Response in
         let input = try req.content.decode(AuthSignupInput.self)
         let email = input.email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -331,6 +388,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             on: req.db
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: updated, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         let response = Response(status: .ok)
         try response.content.encode(playerSessionResponse(from: updated, campaign: campaign))
         setPlayerCookie(on: response, token: token, expiresAt: updated.expiresAt)
@@ -351,6 +409,59 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         )
         let campaigns = try await campaignStore.campaigns()
         return campaigns.filter { campaignIDs.contains($0.id) }
+    }
+
+    app.get("campaigns", ":campaignId", "events") { req async throws -> Response in
+        guard let campaignIDString = req.parameters.get("campaignId"),
+              let routeCampaignID = UUID(uuidString: campaignIDString) else {
+            throw Abort(.badRequest)
+        }
+        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        guard campaign.id == routeCampaignID else {
+            throw Abort(.conflict, reason: "Campaign is not active.")
+        }
+        await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        let response = Response(status: .ok)
+        response.headers.replaceOrAdd(name: .contentType, value: "text/event-stream; charset=utf-8")
+        response.headers.replaceOrAdd(name: .cacheControl, value: "no-cache, no-transform")
+        response.headers.replaceOrAdd(name: .connection, value: "keep-alive")
+        let acceptsEventStream = (req.headers.first(name: .accept) ?? "")
+            .lowercased()
+            .contains("text/event-stream")
+        if acceptsEventStream {
+            response.body = .init(managedAsyncStream: { writer in
+                let messages = await eventHub.subscribe(campaignID: campaign.id)
+                let snapshot = await campaignStreamSnapshot(campaign: campaign, userStore: userStore)
+                try await writer.writeBuffer(
+                    ByteBuffer(string: try serverSentEvent(event: "snapshot", payload: snapshot))
+                )
+                for await message in messages {
+                    if Task.isCancelled {
+                        break
+                    }
+                    try await writer.writeBuffer(
+                        ByteBuffer(string: try serverSentEvent(event: message.event, payload: message.snapshot))
+                    )
+                }
+            })
+        } else {
+            let snapshot = await campaignStreamSnapshot(campaign: campaign, userStore: userStore)
+            response.body = .init(string: try serverSentEvent(event: "snapshot", payload: snapshot))
+        }
+        return response
+    }
+
+    app.post("campaigns", ":campaignId", "keepalive") { req async throws -> HTTPStatus in
+        guard let campaignIDString = req.parameters.get("campaignId"),
+              let routeCampaignID = UUID(uuidString: campaignIDString) else {
+            throw Abort(.badRequest)
+        }
+        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        guard campaign.id == routeCampaignID else {
+            throw Abort(.conflict, reason: "Campaign is not active.")
+        }
+        await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        return .ok
     }
 
     app.patch("me") { req async throws -> PlayerIdentityResponse in
@@ -374,6 +485,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             on: req.db
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: updated, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return playerIdentityResponse(from: updated, campaignID: campaign.id)
     }
 
@@ -435,6 +547,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             campaignName: campaign.name
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return claimed
     }
 
@@ -447,6 +560,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             conditions: Set(input.conditions),
             campaignName: campaign.name
         )
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return .ok
     }
 
@@ -544,11 +658,18 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         guard encounterState == .active else {
             throw Abort(.conflict, reason: "Encounter is not active.")
         }
-        return await userStore.nextTurn(
+        let state = await userStore.nextTurn(
             campaignName: campaignName,
             includeHidden: false,
             encounterState: encounterState
         )
+        await publishCampaignUpdate(
+            campaign: campaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "turn-changed"
+        )
+        return state
     }
 
     app.post("turn-set", ":id") { req async throws -> GameState in
@@ -563,11 +684,18 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         guard encounterState == .active else {
             throw Abort(.conflict, reason: "Encounter is not active.")
         }
-        return await userStore.setCurrentTurn(
+        let state = await userStore.setCurrentTurn(
             campaignName: campaignName,
             characterId: id,
             encounterState: encounterState
         )
+        await publishCampaignUpdate(
+            campaign: campaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "turn-changed"
+        )
+        return state
     }
 
     app.post("encounter", "new") { req async throws -> GameState in
@@ -575,12 +703,15 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let campaignName = campaign.name
         await userStore.resetForNewEncounter(campaignName: campaignName)
-        await campaignStore.setEncounterState(.new)
-        return await userStore.state(
+        _ = await campaignStore.setEncounterState(.new)
+        let updatedCampaign = await campaignStore.activeCampaign() ?? campaign
+        let state = await userStore.state(
             campaignName: campaignName,
             includeHidden: true,
             encounterState: .new
         )
+        await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: eventHub)
+        return state
     }
 
     app.post("encounter", "start") { req async throws -> GameState in
@@ -593,24 +724,30 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             standardDie: library.standardDie
         )
         await userStore.resetTurnState(campaignName: campaignName)
-        await campaignStore.setEncounterState(.active)
-        return await userStore.state(
+        _ = await campaignStore.setEncounterState(.active)
+        let updatedCampaign = await campaignStore.activeCampaign() ?? campaign
+        let state = await userStore.state(
             campaignName: campaignName,
             includeHidden: true,
             encounterState: .active
         )
+        await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: eventHub)
+        return state
     }
 
     app.post("encounter", "suspend") { req async throws -> GameState in
         logConnection(req, action: "encounter-suspend")
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let campaignName = campaign.name
-        await campaignStore.setEncounterState(.suspended)
-        return await userStore.state(
+        _ = await campaignStore.setEncounterState(.suspended)
+        let updatedCampaign = await campaignStore.activeCampaign() ?? campaign
+        let state = await userStore.state(
             campaignName: campaignName,
             includeHidden: true,
             encounterState: .suspended
         )
+        await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: eventHub)
+        return state
     }
 
     app.get("players", ":owner", "characters") { req async throws -> [PlayerView] in
@@ -639,6 +776,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         let renameIdentifier = "\(ownerId.uuidString) owner=\(previousName)->\(input.name)"
         logConnection(req, action: "rename-owner", identifier: renameIdentifier)
         await userStore.renameOwner(ownerId: ownerId, newName: input.name, campaignName: campaignName)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return .ok
     }
 
@@ -708,6 +846,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             conditions: input.conditions.map { Set($0) }
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return created
     }
 
@@ -757,6 +896,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             campaignName: campaign.name
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return released
     }
 
@@ -798,6 +938,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             conditions: input.conditions.map { Set($0) }
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return updated
     }
 
@@ -821,6 +962,7 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         if !removed {
             throw Abort(.notFound)
         }
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return .ok
     }
 
@@ -839,6 +981,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         ) else {
             throw Abort(.notFound)
         }
+        let campaign = try await requireActiveCampaign(campaignStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return updated
     }
 
@@ -850,6 +994,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         let input = try req.content.decode(CharacterRenameInput.self)
         logConnection(req, action: "rename-character", identifier: id.uuidString)
         await userStore.renameCharacter(id: id, characterName: input.name)
+        let campaign = try await requireActiveCampaign(campaignStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return .ok
     }
 
@@ -863,6 +1009,8 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         if !removed {
             throw Abort(.notFound)
         }
+        let campaign = try await requireActiveCampaign(campaignStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return .ok
     }
 
@@ -875,6 +1023,37 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             throw Abort(.conflict, reason: "No campaign selected")
         }
         return campaign
+    }
+
+    app.get("campaign", "events") { req async throws -> Response in
+        let response = Response(status: .ok)
+        response.headers.replaceOrAdd(name: .contentType, value: "text/event-stream; charset=utf-8")
+        response.headers.replaceOrAdd(name: .cacheControl, value: "no-cache, no-transform")
+        response.headers.replaceOrAdd(name: .connection, value: "keep-alive")
+        let acceptsEventStream = (req.headers.first(name: .accept) ?? "")
+            .lowercased()
+            .contains("text/event-stream")
+        if acceptsEventStream {
+            response.body = .init(managedAsyncStream: { writer in
+                let messages = await activeCampaignEventHub.subscribe()
+                let snapshot = await activeCampaignStreamSnapshot(campaignStore: campaignStore)
+                try await writer.writeBuffer(
+                    ByteBuffer(string: try serverSentEvent(event: "snapshot", payload: snapshot))
+                )
+                for await message in messages {
+                    if Task.isCancelled {
+                        break
+                    }
+                    try await writer.writeBuffer(
+                        ByteBuffer(string: try serverSentEvent(event: message.event, payload: message.snapshot))
+                    )
+                }
+            })
+        } else {
+            let snapshot = await activeCampaignStreamSnapshot(campaignStore: campaignStore)
+            response.body = .init(string: try serverSentEvent(event: "snapshot", payload: snapshot))
+        }
+        return response
     }
 
     app.post("campaign") { req async throws -> CampaignState in
@@ -891,6 +1070,10 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
             rulesetId: updated.rulesetId,
             on: req.application.db
         )
+        if let activeCampaign = await campaignStore.activeCampaign(), activeCampaign.id == updated.id {
+            await publishCampaignUpdate(campaign: activeCampaign, userStore: userStore, eventHub: eventHub)
+            await publishActiveCampaignUpdate(campaignStore: campaignStore, eventHub: activeCampaignEventHub)
+        }
         return updated
     }
 
@@ -1005,6 +1188,9 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
                 refereeSessionIDs: Set(refereeSessionIDs)
             )
         }
+        if let activeCampaign = await campaignStore.activeCampaign(), activeCampaign.id == updated.id {
+            await publishCampaignUpdate(campaign: activeCampaign, userStore: userStore, eventHub: eventHub)
+        }
         return updated
     }
 
@@ -1015,12 +1201,23 @@ func routes(_ app: Application, campaignStore: CampaignStore) throws {
         }
         let user = try await requireAuthenticatedUser(req)
         logConnection(req, action: "select-campaign", identifier: "\(user.email) \(campaignID.uuidString)")
+        let previousActiveCampaign = await campaignStore.activeCampaign()
         let selected = try await campaignStore.selectCampaign(id: campaignID)
         try await userStore.configure(
             campaignName: selected.name,
             rulesetId: selected.rulesetId,
             on: req.application.db
         )
+        if let previousActiveCampaign, previousActiveCampaign.id != selected.id {
+            await publishCampaignUpdate(campaign: previousActiveCampaign, userStore: userStore, eventHub: eventHub)
+        }
+        await publishCampaignUpdate(
+            campaign: selected,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "campaign-updated"
+        )
+        await publishActiveCampaignUpdate(campaignStore: campaignStore, eventHub: activeCampaignEventHub)
         return selected
     }
 

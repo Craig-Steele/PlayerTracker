@@ -154,6 +154,84 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(legacyCreateResponse.status, .notFound)
     }
 
+    func testCampaignEventStreamAndKeepaliveRequireMembership() async throws {
+        let tester = try await makeTester()
+        let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
+        let playerSession = try await join(displayName: "Alex", in: tester)
+
+        let streamResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(campaign.id.uuidString)/events",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(streamResponse.status, .ok)
+        XCTAssertEqual(streamResponse.headers.first(name: .contentType), "text/event-stream; charset=utf-8")
+        XCTAssertEqual(streamResponse.headers.first(name: .cacheControl), "no-cache, no-transform")
+        XCTAssertTrue(streamResponse.body.string.contains("event: snapshot"))
+        XCTAssertTrue(streamResponse.body.string.contains("\"campaign\""))
+        XCTAssertTrue(streamResponse.body.string.contains("\"gameState\""))
+
+        let keepaliveResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaign.id.uuidString)/keepalive",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(keepaliveResponse.status, .ok)
+
+        let outsiderSession = try await join(displayName: "Taylor", in: tester)
+        let secondCampaign = try await activateCampaign(tester, name: "Second Route Smoke", rulesetId: "dnd5e")
+        let deniedStreamResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(secondCampaign.id.uuidString)/events",
+            headers: ["Cookie": "roll4_player_session=\(outsiderSession.cookieToken)"]
+        )
+        XCTAssertEqual(deniedStreamResponse.status, .forbidden)
+
+        let deniedKeepaliveResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(secondCampaign.id.uuidString)/keepalive",
+            headers: ["Cookie": "roll4_player_session=\(outsiderSession.cookieToken)"]
+        )
+        XCTAssertEqual(deniedKeepaliveResponse.status, .forbidden)
+    }
+
+    func testActiveCampaignEventStreamSnapshotsSelectionChanges() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+
+        let noCampaignResponse = try await tester.sendRequest(.GET, "/campaign/events")
+        XCTAssertEqual(noCampaignResponse.status, .ok)
+        XCTAssertEqual(
+            noCampaignResponse.headers.first(name: .contentType),
+            "text/event-stream; charset=utf-8"
+        )
+        XCTAssertTrue(noCampaignResponse.body.string.contains("event: snapshot"))
+        XCTAssertTrue(noCampaignResponse.body.string.contains("\"campaign\":null"))
+
+        let createCampaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaign",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Join Stream", rulesetId: "dnd5e")
+            ))
+        )
+        XCTAssertEqual(createCampaignResponse.status, .ok)
+        let createdCampaign = try createCampaignResponse.content.decode(CampaignState.self)
+
+        let adminCookie = try await signInOwner(in: tester)
+        let selectResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(createdCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(selectResponse.status, .ok)
+
+        let campaignResponse = try await tester.sendRequest(.GET, "/campaign/events")
+        XCTAssertEqual(campaignResponse.status, .ok)
+        XCTAssertTrue(campaignResponse.body.string.contains("event: snapshot"))
+        XCTAssertTrue(campaignResponse.body.string.contains("\"name\":\"Join Stream\""))
+    }
+
     func testCampaignCreateAndEditRoutesDoNotActivateCampaign() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
 

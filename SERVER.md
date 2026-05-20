@@ -13,7 +13,7 @@ Use the auth signup endpoint to create the server-owner account:
 POST /auth/signup
 ```
 
-Provide an email, password, and optional display name. The server stores the account locally and returns a signed-in session cookie.
+Provide an email and password. The server stores the account locally and returns a signed-in session cookie.
 
 ## Log In
 
@@ -54,3 +54,9 @@ POST /admin/shutdown
 ```
 
 The server asks for confirmation in the browser, then shuts itself down after the request is accepted. This is owner-gated and intended for local server management only.
+
+## Notes
+
+- The server-owner/admin account is separate from player membership.
+- Admin login does not create a player identity.
+- The admin account does not need a display name.

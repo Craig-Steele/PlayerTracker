@@ -19,6 +19,8 @@ The current working architecture is a Vapor service running on a Mac and serving
 
 - hosts the web UI from the checked-in `Client-Web/` directory
 - serves player, referee, display-only, and campaign-selector pages
+- manages campaign membership, referee roles, and name-based join/reclaim flow
+- publishes live campaign updates over SSE to browser clients
 - tracks campaigns, encounter state, initiative, character stats, conditions, visibility, and reveal-on-turn behavior
 - supports optional initiative assignment, in-app initiative rolling, decimal initiative values, and auto-skip turn behavior
 - loads rulesets from `Client-Web/rulesets`

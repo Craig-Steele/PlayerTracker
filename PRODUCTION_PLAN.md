@@ -900,7 +900,7 @@ Work:
   - active campaign selection changes
   - campaign metadata changes
   - referee-role presence changes
-- add reconnect semantics using event IDs or equivalent resume logic where useful
+- on reconnect, load the current snapshot instead of replaying missed history
 - keep polling as a fallback path during migration and failure handling
 - use the keepalive route to refresh player/session claim liveness while SSE is the primary live-update channel
 - make emitted payloads stable enough for all three clients to consume
@@ -911,10 +911,12 @@ Acceptance:
 - iOS and Android can consume the same event model
 - active campaign selection changes propagate to all clients in real time
 - referee-role presence changes propagate to referee and display clients in real time
-- disconnect/reconnect behavior is understood and implemented
+- disconnect/reconnect behavior reloads the current snapshot cleanly
 - client liveness is maintained by keepalive requests rather than polling loops
 - ordinary writes still use normal HTTP endpoints
 - display clients can receive current-referee presence updates in real time
+
+Status: complete
 
 ### M7: Web Client Migration
 

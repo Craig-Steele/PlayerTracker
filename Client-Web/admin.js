@@ -1,5 +1,3 @@
-const REFRESH_INTERVAL_MS = 5000;
-
 const {
   APP_NAME,
   APP_ICON_URL,
@@ -83,6 +81,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let refreshToken = 0;
   let authRefreshToken = 0;
   let authUser = null;
+  let campaignEventSource = null;
   const defaultClaimTimeoutMinutes = 5;
   const adminEmailStorageKey = 'adminEmail';
 
@@ -246,6 +245,37 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCampaignList();
     updateHeader(null, null);
     setStatus(authUser ? 'Create or activate a campaign.' : 'Sign in to manage campaigns.');
+  }
+
+  function closeCampaignEventStream() {
+    if (campaignEventSource) {
+      campaignEventSource.close();
+      campaignEventSource = null;
+    }
+  }
+
+  function syncCampaignEventStream() {
+    if (typeof EventSource === 'undefined') {
+      closeCampaignEventStream();
+      return;
+    }
+    if (campaignEventSource) {
+      return;
+    }
+    const source = new EventSource('/campaign/events');
+    campaignEventSource = source;
+    const refreshFromCampaignChange = async () => {
+      try {
+        await refreshAll();
+      } catch (_err) {
+        // A later stream event or manual action will retry the refresh.
+      }
+    };
+    source.addEventListener('snapshot', refreshFromCampaignChange);
+    source.addEventListener('campaign-updated', refreshFromCampaignChange);
+    source.onerror = () => {
+      // EventSource retries automatically; the next event will refresh the page state.
+    };
   }
 
   function isCampaignModalOpen() {
@@ -1168,5 +1198,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
   updateAuthUi();
   refreshAll();
-  setInterval(refreshAll, REFRESH_INTERVAL_MS);
+  syncCampaignEventStream();
+  window.addEventListener('beforeunload', closeCampaignEventStream);
 });

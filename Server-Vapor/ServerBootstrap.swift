@@ -59,12 +59,19 @@ enum ServerBootstrap {
             restorePersistedState: options.restorePersistedState,
             persistChanges: options.persistChanges
         )
+        let eventHub = CampaignEventHub()
+        let activeCampaignEventHub = ActiveCampaignEventHub()
         try await campaignStore.configure(database: app.db)
         print("Loaded default ruleset:", conditionLibrary.label)
         print("Connection logs:", await connectionLogPath())
         await logServerEvent("startup host=\(options.hostname) port=\(options.port)")
 
-        try routes(app, campaignStore: campaignStore)
+        try routes(
+            app,
+            campaignStore: campaignStore,
+            eventHub: eventHub,
+            activeCampaignEventHub: activeCampaignEventHub
+        )
 
         if options.launchBrowser {
             Task {
