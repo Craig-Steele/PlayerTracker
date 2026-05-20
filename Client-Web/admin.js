@@ -1,10 +1,12 @@
 const {
   APP_NAME,
   APP_ICON_URL,
+  isAdminHost,
   updateCampaignHeader
 } = window.PlayerTrackerShared || {
   APP_NAME: 'Roll4Initiative',
   APP_ICON_URL: '/favicon-512.png',
+  isAdminHost: () => false,
   updateCampaignHeader: () => {}
 };
 
@@ -62,6 +64,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const campaignMembersList = document.getElementById('admin-campaign-members');
   const campaignInvitePlayerNameInput = document.getElementById('admin-campaign-invite-player-name');
   const campaignInvitePlayerButton = document.getElementById('admin-campaign-invite-player-button');
+  const allowLocalAdminActions = isAdminHost();
 
   let availableRulesets = [];
   let campaignSummaries = [];
@@ -226,7 +229,16 @@ window.addEventListener('DOMContentLoaded', () => {
       authLogoutBtn.disabled = !authUser;
     }
     if (authShutdownBtn) {
-      authShutdownBtn.disabled = !authUser;
+      authShutdownBtn.disabled = !authUser || !allowLocalAdminActions;
+      authShutdownBtn.title = allowLocalAdminActions
+        ? ''
+        : 'Shutdown is only available from localhost.';
+    }
+    if (authSignupBtn) {
+      authSignupBtn.disabled = !allowLocalAdminActions;
+      authSignupBtn.title = allowLocalAdminActions
+        ? ''
+        : 'Create account is only available from localhost.';
     }
     if (authCredentials) {
       authCredentials.classList.toggle('hidden', Boolean(authUser));
@@ -699,7 +711,10 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function openSignupModal() {
-    if (!signupModal) return;
+    if (!signupModal || !allowLocalAdminActions) {
+      setAuthStatus('Create account is only available from localhost.', true);
+      return;
+    }
     if (signupEmailInput) {
       signupEmailInput.value = authEmailInput ? authEmailInput.value.trim() : '';
     }
@@ -953,7 +968,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function shutdownServer() {
-    if (!authUser) return;
+    if (!authUser || !allowLocalAdminActions) return;
     const confirmed = window.confirm('Shut down the server now?');
     if (!confirmed) return;
     try {
