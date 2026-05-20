@@ -194,13 +194,6 @@
                 </span>
               </label>
               <label class="property-toggle-row">
-                <span class="property-label">Share Stats</span>
-                <span class="property-toggle-control">
-                  <input type="checkbox" id="reveal-stats" />
-                  <span>Share stats with others</span>
-                </span>
-              </label>
-              <label class="property-toggle-row">
                 <span class="property-label">AppRoll</span>
                 <span class="property-toggle-control">
                   <input type="checkbox" id="use-app-initiative-roll" checked />
@@ -214,6 +207,17 @@
                 </span>
               </label>
             </div>
+            <div class="form-section-title">Stats</div>
+            <div class="form-section-block">
+              <label class="property-toggle-row">
+                <span class="property-label">Share Stats</span>
+                <span class="property-toggle-control">
+                  <input type="checkbox" id="reveal-stats" />
+                  <span>Share stats with others</span>
+                </span>
+              </label>
+            </div>
+            <div id="stats-fields"></div>
           </div>
         </div>
         <div id="conditions-panel" class="conditions-modal hidden" aria-hidden="true">
@@ -263,9 +267,10 @@
 
   <script src="shared.js?v=2"></script>
   <script src="live-stream.js?v=2"></script>
+  <script src="stat-inputs.js?v=1"></script>
   <script src="claimable-characters.js?v=1"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

@@ -57,6 +57,9 @@ const { filterClaimableCharacters } = window.PlayerTrackerClaimableCharacters ||
       ? characters.filter((character) => !character?.isReferee && !character?.claimedSessionId)
       : []
 };
+const { collectStatPayloadFromInputs } = window.PlayerTrackerStatInputs || {
+  collectStatPayloadFromInputs: () => []
+};
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
 
@@ -2697,6 +2700,15 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const selectedCharacter = myCharacters.find((character) => character.id === selectedCharacterId);
+    let stats;
+    try {
+      stats = collectStatPayloadFromInputs(statInputs, selectedCharacter?.stats, {
+        allowNegativeHealth
+      });
+    } catch (err) {
+      statusDiv.textContent = err.message;
+      return;
+    }
     const initiative = selectedCharacter ? selectedCharacter.initiative : null;
     const initiativeBonusRaw = initiativeBonusInput ? initiativeBonusInput.value.trim() : '0';
     const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
@@ -2710,7 +2722,7 @@ window.addEventListener('DOMContentLoaded', () => {
       ownerName,
       name,
       initiative,
-      stats: Array.isArray(selectedCharacter?.stats) ? selectedCharacter.stats : [],
+      stats,
       revealStats: revealStatsInput ? revealStatsInput.checked : null,
       autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
       useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
