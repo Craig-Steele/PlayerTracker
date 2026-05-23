@@ -67,6 +67,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const initiativeBonusWrap = document.getElementById('ref-initiative-bonus-wrap');
   const statsFields = document.getElementById('ref-stats-fields');
   const characterList = document.getElementById('referee-character-list');
+  const addManualTabBtn = document.getElementById('ref-add-tab-manual');
+  const addLibraryTabBtn = document.getElementById('ref-add-tab-library');
+  const addManualPanel = document.getElementById('ref-add-manual-panel');
+  const librarySummary = document.getElementById('ref-library-summary');
+  const libraryPanel = document.getElementById('ref-library-panel');
+  const libraryQueryInput = document.getElementById('ref-library-query');
+  const libraryList = document.getElementById('ref-library-list');
+  const libraryDetails = document.getElementById('ref-library-details');
   const healthHeading = document.getElementById('health-heading');
   const visibleToggle = document.getElementById('ref-visible');
   const addCurrentStats = document.getElementById('ref-add-current-stats');
@@ -102,11 +110,21 @@ window.addEventListener('DOMContentLoaded', () => {
   const hidePcsToggle = document.getElementById('ref-hide-pcs');
 
   let currentCampaignName = '';
+  let currentRulesetId = '';
   let statKeys = ['HP'];
   let statInputs = new Map();
   let editorStatInputs = new Map();
   let conditionLookup = new Map();
   let conditionLibrary = [];
+  let creatureLibraryQuery = '';
+  let addDialogTab = 'manual';
+  let creatureLibraryOpen = false;
+  let creatureLibraryLoading = false;
+  let creatureLibraryResults = [];
+  let selectedCreatureLibraryId = null;
+  let selectedCreatureLibrary = null;
+  let creatureLibraryRequestController = null;
+  let creatureLibrarySearchTimer = null;
   let selectedConditions = new Set();
   let selectedCharacterId = null;
   let currentPlayers = [];
@@ -411,8 +429,339 @@ window.addEventListener('DOMContentLoaded', () => {
         editorStatsFields.appendChild(row);
       }
 
-      editorStatInputs.set(key, { maxInput, currentInput });
+    editorStatInputs.set(key, { maxInput, currentInput });
     });
+  }
+
+  function setCreatureLibrarySummary(text) {
+    if (!librarySummary) return;
+    librarySummary.textContent = text || '';
+  }
+
+  function updateAddDialogTabs() {
+    const libraryOpen = addDialogTab === 'library';
+    creatureLibraryOpen = libraryOpen;
+
+    if (addManualTabBtn) {
+      addManualTabBtn.setAttribute('aria-selected', (!libraryOpen).toString());
+      addManualTabBtn.tabIndex = libraryOpen ? -1 : 0;
+    }
+    if (addLibraryTabBtn) {
+      addLibraryTabBtn.setAttribute('aria-selected', libraryOpen.toString());
+      addLibraryTabBtn.tabIndex = libraryOpen ? 0 : -1;
+    }
+    if (addManualPanel) {
+      addManualPanel.classList.toggle('hidden', libraryOpen);
+      addManualPanel.setAttribute('aria-hidden', libraryOpen.toString());
+    }
+    if (libraryPanel) {
+      libraryPanel.classList.toggle('hidden', !libraryOpen);
+      libraryPanel.setAttribute('aria-hidden', (!libraryOpen).toString());
+    }
+  }
+
+  function setAddDialogTab(tab, options = {}) {
+    const nextTab = tab === 'library' ? 'library' : 'manual';
+    const previousTab = addDialogTab;
+    addDialogTab = nextTab;
+    updateAddDialogTabs();
+
+    if (nextTab === 'library') {
+      const query = libraryQueryInput ? libraryQueryInput.value : creatureLibraryQuery;
+      if ((previousTab !== 'library' || !creatureLibraryResults.length) && !creatureLibraryLoading) {
+        loadCreatureLibrary(query || '');
+      }
+      if (options.focus && libraryQueryInput) {
+        libraryQueryInput.focus();
+      }
+      return;
+    }
+
+    if (options.focus && nameInput) {
+      nameInput.focus();
+    }
+  }
+
+  function clearCreatureLibrarySelection() {
+    selectedCreatureLibraryId = null;
+    selectedCreatureLibrary = null;
+  }
+
+  function resetCreatureLibraryState() {
+    if (creatureLibraryRequestController) {
+      creatureLibraryRequestController.abort();
+      creatureLibraryRequestController = null;
+    }
+    if (creatureLibrarySearchTimer) {
+      clearTimeout(creatureLibrarySearchTimer);
+      creatureLibrarySearchTimer = null;
+    }
+    creatureLibraryQuery = '';
+    creatureLibraryOpen = false;
+    creatureLibraryLoading = false;
+    creatureLibraryResults = [];
+    clearCreatureLibrarySelection();
+    if (libraryQueryInput) libraryQueryInput.value = '';
+    addDialogTab = 'manual';
+    updateAddDialogTabs();
+    renderCreatureLibraryList();
+    renderCreatureLibraryDetails();
+    setCreatureLibrarySummary('');
+  }
+
+  function setCreatureLibraryOpen(open) {
+    setAddDialogTab(open ? 'library' : 'manual', { focus: open });
+  }
+
+  function scheduleCreatureLibrarySearch(query) {
+    creatureLibraryQuery = query;
+    if (creatureLibrarySearchTimer) {
+      clearTimeout(creatureLibrarySearchTimer);
+    }
+    creatureLibrarySearchTimer = setTimeout(() => {
+      creatureLibrarySearchTimer = null;
+      if (!creatureLibraryOpen) {
+        return;
+      }
+      loadCreatureLibrary(query);
+    }, 200);
+  }
+
+  function creatureLibraryStats(creature) {
+    if (!creature) return [];
+    if (Array.isArray(creature.stats) && creature.stats.length > 0) {
+      return creature.stats;
+    }
+    if (Number.isFinite(creature.hp)) {
+      return [{ key: 'HP', current: creature.hp, max: creature.hp }];
+    }
+    return [];
+  }
+
+  function applyCreatureLibraryCreature(creature) {
+    if (!creature) return;
+    clearCreatureLibrarySelection();
+    selectedCreatureLibraryId = creature.id;
+    selectedCreatureLibrary = creature;
+    if (nameInput) nameInput.value = creature.name || '';
+    if (quantityInput) quantityInput.value = '1';
+    if (initiativeBonusInput) {
+      initiativeBonusInput.value = Number.isFinite(creature.initiativeBonus) ? creature.initiativeBonus : '';
+    }
+    const statsByKey = new Map(creatureLibraryStats(creature).map((stat) => [stat.key, stat]));
+    statInputs.forEach((entry, key) => {
+      const stat = statsByKey.get(key);
+      if (entry.maxInput) {
+        entry.maxInput.value = Number.isFinite(stat?.max) ? stat.max : '';
+      }
+      if (entry.currentInput) {
+        entry.currentInput.value = Number.isFinite(stat?.current) ? stat.current : '';
+      }
+    });
+    setCreatureLibrarySummary(`Using ${creature.name}.`);
+    setAddDialogTab('manual');
+    renderCreatureLibraryList();
+    renderCreatureLibraryDetails();
+  }
+
+  function renderCreatureLibraryList() {
+    if (!libraryList) return;
+    libraryList.innerHTML = '';
+
+    if (creatureLibraryLoading) {
+      const loading = document.createElement('div');
+      loading.className = 'creature-library-empty';
+      loading.textContent = 'Loading creatures...';
+      libraryList.appendChild(loading);
+      return;
+    }
+
+    if (creatureLibraryResults.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'creature-library-empty';
+      empty.textContent = creatureLibraryQuery
+        ? 'No matching creatures.'
+        : 'Open the library to browse default creatures for this ruleset.';
+      libraryList.appendChild(empty);
+      return;
+    }
+
+    creatureLibraryResults.forEach((creature) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'creature-library-item';
+      if (creature.id === selectedCreatureLibraryId) {
+        button.classList.add('active');
+      }
+
+      const name = document.createElement('div');
+      name.className = 'creature-library-item-name';
+      name.textContent = creature.name;
+      button.appendChild(name);
+
+      const meta = document.createElement('div');
+      meta.className = 'creature-library-item-meta';
+      const metaParts = [];
+      if (creature.cr) metaParts.push(`CR ${creature.cr}`);
+      if (creature.type) metaParts.push(creature.type);
+      if (creature.alignment) metaParts.push(creature.alignment);
+      if (Number.isFinite(creature.hp)) metaParts.push(`HP ${creature.hp}`);
+      if (Number.isFinite(creature.ac)) metaParts.push(`AC ${creature.ac}`);
+      meta.textContent = metaParts.join(' • ');
+      button.appendChild(meta);
+
+      const source = document.createElement('span');
+      source.className = 'creature-library-source';
+      source.textContent = creature.source || 'Default';
+      button.appendChild(source);
+
+      button.addEventListener('click', () => {
+        applyCreatureLibraryCreature(creature);
+      });
+
+      libraryList.appendChild(button);
+    });
+  }
+
+  function renderCreatureLibraryDetails() {
+    if (!libraryDetails) return;
+    libraryDetails.innerHTML = '';
+
+    const creature = selectedCreatureLibrary;
+    if (!creature) {
+      const empty = document.createElement('div');
+      empty.className = 'creature-library-empty';
+      empty.textContent = creatureLibraryResults.length > 0
+        ? 'Select a creature to preview its reference details.'
+        : 'Search the library to find a creature to use.';
+      libraryDetails.appendChild(empty);
+      return;
+    }
+
+    const title = document.createElement('div');
+    title.className = 'creature-library-detail-title';
+    title.textContent = creature.name;
+    libraryDetails.appendChild(title);
+
+    const subtitle = document.createElement('div');
+    subtitle.className = 'creature-library-detail-subtitle';
+    const subtitleParts = [];
+    if (creature.cr) subtitleParts.push(`CR ${creature.cr}`);
+    if (creature.alignment) subtitleParts.push(creature.alignment);
+    if (creature.type) subtitleParts.push(creature.type);
+    subtitle.textContent = subtitleParts.join(' • ');
+    libraryDetails.appendChild(subtitle);
+
+    const fields = document.createElement('div');
+    fields.className = 'creature-library-detail-fields';
+
+    const addField = (label, value) => {
+      if (!value && value !== 0) return;
+      const labelNode = document.createElement('div');
+      labelNode.className = 'creature-library-detail-label';
+      labelNode.textContent = label;
+      const valueNode = document.createElement('div');
+      valueNode.textContent = String(value);
+      fields.appendChild(labelNode);
+      fields.appendChild(valueNode);
+    };
+
+    const addReferenceField = (label, url) => {
+      if (!url) return;
+      const labelNode = document.createElement('div');
+      labelNode.className = 'creature-library-detail-label';
+      labelNode.textContent = label;
+      const valueNode = document.createElement('div');
+      const referenceLink = document.createElement('a');
+      referenceLink.href = url;
+      referenceLink.target = '_blank';
+      referenceLink.rel = 'noopener';
+      referenceLink.textContent = 'Reference';
+      valueNode.appendChild(referenceLink);
+      fields.appendChild(labelNode);
+      fields.appendChild(valueNode);
+    };
+
+    addField('Source', creature.source || 'Default');
+    addField('Size', creature.size);
+    addField('HP', Number.isFinite(creature.hp) ? creature.hp : null);
+    addField('AC', Number.isFinite(creature.ac) ? creature.ac : null);
+    addField('Initiative', Number.isFinite(creature.initiativeBonus) ? creature.initiativeBonus : null);
+    addReferenceField('Reference', creature.referenceUrl);
+    if (creature.notes) {
+      addField('Notes', creature.notes);
+    }
+    if (Array.isArray(creature.tags) && creature.tags.length > 0) {
+      addField('Tags', creature.tags.join(', '));
+    }
+    const stats = creatureLibraryStats(creature);
+    if (stats.length > 0) {
+      const statSummary = stats
+        .map((stat) => (stat.key === 'TempHP' ? `${stat.key} ${stat.current}` : `${stat.key} ${stat.current}/${stat.max}`))
+        .join(' • ');
+      addField('Play Stats', statSummary);
+    }
+
+    libraryDetails.appendChild(fields);
+
+  }
+
+  async function loadCreatureLibrary(query = '') {
+    const trimmedQuery = query.trim();
+    creatureLibraryQuery = trimmedQuery;
+    if (libraryQueryInput && libraryQueryInput.value !== trimmedQuery) {
+      libraryQueryInput.value = trimmedQuery;
+    }
+    if (creatureLibraryRequestController) {
+      creatureLibraryRequestController.abort();
+    }
+    const requestController = new AbortController();
+    creatureLibraryRequestController = requestController;
+    creatureLibraryLoading = true;
+    renderCreatureLibraryList();
+    setCreatureLibrarySummary(trimmedQuery ? `Searching for "${trimmedQuery}"...` : 'Loading creatures...');
+    const searchParams = new URLSearchParams();
+    if (trimmedQuery) {
+      searchParams.set('query', trimmedQuery);
+    }
+    searchParams.set('limit', '50');
+
+    try {
+      const res = await fetch(`/creature-library?${searchParams.toString()}`, {
+        signal: requestController.signal
+      });
+      if (!res.ok) {
+        throw new Error('Server returned ' + res.status);
+      }
+      const json = await res.json();
+      if (currentRulesetId && json?.rulesetId && json.rulesetId !== currentRulesetId) {
+        creatureLibraryLoading = false;
+        return;
+      }
+      creatureLibraryResults = Array.isArray(json?.creatures) ? json.creatures : [];
+      creatureLibraryLoading = false;
+      renderCreatureLibraryList();
+      renderCreatureLibraryDetails();
+      const totalMatches = Number.isFinite(json?.totalMatches) ? json.totalMatches : creatureLibraryResults.length;
+      const shownCount = creatureLibraryResults.length;
+      const baseLabel = json?.rulesetLabel || currentRulesetId || 'Creature library';
+      const countText = `${shownCount} of ${totalMatches} creatures`;
+      const queryText = trimmedQuery ? ` for "${trimmedQuery}"` : '';
+      setCreatureLibrarySummary(`${baseLabel}: ${countText}${queryText}${json?.hasMore ? ' (showing first page)' : ''}`);
+    } catch (err) {
+      if (err?.name === 'AbortError') {
+        return;
+      }
+      creatureLibraryLoading = false;
+      creatureLibraryResults = [];
+      renderCreatureLibraryList();
+      renderCreatureLibraryDetails();
+      setCreatureLibrarySummary(`Unable to load creature library: ${err.message}`);
+    } finally {
+      if (creatureLibraryRequestController === requestController) {
+        creatureLibraryRequestController = null;
+      }
+    }
   }
 
   async function loadCampaign() {
@@ -426,6 +775,8 @@ window.addEventListener('DOMContentLoaded', () => {
           }
           currentCampaignName = '';
           activeCampaignId = null;
+          currentRulesetId = '';
+          resetCreatureLibraryState();
           updateCampaignHeader(
             {
               nameTargets: refereeHeaderNameTargets,
@@ -456,6 +807,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const previousCampaignId = activeCampaignId || null;
       currentCampaignName = campaign.name || '';
       activeCampaignId = campaign.id || null;
+      currentRulesetId = campaign.rulesetId || '';
       updateCampaignHeader(
         {
           nameTargets: refereeHeaderNameTargets,
@@ -1525,6 +1877,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function showAddForm() {
     if (!form) return;
     clearAddForm();
+    setAddDialogTab('manual');
     form.classList.remove('hidden');
     form.classList.remove('details-panel-collapsed');
     form.classList.add('details-panel-open');
@@ -1541,6 +1894,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function clearAddForm() {
+    resetCreatureLibraryState();
     if (nameInput) nameInput.value = '';
     if (quantityInput) quantityInput.value = '1';
     if (initiativeBonusInput) initiativeBonusInput.value = '';
@@ -1873,6 +2227,21 @@ window.addEventListener('DOMContentLoaded', () => {
   if (addButton) {
     addButton.addEventListener('click', () => {
       showAddForm();
+    });
+  }
+  if (addManualTabBtn) {
+    addManualTabBtn.addEventListener('click', () => {
+      setAddDialogTab('manual');
+    });
+  }
+  if (addLibraryTabBtn) {
+    addLibraryTabBtn.addEventListener('click', () => {
+      setAddDialogTab('library', { focus: true });
+    });
+  }
+  if (libraryQueryInput) {
+    libraryQueryInput.addEventListener('input', (event) => {
+      scheduleCreatureLibrarySearch(event.target.value || '');
     });
   }
   if (deleteCharacterBtn) {

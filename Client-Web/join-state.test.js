@@ -85,6 +85,24 @@ test('returns the player page when access exists and referee access is absent', 
   );
 });
 
+test('returns the referee page when explicitly requested but referee access exists', () => {
+  assert.deepEqual(
+    resolveJoinOutcome({
+      campaignLoaded: true,
+      currentCampaign: { id: 'campaign-a' },
+      currentPlayerName: 'Alex',
+      editingPlayerName: false,
+      memberships: [{ id: 'campaign-a' }],
+      hasRefereeAccess: true,
+      preferredView: 'player'
+    }),
+    {
+      state: 'forwarded',
+      destination: '/referee.html'
+    }
+  );
+});
+
 test('returns the player page for open campaigns even without membership', () => {
   assert.deepEqual(
     resolveJoinOutcome({

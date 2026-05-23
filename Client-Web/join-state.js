@@ -20,7 +20,8 @@
     currentPlayerName,
     editingPlayerName,
     memberships,
-    hasRefereeAccess
+    hasRefereeAccess,
+    preferredView
   }) {
     if (!campaignLoaded || !currentCampaign || !currentPlayerName || editingPlayerName) {
       return {
@@ -32,6 +33,13 @@
       return {
         state: 'forwarded',
         destination: '/referee.html'
+      };
+    }
+
+    if (preferredView === 'player') {
+      return {
+        state: 'forwarded',
+        destination: '/player.html?view=player'
       };
     }
 

@@ -14,6 +14,15 @@ enum AppPaths {
         #endif
     }
 
+    static func userDataDirectory(
+        rulesetId: String,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> URL {
+        appDataDirectory(environment: environment)
+            .appendingPathComponent("userdata", isDirectory: true)
+            .appendingPathComponent(rulesetId, isDirectory: true)
+    }
+
     static func logsDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
         #if os(macOS)
         FileManager.default.homeDirectoryForCurrentUser

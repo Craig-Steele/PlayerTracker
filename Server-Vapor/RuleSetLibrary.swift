@@ -12,12 +12,17 @@ struct RuleSetLibrary: Content {
     let label: String
     let icon: String?
     let rulesBaseUrl: String?
+    let creatureLibrary: CreatureLibraryReference?
     let conditions: [ConditionDefinition]
     let stats: [String]?
     let supportsTempHp: Bool?
     let allowNegativeHealth: Bool?
     let license: String?
     let standardDie: String?
+}
+
+struct CreatureLibraryReference: Content {
+    let file: String
 }
 
 enum RuleSetLibraryLoader {
@@ -128,6 +133,7 @@ enum RuleSetLibraryLoader {
             label: "",
             icon: nil,
             rulesBaseUrl: nil,
+            creatureLibrary: nil,
             conditions: [],
             stats: [],
             supportsTempHp: nil,

@@ -428,7 +428,7 @@ func routes(
     }
 
     app.get("me") { req async throws -> Response in
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
         let refereeAccess = try await isRefereeSession(session, in: campaign.id, on: req.db)
         var response = Response(status: .ok)
@@ -455,7 +455,7 @@ func routes(
               let routeCampaignID = UUID(uuidString: campaignIDString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -825,7 +825,7 @@ func routes(
               let routeCampaignID = UUID(uuidString: campaignIDString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -859,7 +859,7 @@ func routes(
               let routeCampaignID = UUID(uuidString: campaignIDString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -867,6 +867,21 @@ func routes(
             campaignName: campaign.name,
             claimTimeoutMinutes: campaign.claimTimeoutMinutes
         )
+        let isAlreadyMember = try await DatabasePersistence.isCampaignMember(
+            campaignID: campaign.id,
+            playerID: session.id,
+            on: req.db
+        )
+        if campaign.isInviteOnly && !isAlreadyMember {
+            throw Abort(.forbidden, reason: "Campaign access required.")
+        } else if !isAlreadyMember {
+            try await DatabasePersistence.ensureCampaignMember(
+                campaignID: campaign.id,
+                playerID: session.id,
+                role: "player",
+                on: req.db
+            )
+        }
         let input = try req.content.decode(CharacterInput.self)
         let resolvedOwnerName = session.displayName
         let created = await userStore.upsertCharacter(
@@ -1056,6 +1071,18 @@ func routes(
 
     app.get("conditions-library") { req async throws -> RuleSetLibrary in
         return await campaignStore.library()
+    }
+
+    app.get("creature-library") { req async throws -> CreatureLibraryResponse in
+        let library = await campaignStore.library()
+        let query = req.query[String.self, at: "query"]
+        let limit = req.query[Int.self, at: "limit"] ?? 50
+        return try await CreatureLibraryStore.shared.library(
+            rulesetId: library.id,
+            rulesetLabel: library.label,
+            query: query,
+            limit: limit
+        )
     }
 
     app.get("campaign") { req async throws -> Response in

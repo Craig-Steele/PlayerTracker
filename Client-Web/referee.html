@@ -120,15 +120,34 @@
                 </span>
               </label>
             </div>
-            <div class="form-section-block property-group">
-              <label id="ref-initiative-bonus-wrap" class="property-row">
-                <span class="property-label">Initiative Bonus</span>
-                <span class="property-control">
-                  <input type="number" id="ref-initiative-bonus" value="" />
-                </span>
+            <div class="add-form-tabs" role="tablist" aria-label="Add character entry mode">
+              <button type="button" id="ref-add-tab-manual" class="add-form-tab-button" role="tab" aria-selected="true" aria-controls="ref-add-manual-panel">Manual</button>
+              <button type="button" id="ref-add-tab-library" class="add-form-tab-button" role="tab" aria-selected="false" aria-controls="ref-library-panel">Library</button>
+            </div>
+            <div id="ref-add-manual-panel" class="add-form-tabpanel" role="tabpanel" aria-labelledby="ref-add-tab-manual">
+              <div class="form-section-block property-group">
+                <label id="ref-initiative-bonus-wrap" class="property-row">
+                  <span class="property-label">Initiative Bonus</span>
+                  <span class="property-control">
+                    <input type="number" id="ref-initiative-bonus" value="" />
+                  </span>
+                </label>
+                <div id="ref-stats-fields"></div>
+                <div id="ref-add-current-stats" class="add-current-stats"></div>
+              </div>
+            </div>
+            <div id="ref-library-panel" class="creature-library-panel add-form-tabpanel hidden" role="tabpanel" aria-labelledby="ref-add-tab-library" aria-hidden="true">
+              <div class="creature-library-header">
+                <div id="ref-library-summary" class="creature-library-summary"></div>
+              </div>
+              <label class="creature-library-search">
+                <span class="property-label">Filter</span>
+                <input type="search" id="ref-library-query" placeholder="Search name, type, CR, alignment" />
               </label>
-              <div id="ref-stats-fields"></div>
-              <div id="ref-add-current-stats" class="add-current-stats"></div>
+              <div class="creature-library-results">
+                <div id="ref-library-list" class="creature-library-list"></div>
+                <div id="ref-library-details" class="creature-library-details"></div>
+              </div>
             </div>
           </div>
         </form>
@@ -189,6 +208,6 @@
   <script src="live-stream.js?v=2"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=11"></script>
+  <script src="referee.js?v=12"></script>
 </body>
 </html>

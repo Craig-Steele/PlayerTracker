@@ -36,9 +36,17 @@ enum ServerBootstrap {
         library: RuleSetLibrary? = nil
     ) async throws {
         let sitesDir = options.webClientDirectory.path + "/"
+        let conditionLibrary = try library ?? RuleSetLibraryLoader.loadDefault()
+        let campaignStore = CampaignStore(
+            defaultLibrary: conditionLibrary,
+            defaultName: options.campaignName,
+            restorePersistedState: options.restorePersistedState,
+            persistChanges: options.persistChanges
+        )
 
         print("Serving static files from:", sitesDir)
 
+        app.middleware.use(JoinPageRedirectMiddleware(campaignStore: campaignStore))
         app.middleware.use(FileMiddleware(publicDirectory: sitesDir))
         app.http.server.configuration.hostname = options.hostname
         app.http.server.configuration.port = options.port
@@ -51,14 +59,6 @@ enum ServerBootstrap {
         DatabaseMigrations.register(on: app)
         try await app.autoMigrate()
         try await DatabaseMigrations.verifyShape(on: app.db)
-
-        let conditionLibrary = try library ?? RuleSetLibraryLoader.loadDefault()
-        let campaignStore = CampaignStore(
-            defaultLibrary: conditionLibrary,
-            defaultName: options.campaignName,
-            restorePersistedState: options.restorePersistedState,
-            persistChanges: options.persistChanges
-        )
         let eventHub = CampaignEventHub()
         let activeCampaignEventHub = ActiveCampaignEventHub()
         try await campaignStore.configure(database: app.db)

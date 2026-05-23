@@ -200,7 +200,7 @@ Implementation direction:
 
 ### 9. Audit and Activity History
 
-Commercial support and GM trust improve if the system can answer:
+Commercial support and referee trust improve if the system can answer:
 
 - who changed this
 - when did it change
@@ -940,27 +940,35 @@ Acceptance:
 
 Status: complete
 
-### M7A: GM Tools
+### M7A: Referee Tools
 
-Goal: add referee/GM workflow tools once the core web migration is in place, and leave room for future GM-only capabilities.
+Goal: add referee workflow tools once the core web migration is in place, and leave room for future referee-only capabilities.
+
+Current status:
+
+- slice 1 is complete: read-only creature library lookup is wired into the referee add flow
+- the library is ruleset-driven through the ruleset manifest, with Pathfinder seeded from `Client-Web/rulesets/pathfinder-bestiary.json`
+- remaining M7A work is still pending: encounter cloning, reusable templates, ruleset-provided imports, and referee-specific stat-block variants
 
 Work:
 
-- add encounter cloning for referee/GM workflows
+- add encounter cloning for referee workflows
 - add reusable encounter templates, ruleset-scoped where that makes sense
+- add creature libraries for referee workflows, including ruleset-provided imports where available
 - import creature templates from each ruleset's system reference documents where available
 - support ruleset-specific enemy stat blocks, including alternate layouts such as a single health pool instead of STR/DEX/END when the ruleset uses that structure
 - use `Client-Web/rulesets/traveller2.json` as the design example for polymorphic Traveller-style enemy stat blocks
 - add manual encounter snapshots and restore operations if the workflow still needs them
-- leave room for future GM-only tools without forcing them into the core auth/membership milestones
+- leave room for future referee-only tools without forcing them into the core auth/membership milestones
 
 Acceptance:
 
-- designated GMs can clone encounters and apply reusable encounter templates
+- designated referees can clone encounters and apply reusable encounter templates
+- designated referees can browse and use creature libraries in campaign workflows
 - ruleset-provided creature templates can be imported into campaign workflows
 - referee-created enemy characters can use the stat structure required by the active ruleset
 - snapshot/restore exists only if it still adds value after continuous persistence is in place
-- additional GM-only workflows can be added here later without reopening M5/M6
+- additional referee-only workflows can be added here later without reopening M5/M6
 
 ### M8: iOS Migration
 
@@ -1134,7 +1142,7 @@ That yields:
 
 That is the first version that starts looking like a product instead of a LAN tool.
 
-If the goal includes GM workflow polish, add `M7A` after `M7`.
+If the goal includes referee workflow polish, add `M7A` after `M7`.
 
 ## Early Product Decisions
 
@@ -1216,7 +1224,7 @@ The launch migration decision is already made:
 The next feature-planning priorities are:
 
 - launch-critical: ruleset upload validation and immutable versioning for user-supplied rulesets
-- high-value near-term: GM workflow tools in `M7A`
+- high-value near-term: referee workflow tools in `M7A`
 - high-value near-term: encounter templates/cloning
 - high-value near-term: undo/restore from encounter snapshots
 - later portability feature: character import/export

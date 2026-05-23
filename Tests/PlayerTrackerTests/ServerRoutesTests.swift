@@ -30,6 +30,43 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(rulesets.contains { $0.id == "none" })
     }
 
+    func testCreatureLibraryRouteReturnsFilteredCreaturesForActiveRuleset() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+
+        let pathfinderLibrary = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
+        XCTAssertEqual(pathfinderLibrary.creatureLibrary?.file, "pathfinder-bestiary.json")
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Aasimar&limit=5"
+        )
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(CreatureLibraryResponse.self)
+        XCTAssertEqual(library.rulesetId, "pathfinder")
+        XCTAssertEqual(library.rulesetLabel, "Pathfinder (1st)")
+        XCTAssertEqual(library.query, "Aasimar")
+        XCTAssertGreaterThanOrEqual(library.totalMatches, 1)
+        XCTAssertTrue(library.creatures.contains { creature in
+            creature.name == "Aasimar" && creature.cr == "1/2" && creature.type?.contains("outsider") == true
+        })
+    }
+
+    func testCreatureLibraryNormalizesTypeCommaSpacing() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Archon,%20Codex&limit=5"
+        )
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(CreatureLibraryResponse.self)
+        let creature = try XCTUnwrap(library.creatures.first(where: { $0.name == "Archon, Codex" }))
+        XCTAssertFalse(creature.type?.contains(" ,") ?? false)
+        XCTAssertEqual(creature.type, "Medium outsider (archon, extraplanar, good, lawful)")
+    }
+
     func testRootRedirectsToAdminOnLocalhost() async throws {
         let tester = try await makeTester()
 
@@ -41,6 +78,33 @@ final class ServerRoutesTests: XCTestCase {
 
         XCTAssertEqual(response.status, .seeOther)
         XCTAssertEqual(response.headers.first(name: .location), "/admin.html")
+    }
+
+    func testIndexHtmlViewPlayerRedirectsBeforeRenderBasedOnPlayerSession() async throws {
+        let tester = try await makeTester()
+
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let playerSession = try await join(displayName: "Player", in: tester)
+
+        let refereeResponse = try await tester.sendRequest(
+            .GET,
+            "/index.html?view=player",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeCookie)")])
+        )
+        XCTAssertEqual(refereeResponse.status, .seeOther)
+        XCTAssertEqual(refereeResponse.headers.first(name: .location), "/referee.html")
+
+        let playerResponse = try await tester.sendRequest(
+            .GET,
+            "/index.html?view=player",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+        XCTAssertEqual(playerResponse.status, .seeOther)
+        XCTAssertEqual(playerResponse.headers.first(name: .location), "/player.html?view=player")
+
+        let noCookieResponse = try await tester.sendRequest(.GET, "/index.html?view=player")
+        XCTAssertEqual(noCookieResponse.status, .ok)
+        XCTAssertTrue(noCookieResponse.body.string.contains("<title>"))
     }
 
     func testCampaignListAndUUIDSelectionRoute() async throws {

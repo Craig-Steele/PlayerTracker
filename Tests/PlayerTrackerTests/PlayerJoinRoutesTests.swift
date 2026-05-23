@@ -123,6 +123,74 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(campaignID, joinSession.session.player.campaignID)
     }
 
+    func testOpenCampaignAutoEnrollsPlayerWhenAddingFirstCharacterAfterCampaignSwitch() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+        let firstCampaignID = try await activateCampaign(in: tester)
+        let playerSession = try await join(displayName: "Alex", tester: tester)
+        let adminCookie = try await signInOwner(in: tester)
+
+        let secondCampaignPayload = CampaignUpdateInput(name: "Open Access Smoke", rulesetId: "dnd5e")
+        let secondCampaignResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(secondCampaignPayload))
+        )
+        XCTAssertEqual(secondCampaignResponse.status, .ok)
+        let secondCampaign = try secondCampaignResponse.content.decode(CampaignSummary.self)
+        XCTAssertNotEqual(firstCampaignID, secondCampaign.id)
+
+        let selectResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(secondCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(selectResponse.status, .ok)
+
+        let payload = CharacterInput(
+            id: nil,
+            campaignName: nil,
+            ownerId: UUID(),
+            ownerName: "Alex",
+            name: "Scout",
+            initiative: nil,
+            stats: nil,
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+        let addResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(secondCampaign.id.uuidString)/me/characters",
+            headers: [
+                "Content-Type": "application/json",
+                "Cookie": "roll4_player_session=\(playerSession.cookieToken)"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        )
+        XCTAssertEqual(addResponse.status, .ok)
+        let created = try addResponse.content.decode(PlayerView.self)
+        XCTAssertEqual(created.name, "Scout")
+
+        let charactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(secondCampaign.id.uuidString)/me/characters",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(charactersResponse.status, .ok)
+        let characters = try charactersResponse.content.decode([PlayerView].self)
+        XCTAssertTrue(characters.contains { $0.name == "Scout" })
+    }
+
     func testRenamingPlayerKeepsTheSameIdentity() async throws {
         let app = try await makeApp()
         defer { Task { try? await app.asyncShutdown() } }

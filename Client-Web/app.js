@@ -101,6 +101,7 @@ const campaignHeaderNameTargets = [];
 const campaignHeaderIconTargets = [];
 const campaignHeaderLinkTargets = [];
 const campaignHeaderLicenseTargets = [];
+const APP_JS_VERSION = '10';
 
 function normalizePlayerName(name) {
   return (name || '').trim().toLowerCase();
@@ -364,9 +365,11 @@ window.addEventListener('DOMContentLoaded', () => {
     { linkEl: displayRulesetLicense, wrapEl: displayRulesetLicenseWrap }
   );
 
-  const displayOnly = isDisplayPath();
-  const viewMode = new URLSearchParams(window.location.search).get('view');
-  const hideTurnTable = !displayOnly && viewMode === 'B';
+const displayOnly = isDisplayPath();
+const viewMode = new URLSearchParams(window.location.search).get('view');
+const playerPath = (window.location.pathname || '').endsWith('/player.html');
+const preferPlayerView = viewMode === 'player' || playerPath;
+const hideTurnTable = !displayOnly && viewMode === 'B';
   if (playerTable) {
     playerTable.style.display = hideTurnTable ? 'none' : '';
   }
@@ -380,6 +383,11 @@ window.addEventListener('DOMContentLoaded', () => {
       button.style.width = 'auto';
       button.style.flex = '0 0 auto';
     });
+  }
+
+  function logDisplayForbidden(context) {
+    if (!displayOnly) return;
+    console.warn(`[display] ${context}: 403 Forbidden`);
   }
 
   function setConditionsPanelOpen(open) {
@@ -1074,6 +1082,9 @@ window.addEventListener('DOMContentLoaded', () => {
       );
       if (!characterRes.ok) {
         if (characterRes.status === 401 || characterRes.status === 403) {
+          if (preferPlayerView) {
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -1104,6 +1115,12 @@ window.addEventListener('DOMContentLoaded', () => {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (preferPlayerView) {
+            myCharacters = [];
+            renderCharacterList();
+            updateConditionsAvailability();
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -1258,6 +1275,9 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/player/session');
       if (!res.ok) {
+        if (res.status === 403 && displayOnly) {
+          logDisplayForbidden('GET /player/session');
+        }
         currentPlayerSessionId = '';
         return false;
       }
@@ -1834,6 +1854,11 @@ window.addEventListener('DOMContentLoaded', () => {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (preferPlayerView) {
+            lastStateJson = null;
+            updateConditionsAvailability();
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -1864,6 +1889,11 @@ window.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/campaigns/${encodeURIComponent(currentCampaignId)}/characters`);
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (preferPlayerView) {
+            claimableCharacters = [];
+            renderClaimableCharacterList();
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -1893,6 +1923,14 @@ window.addEventListener('DOMContentLoaded', () => {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (preferPlayerView) {
+            loadStateInFlight = false;
+            if (loadStateRefreshQueued) {
+              loadStateRefreshQueued = false;
+              void loadState();
+            }
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -1916,6 +1954,10 @@ window.addEventListener('DOMContentLoaded', () => {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (preferPlayerView) {
+            statusDiv.textContent = '';
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -1933,9 +1975,16 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/campaign');
       if (!res.ok) {
+        if (res.status === 403) {
+          logDisplayForbidden('GET /campaign');
+          return false;
+        }
         if (res.status === 409) {
           campaignLiveStream.close();
           if (currentCampaignId) {
+            if (preferPlayerView) {
+              return false;
+            }
             window.location.replace('/index.html');
             return false;
           }
@@ -1987,6 +2036,9 @@ window.addEventListener('DOMContentLoaded', () => {
       await refreshCharacterState(getOwnerName());
       if (previousCampaignId && previousCampaignId !== currentCampaignId) {
         campaignLiveStream.close();
+        if (preferPlayerView) {
+          return false;
+        }
         window.location.replace('/index.html');
         return false;
       }
@@ -2030,6 +2082,9 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/conditions-library');
       if (!res.ok) {
+        if (res.status === 403 && displayOnly) {
+          logDisplayForbidden('GET /conditions-library');
+        }
         throw new Error('Server returned ' + res.status);
       }
       const json = await res.json();
@@ -2419,6 +2474,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (!characterRes.ok) {
         if (characterRes.status === 401 || characterRes.status === 403) {
+          if (preferPlayerView) {
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -2441,7 +2499,7 @@ window.addEventListener('DOMContentLoaded', () => {
     updatePlayerNameDisplay();
     if (!displayOnly) {
       if (!hadPlayerSession && !getOwnerName()) {
-        if (!isJoinPage()) {
+        if (!isJoinPage() && !preferPlayerView) {
           window.location.replace('/index.html');
           return;
         }
@@ -2480,7 +2538,24 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('/state');
       if (!res.ok) {
+        if (res.status === 403 && displayOnly) {
+          logDisplayForbidden('GET /state');
+          loadStateInFlight = false;
+          if (loadStateRefreshQueued) {
+            loadStateRefreshQueued = false;
+            void loadState();
+          }
+          return;
+        }
         if (res.status === 401 || res.status === 403) {
+          if (preferPlayerView) {
+            loadStateInFlight = false;
+            if (loadStateRefreshQueued) {
+              loadStateRefreshQueued = false;
+              void loadState();
+            }
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }
@@ -2696,6 +2771,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (!characterRes.ok) {
         if (characterRes.status === 401 || characterRes.status === 403) {
+          if (preferPlayerView) {
+            return null;
+          }
           window.location.replace('/index.html');
           return null;
         }
@@ -2829,6 +2907,9 @@ window.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/turn-complete', { method: 'POST' });
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (preferPlayerView) {
+            return;
+          }
           window.location.replace('/index.html');
           return;
         }

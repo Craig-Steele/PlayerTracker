@@ -33,6 +33,18 @@ final class ServerPlatformTests: XCTestCase {
         #endif
     }
 
+    func testUserDataDirectoryResolvesToExpectedPlatformLocation() {
+        let directory = AppPaths.userDataDirectory(rulesetId: "pathfinder", environment: [:])
+
+        #if os(macOS)
+        XCTAssertTrue(directory.path.hasSuffix("Library/Application Support/Roll4Initiative/userdata/pathfinder"))
+        #elseif os(Windows)
+        XCTAssertTrue(directory.path.replacingOccurrences(of: "\\", with: "/").hasSuffix("Roll4Initiative/userdata/pathfinder"))
+        #else
+        XCTAssertTrue(directory.path.contains(".local/share/Roll4Initiative/userdata/pathfinder"))
+        #endif
+    }
+
     func testBrowserLaunchCanBeDisabledByEnvironment() {
         let environment = ["ROLL4INITIATIVE_LAUNCH_BROWSER": "0"]
         XCTAssertFalse(BrowserLauncher.shouldLaunchByDefault(environment: environment))

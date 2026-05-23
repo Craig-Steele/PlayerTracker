@@ -8,6 +8,9 @@
   "allowNegativeHealth": true,
   "license": "https://www.d20pfsrd.com/extras/legal/",
   "rulesBaseUrl": "https://www.d20pfsrd.com/",
+  "creatureLibrary": {
+    "file": "pathfinder-bestiary.json"
+  },
   "conditions": [
     {
       "name": "Bleed",

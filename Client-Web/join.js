@@ -68,6 +68,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const statusEl = document.getElementById('join-status');
   const campaignsPanel = document.getElementById('join-campaigns-panel');
   const campaignsListEl = document.getElementById('join-campaign-list');
+  const preferredView = new URLSearchParams(window.location.search).get('view');
 
   const headerNameTargets = [campaignNameEl];
   const headerIconTargets = [rulesetIconEl];
@@ -179,7 +180,8 @@ window.addEventListener('DOMContentLoaded', () => {
         currentPlayerName,
         editingPlayerName,
         memberships,
-        hasRefereeAccess: Boolean(currentPlayerIsReferee)
+        hasRefereeAccess: Boolean(currentPlayerIsReferee),
+        preferredView
       });
 
       if (outcome.state === 'denied') {
@@ -199,7 +201,8 @@ window.addEventListener('DOMContentLoaded', () => {
         currentPlayerName,
         editingPlayerName,
         memberships: [],
-        hasRefereeAccess: false
+        hasRefereeAccess: false,
+        preferredView
       });
       accessDenied = true;
       setCampaignPanelVisible(false);

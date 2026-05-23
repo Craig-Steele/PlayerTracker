@@ -51,6 +51,32 @@ struct StatEntry: Content {
     let max: Int
 }
 
+struct CreatureLibraryCreature: Content {
+    let id: String
+    let name: String
+    let cr: String?
+    let alignment: String?
+    let type: String?
+    let size: String?
+    let hp: Int?
+    let ac: Int?
+    let initiativeBonus: Int?
+    let source: String?
+    let referenceUrl: String?
+    let notes: String?
+    let tags: [String]?
+    let stats: [StatEntry]?
+}
+
+struct CreatureLibraryResponse: Content {
+    let rulesetId: String
+    let rulesetLabel: String
+    let query: String?
+    let totalMatches: Int
+    let hasMore: Bool
+    let creatures: [CreatureLibraryCreature]
+}
+
 enum EncounterState: String, Content, Codable {
     case new = "new"
     case active = "active"
