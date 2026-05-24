@@ -948,27 +948,29 @@ Current status:
 
 - slice 1 is complete: read-only creature library lookup is wired into the referee add flow
 - the library is ruleset-driven through the ruleset manifest, with Pathfinder seeded from `Client-Web/rulesets/pathfinder-bestiary.json`
-- remaining M7A work is still pending: encounter cloning, reusable templates, ruleset-provided imports, and referee-specific stat-block variants
+- remaining M7A work is still pending: reusable templates, ruleset-provided imports, referee-specific stat-block variants, and the creature reference action in the card overflow menu
 
 Work:
 
-- add encounter cloning for referee workflows
 - add reusable encounter templates, ruleset-scoped where that makes sense
 - add creature libraries for referee workflows, including ruleset-provided imports where available
 - import creature templates from each ruleset's system reference documents where available
 - support ruleset-specific enemy stat blocks, including alternate layouts such as a single health pool instead of STR/DEX/END when the ruleset uses that structure
 - use `Client-Web/rulesets/traveller2.json` as the design example for polymorphic Traveller-style enemy stat blocks
-- add manual encounter snapshots and restore operations if the workflow still needs them
+- keep the creature reference in the add-flow detail pane and also expose it from the added creature card overflow menu
 - leave room for future referee-only tools without forcing them into the core auth/membership milestones
 
 Acceptance:
 
-- designated referees can clone encounters and apply reusable encounter templates
 - designated referees can browse and use creature libraries in campaign workflows
 - ruleset-provided creature templates can be imported into campaign workflows
 - referee-created enemy characters can use the stat structure required by the active ruleset
-- snapshot/restore exists only if it still adds value after continuous persistence is in place
 - additional referee-only workflows can be added here later without reopening M5/M6
+
+Future possibilities:
+
+- encounter cloning for referee workflows
+- manual encounter snapshots and restore operations if a future workflow needs them
 
 ### M8: iOS Migration
 
@@ -1225,8 +1227,8 @@ The next feature-planning priorities are:
 
 - launch-critical: ruleset upload validation and immutable versioning for user-supplied rulesets
 - high-value near-term: referee workflow tools in `M7A`
-- high-value near-term: encounter templates/cloning
-- high-value near-term: undo/restore from encounter snapshots
+- future possibilities: encounter cloning
+- future possibilities: undo/restore from encounter snapshots
 - later portability feature: character import/export
 - later portability feature: campaign export bundle
 

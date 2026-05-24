@@ -262,6 +262,32 @@ struct AddLastPlayedByNameToCharacters: AsyncMigration {
     }
 }
 
+struct AddReferenceUrlToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "reference_url" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE characters ADD COLUMN reference_url TEXT")
+                .run()
+            connection.logger.notice("Patched characters with reference_url.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct AddClaimTimeoutMinutesToCampaigns: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -367,7 +393,8 @@ struct DatabaseShapeVerification {
                 "claimed_session_id",
                 "claimed_display_name",
                 "claimed_at",
-                "last_played_by_name"
+                "last_played_by_name",
+                "reference_url"
             ]
             let missingCharacterColumns = requiredCharacterColumns.filter { required in
                 characterColumns.contains(where: { $0.name == required }) == false
@@ -601,6 +628,7 @@ enum DatabaseMigrations {
         app.migrations.add(CreateCharacters())
         app.migrations.add(AddCharacterClaimColumnsToCharacters())
         app.migrations.add(AddLastPlayedByNameToCharacters())
+        app.migrations.add(AddReferenceUrlToCharacters())
         app.migrations.add(CreateCharacterStats())
         app.migrations.add(CreateCharacterConditions())
         app.migrations.add(CreateCampaignEncounters())

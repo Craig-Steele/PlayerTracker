@@ -215,6 +215,7 @@ actor UserStore {
         ownerId: UUID,
         ownerName: String,
         characterName: String,
+        referenceUrl: String? = nil,
         initiative: Double?,
         stats: [StatEntry]?,
         revealStats: Bool?,
@@ -231,6 +232,7 @@ actor UserStore {
             campaignName: campaignName,
             ownerId: ownerId,
             ownerName: ownerName,
+            referenceUrl: referenceUrl,
             claimedSessionId: nil,
             claimedDisplayName: nil,
             claimedAt: nil,
@@ -250,6 +252,9 @@ actor UserStore {
         state.campaignName = campaignName
         state.ownerId = ownerId
         state.ownerName = ownerName
+        if let referenceUrl = referenceUrl?.trimmingCharacters(in: .whitespacesAndNewlines), !referenceUrl.isEmpty {
+            state.referenceUrl = referenceUrl
+        }
         state.characterName = characterName
         state.initiative = initiative
         if let stats {
@@ -286,7 +291,6 @@ actor UserStore {
             state.claimedDisplayName = ownerName
             state.claimedAt = Date()
         }
-
         storage[resolvedId] = state
         if currentCampaignName == campaignName {
             if let campaignID = currentCampaignID {
@@ -814,6 +818,7 @@ actor UserStore {
             id: state.id,
             ownerId: state.ownerId,
             ownerName: state.ownerName,
+            referenceUrl: state.referenceUrl,
             lastPlayedByName: state.lastPlayedByName,
             claimedSessionId: state.claimedSessionId,
             claimedDisplayName: state.claimedDisplayName,
@@ -875,27 +880,54 @@ actor UserStore {
                 }
                 return true
             }
-            .sorted { a, b in
-                if a.initiative == b.initiative {
-                    if a.ownerName == b.ownerName {
-                        return a.characterName < b.characterName
-                    }
-                    return a.ownerName < b.ownerName
-                }
-                switch (a.initiative, b.initiative) {
-                case let (lhs?, rhs?):
-                    return lhs > rhs
-                case (.some, .none):
-                    return true
-                case (.none, .some):
-                    return false
-                case (.none, .none):
-                    if a.ownerName == b.ownerName {
-                        return a.characterName < b.characterName
-                    }
-                    return a.ownerName < b.ownerName
-                }
+            .sorted(by: compareTurnOrder)
+    }
+
+    private func compareTurnOrder(_ a: CharacterState, _ b: CharacterState) -> Bool {
+        let leftInitiative = a.initiative ?? -Double.greatestFiniteMagnitude
+        let rightInitiative = b.initiative ?? -Double.greatestFiniteMagnitude
+        if leftInitiative != rightInitiative {
+            return leftInitiative > rightInitiative
+        }
+        if a.isReferee != b.isReferee {
+            return !a.isReferee && b.isReferee
+        }
+        if a.ownerName == b.ownerName {
+            return a.characterName.localizedCaseInsensitiveCompare(b.characterName) == .orderedAscending
+        }
+        return a.ownerName.localizedCaseInsensitiveCompare(b.ownerName) == .orderedAscending
+    }
+
+    func rollInitiativeForCharacter(id: UUID, standardDie: String?) async -> PlayerView? {
+        guard var state = storage[id] else { return nil }
+        guard state.initiative == nil else { return view(from: state) }
+        guard state.useAppInitiativeRoll else { return view(from: state) }
+        guard let die = standardDie?.trimmingCharacters(in: .whitespacesAndNewlines),
+              let match = die.wholeMatch(of: /(\d+)[dD](\d+)/),
+              let count = Int(match.output.1),
+              let sides = Int(match.output.2),
+              count > 0,
+              sides > 0 else {
+            return view(from: state)
+        }
+
+        let roll = (0..<count).reduce(0) { partialResult, _ in
+            partialResult + Int.random(in: 1...sides)
+        }
+        state.initiative = Double(roll + state.initiativeBonus)
+        storage[id] = state
+        if state.campaignName == currentCampaignName, let database, let campaignID = currentCampaignID {
+            do {
+                try await DatabasePersistence.persistCharacter(
+                    state,
+                    campaignID: campaignID,
+                    on: database
+                )
+            } catch {
+                print("Failed to persist rolled initiative:", error)
             }
+        }
+        return view(from: state)
     }
 
     private func sortedViews(

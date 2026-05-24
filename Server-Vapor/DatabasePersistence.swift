@@ -372,6 +372,9 @@ final class CharacterRow: Model, @unchecked Sendable {
     @Field(key: "owner_name")
     var ownerName: String
 
+    @OptionalField(key: "reference_url")
+    var referenceUrl: String?
+
     @OptionalField(key: "last_played_by_name")
     var lastPlayedByName: String?
 
@@ -421,6 +424,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         campaignID: UUID,
         ownerID: UUID,
         ownerName: String,
+        referenceUrl: String? = nil,
         lastPlayedByName: String? = nil,
         claimedSessionID: UUID? = nil,
         claimedDisplayName: String? = nil,
@@ -438,6 +442,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.campaignID = campaignID
         self.ownerID = ownerID
         self.ownerName = ownerName
+        self.referenceUrl = referenceUrl
         self.lastPlayedByName = lastPlayedByName
         self.claimedSessionID = claimedSessionID
         self.claimedDisplayName = claimedDisplayName
@@ -1489,6 +1494,7 @@ enum DatabasePersistence {
                 campaignName: campaignName,
                 ownerId: row.ownerID,
                 ownerName: row.ownerName,
+                referenceUrl: row.referenceUrl,
                 lastPlayedByName: row.lastPlayedByName,
                 claimedSessionId: row.claimedSessionID,
                 claimedDisplayName: row.claimedDisplayName,
@@ -1521,6 +1527,7 @@ enum DatabasePersistence {
                 row.campaignID = campaignID
                 row.ownerID = state.ownerId
                 row.ownerName = state.ownerName
+                row.referenceUrl = state.referenceUrl
                 row.lastPlayedByName = state.lastPlayedByName
                 row.claimedSessionID = state.claimedSessionId
                 row.claimedDisplayName = state.claimedDisplayName
@@ -1544,6 +1551,7 @@ enum DatabasePersistence {
                     campaignID: campaignID,
                     ownerID: state.ownerId,
                     ownerName: state.ownerName,
+                    referenceUrl: state.referenceUrl,
                     lastPlayedByName: state.lastPlayedByName,
                     claimedSessionID: state.claimedSessionId,
                     claimedDisplayName: state.claimedDisplayName,

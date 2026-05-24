@@ -125,6 +125,13 @@ body:not(.display-only):not(.referee-page) {
   padding-top: 0;
 }
 
+body.referee-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
 h1, h2 {
   margin-bottom: 0.0rem;
 }
@@ -262,6 +269,22 @@ th, td {
   font: inherit;
   text-decoration: underline;
   text-underline-offset: 0.1em;
+  white-space: nowrap;
+}
+
+.character-item .character-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: nowrap;
+}
+
+.character-hidden-state {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
 }
 
 .container {
@@ -270,6 +293,12 @@ th, td {
   align-items: flex-start;
   width: 100%;
   min-width: 0;
+}
+
+body.referee-page .referee-container {
+  flex: 1 1 auto;
+  align-items: stretch;
+  min-height: 0;
 }
 
 .no-conditions .conditions-section {
@@ -434,6 +463,23 @@ th, td {
   flex-direction: column;
   min-width: 0;
   order: 1;
+}
+
+body.referee-page .player-list,
+body.referee-page .referee-panel {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body.referee-page .player-list {
+  display: flex;
+  flex-direction: column;
+}
+
+body.referee-page .referee-panel {
+  display: flex;
+  flex-direction: column;
 }
 
 #player-form {
@@ -1411,6 +1457,21 @@ th, td {
 
 /* 🎯 Narrow or portrait screens: stack vertically */
 @media (orientation: portrait), (max-width: 900px) {
+  body.referee-page {
+    overflow: auto;
+  }
+
+  body.referee-page .referee-container {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  body.referee-page .player-list,
+  body.referee-page .referee-panel {
+    overflow: visible;
+    max-height: none;
+  }
+
   .container {
     flex-direction: column;
     width: 100%;
@@ -1444,6 +1505,14 @@ th, td {
 
   .detail-panel {
     margin-top: 0.15rem;
+  }
+
+  body.referee-page .player-list {
+    order: 1;
+  }
+
+  body.referee-page .referee-panel {
+    order: 2;
   }
 
   .character-drawer-header {
@@ -1492,30 +1561,35 @@ th, td {
   }
 
   .character-selection-toolbar {
-    flex-wrap: nowrap;
-    align-items: center;
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
 
   .character-selection-toolbar .details-toggles {
-    flex: 1 1 auto;
+    flex: 1 1 100%;
+    width: 100%;
     min-width: 0;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    gap: 0.4rem;
   }
 
   .character-selection-toolbar .details-toggle {
     width: auto !important;
     max-width: 100%;
     min-width: 0;
-    flex: 0 1 auto;
+    flex: 1 1 calc(50% - 0.2rem);
     margin-top: 0;
-    white-space: nowrap;
-    font-size: 0.95rem;
-    padding: 0.55rem 0.75rem;
+    white-space: normal;
+    font-size: clamp(0.74rem, 2.6vw, 0.92rem);
+    line-height: 1.1;
+    padding: 0.45rem 0.6rem;
   }
 
   .character-overflow {
     position: relative;
     flex: 0 0 auto;
+    margin-left: auto;
+    margin-top: 0.1rem;
   }
 
   .character-overflow-toggle {
@@ -1525,7 +1599,7 @@ th, td {
     align-items: center;
     justify-content: center;
     min-width: 2.5rem;
-    padding: 0.55rem 0.7rem;
+    padding: 0.45rem 0.55rem;
   }
 
   .character-overflow-menu {
@@ -1533,8 +1607,9 @@ th, td {
   }
 
   .character-overflow-menu button {
+    font-size: 0.9rem;
     min-height: 2.7rem;
-    padding: 0.45rem 0.65rem;
+    padding: 0.4rem 0.55rem;
   }
 
   table,

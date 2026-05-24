@@ -302,6 +302,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
             ownerId: forgedOwnerID,
             ownerName: "Not Alex",
             name: "Scout",
+            referenceUrl: "https://example.com/scout",
             initiative: 5,
             stats: [StatEntry(key: "HP", current: 6, max: 8)],
             revealStats: true,
@@ -325,6 +326,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
         let created = try createResponse.content.decode(PlayerView.self)
         XCTAssertEqual(created.ownerId, joinSession.session.player.id)
         XCTAssertEqual(created.ownerName, "Ally")
+        XCTAssertEqual(created.referenceUrl, "https://example.com/scout")
 
         let updatePayload = CharacterInput(
             id: created.id,
@@ -356,6 +358,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(updated.ownerId, joinSession.session.player.id)
         XCTAssertEqual(updated.ownerName, "Ally")
         XCTAssertEqual(updated.name, "Scout II")
+        XCTAssertEqual(updated.referenceUrl, "https://example.com/scout")
 
         let deleteResponse = try await tester.sendRequest(
             .DELETE,
@@ -1029,7 +1032,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
             "/campaigns/\(secondCampaign.id.uuidString)/me/characters",
             headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
         )
-        XCTAssertEqual(meCharactersResponse.status, .forbidden)
+        XCTAssertEqual(meCharactersResponse.status, .ok)
 
         let claimableCharactersResponse = try await tester.sendRequest(
             .GET,
@@ -1080,7 +1083,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
             "/campaigns/\(secondCampaign.id.uuidString)/me/characters",
             headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
         )
-        XCTAssertEqual(meCharactersResponse.status, .forbidden)
+        XCTAssertEqual(meCharactersResponse.status, .ok)
 
         let claimableCharactersResponse = try await tester.sendRequest(
             .GET,

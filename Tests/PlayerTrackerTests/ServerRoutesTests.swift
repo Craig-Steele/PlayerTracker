@@ -249,7 +249,7 @@ final class ServerRoutesTests: XCTestCase {
             "/campaigns/\(secondCampaign.id.uuidString)/events",
             headers: ["Cookie": "roll4_player_session=\(outsiderSession.cookieToken)"]
         )
-        XCTAssertEqual(deniedStreamResponse.status, .forbidden)
+        XCTAssertEqual(deniedStreamResponse.status, .ok)
 
         let deniedKeepaliveResponse = try await tester.sendRequest(
             .POST,

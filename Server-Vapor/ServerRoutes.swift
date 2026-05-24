@@ -890,6 +890,7 @@ func routes(
             ownerId: session.id,
             ownerName: resolvedOwnerName,
             characterName: input.name,
+            referenceUrl: input.referenceUrl,
             initiative: input.initiative,
             stats: input.stats,
             revealStats: input.revealStats,
@@ -900,9 +901,17 @@ func routes(
             revealOnTurn: input.revealOnTurn,
             conditions: input.conditions.map { Set($0) }
         )
+        var responseCharacter = created
+        if campaign.encounterState == .active,
+           try await isRefereeSession(session, in: campaign.id, on: req.db) {
+            responseCharacter = await userStore.rollInitiativeForCharacter(
+                id: created.id,
+                standardDie: (await campaignStore.library()).standardDie
+            ) ?? created
+        }
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
         await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
-        return created
+        return responseCharacter
     }
 
     app.post("campaigns", ":campaignId", "me", "characters", ":id", "claim") { req async throws -> PlayerView in
@@ -982,6 +991,7 @@ func routes(
             ownerId: session.id,
             ownerName: session.displayName,
             characterName: input.name,
+            referenceUrl: input.referenceUrl,
             initiative: input.initiative,
             stats: input.stats,
             revealStats: input.revealStats,

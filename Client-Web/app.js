@@ -1030,9 +1030,23 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       autoSkipTurn: typeof character.autoSkipTurn === 'boolean' ? character.autoSkipTurn : null,
       useAppInitiativeRoll:
         typeof character.useAppInitiativeRoll === 'boolean' ? character.useAppInitiativeRoll : true,
-      initiativeBonus: Number.isFinite(character.initiativeBonus) ? String(character.initiativeBonus) : '0'
+      initiativeBonus: Number.isFinite(character.initiativeBonus) ? String(character.initiativeBonus) : '0',
+      referenceUrl: typeof character.referenceUrl === 'string' ? character.referenceUrl : null
     };
     saveDrafts(ownerName, drafts);
+  }
+
+  function upsertMyCharacter(savedCharacter) {
+    if (!savedCharacter?.id) return;
+    const index = myCharacters.findIndex((character) => character.id === savedCharacter.id);
+    if (index >= 0) {
+      myCharacters[index] = {
+        ...myCharacters[index],
+        ...savedCharacter
+      };
+      return;
+    }
+    myCharacters.push(savedCharacter);
   }
 
   function scheduleCharacterSave(character) {
@@ -2782,6 +2796,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
       const savedCharacter = await characterRes.json();
       selectedCharacterId = savedCharacter.id;
+      upsertMyCharacter(savedCharacter);
 
       if (showStatus) {
         statusDiv.textContent = successMessage;
@@ -2843,6 +2858,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       successMessage: `Saved ${name}.`
     });
     if (!savedCharacter) return;
+    upsertMyCharacter(savedCharacter);
     formDirty = false;
     updateDraftFromForm();
   }

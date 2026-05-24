@@ -27,6 +27,7 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await AddInviteOnlyToCampaigns().prepare(on: app.db)
         try await AddCharacterClaimColumnsToCharacters().prepare(on: app.db)
         try await AddLastPlayedByNameToCharacters().prepare(on: app.db)
+        try await AddReferenceUrlToCharacters().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
@@ -40,6 +41,7 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await AddInviteOnlyToCampaigns().prepare(on: app.db)
         try await AddCharacterClaimColumnsToCharacters().prepare(on: app.db)
         try await AddLastPlayedByNameToCharacters().prepare(on: app.db)
+        try await AddReferenceUrlToCharacters().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
@@ -70,6 +72,7 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await AddCharacterClaimColumnsToCharacters().prepare(on: app.db)
         try await AddClaimTimeoutMinutesToCampaigns().prepare(on: app.db)
         try await AddInviteOnlyToCampaigns().prepare(on: app.db)
+        try await AddReferenceUrlToCharacters().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }

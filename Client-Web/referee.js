@@ -104,6 +104,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const hideBtn = document.getElementById('ref-hide-character');
   const overflowToggle = document.getElementById('ref-overflow-toggle');
   const overflowMenu = document.getElementById('ref-overflow-menu');
+  const openReferenceBtn = document.getElementById('ref-open-reference');
   const claimCharacterBtn = document.getElementById('ref-claim-character');
   const releaseCharacterBtn = document.getElementById('ref-release-character');
   const deleteCharacterBtn = document.getElementById('ref-delete-character');
@@ -559,7 +560,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
     setCreatureLibrarySummary(`Using ${creature.name}.`);
-    setAddDialogTab('manual');
     renderCreatureLibraryList();
     renderCreatureLibraryDetails();
   }
@@ -1181,25 +1181,21 @@ window.addEventListener('DOMContentLoaded', () => {
       name.textContent = player.name;
       const meta = document.createElement('div');
       meta.className = 'character-meta';
-      let statusLabel = '';
-      if (player.isReferee) {
-        statusLabel = player.isHidden
-          ? player.revealOnTurn
-            ? 'Hidden (Reveal on Turn)'
-            : 'Hidden'
-          : 'Visible';
-      } else {
-        statusLabel = getCharacterControllerName(player) || 'Unclaimed';
-      }
       const initiativeButton = document.createElement('button');
       initiativeButton.type = 'button';
       initiativeButton.className = 'initiative-inline-button';
-      initiativeButton.textContent = `Init ${formatInitiative(player.initiative)} • ${statusLabel}`;
+      initiativeButton.textContent = `Init ${formatInitiative(player.initiative)}`;
       initiativeButton.addEventListener('click', (event) => {
         event.stopPropagation();
         editCharacterInitiative(player);
       });
       meta.appendChild(initiativeButton);
+      if (player.isReferee && player.isHidden) {
+        const hiddenState = document.createElement('span');
+        hiddenState.className = 'character-hidden-state';
+        hiddenState.textContent = player.revealOnTurn ? 'Hidden (Reveal on Turn)' : 'Hidden';
+        meta.appendChild(hiddenState);
+      }
       nameWrap.appendChild(name);
       nameWrap.appendChild(meta);
       row.appendChild(nameWrap);
@@ -1474,6 +1470,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const canClaim = Boolean(player && !isReferee && !player.claimedSessionId);
     const canRelease = Boolean(player && !isReferee && player.claimedSessionId);
     const canDelete = Boolean(player);
+    const hasReference = Boolean(player?.referenceUrl);
     if (revealNowBtn) {
       revealNowBtn.classList.toggle('hidden', !isHidden || !isReferee);
       revealNowBtn.disabled = !isHidden || !isReferee;
@@ -1500,8 +1497,13 @@ window.addEventListener('DOMContentLoaded', () => {
       deleteCharacterBtn.disabled = !canDelete;
       deleteCharacterBtn.setAttribute('aria-disabled', (!canDelete).toString());
     }
+    if (openReferenceBtn) {
+      openReferenceBtn.classList.toggle('hidden', !hasReference);
+      openReferenceBtn.disabled = !hasReference;
+      openReferenceBtn.setAttribute('aria-disabled', (!hasReference).toString());
+    }
     if (overflowToggle) {
-      const hasAction = canClaim || canRelease || canDelete;
+      const hasAction = canClaim || canRelease || canDelete || hasReference;
       overflowToggle.classList.toggle('hidden', !hasAction);
       overflowToggle.disabled = !hasAction;
       overflowToggle.setAttribute('aria-disabled', (!hasAction).toString());
@@ -1543,6 +1545,15 @@ window.addEventListener('DOMContentLoaded', () => {
     updateSelectionControls();
     updateActionButtons(null);
     renderCharacterList(currentPlayers, currentTurnId);
+  }
+
+  function openSelectedCharacterReference() {
+    const selected = selectedCharacterId
+      ? currentPlayers.find((player) => player.id === selectedCharacterId)
+      : null;
+    const referenceUrl = selected?.referenceUrl?.trim();
+    if (!referenceUrl) return;
+    window.open(referenceUrl, '_blank', 'noopener');
   }
 
   function renderEditorConditions(filterText = '') {
@@ -1828,11 +1839,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
     try {
       const shouldReveal = Boolean(visibleToggle && visibleToggle.checked);
+      const referenceUrl = selectedCreatureLibrary?.referenceUrl || null;
       for (let i = 1; i <= quantity; i += 1) {
         const suffix = quantity > 1 ? ` (${i})` : '';
         const payload = {
           ownerName: 'Referee',
           name: `${name}${suffix}`,
+          referenceUrl,
           initiative: null,
           useAppInitiativeRoll: true,
           initiativeBonus,
@@ -2001,6 +2014,14 @@ window.addEventListener('DOMContentLoaded', () => {
   if (overflowMenu) {
     overflowMenu.addEventListener('click', (event) => {
       event.stopPropagation();
+    });
+  }
+
+  if (openReferenceBtn) {
+    openReferenceBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      closeOverflowMenu();
+      openSelectedCharacterReference();
     });
   }
 

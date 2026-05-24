@@ -89,6 +89,79 @@ final class UserStoreTests: XCTestCase {
         XCTAssertFalse(revealed.revealOnTurn)
     }
 
+    func testPlayerCharactersSortAheadOfRefereesOnEqualInitiative() async throws {
+        let store = UserStore()
+        let campaignName = "Tie Break"
+        let playerOwnerId = UUID()
+        let refereeOwnerId = UUID()
+        let player = await addCharacter(
+            to: store,
+            campaignName: campaignName,
+            ownerId: playerOwnerId,
+            ownerName: "Player",
+            characterName: "Hero",
+            initiative: 12
+        )
+        let referee = await addCharacter(
+            to: store,
+            campaignName: campaignName,
+            ownerId: refereeOwnerId,
+            ownerName: "Referee",
+            characterName: "Mage",
+            initiative: 12
+        )
+        await store.setCampaignRefereeSessionIDs(
+            campaignName: campaignName,
+            refereeSessionIDs: [refereeOwnerId]
+        )
+
+        let state = await store.state(
+            campaignName: campaignName,
+            includeHidden: true,
+            encounterState: .active
+        )
+
+        XCTAssertEqual(state.players.first?.id, player.id)
+        XCTAssertEqual(state.players.last?.id, referee.id)
+        XCTAssertEqual(state.currentTurnId, player.id)
+        XCTAssertEqual(state.currentTurnName, "Hero")
+    }
+
+    func testNewCharacterRollsInitiativeWhenEncounterIsActive() async throws {
+        let store = UserStore()
+        let campaignName = "Active Add"
+
+        _ = await store.state(
+            campaignName: campaignName,
+            includeHidden: true,
+            encounterState: .active
+        )
+
+        let player = await store.upsertCharacter(
+            id: nil,
+            campaignName: campaignName,
+            ownerId: UUID(),
+            ownerName: "Referee",
+            characterName: "Incoming",
+            initiative: nil,
+            stats: [],
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 2,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        XCTAssertNil(player.initiative)
+
+        let rolled = await store.rollInitiativeForCharacter(id: player.id, standardDie: "1d20")
+        XCTAssertNotNil(rolled?.initiative)
+        let stored = await store.characterState(for: player.id)
+        XCTAssertNotNil(stored?.initiative)
+    }
+
     func testStaleClaimExpiresAfterClaimTimeout() async throws {
         let store = UserStore()
         let campaignName = "Timeout"
@@ -149,6 +222,7 @@ final class UserStoreTests: XCTestCase {
     private func addCharacter(
         to store: UserStore,
         campaignName: String,
+        ownerId: UUID = UUID(),
         ownerName: String,
         characterName: String,
         initiative: Double,
@@ -159,7 +233,7 @@ final class UserStoreTests: XCTestCase {
         await store.upsertCharacter(
             id: nil,
             campaignName: campaignName,
-            ownerId: UUID(),
+            ownerId: ownerId,
             ownerName: ownerName,
             characterName: characterName,
             initiative: initiative,

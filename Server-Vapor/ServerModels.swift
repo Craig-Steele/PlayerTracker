@@ -173,6 +173,7 @@ struct CharacterState {
     var campaignName: String
     var ownerId: UUID
     var ownerName: String
+    var referenceUrl: String?
     var lastPlayedByName: String?
     var claimedSessionId: UUID?
     var claimedDisplayName: String?
@@ -194,6 +195,7 @@ struct PlayerView: Content {
     let id: UUID
     let ownerId: UUID
     let ownerName: String
+    let referenceUrl: String?
     let lastPlayedByName: String?
     let claimedSessionId: UUID?
     let claimedDisplayName: String?
@@ -262,6 +264,7 @@ struct CharacterInput: Content {
     let ownerId: UUID?
     let ownerName: String
     let name: String
+    let referenceUrl: String?
     let initiative: Double?
     let stats: [StatEntry]?
     let revealStats: Bool?
@@ -271,6 +274,40 @@ struct CharacterInput: Content {
     let isHidden: Bool?
     let revealOnTurn: Bool?
     let conditions: [String]?
+
+    init(
+        id: UUID? = nil,
+        campaignName: String? = nil,
+        ownerId: UUID? = nil,
+        ownerName: String,
+        name: String,
+        referenceUrl: String? = nil,
+        initiative: Double? = nil,
+        stats: [StatEntry]? = nil,
+        revealStats: Bool? = nil,
+        autoSkipTurn: Bool? = nil,
+        useAppInitiativeRoll: Bool? = nil,
+        initiativeBonus: Int? = nil,
+        isHidden: Bool? = nil,
+        revealOnTurn: Bool? = nil,
+        conditions: [String]? = nil
+    ) {
+        self.id = id
+        self.campaignName = campaignName
+        self.ownerId = ownerId
+        self.ownerName = ownerName
+        self.name = name
+        self.referenceUrl = referenceUrl
+        self.initiative = initiative
+        self.stats = stats
+        self.revealStats = revealStats
+        self.autoSkipTurn = autoSkipTurn
+        self.useAppInitiativeRoll = useAppInitiativeRoll
+        self.initiativeBonus = initiativeBonus
+        self.isHidden = isHidden
+        self.revealOnTurn = revealOnTurn
+        self.conditions = conditions
+    }
 }
 
 struct CharacterVisibilityInput: Content {
