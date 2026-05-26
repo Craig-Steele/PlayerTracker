@@ -31,7 +31,8 @@ const {
   applyEncounterHealthClasses,
   formatEncounterStatsText,
   buildEncounterConditionsList,
-  createEmptyEncounterRow
+  createEmptyEncounterRow,
+  setEncounterHealthLabel
 } = window.PlayerTrackerEncounter || {
   normalizeConditionEntry: () => null,
   createConditionLink: () => null,
@@ -49,12 +50,16 @@ const {
     td.textContent = text || '(no players yet)';
     tr.appendChild(td);
     return tr;
-  }
+  },
+  setEncounterHealthLabel: () => {}
 };
 const { filterClaimableCharacters } = window.PlayerTrackerClaimableCharacters || {
   filterClaimableCharacters: (characters) =>
     Array.isArray(characters)
-      ? characters.filter((character) => !character?.isReferee && !character?.claimedSessionId)
+      ? characters.filter(
+        (character) =>
+          !character?.claimedSessionId && (!character?.isReferee || Boolean(character?.isClaimable))
+      )
       : []
 };
 const { collectStatPayloadFromInputs } = window.PlayerTrackerStatInputs || {
@@ -100,8 +105,10 @@ const EMPTY_CONDITION_SET = {
 const campaignHeaderNameTargets = [];
 const campaignHeaderIconTargets = [];
 const campaignHeaderLinkTargets = [];
-const campaignHeaderLicenseTargets = [];
-const APP_JS_VERSION = '10';
+  const campaignHeaderLicenseTargets = [];
+  const APP_JS_VERSION = '11';
+  let statBlockDefinitions = [];
+  let statBlockLookup = new Map();
 
 function normalizePlayerName(name) {
   return (name || '').trim().toLowerCase();
@@ -320,7 +327,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentCampaignName = '';
   let currentRulesetId = '';
   let encounterState = 'new';
+  let currentHealthLabel = 'HP';
   let statKeys = ['HP'];
+  let statAliases = new Map();
   let playerNameRequired = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
@@ -743,7 +752,12 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (statsFields) statsFields.innerHTML = '';
     if (currentStatsInputs) currentStatsInputs.innerHTML = '';
     if (healthHeading) {
-      healthHeading.textContent = statKeys.length === 1 ? statKeys[0] : 'Stats';
+      healthHeading.textContent =
+        statKeys.length === 1 && statKeys[0] === 'HP'
+          ? currentHealthLabel
+          : statKeys.length === 1
+            ? statKeys[0]
+            : 'Stats';
     }
 
     statKeys.forEach((key) => {
@@ -878,6 +892,123 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
+  function normalizeStatBlockDefinition(entry) {
+    if (!entry || typeof entry.id !== 'string' || typeof entry.label !== 'string') {
+      return null;
+    }
+    const id = entry.id.trim();
+    const label = entry.label.trim();
+    const stats = Array.isArray(entry.stats)
+      ? entry.stats
+          .map((stat) => (typeof stat === 'string' ? stat.trim() : ''))
+          .filter(Boolean)
+      : [];
+    if (!id || !label || stats.length === 0) {
+      return null;
+    }
+    return {
+      id,
+      label,
+      appliesTo: Array.isArray(entry.appliesTo)
+        ? entry.appliesTo
+            .map((role) => (typeof role === 'string' ? role.trim() : ''))
+            .filter(Boolean)
+        : [],
+      stats,
+      defaultBlock: Boolean(entry.default ?? entry.defaultBlock)
+    };
+  }
+
+  function normalizeStatToken(value) {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    return value
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '');
+  }
+
+  function setStatAliases(aliases) {
+    statAliases = new Map();
+    if (!aliases || typeof aliases !== 'object') {
+      return;
+    }
+    Object.entries(aliases).forEach(([alias, canonical]) => {
+      const aliasToken = normalizeStatToken(alias);
+      const canonicalToken = normalizeStatToken(canonical);
+      if (!aliasToken || !canonicalToken) {
+        return;
+      }
+      statAliases.set(aliasToken, canonicalToken === 'TEMPHP' ? 'TempHP' : canonicalToken);
+    });
+  }
+
+  function normalizeStatKey(value) {
+    const token = normalizeStatToken(value);
+    if (!token) {
+      return '';
+    }
+    if (token === 'TEMPHP') {
+      return 'TempHP';
+    }
+    return statAliases.get(token) || token;
+  }
+
+  function normalizeStatEntries(stats) {
+    const normalized = [];
+    const seen = new Map();
+    (Array.isArray(stats) ? stats : []).forEach((stat) => {
+      const key = normalizeStatKey(stat?.key);
+      if (!key) {
+        return;
+      }
+      const current = Number.isFinite(stat?.current) ? stat.current : 0;
+      const max = Number.isFinite(stat?.max) ? stat.max : current;
+      seen.set(key, { key, current, max });
+    });
+    seen.forEach((value) => normalized.push(value));
+    return normalized;
+  }
+
+  function inferCharacterStatBlockIdFromStats(stats) {
+    const sourceKeys = normalizeStatEntries(stats)
+      .map((stat) => stat.key)
+      .filter((key) => typeof key === 'string' && key !== 'TempHP');
+    if (sourceKeys.length === 0) {
+      return null;
+    }
+    const normalizedSource = sourceKeys.slice().sort().join('|');
+    const match = statBlockDefinitions.find((block) => {
+      const blockKeys = normalizeStatEntries(
+        (Array.isArray(block.stats) ? block.stats : []).map((key) => ({ key, current: 0, max: 0 }))
+      ).map((stat) => stat.key)
+        .filter((key) => key !== 'TempHP')
+        .slice()
+        .sort()
+        .join('|');
+      return blockKeys === normalizedSource;
+    });
+    return match?.id || null;
+  }
+
+  function getCharacterStatKeys(character) {
+    const statBlockId = typeof character?.statBlockId === 'string' ? character.statBlockId.trim() : '';
+    const inferredStatBlockId = statBlockId || inferCharacterStatBlockIdFromStats(character?.stats);
+    const block = inferredStatBlockId ? statBlockLookup.get(inferredStatBlockId) : null;
+    const baseKeys = Array.isArray(block?.stats) && block.stats.length > 0
+      ? block.stats.slice()
+      : (Array.isArray(character?.stats) && character.stats.length > 0
+          ? normalizeStatEntries(character.stats).map((stat) => stat.key)
+          : statKeys.slice());
+    const extras = Array.isArray(character?.stats)
+      ? normalizeStatEntries(character.stats)
+          .map((stat) => stat?.key)
+          .filter((key) => typeof key === 'string' && key === 'TempHP' && !baseKeys.includes(key))
+      : [];
+    return baseKeys.concat(extras);
+  }
+
   function draftKeyForOwner(ownerName) {
     const normalized = normalizePlayerName(ownerName);
     const campaignKey = currentCampaignName ? currentCampaignName : 'default';
@@ -928,7 +1059,10 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       revealStats: revealStatsInput ? revealStatsInput.checked : null,
       autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
       useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
-      initiativeBonus: initiativeBonusInput ? initiativeBonusInput.value.trim() : '0'
+      initiativeBonus: initiativeBonusInput ? initiativeBonusInput.value.trim() : '0',
+      statBlockId: selectedCharacterId
+        ? (myCharacters.find((character) => character.id === selectedCharacterId)?.statBlockId || null)
+        : null
     };
     saveDrafts(ownerName, drafts);
   }
@@ -1005,6 +1139,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         const parsedBonus = Number(draft.initiativeBonus);
         character.initiativeBonus = Number.isFinite(parsedBonus) ? parsedBonus : 0;
       }
+      if (typeof draft.statBlockId === 'string' && draft.statBlockId.trim()) {
+        character.statBlockId = draft.statBlockId.trim();
+      }
     });
   }
 
@@ -1031,6 +1168,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       useAppInitiativeRoll:
         typeof character.useAppInitiativeRoll === 'boolean' ? character.useAppInitiativeRoll : true,
       initiativeBonus: Number.isFinite(character.initiativeBonus) ? String(character.initiativeBonus) : '0',
+      statBlockId: character.statBlockId || inferCharacterStatBlockIdFromStats(character.stats) || null,
       referenceUrl: typeof character.referenceUrl === 'string' ? character.referenceUrl : null
     };
     saveDrafts(ownerName, drafts);
@@ -1072,6 +1210,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         ownerId: currentPlayerSessionId,
         ownerName: character.ownerName,
         name: character.name,
+        statBlockId: character.statBlockId || inferCharacterStatBlockIdFromStats(character.stats) || null,
         initiative: character.initiative,
         stats: Array.isArray(character.stats) ? character.stats : [],
         revealStats: character.revealStats,
@@ -1104,7 +1243,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         }
         throw new Error('Server returned ' + characterRes.status);
       }
-      updateDraftForCharacter(character);
+      const savedCharacter = await characterRes.json();
+      upsertMyCharacter(savedCharacter);
+      updateDraftForCharacter(savedCharacter);
       lastStateJson = null;
       await loadState();
     } catch (err) {
@@ -1176,10 +1317,20 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       statKeys = [...statKeys, 'TempHP'];
     }
     allowNegativeHealth = Boolean(conditionSet?.allowNegativeHealth);
+    currentHealthLabel =
+      typeof conditionSet?.healthLabel === 'string' && conditionSet.healthLabel.trim()
+        ? conditionSet.healthLabel.trim()
+        : 'HP';
+    setStatAliases(conditionSet?.statAliases);
+    setEncounterHealthLabel(currentHealthLabel);
     currentStandardDie =
       typeof conditionSet?.standardDie === 'string' && conditionSet.standardDie.trim()
         ? conditionSet.standardDie.trim()
         : null;
+    statBlockDefinitions = Array.isArray(conditionSet?.statBlocks)
+      ? conditionSet.statBlocks.map((entry) => normalizeStatBlockDefinition(entry)).filter(Boolean)
+      : [];
+    statBlockLookup = new Map(statBlockDefinitions.map((block) => [block.id, block]));
     buildStatsFields();
 
     if (normalizedEntries.length === 0) {
@@ -1396,7 +1547,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       const stats = Array.isArray(character.stats) ? character.stats : [];
       const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
 
-      statKeys.forEach((key) => {
+      getCharacterStatKeys(character).forEach((key) => {
         const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
         const line = document.createElement('div');
         line.className = 'character-stat-line';
@@ -1415,9 +1566,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
         const value = document.createElement('span');
         value.className = 'character-hp-value';
-        const currentVal = Number.isFinite(stat.current) ? stat.current : 0;
-        const maxVal = Number.isFinite(stat.max) ? stat.max : 0;
-        value.textContent = key === 'TempHP' ? `${currentVal}` : `${currentVal}/${maxVal}`;
+      const currentVal = Number.isFinite(stat.current) ? stat.current : 0;
+      const maxVal = Number.isFinite(stat.max) ? stat.max : 0;
+      value.textContent = key === 'TempHP' ? `${currentVal}` : `${currentVal}/${maxVal}`;
 
         const plus = document.createElement('button');
         plus.type = 'button';
@@ -1610,6 +1761,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         ...character,
         initiative: match.initiative,
         stats: Array.isArray(match.stats) ? match.stats : character.stats,
+        statBlockId: match.statBlockId || character.statBlockId || inferCharacterStatBlockIdFromStats(match.stats || character.stats),
         revealStats: match.revealStats,
         autoSkipTurn: match.autoSkipTurn,
         useAppInitiativeRoll: match.useAppInitiativeRoll,
@@ -2463,6 +2615,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         ownerId: currentPlayerSessionId,
         ownerName,
         name,
+        statBlockId: inferCharacterStatBlockIdFromStats(statsPayload) || null,
         initiative: null,
         stats: statsPayload,
         revealStats: addRevealStatsInput ? addRevealStatsInput.checked : null,
@@ -2499,6 +2652,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
       const savedCharacter = await characterRes.json();
       selectedCharacterId = savedCharacter.id;
+      upsertMyCharacter(savedCharacter);
       hideAddForm();
       await refreshCharacterState(ownerName);
       await loadState();
@@ -2686,8 +2840,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
             }
 
             const stats = Array.isArray(p.stats) ? p.stats : [];
-            const orderedStats = orderedEncounterStats(stats, statKeys);
-            const statusInfo = encounterStatusInfo(stats, statKeys);
+            const displayStatKeys = getCharacterStatKeys(p);
+            const orderedStats = orderedEncounterStats(stats, displayStatKeys);
+            const statusInfo = encounterStatusInfo(stats, displayStatKeys);
 
             if (statusInfo) {
               applyEncounterHealthClasses(hpTd, statusInfo);
@@ -2701,7 +2856,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
               }
               if (canReveal) {
                 const valueLine = document.createElement('div');
-                valueLine.textContent = formatEncounterStatsText(orderedStats, statKeys);
+                valueLine.textContent = formatEncounterStatsText(orderedStats, displayStatKeys);
                 hpTd.appendChild(valueLine);
               }
             } else {

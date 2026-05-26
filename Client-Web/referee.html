@@ -43,7 +43,7 @@
           <tr>
             <th>#</th>
             <th>Character</th>
-            <th id="health-heading">HP</th>
+            <th id="health-heading">Stats</th>
             <th class="conditions-col">Conditions</th>
             <th class="act-col">Act</th>
           </tr>
@@ -127,6 +127,12 @@
             </div>
             <div id="ref-add-manual-panel" class="add-form-tabpanel" role="tabpanel" aria-labelledby="ref-add-tab-manual">
               <div class="form-section-block property-group">
+                <label id="ref-stat-block-wrap" class="property-row hidden">
+                  <span class="property-label">Stat block</span>
+                  <span class="property-control">
+                    <select id="ref-stat-block"></select>
+                  </span>
+                </label>
                 <label id="ref-initiative-bonus-wrap" class="property-row">
                   <span class="property-label">Initiative Bonus</span>
                   <span class="property-control">
@@ -139,8 +145,13 @@
             </div>
             <div id="ref-library-panel" class="creature-library-panel add-form-tabpanel hidden" role="tabpanel" aria-labelledby="ref-add-tab-library" aria-hidden="true">
               <div class="creature-library-header">
-                <div id="ref-library-summary" class="creature-library-summary"></div>
+                <div class="creature-library-header-row">
+                  <div id="ref-library-summary" class="creature-library-summary"></div>
+                  <button type="button" id="ref-library-import" class="secondary">Import JSON</button>
+                </div>
+                <div id="ref-library-import-status" class="creature-library-summary creature-library-import-status"></div>
               </div>
+              <input type="file" id="ref-library-import-input" class="hidden" accept=".json,application/json" multiple />
               <label class="creature-library-search">
                 <span class="property-label">Filter</span>
                 <input type="search" id="ref-library-query" placeholder="Search name, type, CR, alignment" />
@@ -209,6 +220,6 @@
   <script src="live-stream.js?v=2"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=12"></script>
+  <script src="referee.js?v=14"></script>
 </body>
 </html>

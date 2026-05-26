@@ -1,0 +1,67 @@
+{
+  "id": "exemplar",
+  "name": "Exemplar",
+  "page": 47,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=47",
+  "cr": 7,
+  "xp": 3200,
+  "alignment": "LG",
+  "size": "Small",
+  "type": "outsider (extraplanar, incorporeal)",
+  "initiative": 3,
+  "senses": "darkvision 60 ft., know alignment, low-light vision; Perception +16",
+  "ac": {
+    "value": 17,
+    "touch": 17,
+    "flatFooted": 14,
+    "notes": "+3 deflection, +3 Dex, +1 size"
+  },
+  "hp": 67,
+  "hitDice": "9d10+18",
+  "savingThrows": {
+    "fort": 8,
+    "ref": 9,
+    "will": 7
+  },
+  "defense": {
+    "defensiveAbilities": ["incorporeal", "rejuvenation"],
+    "dr": ["10/evil"]
+  },
+  "offense": {
+    "speed": "fly 40 ft. (perfect)",
+    "melee": "incorporeal bite +13 touch (1d8 plus 1d4 Wisdom)"
+  },
+  "specialAttacks": ["howl", "Wisdom damage"],
+  "statistics": {
+    "str": null,
+    "dex": 17,
+    "con": 15,
+    "int": 12,
+    "wis": 15,
+    "cha": 16,
+    "baseAtk": 9,
+    "cmb": 11,
+    "cmd": 24
+  },
+  "feats": ["Alertness", "Combat Reflexes", "Iron Will", "Lunge", "Vital Strike"],
+  "skills": {
+    "Fly": 25,
+    "Intimidate": 15,
+    "Knowledge (religion)": 13,
+    "Perception": 16,
+    "Sense Motive": 16,
+    "Stealth": 19,
+    "Survival": 14
+  },
+  "languages": ["Common (can't speak)"],
+  "sq": ["limited domain", "soul defender"],
+  "specialAbilities": [
+    "Howl (Su) When Exemplar howls, all evil creatures within his limited domain must succeed at a DC 17 Will save or be panicked for 2d4 rounds.",
+    "Know Alignment (Su) Exemplar automatically knows the alignment of any creature that enters Valor's Fastness.",
+    "Limited Domain (Ex) Exemplar is sworn to protect the grounds of Valor's Fastness. He can freely wander through the courtyard and first floor of the temple, but he cannot move beyond these boundaries.",
+    "Rejuvenation (Su) If slain, Exemplar restores himself in 24 hours, reappearing in Valor's Fastness.",
+    "Soul Defender (Ex) Exemplar is especially vigilant against the temple's foes and can detect evil in his domain."
+  ]
+}

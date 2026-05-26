@@ -1,0 +1,26 @@
+{
+  "id": "sky-shark",
+  "name": "Sky-Shark",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=94",
+  "source": "Secrets of the Ancients p. 94",
+  "type": "Komesh fauna",
+  "size": "Large",
+  "notes": "A Komesh predator that attacks by biting or slashing the locomotive limbs of other creatures.",
+  "tags": ["creature", "gas-giant", "predator"],
+  "stats": [
+    { "key": "Hits", "current": 22, "max": 22 }
+  ],
+  "speed": "—",
+  "statBlock": {
+    "skills": [
+      { "name": "Athletics (dexterity)", "level": 1 },
+      { "name": "Melee", "level": 0 },
+      { "name": "Recon", "level": 0 },
+      { "name": "Stealth", "level": 1 },
+      { "name": "Survival", "level": 1 }
+    ],
+    "attacks": ["Teeth (3D)"],
+    "traits": ["Armour (+1)", "Flyer (slow)"],
+    "behaviour": ["Carnivore", "Chaser"]
+  }
+}

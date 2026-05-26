@@ -1,0 +1,34 @@
+{
+  "id": "pallod-norrim",
+  "name": "Pallod Norrim",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=14",
+  "source": "Bodysnatchers p. 13",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Public Order inspector who handles Vlen Beckett's suspicious death with polite, careful evasiveness.",
+  "tags": ["contact", "inspector", "regina"],
+  "traits": [
+    { "key": "STR", "current": 4, "max": 4 },
+    { "key": "DEX", "current": 7, "max": 7 },
+    { "key": "END", "current": 8, "max": 8 },
+    { "key": "INT", "current": 9, "max": 9 },
+    { "key": "EDU", "current": 9, "max": 9 },
+    { "key": "SOC", "current": 8, "max": 8 }
+  ],
+  "skills": [
+    { "name": "Admin", "level": 2 },
+    { "name": "Advocate", "level": 4 },
+    { "name": "Broker", "level": 2 },
+    { "name": "Diplomat", "level": 2 },
+    { "name": "Investigate", "level": 3 },
+    { "name": "Persuade", "level": 2 },
+    { "name": "Streetwise", "level": 2 }
+  ],
+  "playingNotes": [
+    "Speak clearly but never actually say anything.",
+    "Couch everything in polite phrases and diplomatic vagueness.",
+    "Never say 'no' when you can say 'not at this time'.",
+    "Never get angry or raise your voice unless you are exerting your authority.",
+    "Stroke your moustache thoughtfully."
+  ]
+}

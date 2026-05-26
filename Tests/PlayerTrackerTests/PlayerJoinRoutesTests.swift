@@ -822,6 +822,35 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(released.lastPlayedByName, "Referee")
     }
 
+    func testRefereeCanReleaseOwnedCreatureToClaimPool() async throws {
+        let app = try await makeApp()
+        defer { Task { try? await app.asyncShutdown() } }
+        let tester = try app.testable()
+        let campaignID = try await activateCampaign(in: tester)
+        let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
+        let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
+
+        let releaseToPoolResponse = try await tester.sendRequest(
+            .POST,
+            "/referee/campaigns/\(campaignID.uuidString)/characters/\(refereeCharacter.id.uuidString)/release-to-pool",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
+        XCTAssertEqual(releaseToPoolResponse.status, .ok)
+        let released = try releaseToPoolResponse.content.decode(PlayerView.self)
+        XCTAssertNil(released.claimedSessionId)
+        XCTAssertTrue(released.isReferee)
+        XCTAssertTrue(released.isClaimable)
+
+        let claimableResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(campaignID.uuidString)/characters",
+            headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
+        )
+        XCTAssertEqual(claimableResponse.status, .ok)
+        let claimableCharacters = try claimableResponse.content.decode([PlayerView].self)
+        XCTAssertTrue(claimableCharacters.contains(where: { $0.id == refereeCharacter.id && $0.isClaimable }))
+    }
+
     func testPlayerCannotUseRefereeOnlyRoutes() async throws {
         let app = try await makeApp()
         defer { Task { try? await app.asyncShutdown() } }

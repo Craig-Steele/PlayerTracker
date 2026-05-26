@@ -9,6 +9,7 @@ final class ServerRoutesTests: XCTestCase {
     override func tearDown() async throws {
         try await app?.asyncShutdown()
         await userStore.resetMemoryForTesting()
+        CreatureLibraryConfiguration.includeLocalCreatures = true
         app = nil
     }
 
@@ -65,6 +66,67 @@ final class ServerRoutesTests: XCTestCase {
         let creature = try XCTUnwrap(library.creatures.first(where: { $0.name == "Archon, Codex" }))
         XCTAssertFalse(creature.type?.contains(" ,") ?? false)
         XCTAssertEqual(creature.type, "Medium outsider (archon, extraplanar, good, lawful)")
+    }
+
+    func testConditionsLibraryReturnsStatBlocksForTraveller2() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")
+
+        let response = try await tester.sendRequest(.GET, "/conditions-library")
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(RuleSetLibrary.self)
+        XCTAssertEqual(library.id, "traveller")
+        XCTAssertEqual(library.statBlocks?.count, 2)
+        XCTAssertEqual(library.statAliases?["Psionic Points"], "PSI")
+        let refereeBlock = try XCTUnwrap(library.statBlocks?.first(where: { $0.id == "refereeHealthPool" }))
+        XCTAssertEqual(refereeBlock.appliesTo, ["referee"])
+        XCTAssertEqual(refereeBlock.stats, ["HP"])
+    }
+
+    func testTraveller2CreatureLibraryReturnsSampleBestiary() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")
+
+        let travellerLibrary = try RuleSetLibraryLoader.loadLibrary(id: "traveller")
+        XCTAssertEqual(travellerLibrary.creatureLibrary?.file, "traveller-bestiary.json")
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/creature-library?limit=20"
+        )
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(CreatureLibraryResponse.self)
+        XCTAssertEqual(library.rulesetId, "traveller")
+        XCTAssertEqual(library.rulesetLabel, "Traveller (SRD)")
+        XCTAssertEqual(library.totalMatches, 11)
+        XCTAssertFalse(library.hasMore)
+
+        let cadgeree = try XCTUnwrap(library.creatures.first(where: { $0.name == "Cadgeree" }))
+        XCTAssertEqual(cadgeree.source, "Secrets of the Ancients p. 51")
+        XCTAssertNil(cadgeree.cr)
+        XCTAssertNil(cadgeree.ac)
+        XCTAssertNil(cadgeree.initiativeBonus)
+        XCTAssertNil(cadgeree.alignment)
+        XCTAssertEqual(cadgeree.stats?.map(\.key), ["Hits"])
+        XCTAssertTrue(cadgeree.referenceUrl?.contains("#page=51") ?? false)
+
+        let servitor = try XCTUnwrap(library.creatures.first(where: { $0.name == "Servitor" }))
+        XCTAssertEqual(servitor.source, "Secrets of the Ancients p. 105")
+        XCTAssertNil(servitor.cr)
+        XCTAssertNil(servitor.ac)
+        XCTAssertNil(servitor.initiativeBonus)
+        XCTAssertNil(servitor.alignment)
+        XCTAssertEqual(servitor.stats?.map(\.key), ["Hits"])
+        XCTAssertTrue(servitor.referenceUrl?.contains("#page=105") ?? false)
+
+        let cyborgAssassin = try XCTUnwrap(library.creatures.first(where: { $0.name == "Cyborg Assassin" }))
+        XCTAssertEqual(cyborgAssassin.source, "Secrets of the Ancients p. 150")
+        XCTAssertNil(cyborgAssassin.cr)
+        XCTAssertNil(cyborgAssassin.ac)
+        XCTAssertNil(cyborgAssassin.initiativeBonus)
+        XCTAssertNil(cyborgAssassin.alignment)
+        XCTAssertNil(cyborgAssassin.stats)
+        XCTAssertTrue(cyborgAssassin.referenceUrl?.contains("#page=150") ?? false)
     }
 
     func testRootRedirectsToAdminOnLocalhost() async throws {
@@ -216,6 +278,53 @@ final class ServerRoutesTests: XCTestCase {
             )))
         )
         XCTAssertEqual(legacyCreateResponse.status, .notFound)
+    }
+
+    func testRefereeCharacterCreatePersistsStatBlockId() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+
+        let createPayload = CharacterInput(
+            id: nil,
+            campaignName: campaign.name,
+            ownerId: UUID(),
+            ownerName: "Referee",
+            name: "Aasimar",
+            statBlockId: "refereeHealthPool",
+            initiative: nil,
+            stats: [StatEntry(key: "HP", current: 11, max: 11)],
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: true,
+            revealOnTurn: false,
+            conditions: []
+        )
+        let createResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaign.id.uuidString)/me/characters",
+            headers: HTTPHeaders([
+                ("Cookie", "roll4_player_session=\(refereeCookie)"),
+                ("Content-Type", "application/json")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(createPayload))
+        )
+        XCTAssertEqual(createResponse.status, HTTPStatus.ok)
+        let created = try createResponse.content.decode(PlayerView.self)
+        XCTAssertEqual(created.statBlockId, "refereeHealthPool")
+        XCTAssertEqual(created.stats.first?.key, "HP")
+
+        let listResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(campaign.id.uuidString)/characters",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeCookie)")])
+        )
+        XCTAssertEqual(listResponse.status, .ok)
+        let list = try listResponse.content.decode([PlayerView].self)
+        let stored = try XCTUnwrap(list.first(where: { $0.name == "Aasimar" }))
+        XCTAssertEqual(stored.statBlockId, "refereeHealthPool")
     }
 
     func testCampaignEventStreamAndKeepaliveRequireMembership() async throws {
@@ -1565,6 +1674,7 @@ final class ServerRoutesTests: XCTestCase {
 
     private func makeTester(selectDefaultCampaign: Bool = true) async throws -> XCTApplicationTester {
         await userStore.clear()
+        CreatureLibraryConfiguration.includeLocalCreatures = false
         app = try await Application.make(.testing)
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production

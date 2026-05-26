@@ -288,6 +288,58 @@ struct AddReferenceUrlToCharacters: AsyncMigration {
     }
 }
 
+struct AddCharacterClaimableToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "is_claimable" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE characters ADD COLUMN is_claimable INTEGER NOT NULL DEFAULT 0")
+                .run()
+            connection.logger.notice("Patched characters with is_claimable.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
+struct AddStatBlockIdToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "stat_block_id" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE characters ADD COLUMN stat_block_id TEXT")
+                .run()
+            connection.logger.notice("Patched characters with stat_block_id.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct AddClaimTimeoutMinutesToCampaigns: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -394,7 +446,9 @@ struct DatabaseShapeVerification {
                 "claimed_display_name",
                 "claimed_at",
                 "last_played_by_name",
-                "reference_url"
+                "reference_url",
+                "is_claimable",
+                "stat_block_id"
             ]
             let missingCharacterColumns = requiredCharacterColumns.filter { required in
                 characterColumns.contains(where: { $0.name == required }) == false
@@ -540,6 +594,7 @@ struct CreateCharacters: AsyncMigration {
             .field("owner_name", .string, .required)
             .field("name", .string, .required)
             .field("initiative", .double)
+            .field("stat_block_id", .string)
             .field("reveal_stats", .bool, .required)
             .field("auto_skip_turn", .bool, .required)
             .field("use_app_initiative_roll", .bool, .required)
@@ -627,8 +682,10 @@ enum DatabaseMigrations {
         app.migrations.add(AddInviteTargetNameToCampaignInvites())
         app.migrations.add(CreateCharacters())
         app.migrations.add(AddCharacterClaimColumnsToCharacters())
+        app.migrations.add(AddCharacterClaimableToCharacters())
         app.migrations.add(AddLastPlayedByNameToCharacters())
         app.migrations.add(AddReferenceUrlToCharacters())
+        app.migrations.add(AddStatBlockIdToCharacters())
         app.migrations.add(CreateCharacterStats())
         app.migrations.add(CreateCharacterConditions())
         app.migrations.add(CreateCampaignEncounters())

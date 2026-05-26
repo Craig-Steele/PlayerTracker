@@ -1,0 +1,26 @@
+{
+  "id": "darter",
+  "name": "Darter",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=93",
+  "source": "Secrets of the Ancients p. 93",
+  "type": "Komesh fauna",
+  "size": "Medium",
+  "notes": "Gas-giant predator that attacks with a spike and must reinflate its gas bags before striking again.",
+  "tags": ["creature", "gas-giant", "predator"],
+  "stats": [
+    { "key": "Hits", "current": 22, "max": 22 }
+  ],
+  "speed": "—",
+  "statBlock": {
+    "skills": [
+      { "name": "Athletics (dexterity)", "level": 1 },
+      { "name": "Melee (natural)", "level": 3 },
+      { "name": "Recon", "level": 1 },
+      { "name": "Stealth", "level": 1 },
+      { "name": "Survival", "level": 1 }
+    ],
+    "attacks": ["Spike (2D)*"],
+    "traits": ["Flyer (very slow)"],
+    "behaviour": ["Carnivore", "Trapper"]
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "id": "halfling-slinger",
+  "name": "Halfling Slinger",
+  "page": 11,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=11",
+  "cr": 0.5,
+  "xp": 200,
+  "alignment": "NG",
+  "size": "Small",
+  "type": "humanoid (halfling)",
+  "initiative": 2,
+  "senses": "Perception +2",
+  "ac": {
+    "value": 15,
+    "touch": 13,
+    "flatFooted": 13,
+    "notes": "+2 armor, +2 Dex, +1 size"
+  },
+  "hp": 13,
+  "hitDice": "2d10+2",
+  "savingThrows": {
+    "fort": 4,
+    "ref": 3,
+    "will": 0
+  },
+  "defense": {
+    "resist": ["+2 vs. fear"]
+  },
+  "offense": {
+    "speed": "20 ft.",
+    "melee": "short sword +3 (1d4/19-20) or halfling sling staff +3 (1d4)",
+    "ranged": "halfling sling staff +5 (1d6/x3)"
+  },
+  "statistics": {
+    "str": 10,
+    "dex": 15,
+    "con": 11,
+    "int": 10,
+    "wis": 9,
+    "cha": 10,
+    "baseAtk": 2,
+    "cmb": 1,
+    "cmd": 13
+  },
+  "feats": ["Point-Blank Shot"],
+  "skills": {
+    "Acrobatics": 4,
+    "Climb": 2,
+    "Handle Animal": 4,
+    "Perception": 2,
+    "Profession (servant)": 3,
+    "Stealth": 7
+  },
+  "racialModifiers": {
+    "Acrobatics": 2,
+    "Climb": 2,
+    "Perception": 2
+  },
+  "languages": ["Common", "Halfling"],
+  "combatGear": ["tanglefoot bag"],
+  "otherGear": [
+    "leather armor",
+    "halfling sling staff with 10 bullets",
+    "short sword"
+  ],
+  "tactics": "During Combat Slingers target opponents at range with their sling staffs, preferring to strike at enemies not yet engaged by allies, or using tanglefoot bags against heavily armored opponents. If forced into melee combat, a slinger takes 5-foot steps backward to continue making missile attacks, switching to use a short sword (or using the sling staff as a club) only if he has no other choice.",
+  "morale": "A halfling slinger flees when reduced to 4 hit points or fewer.",
+  "rawText": "HALFLING SLINGER CR 1/2 XP 200 Halfling warrior 2 NG Small humanoid (halfling) Init +2; Senses Perception +2 DEFENSE AC 15, touch 13, flat-footed 13 (+2 armor, +2 Dex, +1 size) hp 13 (2d10+2) Fort +4, Ref +3, Will +0; +2 vs. fear OFFENSE Speed 20 ft. Melee short sword +3 (1d4/19-20) or halfling sling staff +3 (1d4) Ranged halfling sling staff +5 (1d6/x3) TACTICS During Combat Slingers target opponents at range with their sling staffs, preferring to strike at enemies not yet engaged by allies, or using tanglefoot bags against heavily armored opponents. If forced into melee combat, a slinger takes 5-foot steps backward to continue making missile attacks, switching to use a short sword (or using the sling staff as a club) only if he has no other choice. Morale A halfling slinger flees when reduced to 4 hit points or fewer. STATISTICS Str 10, Dex 15, Con 11, Int 10, Wis 9, Cha 10 Base Atk +2; CMB +1; CMD 13 Feats Point-Blank Shot Skills Acrobatics +4, Climb +2, Handle Animal +4, Perception +2, Profession (servant) +3, Stealth +7; Racial Modifiers +2 Acrobatics, +2 Climb, +2 Perception Languages Common, Halfling Combat Gear tanglefoot bag; Other Gear leather armor, halfling sling staff with 10 bullets, short sword"
+}

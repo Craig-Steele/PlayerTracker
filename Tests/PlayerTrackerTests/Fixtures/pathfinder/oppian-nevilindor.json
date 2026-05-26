@@ -1,0 +1,79 @@
+{
+  "id": "oppian-nevilindor",
+  "name": "Oppian Nevilindor",
+  "page": 60,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=60",
+  "rawText": "FOURTH SWORD KNIGHT OPPIAN NEVILINDOR Appointed governor of Kantaria by its Glorious Reclamation liberators, Oppian Nevilindor is a devout servant of Iomedae. Oppian dedicates himself to the ideals of the Inheritor, maintaining peak martial, physical, and spiritual condition. OPPIAN NEVILINDOR CR 7 XP 3,200 Male human cleric of Iomedae 8 LG Medium humanoid (human) Init –1; Senses Perception +3 Aura divine presence (30 ft., DC 17, 8 rounds/day) TACTICS DEFENSE AC 25, touch 12, flat-footed 25 (+10",
+  "cr": 7,
+  "xp": 3200,
+  "alignment": "LG",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": -1,
+  "senses": "Perception +3",
+  "ac": {
+    "value": 25,
+    "touch": 12,
+    "flatFooted": 25,
+    "notes": "+10 armor, +3 deflection, -1 Dex, +3 shield"
+  },
+  "hp": 79,
+  "hitDice": "8d8+40",
+  "savingThrows": {
+    "fort": 10,
+    "ref": 1,
+    "will": 9
+  },
+  "defense": {
+    "resist": [
+      "+2 vs. spells with the evil descriptor or cast by evil creatures"
+    ]
+  },
+  "offense": {
+    "speed": "20 ft.",
+    "melee": "+1 longsword +12/+7"
+  },
+  "statistics": {
+    "str": 18,
+    "dex": 8,
+    "con": 18,
+    "int": 10,
+    "wis": 16,
+    "cha": 14,
+    "baseAtk": 6,
+    "cmb": 10,
+    "cmd": 22
+  },
+  "feats": [
+    "Combat Casting",
+    "Disciple Of The SwordISG",
+    "Heavy Armor Proficiency",
+    "Power Attack",
+    "Weapon Focus (longsword)"
+  ],
+  "skills": {
+    "Diplomacy": 11,
+    "Knowledge (history)": 9,
+    "Knowledge (religion)": 9,
+    "Sense Motive": 12
+  },
+  "languages": [
+    "Common"
+  ],
+  "combatGear": [
+    "scroll of blessing of fervorAPG",
+    "scroll of spiritual allyAPG"
+  ],
+  "otherGear": [
+    "honor's panoply (+1 full plate; see sidebar)",
+    "+1 heavy steel shield",
+    "+1 longsword",
+    "golden holy symbol of Iomedae",
+    "spell component pouch"
+  ],
+  "specialAbilities": [
+    "Disciple of the Sword (Ex) Oppian receives the benefits described in the class feature."
+  ]
+}

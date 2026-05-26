@@ -1,0 +1,92 @@
+{
+  "id": "zara-orcelani",
+  "name": "Zara Orcelani",
+  "page": 62,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=62",
+  "rawText": "SHIELD-MARALICTOR ZARA ORCELANI Dedicated to law above all else, Zara Orcelani represents the ideals of the Hellknight Order of the Rack. Imprisoned during the fall of Kantaria, she seeks to escape and exact vengeance for the death of the maralictor she was sworn to defend. ZARA ORCELANI CR 5 XP 1,600 Female human fighter 5/Hellknight 1 (Pathfinder Campaign Setting: The Inner Sea World Guide 278) LE Medium humanoid (human) Init +2; Senses Perception +5 DEFENSE AC 25, touch 12, flat-footed 23 (+9",
+  "cr": 5,
+  "xp": 1600,
+  "alignment": "LE",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 2,
+  "senses": "Perception +5",
+  "ac": {
+    "value": 25,
+    "touch": 12,
+    "flatFooted": 23,
+    "notes": "+9 armor, +2 Dex, +4 shield"
+  },
+  "hp": 58,
+  "hitDice": "6d10+21",
+  "savingThrows": {
+    "fort": 8,
+    "ref": 3,
+    "will": 3
+  },
+  "defense": {
+    "resist": [
+      "+1 vs. fear"
+    ],
+    "defensiveAbilities": [
+      "bravery +1"
+    ]
+  },
+  "offense": {
+    "speed": "20 ft.",
+    "melee": "mwk longsword +11/+6",
+    "ranged": "mwk heavy crossbow +9"
+  },
+  "specialAttacks": [
+    "smite chaos 1/day",
+    "weapon training (heavy blades +1)"
+  ],
+  "statistics": {
+    "str": 14,
+    "dex": 14,
+    "con": 16,
+    "int": 8,
+    "wis": 10,
+    "cha": 13,
+    "baseAtk": 5,
+    "cmb": 7,
+    "cmd": 19
+  },
+  "feats": [
+    "Combat Reflexes",
+    "Iron Will",
+    "Missile ShieldAPG",
+    "Saving ShieldAPG",
+    "Shield Focus",
+    "Weapon Focus (longsword)",
+    "Weapon Specialization (longsword)"
+  ],
+  "skills": {
+    "Intimidate": 10,
+    "Knowledge (local)": 3,
+    "Knowledge (planes)": 1,
+    "Perception": 5,
+    "Ride": 1,
+    "Sense Motive": 5
+  },
+  "languages": [
+    "Common"
+  ],
+  "sq": [
+    "armor training 1",
+    "aura of law",
+    "Hellknight order (Order of the Rack)"
+  ],
+  "combatGear": [
+    "arrow magnetUE",
+    "potion of darkvision"
+  ],
+  "otherGear": [
+    "Hellknight plateISWG",
+    "+1 heavy steel shield",
+    "mwk heavy crossbow with 10 bolts",
+    "mwk longsword"
+  ]
+}

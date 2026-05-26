@@ -1,0 +1,65 @@
+{
+  "id": "sixth-sword-knight",
+  "name": "Sixth Sword Knight",
+  "page": 12,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=12",
+  "cr": 3,
+  "xp": 800,
+  "alignment": "LG",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 4,
+  "senses": "Perception +2",
+  "ac": {
+    "value": 17,
+    "touch": 10,
+    "flatFooted": 17,
+    "notes": "+7 armor"
+  },
+  "hp": 33,
+  "hitDice": "4d8+12",
+  "savingThrows": {
+    "fort": 6,
+    "ref": 3,
+    "will": 6
+  },
+  "offense": {
+    "speed": "20 ft.",
+    "melee": "mwk longsword +5 (1d8+1/19-20)",
+    "ranged": "javelin +3 (1d6+1)"
+  },
+  "specialAttacks": ["channel positive energy 5/day (DC 14, 2d6)"],
+  "spellLikeAbilities": [
+    "Domain Spell-Like Abilities (CL 4th; concentration +6) 5/day—battle rage (+2), touch of good (+2)"
+  ],
+  "spellsPrepared": [
+    "2nd—aid, shield other, sound burst (DC 14), spiritual weapon",
+    "1st—bless, command (DC 13), divine favor, protection from evil, shield of faith",
+    "0 (at will)—guidance, light, resistance, stabilize"
+  ],
+  "statistics": {
+    "str": 12,
+    "dex": 10,
+    "con": 14,
+    "int": 10,
+    "wis": 15,
+    "cha": 14,
+    "baseAtk": 3,
+    "cmb": 4,
+    "cmd": 14
+  },
+  "feats": ["Improved Initiative", "Lightning Reflexes", "Selective Channeling"],
+  "skills": {
+    "Diplomacy": 8,
+    "Heal": 8,
+    "Knowledge (religion)": 6,
+    "Spellcraft": 6
+  },
+  "languages": ["Common"],
+  "domains": ["Good", "War"],
+  "tactics": "During Combat If accompanying allies, a sword knight casts shield other on those expected to move into melee. A sword knight attempts to stay back to support and heal allies, using offensive spells when able. If pressed into melee, a sword knight casts divine favor before attacking.",
+  "morale": "Zealous defenders of the faith, sword knights fight to the death.",
+  "rawText": "SIXTH SWORD KNIGHT CR 3 XP 800 Human cleric of Iomedae 4 LG Medium humanoid (human) Init +4; Senses Perception +2 DEFENSE AC 17, touch 10, flat-footed 17 (+7 armor) hp 33 (4d8+12) Fort +6, Ref +3, Will +6 OFFENSE Speed 20 ft. Melee mwk longsword +5 (1d8+1/19-20) Ranged javelin +3 (1d6+1) Special Attacks channel positive energy 5/day (DC 14, 2d6) Domain Spell-Like Abilities (CL 4th; concentration +6) 5/day—battle rage (+2), touch of good (+2) Cleric Spells Prepared (CL 4th; concentration +6) 2nd—aid, shield other, sound burst (DC 14), spiritual weapon 1st—bless, command (DC 13), divine favor, protection from evil, shield of faith 0 (at will)—guidance, light, resistance, stabilize D domain spell; Domains Good, War TACTICS During Combat If accompanying allies, a sword knight casts shield other on those expected to move into melee. A sword knight attempts to stay back to support and heal allies, using offensive spells when able. If pressed into melee, a sword knight casts divine favor before attacking. Morale Zealous defenders of the faith, sword knights fight to the death. STATISTICS Str 12, Dex 10, Con 14, Int 10, Wis 15, Cha 14 Base Atk +3; CMB +4; CMD 14 Feats Improved Initiative, Lightning Reflexes, Selective Channeling Skills Diplomacy +8, Heal +8, Knowledge (religion) +6, Spellcraft +6 Languages Common"
+}

@@ -1,0 +1,74 @@
+{
+  "id": "glorious-reclamation-sergeant",
+  "name": "Glorious Reclamation Sergeant",
+  "page": 11,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=11",
+  "cr": 2,
+  "xp": 600,
+  "alignment": "LG",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 2,
+  "senses": "Perception +4",
+  "ac": {
+    "value": 18,
+    "touch": 12,
+    "flatFooted": 16,
+    "notes": "+6 armor, +2 Dex"
+  },
+  "hp": 24,
+  "hitDice": "3d10+3",
+  "savingThrows": {
+    "fort": 4,
+    "ref": 3,
+    "will": 5
+  },
+  "defense": {
+    "notes": "+1 vs. fear"
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "mwk bastard sword +7 (1d10+3/19-20)",
+    "ranged": "mwk longbow +6 (1d8/x3)"
+  },
+  "statistics": {
+    "str": 15,
+    "dex": 15,
+    "con": 12,
+    "int": 10,
+    "wis": 14,
+    "cha": 8,
+    "baseAtk": 3,
+    "cmb": 5,
+    "cmd": 17
+  },
+  "feats": [
+    "Iron Will",
+    "Point-Blank Shot",
+    "Power Attack",
+    "Precise Shot",
+    "Weapon Focus (bastard sword)"
+  ],
+  "skills": {
+    "Climb": 5,
+    "Handle Animal": 4,
+    "Perception": 4,
+    "Profession (soldier)": 7,
+    "Ride": 5
+  },
+  "languages": ["Common"],
+  "specialAbilities": ["armor training 1"],
+  "combatGear": ["potion of bear's endurance", "potion of cure moderate wounds"],
+  "otherGear": [
+    "mwk chainmail",
+    "mwk bastard sword",
+    "mwk longbow with 20 arrows",
+    "wooden holy symbol of Iomedae",
+    "38 gp"
+  ],
+  "tactics": "Before Combat If she has time before combat, a sergeant drinks her potion of bear’s endurance. During Combat A sergeant uses her longbow against distant foes or those engaged by allies. In melee combat, a sergeant makes Power Attacks with her bastard sword.",
+  "morale": "A sergeant surrenders or attempts to flee when reduced below 7 hit points.",
+  "rawText": "GLORIOUS RECLAMATION SERGEANT CR 2 XP 600 Human fighter 3 LG Medium humanoid (human) Init +2; Senses Perception +4 DEFENSE AC 18, touch 12, flat-footed 16 (+6 armor, +2 Dex) hp 24 (3d10+3) Fort +4, Ref +3, Will +5 (+1 vs. fear) OFFENSE Speed 30 ft. Melee mwk bastard sword +7 (1d10+3/19-20) Ranged mwk longbow +6 (1d8/x3) TACTICS Before Combat If she has time before combat, a sergeant drinks her potion of bear’s endurance. During Combat A sergeant uses her longbow against distant foes or those engaged by allies. In melee combat, a sergeant makes Power Attacks with her bastard sword. Morale A sergeant surrenders or attempts to flee when reduced below 7 hit points. STATISTICS Str 15, Dex 15, Con 12, Int 10, Wis 14, Cha 8 Base Atk +3; CMB +5; CMD 17 Feats Iron Will, Point-Blank Shot, Power Attack, Precise Shot, Weapon Focus (bastard sword) Skills Climb +5, Handle Animal +4, Perception +4, Profession (soldier) +7, Ride +5 Languages Common SQ armor training 1 Combat Gear potion of bear's endurance, potion of cure moderate wounds; Other Gear mwk chainmail, mwk bastard sword, mwk longbow with 20 arrows, wooden holy symbol of Iomedae, 38 gp"
+}

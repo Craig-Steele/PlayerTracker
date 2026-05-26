@@ -48,6 +48,18 @@ http://localhost:8080
 
 On startup, the service opens the local display view in a browser when the platform has a supported launcher. Set `ROLL4INITIATIVE_LAUNCH_BROWSER=0` to run the server without opening a browser.
 
+## Import creature fixtures
+
+The referee creature library has an `Import JSON` button in the library panel. Select the checked-in fixture JSON files for the current ruleset and the app will copy them into the local `userdata/<ruleset>` directory that the server already reads from.
+
+If you prefer the command line, the repository still includes the same import path as a script:
+
+```bash
+swift Scripts/import-creature-fixtures.swift --ruleset pathfinder
+```
+
+Add `--overwrite` if you want to replace existing local creature files.
+
 ## Project layout
 
 - `Package.swift`

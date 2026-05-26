@@ -1,0 +1,61 @@
+{
+  "id": "militia-volunteer",
+  "name": "Militia Volunteer",
+  "page": 11,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=11",
+  "cr": 1,
+  "xp": 400,
+  "alignment": "LN",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 1,
+  "senses": "Perception +2",
+  "ac": {
+    "value": 16,
+    "touch": 11,
+    "flatFooted": 15,
+    "notes": "+5 armor, +1 Dex"
+  },
+  "hp": 21,
+  "hitDice": "2d10+6",
+  "savingThrows": {
+    "fort": 5,
+    "ref": 1,
+    "will": 1
+  },
+  "offense": {
+    "speed": "20 ft.",
+    "melee": "guisarme +5 (2d4+3/x3)",
+    "ranged": "light crossbow +3 (1d8/19-20)",
+    "space": "5 ft.",
+    "reach": "5 ft. (10 ft. with guisarme)"
+  },
+  "specialAttacks": ["pole fighting"],
+  "statistics": {
+    "str": 15,
+    "dex": 13,
+    "con": 14,
+    "int": 10,
+    "wis": 12,
+    "cha": 10,
+    "baseAtk": 2,
+    "cmb": 4,
+    "cmd": 15
+  },
+  "feats": ["Athletic", "Cleave", "Power Attack", "Weapon Focus (guisarme)"],
+  "skills": {
+    "Climb": 4,
+    "Handle Animal": 4,
+    "Perception": 2,
+    "Profession (farmer)": 5,
+    "Ride": 1,
+    "Swim": 4
+  },
+  "languages": ["Common"],
+  "gear": ["scale mail", "guisarme", "light crossbow with 10 bolts"],
+  "tactics": "During Combat Militia volunteers prefer fighting in groups, moving to surround lone enemies and subdue them.",
+  "morale": "A militia volunteer flees when reduced to fewer than 7 hit points.",
+  "rawText": "MILITIA VOLUNTEER CR 1 XP 400 Human fighter (polearm master) 2 (Pathfinder RPG Advanced Player's Guide 106) LN Medium humanoid (human) Init +1; Senses Perception +2 DEFENSE AC 16, touch 11, flat-footed 15 (+5 armor, +1 Dex) hp 21 (2d10+6) Fort +5, Ref +1, Will +1 OFFENSE Speed 20 ft. Melee guisarme +5 (2d4+3/x3) Ranged light crossbow +3 (1d8/19-20) Space 5 ft., Reach 5 ft. (10 ft. with guisarme) Special Attacks pole fighting TACTICS During Combat Militia volunteers prefer fighting in groups, moving to surround lone enemies and subdue them. Morale A militia volunteer flees when reduced to fewer than 7 hit points. STATISTICS Str 15, Dex 13, Con 14, Int 10, Wis 12, Cha 10 Base Atk +2; CMB +4; CMD 15 Feats Athletic, Cleave, Power Attack, Weapon Focus (guisarme) Skills Climb +4, Handle Animal +4, Perception +2, Profession (farmer) +5, Ride +1, Swim +4 Languages Common Gear scale mail, guisarme, light crossbow with 10 bolts"
+}

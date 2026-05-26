@@ -1,5 +1,9 @@
 import Foundation
 
+enum CreatureLibraryConfiguration {
+    nonisolated(unsafe) static var includeLocalCreatures = true
+}
+
 actor CreatureLibraryStore {
     static let shared = CreatureLibraryStore()
 
@@ -56,7 +60,7 @@ actor CreatureLibraryStore {
         try loadBuiltinCreatures(for: ruleset, rulesetId: rulesetId).forEach { creature in
             creaturesByID[creature.id] = creature
         }
-        try loadLocalCreatures(for: rulesetId).forEach { creature in
+        try loadLocalCreatures(for: ruleset, rulesetId: rulesetId).forEach { creature in
             creaturesByID[creature.id] = creature
         }
 
@@ -90,12 +94,18 @@ actor CreatureLibraryStore {
                 record,
                 rulesetId: rulesetId,
                 fallbackIDSeed: "\(file.id)-\(index)",
-                source: nil
+                source: record.source,
+                initiativeRule: ruleset.initiative,
+                statAliases: ruleset.statAliases
             )
         }
     }
 
-    private func loadLocalCreatures(for rulesetId: String) throws -> [CreatureLibraryCreature] {
+    private func loadLocalCreatures(for ruleset: RuleSetLibrary, rulesetId: String) throws -> [CreatureLibraryCreature] {
+        guard CreatureLibraryConfiguration.includeLocalCreatures else {
+            return []
+        }
+
         let directory = AppPaths.userDataDirectory(rulesetId: rulesetId)
         guard FileManager.default.fileExists(atPath: directory.path) else {
             return []
@@ -121,7 +131,9 @@ actor CreatureLibraryStore {
                     record,
                     rulesetId: rulesetId,
                     fallbackIDSeed: url.deletingPathExtension().lastPathComponent,
-                    source: record.source
+                    source: record.source,
+                    initiativeRule: ruleset.initiative,
+                    statAliases: ruleset.statAliases
                 )
             }
     }
@@ -135,22 +147,26 @@ actor CreatureLibraryStore {
         _ record: CreatureLibraryRecord,
         rulesetId: String,
         fallbackIDSeed: String,
-        source: String?
+        source: String?,
+        initiativeRule: InitiativeRule?,
+        statAliases: [String: String]?
     ) -> CreatureLibraryCreature {
         let normalizedSource = trimmedNonEmpty(source)
         let creatureID = trimmedNonEmpty(record.id)
             ?? makeCreatureID(rulesetId: rulesetId, seed: fallbackIDSeed, name: record.name)
-        let stats = record.stats ?? makeStats(from: record.hp)
+        let stats = record.stats ?? record.traits ?? makeStats(from: record.hp)
         return CreatureLibraryCreature(
             id: creatureID,
             name: record.name,
+            baseCreatureId: record.baseCreatureId,
+            baseCreatureName: record.baseCreatureName,
             cr: record.cr,
             alignment: record.alignment,
             type: normalizeCreatureType(record.type),
             size: record.size,
             hp: record.hp,
             ac: record.ac,
-            initiativeBonus: record.initiativeBonus,
+            initiativeBonus: record.initiativeBonus ?? InitiativeRules.bonus(from: stats, rule: initiativeRule, aliases: statAliases),
             source: normalizedSource,
             referenceUrl: record.referenceUrl,
             notes: record.notes,
@@ -163,21 +179,25 @@ actor CreatureLibraryStore {
         _ record: BuiltinCreatureRecord,
         rulesetId: String,
         fallbackIDSeed: String,
-        source: String?
+        source: String?,
+        initiativeRule: InitiativeRule?,
+        statAliases: [String: String]?
     ) -> CreatureLibraryCreature {
         let creatureID = trimmedNonEmpty(record.id)
             ?? makeCreatureID(rulesetId: rulesetId, seed: fallbackIDSeed, name: record.name)
-        let stats = record.stats ?? makeStats(from: record.hp)
+        let stats = record.stats ?? record.traits ?? makeStats(from: record.hp)
         return CreatureLibraryCreature(
             id: creatureID,
             name: record.name,
+            baseCreatureId: record.baseCreatureId,
+            baseCreatureName: record.baseCreatureName,
             cr: record.cr,
             alignment: record.alignment,
             type: normalizeCreatureType(record.type),
             size: record.size,
             hp: record.hp,
             ac: record.ac,
-            initiativeBonus: record.initiativeBonus,
+            initiativeBonus: record.initiativeBonus ?? InitiativeRules.bonus(from: stats, rule: initiativeRule, aliases: statAliases),
             source: trimmedNonEmpty(source),
             referenceUrl: record.referenceUrl,
             notes: record.notes,
@@ -194,6 +214,7 @@ actor CreatureLibraryStore {
             creature.type,
             creature.size,
             creature.source,
+            creature.baseCreatureName,
             creature.referenceUrl,
             creature.notes,
             creature.tags?.joined(separator: " "),
@@ -264,38 +285,8 @@ private struct BuiltinCreatureLibraryFile: Decodable {
 private struct BuiltinCreatureRecord: Decodable {
     let id: String?
     let name: String
-    let cr: String?
-    let alignment: String?
-    let type: String?
-    let size: String?
-    let hp: Int?
-    let ac: Int?
-    let initiativeBonus: Int?
-    let referenceUrl: String?
-    let notes: String?
-    let tags: [String]?
-    let stats: [StatEntry]?
-
-    enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case cr
-        case alignment
-        case type
-        case size
-        case hp
-        case ac
-        case initiativeBonus = "init"
-        case referenceUrl = "url"
-        case notes
-        case tags
-        case stats
-    }
-}
-
-private struct CreatureLibraryRecord: Decodable {
-    let id: String?
-    let name: String
+    let baseCreatureId: String?
+    let baseCreatureName: String?
     let cr: String?
     let alignment: String?
     let type: String?
@@ -308,6 +299,47 @@ private struct CreatureLibraryRecord: Decodable {
     let notes: String?
     let tags: [String]?
     let stats: [StatEntry]?
+    let traits: [StatEntry]?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case baseCreatureId
+        case baseCreatureName
+        case cr
+        case alignment
+        case type
+        case size
+        case hp
+        case ac
+        case initiativeBonus = "init"
+        case source
+        case referenceUrl = "url"
+        case notes
+        case tags
+        case stats
+        case traits
+    }
+}
+
+private struct CreatureLibraryRecord: Decodable {
+    let id: String?
+    let name: String
+    let baseCreatureId: String?
+    let baseCreatureName: String?
+    let cr: String?
+    let alignment: String?
+    let type: String?
+    let size: String?
+    let hp: Int?
+    let ac: Int?
+    let initiativeBonus: Int?
+    let source: String?
+    let referenceUrl: String?
+    let notes: String?
+    let tags: [String]?
+    let stats: [StatEntry]?
+    let traits: [StatEntry]?
 }
 
 private extension String {

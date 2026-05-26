@@ -1,0 +1,16 @@
+{
+  "id": "rima",
+  "name": "Rima",
+  "page": 32,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=32",
+  "rawText": "thinking that the PCs are either allied with the Glorious Reclamation or Thrune agents who’ve come to kill her. RIMA CR 4 XP 1,200 hp 42 Female faceless stalker (Pathfinder RPG Bestiary 2 122) Melee 2 slams +7 (1d6+4 plus grab) E5. Guardroom (cr 5) A large burgundy couch sits in the northeast corner of this room next to a small end table. A larger circular table and four chairs fill the southern half of the room. Wooden doors exit the chamber to the south, east, and west. The prison camp’s guard",
+  "cr": 4,
+  "xp": 1200,
+  "hp": 42,
+  "offense": {
+    "melee": "2 slams +7 (1d6+4 plus grab)"
+  },
+  "notes": "Female faceless stalker (Pathfinder RPG Bestiary 2 122)"
+}

@@ -1,0 +1,24 @@
+{
+  "id": "lambdragon",
+  "name": "Lambdragon",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=52",
+  "source": "Secrets of the Ancients p. 52",
+  "type": "Alell fauna",
+  "size": "Large",
+  "notes": "Large herbivore common to the Alell jungles. It grazes from the treetops and can flatten a tank in a stampede.",
+  "tags": ["creature", "herbivore", "jungle"],
+  "stats": [
+    { "key": "Hits", "current": 92, "max": 92 }
+  ],
+  "speed": "7m",
+  "statBlock": {
+    "skills": [
+      { "name": "Melee", "level": 0 },
+      { "name": "Recon", "level": 2 },
+      { "name": "Survival", "level": 3 }
+    ],
+    "attacks": ["Stampede (6D)"],
+    "traits": ["Armour (+2)", "Large (+5)"],
+    "behaviour": ["Herbivore", "Grazer"]
+  }
+}

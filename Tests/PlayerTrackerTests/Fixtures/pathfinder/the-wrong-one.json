@@ -1,0 +1,85 @@
+{
+  "id": "the-wrong-one",
+  "name": "The Wrong One",
+  "page": 43,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=43",
+  "rawText": "their mutated “sibling.” When the PCs first enter this cavern, the young’uns are poking the writhing creature with sticks, but they quickly try to run off to get Mam and Pap in area G6 or their allies in area G5 if combat occurs. MYCELOID YOUNG’UNS (2) CR 3 XP 800 each Young myceloid (Pathfinder RPG Bestiary 3 291, 196) hp 27 each THE WRONG ONE CR 5 XP 1,600 Unique flesh myceloid (Advanced Bestiary 148, Pathfinder RPG Bestiary 3 196) NE Medium aberration (augmented plant) Init +6; Senses darkvis",
+  "cr": 5,
+  "xp": 1600,
+  "alignment": "NE",
+  "size": "Medium",
+  "type": "aberration (augmented plant)",
+  "initiative": 6,
+  "senses": "darkvision 60 ft., low-light vision, scent, tremorsense 20 ft.; Perception +6",
+  "ac": {
+    "value": 18,
+    "touch": 12,
+    "flatFooted": 16,
+    "notes": "+2 Dex, +6 natural"
+  },
+  "hp": 52,
+  "hitDice": "5d8+30",
+  "savingThrows": {
+    "fort": 9,
+    "ref": 3,
+    "will": 4
+  },
+  "defense": {
+    "dr": [
+      "5/slashing"
+    ],
+    "immunities": [
+      "purple pox"
+    ],
+    "resist": [
+      "cold 10",
+      "fire 10",
+      "sonic 10"
+    ],
+    "defensiveAbilities": [
+      "fast healing 2"
+    ]
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "2 claws +8 (1d6+5 plus bleed)"
+  },
+  "specialAttacks": [
+    "bleed (1d4)",
+    "long limbs"
+  ],
+  "spellLikeAbilities": [
+    "3/day—remorseful aspect (DC 14)"
+  ],
+  "statistics": {
+    "str": 21,
+    "dex": 15,
+    "con": 20,
+    "int": 9,
+    "wis": 12,
+    "cha": 10,
+    "baseAtk": 3,
+    "cmb": 8,
+    "cmd": 20
+  },
+  "feats": [
+    "Improved Initiative",
+    "Iron Will",
+    "Toughness"
+  ],
+  "skills": {
+    "Perception": 6,
+    "Sense Motive": 6,
+    "Stealth": 6,
+    "Survival": 9
+  },
+  "languages": [
+    "Undercommon; telepathy 60 ft. (myceloid and purple pox sufferers only)"
+  ],
+  "specialAbilities": [
+    "Long Limbs (Ex) As a result of its faceless stalker ancestry, the Wrong One's arms are lengthier than that of normal myceloids, giving it reach of 10 feet.",
+    "Remorseful Aspect (Sp) The Wrong One can adjust its skin to crudely resemble the appearance of another creature it can see, the sight of which fills the target with profound disgust and remorse."
+  ]
+}

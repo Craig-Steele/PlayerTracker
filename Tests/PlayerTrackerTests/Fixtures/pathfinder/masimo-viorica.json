@@ -1,0 +1,106 @@
+{
+  "id": "masimo-viorica",
+  "name": "Masimo Viorica",
+  "page": 19,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=19",
+  "rawText": "connection to Zon-Kuthon. Unable to open the boarded- up cellar door, the shredskin is trapped beneath the Little Uskwood, but finds some solace in endlessly scratching the walls. He waits in the small chamber to the south of the main cellar. When living creatures enter the cellar, Masimo rises up from among the haphazardly placed barrels, boxes, and other abandoned stores to find a host body he can control to confront his daughter. MASIMO VIORICA CR 5 XP 1,600 Male advanced variant shredskin cl",
+  "cr": 5,
+  "xp": 1600,
+  "alignment": "NE",
+  "size": "Small",
+  "type": "undead",
+  "initiative": 4,
+  "senses": "darkvision 60 ft., detect undead; Perception +12",
+  "ac": {
+    "value": 18,
+    "touch": 15,
+    "flatFooted": 14,
+    "notes": "+4 Dex, +3 natural, +1 size"
+  },
+  "hp": 62,
+  "hitDice": "7d8+31",
+  "savingThrows": {
+    "fort": 8,
+    "ref": 6,
+    "will": 11
+  },
+  "defense": {
+    "defensiveAbilities": [
+      "amorphous"
+    ],
+    "immunities": [
+      "undead traits"
+    ]
+  },
+  "offense": {
+    "speed": "fly 40 ft. (average)",
+    "melee": "bite +10 (1d4+4), 2 claws +10 (1d4+4 plus grab)"
+  },
+  "specialAttacks": [
+    "channel negative energy 9/day (DC 15, 2d6)",
+    "constrict (1d4+4)",
+    "control body",
+    "enshroud",
+    "enshrouding caster",
+    "grab (Medium)"
+  ],
+  "spellLikeAbilities": [
+    "Constant—detect undead",
+    "1/day—command undead (DC 16)",
+    "Domain Spell-Like Abilities (CL 3rd; concentration +7) 7/day—touch of darkness (1 round), touch of evil (1 round)"
+  ],
+  "spellsPrepared": [
+    "2nd—blindness/deafnessD (blindness only; DC 16), death knell (DC 16), hold person (DC 16)",
+    "1st—bane (DC 15), deathwatch, doom (DC 15), obscuring mistD",
+    "0 (at will)—bleed (DC 14), detect magic, guidance, resistance"
+  ],
+  "statistics": {
+    "str": 18,
+    "dex": 19,
+    "con": null,
+    "int": 12,
+    "wis": 18,
+    "cha": 19,
+    "baseAtk": 5,
+    "cmb": 8,
+    "cmd": 22
+  },
+  "feats": [
+    "Agile Maneuvers",
+    "Blind-Fight",
+    "Extra Channel",
+    "Quick ChannelUM",
+    "Weapon Finesse"
+  ],
+  "skills": {
+    "Fly": 12,
+    "Intimidate": 10,
+    "Knowledge (religion)": 11,
+    "Perception": 12,
+    "Sense Motive": 10,
+    "Spellcraft": 8,
+    "Stealth": 15
+  },
+  "languages": [
+    "Common",
+    "Infernal",
+    "Shadowtongue (can't speak)"
+  ],
+  "sq": [
+    "compression"
+  ],
+  "combatGear": [
+    "potion of cure moderate wounds"
+  ],
+  "otherGear": [
+    "spell component pouch",
+    "platinum unholy symbol of Zon-Kuthon (worth 500 gp)"
+  ],
+  "tactics": "During Combat Masimo attempts to enshroud the target who appears to be weakest physically. If successful, he immediately uses his enshrouding caster ability to cast obscuring mist, then alternates between channeling negative energy and spellcasting as appropriate.",
+  "morale": "Masimo fights until destroyed in his attempt to find a host body to control. If one of his foes dies, Masimo immediately enshrouds the corpse and moves toward the exit, eager to confront his daughter with his new body.",
+  "specialAbilities": [
+    "Enshrouding Caster (Ex) Since he is unable to speak, Masimo cannot cast spells with verbal components. However, when Masimo successfully uses his enshroud ability on a humanoid creature capable of speech, he can apply pressure on the creature's vocal cords as a free action to enable him to cast spells normally."
+  ]
+}

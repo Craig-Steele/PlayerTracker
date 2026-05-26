@@ -1,0 +1,35 @@
+{
+  "id": "fedic-jocan",
+  "name": "Fedic Jocan",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=79",
+  "source": "The Hunt p. 78",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Beck's World imperial consul, a weary drunk who still knows how the local politics work.",
+  "tags": ["official", "contact", "becks-world"],
+  "traits": [
+    { "key": "STR", "current": 5, "max": 5 },
+    { "key": "DEX", "current": 6, "max": 6 },
+    { "key": "END", "current": 7, "max": 7 },
+    { "key": "INT", "current": 8, "max": 8 },
+    { "key": "EDU", "current": 9, "max": 9 },
+    { "key": "SOC", "current": 9, "max": 9 }
+  ],
+  "skills": [
+    { "name": "Admin", "level": 1 },
+    { "name": "Carouse", "level": 2 },
+    { "name": "Deception", "level": 1 },
+    { "name": "Diplomat", "level": 1 },
+    { "name": "Melee", "level": 0 },
+    { "name": "Vacc Suit", "level": 0 }
+  ],
+  "equipment": [
+    "Rapier (2D)",
+    "Vacc Suit (+12)"
+  ],
+  "playingNotes": [
+    "When talking, slur your words and sway from side-to-side.",
+    "Turn everything into a self-pitying diatribe, if possible.",
+    "Underneath it all, remember that you are the Imperial consul, the representative of the Emperor on this distant outpost. When put under pressure, stand up straight and have some dignity and composure."
+  ]
+}

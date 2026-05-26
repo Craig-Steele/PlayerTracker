@@ -1,0 +1,36 @@
+{
+  "id": "marisa-jocell",
+  "name": "Marisa Jocell",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=44",
+  "source": "Homecoming p. 43",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Overblown, self-important member of the Jocell family who wants Vlen's ship and leverage over the Backetts.",
+  "tags": ["jocell", "contact", "family"],
+  "traits": [
+    { "key": "STR", "current": 6, "max": 6 },
+    { "key": "DEX", "current": 6, "max": 6 },
+    { "key": "END", "current": 8, "max": 8 },
+    { "key": "INT", "current": 7, "max": 7 },
+    { "key": "EDU", "current": 8, "max": 8 },
+    { "key": "SOC", "current": 8, "max": 8 }
+  ],
+  "skills": [
+    { "name": "Admin", "level": 2 },
+    { "name": "Astrogation", "level": 0 },
+    { "name": "Deception", "level": 0 },
+    { "name": "Electronics (comms)", "level": 2 },
+    { "name": "Electronics (computers)", "level": 1 },
+    { "name": "Electronics (sensors)", "level": 1 },
+    { "name": "Flyer", "level": 0 },
+    { "name": "Streetwise", "level": 0 }
+  ],
+  "equipment": [
+    "Weapons: Stunner",
+    "Armour: Flak Jacket"
+  ],
+  "playingNotes": [
+    "Marisa is overblown and self-important, and is very used to getting her way.",
+    "She preens and dresses like she was a minor noble and has ambitions far above her station."
+  ]
+}

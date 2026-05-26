@@ -1,0 +1,83 @@
+{
+  "id": "hiracapath",
+  "name": "Hiracapath",
+  "page": 90,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=90",
+  "rawText": "HIRACAPATH Silvery armor in the shape of a powerful ram barely contains the brilliant radiance shining from within it, and curling, steel horns emerge from its helm. HIRACAPATH CR 7 XP 3,200 LG Large outsider (extraplanar, good, lawful) Init +1; Senses darkvision 60 ft., scent; Perception +12 DEFENSE AC 18, touch 10, flat-footed 17 (+1 Dex, +8 natural, –1 size) hp 94 (9d10+45) Fort +11, Ref +6, Will +9 DR 5/evil; Resist electricity 5, fire 5 OFFENSE Speed 40 ft. Melee gore +14 (1d8+6), 2 hooves ",
+  "cr": 7,
+  "xp": 3200,
+  "alignment": "LG",
+  "size": "Large",
+  "type": "outsider (extraplanar, good, lawful)",
+  "initiative": 1,
+  "senses": "darkvision 60 ft., scent; Perception +12",
+  "ac": {
+    "value": 18,
+    "touch": 10,
+    "flatFooted": 17,
+    "notes": "+1 Dex, +8 natural, -1 size"
+  },
+  "hp": 94,
+  "hitDice": "9d10+45",
+  "savingThrows": {
+    "fort": 11,
+    "ref": 6,
+    "will": 9
+  },
+  "defense": {
+    "dr": [
+      "5/evil"
+    ],
+    "resist": [
+      "electricity 5",
+      "fire 5"
+    ]
+  },
+  "offense": {
+    "speed": "40 ft.",
+    "melee": "gore +14 (1d8+6), 2 hooves +12 (1d6+3)"
+  },
+  "specialAttacks": [
+    "nonlethal mastery",
+    "powerful charge (gore, 2d8+9)"
+  ],
+  "spellLikeAbilities": [
+    "Constant—air walk",
+    "1/day—plane shift (self only)"
+  ],
+  "statistics": {
+    "str": 22,
+    "dex": 12,
+    "con": 21,
+    "int": 3,
+    "wis": 16,
+    "cha": 17,
+    "baseAtk": 9,
+    "cmb": 16,
+    "cmd": 27
+  },
+  "feats": [
+    "Greater Bull Rush",
+    "Improved Bull Rush",
+    "Lightning Reflexes",
+    "Multiattack",
+    "Power Attack"
+  ],
+  "skills": {
+    "Intimidate": 12,
+    "Perception": 12,
+    "Survival": 12
+  },
+  "languages": [
+    "Celestial (can't speak)"
+  ],
+  "sq": [
+    "glorious nimbus"
+  ],
+  "specialAbilities": [
+    "Glorious Nimbus (Su)",
+    "Nonlethal Mastery (Ex)"
+  ]
+}

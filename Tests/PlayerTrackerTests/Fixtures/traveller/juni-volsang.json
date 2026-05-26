@@ -1,0 +1,42 @@
+{
+  "id": "juni-volsang",
+  "name": "Juni Volsang",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=85",
+  "source": "The Hunt p. 84",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Professor Ujinka's senior research associate and a technically gifted archaeology specialist.",
+  "tags": ["scientist", "contact", "assistant"],
+  "traits": [
+    { "key": "STR", "current": 7, "max": 7 },
+    { "key": "DEX", "current": 10, "max": 10 },
+    { "key": "END", "current": 6, "max": 6 },
+    { "key": "INT", "current": 10, "max": 10 },
+    { "key": "EDU", "current": 10, "max": 10 }
+  ],
+  "skills": [
+    { "name": "Electronics (comms)", "level": 1 },
+    { "name": "Electronics (computers)", "level": 1 },
+    { "name": "Electronics (remote ops)", "level": 1 },
+    { "name": "Electronics (sensors)", "level": 1 },
+    { "name": "Engineer (power)", "level": 1 },
+    { "name": "Explosives", "level": 1 },
+    { "name": "Gun Combat", "level": 0 },
+    { "name": "Investigate", "level": 1 },
+    { "name": "Life Sciences", "level": 1 },
+    { "name": "Medic", "level": 1 },
+    { "name": "Pilot", "level": 1 },
+    { "name": "Science (archaeology)", "level": 1 },
+    { "name": "Vacc Suit", "level": 0 }
+  ],
+  "equipment": [
+    "Laser Pistol",
+    "Zero-G Vacc Suit"
+  ],
+  "playingNotes": [
+    "You're not sure what's going on here but you're quick on the uptake. Your first priority is finding out what happened to your team and getting out alive.",
+    "You're very protective of your team; these grad students are more than your colleagues, they're your friends.",
+    "You despise thieves; the Ancients are too important to be treated as historical curiosities.",
+    "Speak in bullet points; outline your argument logically, never waste words."
+  ]
+}

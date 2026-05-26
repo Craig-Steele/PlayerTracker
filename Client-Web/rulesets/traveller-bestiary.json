@@ -1,0 +1,268 @@
+{
+  "id": "traveller-bestiary",
+  "label": "Traveller Bestiary",
+  "rulesetId": "traveller",
+  "creatures": [
+    {
+      "id": "cadgeree",
+      "name": "Cadgeree",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=51",
+      "source": "Secrets of the Ancients p. 51",
+      "type": "Alell fauna",
+      "size": "Medium",
+      "notes": "The cadgeree resembles a winged snake with a spiked tail. It dives on prey from a great height and drives its tail spikes deep into the target's flesh.",
+      "tags": ["creature", "predator", "jungle"],
+      "stats": [
+        { "key": "Hits", "current": 17, "max": 17 }
+      ],
+      "speed": "6m",
+      "statBlock": {
+        "skills": [
+          { "name": "Melee (natural)", "level": 1 },
+          { "name": "Recon", "level": 1 },
+          { "name": "Stealth", "level": 2 },
+          { "name": "Survival", "level": 1 }
+        ],
+        "attacks": ["Spiked Tail (3D)"],
+        "traits": ["Armour (+1)", "Flyer (very slow)"],
+        "behaviour": ["Carnivore", "Pouncer"]
+      }
+    },
+    {
+      "id": "maleficent",
+      "name": "Maleficent",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=51",
+      "source": "Secrets of the Ancients p. 51",
+      "type": "Alell fauna",
+      "size": "Medium",
+      "notes": "Fast, brutal canopy hunter with tentacles and ultraviolet markings.",
+      "tags": ["creature", "predator", "forest"],
+      "stats": [
+        { "key": "Hits", "current": 42, "max": 42 }
+      ],
+      "speed": "6m",
+      "statBlock": {
+        "skills": [
+          { "name": "Melee (natural)", "level": 1 },
+          { "name": "Recon", "level": 1 },
+          { "name": "Stealth", "level": 3 },
+          { "name": "Survival", "level": 1 }
+        ],
+        "attacks": ["Teeth (3D)"],
+        "traits": ["Armour (+1)", "Large (+2)"],
+        "behaviour": ["Carnivore", "Hunter"]
+      }
+    },
+    {
+      "id": "lambdragon",
+      "name": "Lambdragon",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=52",
+      "source": "Secrets of the Ancients p. 52",
+      "type": "Alell fauna",
+      "size": "Large",
+      "notes": "Large herbivore common to the Alell jungles. It grazes from the treetops and can flatten a tank in a stampede.",
+      "tags": ["creature", "herbivore", "jungle"],
+      "stats": [
+        { "key": "Hits", "current": 92, "max": 92 }
+      ],
+      "speed": "7m",
+      "statBlock": {
+        "skills": [
+          { "name": "Melee", "level": 0 },
+          { "name": "Recon", "level": 2 },
+          { "name": "Survival", "level": 3 }
+        ],
+        "attacks": ["Stampede (6D)"],
+        "traits": ["Armour (+2)", "Large (+5)"],
+        "behaviour": ["Herbivore", "Grazer"]
+      }
+    },
+    {
+      "id": "whisperhawk",
+      "name": "Whisperhawk",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=52",
+      "source": "Secrets of the Ancients p. 52",
+      "type": "Alell fauna",
+      "size": "Large",
+      "notes": "One of the most common sights in the jungle, whisperhawks are beautiful avians whose wings do double duty as locomotion and feeding organs.",
+      "tags": ["creature", "avian", "flier"],
+      "stats": [
+        { "key": "Hits", "current": 26, "max": 26 }
+      ],
+      "speed": "2m",
+      "statBlock": {
+        "skills": [
+          { "name": "Melee", "level": 0 },
+          { "name": "Stealth", "level": 2 }
+        ],
+        "attacks": ["Suffocate (1D)"],
+        "traits": ["Flyer (slow)", "Large (+1)"],
+        "behaviour": ["Herbivore", "Filter"]
+      }
+    },
+    {
+      "id": "darter",
+      "name": "Darter",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=93",
+      "source": "Secrets of the Ancients p. 93",
+      "type": "Komesh fauna",
+      "size": "Medium",
+      "notes": "Gas-giant predator that attacks with a spike and must reinflate its gas bags before striking again.",
+      "tags": ["creature", "gas-giant", "predator"],
+      "stats": [
+        { "key": "Hits", "current": 22, "max": 22 }
+      ],
+      "speed": "—",
+      "statBlock": {
+        "skills": [
+          { "name": "Athletics (dexterity)", "level": 1 },
+          { "name": "Melee (natural)", "level": 3 },
+          { "name": "Recon", "level": 1 },
+          { "name": "Stealth", "level": 1 },
+          { "name": "Survival", "level": 1 }
+        ],
+        "attacks": ["Spike (2D)*"],
+        "traits": ["Flyer (very slow)"],
+        "behaviour": ["Carnivore", "Trapper"]
+      }
+    },
+    {
+      "id": "sky-shark",
+      "name": "Sky-Shark",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the_Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=94",
+      "source": "Secrets of the Ancients p. 94",
+      "type": "Komesh fauna",
+      "size": "Large",
+      "notes": "A Komesh predator that attacks by biting or slashing the locomotive limbs of other creatures.",
+      "tags": ["creature", "gas-giant", "predator"],
+      "stats": [
+        { "key": "Hits", "current": 22, "max": 22 }
+      ],
+      "speed": "—",
+      "statBlock": {
+        "skills": [
+          { "name": "Athletics (dexterity)", "level": 1 },
+          { "name": "Melee", "level": 0 },
+          { "name": "Recon", "level": 0 },
+          { "name": "Stealth", "level": 1 },
+          { "name": "Survival", "level": 1 }
+        ],
+        "attacks": ["Teeth (3D)"],
+        "traits": ["Armour (+1)", "Flyer (slow)"],
+        "behaviour": ["Carnivore", "Chaser"]
+      }
+    },
+    {
+      "id": "sky-whale",
+      "name": "Sky-Whale",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the_Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=94",
+      "source": "Secrets of the Ancients p. 94",
+      "type": "Komesh fauna",
+      "size": "Huge",
+      "notes": "A massive gas-giant grazer that feeds on plankton-like life in the atmosphere.",
+      "tags": ["creature", "gas-giant", "herbivore"],
+      "stats": [
+        { "key": "Hits", "current": 35, "max": 35 }
+      ],
+      "speed": "—",
+      "statBlock": {
+        "skills": [
+          { "name": "Athletics (endurance)", "level": 2 },
+          { "name": "Melee", "level": 0 },
+          { "name": "Recon", "level": 1 },
+          { "name": "Survival", "level": 1 }
+        ],
+        "attacks": ["Tail Sweep (2D)"],
+        "traits": ["Flyer (very slow)", "Large (+6)"],
+        "behaviour": ["Herbivore", "Filter"]
+      }
+    },
+    {
+      "id": "wreck-darter",
+      "name": "Wreck-Darter",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=95",
+      "source": "Secrets of the Ancients p. 95",
+      "type": "Komesh fauna",
+      "size": "Medium",
+      "notes": "A darter adapted to feeding around wrecks and damaged hulls. After attacking, it needs time to reinflate its gas bags before it can strike again.",
+      "tags": ["creature", "scavenger", "gas-giant"],
+      "stats": [
+        { "key": "Hits", "current": 22, "max": 22 }
+      ],
+      "speed": "—",
+      "statBlock": {
+        "skills": [
+          { "name": "Athletics (dexterity)", "level": 2 },
+          { "name": "Melee (natural)", "level": 3 },
+          { "name": "Recon", "level": 0 },
+          { "name": "Stealth", "level": 3 },
+          { "name": "Survival", "level": 2 }
+        ],
+        "attacks": ["Spike (2D)*"],
+        "traits": ["Flyer (very slow)"],
+        "behaviour": ["Carnivore", "Trapper"]
+      }
+    },
+    {
+      "id": "servitor",
+      "name": "Servitor",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=105",
+      "source": "Secrets of the Ancients p. 105",
+      "type": "robot",
+      "size": "Small",
+      "notes": "Winged humanoid robot built to resemble the Droyne who created it.",
+      "tags": ["robot", "servitor", "ancients"],
+      "stats": [
+        { "key": "Hits", "current": 16, "max": 16 }
+      ],
+      "speed": "12m",
+      "statBlock": {
+        "locomotion": "Grav",
+        "tl": "25+",
+        "cost": "Priceless",
+        "skills": [
+          { "name": "Athletics (endurance)", "level": 3 },
+          { "name": "Athletics (strength)", "level": 1 },
+          { "name": "Electronics (computers)", "level": 3 },
+          { "name": "Engineer (power)", "level": 3 },
+          { "name": "Mechanic", "level": 2 },
+          { "name": "Melee (unarmed)", "level": 2 },
+          { "name": "Recon", "level": 2 }
+        ],
+        "attacks": ["Claws (2D)"],
+        "manipulators": "2 x (STR 9 DEX 12)",
+        "endurance": "Unlimited",
+        "traits": ["Armour (+5)", "Flyer", "Heightened Senses", "IR/UV Vision", "Small (-1)"],
+        "programming": "Very Advanced (INT 12)",
+        "options": [
+          "Auditory Sensor (broad spectrum)",
+          "PRIS Sensor",
+          "Transceiver 500km (advanced)",
+          "Voder Speaker (broad spectrum)",
+          "Wireless Data Link",
+          "Spare Slot 1"
+        ]
+      }
+    },
+    {
+      "id": "custodian",
+      "name": "Custodian",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the_Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=133",
+      "source": "Secrets of the Ancients p. 133",
+      "type": "robot",
+      "size": "Medium",
+      "notes": "A powerful robot gatekeeper with a gravity-projection field.",
+      "tags": ["robot", "custodian", "ancients"]
+    },
+    {
+      "id": "cyborg-assassin",
+      "name": "Cyborg Assassin",
+      "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=150",
+      "source": "Secrets of the Ancients p. 150",
+      "type": "cyborg",
+      "size": "Medium",
+      "notes": "Armoured cyborg assassin equipped with disintegrator wands and personal shields.",
+      "tags": ["enemy", "cyborg", "assassin"]
+    }
+  ]
+}

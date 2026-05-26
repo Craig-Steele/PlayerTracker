@@ -1,0 +1,72 @@
+{
+  "id": "glorious-reclamation-squire",
+  "name": "Glorious Reclamation Squire",
+  "page": 12,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=12",
+  "cr": 1,
+  "xp": 400,
+  "alignment": "LG",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 0,
+  "senses": "Perception +1",
+  "ac": {
+    "value": 15,
+    "touch": 10,
+    "flatFooted": 15,
+    "notes": "+4 armor, +1 shield"
+  },
+  "hp": 19,
+  "hitDice": "2d10+4",
+  "savingThrows": {
+    "fort": 7,
+    "ref": 2,
+    "will": 6
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "mwk longsword +5 (1d8+2/19-20)",
+    "ranged": "shortbow +2 (1d6/x3)"
+  },
+  "specialAttacks": ["smite evil 1/day (+2 attack and AC, +2 damage)"],
+  "spellLikeAbilities": [
+    "Paladin Spell-Like Abilities (CL 2nd; concentration +4) at will—detect evil"
+  ],
+  "statistics": {
+    "str": 15,
+    "dex": 10,
+    "con": 14,
+    "int": 8,
+    "wis": 13,
+    "cha": 14,
+    "baseAtk": 2,
+    "cmb": 4,
+    "cmd": 14
+  },
+  "feats": ["Power Attack", "Step Up"],
+  "skills": {
+    "Diplomacy": 6,
+    "Heal": 5,
+    "Intimidate": 3,
+    "Knowledge (nobility)": 3,
+    "Knowledge (religion)": 3,
+    "Ride": 1
+  },
+  "languages": ["Common"],
+  "specialAbilities": ["lay on hands 3/day (1d6)"],
+  "combatGear": ["oil (2)", "thunderstone"],
+  "otherGear": [
+    "chain shirt",
+    "light wooden shield",
+    "mwk longsword",
+    "shortbow with 20 arrows",
+    "bullseye lantern",
+    "wooden holy symbol of Iomedae",
+    "8 gp"
+  ],
+  "tactics": "During Combat A squire first attempts to deal nonlethal damage to subdue foes. Once any allies have been slain, the squire instead attacks with lethal damage, targeting foes with obvious evil affiliations (such as those wearing Hellknight armor, displaying unholy symbols, using evil magic, etc.) with smite evil.",
+  "morale": "When reduced to fewer than 7 hp, a squire attempts to withdraw and summon reinforcements, using lay on hands to remain conscious.",
+  "rawText": "GLORIOUS RECLAMATION SQUIRE CR 1 XP 400 Human paladin of Iomedae 2 LG Medium humanoid (human) Init +0; Senses Perception +1 DEFENSE AC 15, touch 10, flat-footed 15 (+4 armor, +1 shield) hp 19 (2d10+4) Fort +7, Ref +2, Will +6 OFFENSE Speed 30 ft. Melee mwk longsword +5 (1d8+2/19-20) Ranged shortbow +2 (1d6/x3) Special Attacks smite evil 1/day (+2 attack and AC, +2 damage) Paladin Spell-Like Abilities (CL 2nd; concentration +4) at will—detect evil TACTICS During Combat A squire first attempts to deal nonlethal damage to subdue foes. Once any allies have been slain, the squire instead attacks with lethal damage, targeting foes with obvious evil affiliations (such as those wearing Hellknight armor, displaying unholy symbols, using evil magic, etc.) with smite evil. Morale When reduced to fewer than 7 hp, a squire attempts to withdraw and summon reinforcements, using lay on hands to remain conscious. STATISTICS Str 15, Dex 10, Con 14, Int 8, Wis 13, Cha 14 Base Atk +2; CMB +4; CMD 14 Feats Power Attack, Step Up Skills Diplomacy +6, Heal +5, Intimidate +3, Knowledge (nobility) +3, Knowledge (religion) +3, Ride +1 Languages Common SQ lay on hands 3/day (1d6) Combat Gear oil (2), thunderstone; Other Gear chain shirt, light wooden shield, mwk longsword, shortbow with 20 arrows, bullseye lantern, wooden holy symbol of Iomedae, 8 gp"
+}

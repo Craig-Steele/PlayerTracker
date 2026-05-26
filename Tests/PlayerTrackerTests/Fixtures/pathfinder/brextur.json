@@ -1,0 +1,52 @@
+{
+  "id": "brextur",
+  "name": "Brextur",
+  "page": 26,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=26",
+  "cr": 4,
+  "xp": 1200,
+  "alignment": "LE",
+  "size": "Small",
+  "type": "outsider (devil, evil, extraplanar, lawful)",
+  "initiative": 8,
+  "senses": "darkvision 60 ft., see in darkness",
+  "perception": 3,
+  "ac": {
+    "value": 17,
+    "touch": 15,
+    "flatFooted": 13,
+    "notes": "+4 Dex, +2 natural, +1 size"
+  },
+  "hp": 37,
+  "hitDice": "5d10+10",
+  "savingThrows": {
+    "fort": 3,
+    "ref": 10,
+    "will": 7
+  },
+  "defense": {
+    "dr": "5/good or silver",
+    "immune": ["fire", "poison"],
+    "resist": ["acid 10", "cold 10"],
+    "sr": 15
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "fire poker +5 (1d6-1 plus 1d4 fire) or 2 claws +5 (1d3-1 plus 1d4 fire)",
+    "ranged": "ember +10 (1d6 fire)",
+    "specialAttacks": ["animate flames", "fire-breathing", "scorch"]
+  },
+  "skills": {
+    "Stealth": 16
+  },
+  "specialAbilities": [
+    "Animate Flames (Su)",
+    "Ember (Ex)",
+    "Fire Leap (Su)",
+    "Fire-Breathing (Su)",
+    "Scorch (Su)"
+  ],
+  "rawText": "When the PCs first arrive at the smithy, Brextur hides in the ruins. Noticing that they are (most likely) not wearing any Iomedaean paraphernalia, the devil has enough confidence to stealthily initiate combat with the intruders by animating the nearby fire plumes with his animate flames ability. If the PCs detect Brextur, they can attempt to talk to the devil. Brextur’s initial attitude is unfriendly; he can be made indifferent with a successful DC 21 Diplomacy check, or friendly with a successful DC 26 Diplomacy check. Alternatively, the PCs can bully the devil with a successful DC 18 Intimidate check. If the PCs reveal their status as Thrune agents, they gain a +4 circumstance bonus on these checks. See Development below for details on befriending the devil. BREXTUR CR 4 XP 1,200 Male ukobach (Pathfinder Adventure Path #25 86) LE Small outsider (devil, evil, extraplanar, lawful) Init +8; Senses darkvision 60 ft., see in darkness; Perception +3 DEFENSE AC 17, touch 15, flat-footed 13 (+4 Dex, +2 natural, +1 size) hp 37 (5d10+10) Fort +3, Ref +10, Will +7 DR 5/good or silver; Immune fire, poison; Resist acid 10, cold 10; SR 15 OFFENSE Speed 30 ft. Melee fire poker +5 (1d6-1 plus 1d4 fire) or 2 claws +5 (1d3-1 plus 1d4 fire) Ranged ember +10 (1d6 fire) Special Attacks animate flames, fire-breathing, scorch TACTICS During Combat From hiding, Brextur attempts to animate one of the fire plumes as a Small fire elemental, which then attacks the PCs. If the devil remains undetected, he continues this tactic. If he’s spotted, Brextur stays to defend his home, but uses his flame leap ability to move around the battlefield through the fire plumes. Morale If reduced to fewer than 10 hit points, Brextur offers unconditional surrender, pleading for his life and cursing \"the Inheritor and her lackeys for ever coming to Kantaria.\" SPECIAL ABILITIES Animate Flames (Su) As a standard action, an ukobach can animate an existing Small or larger fire. Doing so requires the ukobach to succeed at a DC 15 Wisdom check as it impresses its will upon the fire. This DC increases by +5 for every size category of the flame above Small. If it’s successful, the flame animates and follows the ukobach’s mental commands, functioning as a fire elemental of the same size. The flame remains animate for a number of rounds equal to the ukobach’s Wisdom modifier—usually 3—after which it returns to being simple flame, setting the square it ceases moving in alight or being extinguished, as its surroundings warrant. Ember (Ex) An ukobach can hurl a red-hot ember as an improvised thrown weapon that deals 1d6 points of fire damage. A thrown ember has a range increment of 10 feet. Fire Leap (Su) As a swift action, an ukobach occupying the same space as a fire, a pool of lava, a vent of searing steam, or a similar blaze (such as the fire plumes in the smithy ruins) can teleport from that burning feature and emerge from another within 100 feet. This ability functions similarly to dimension door, but only between fires. Upon entering a flame, an ukobach is instantly aware of all flames within range through which it might exit. If an ukobach enters a flame and there are no others to exit through within 100 feet, the devil’s movement immediately ends and it is stunned for 1 round. Fire-Breathing (Su) An ukobach can spend a standard action to guzzle a pint of oil, alcohol, or a similarly flammable fluid and hold the combustible liquid within its body. At any point within 10 minutes of doing so, the ukobach can ignite and expel the liquid as either a 10-foot cone or a 20-foot line of fire, dealing 3d6 points of fire damage (Reflex DC 14 half). Once it has breathed fire, an ukobach cannot make use of this ability again until it drinks another pint of flammable liquid. The save DC is Constitution-based. Scorch (Su) An ukobach’s touch is searing hot, and its natural weapons and any metal weapons it grasps deal an additional 1d4 points of fire damage."
+}

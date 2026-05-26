@@ -11,7 +11,10 @@
     if (!Array.isArray(characters)) {
       return [];
     }
-    return characters.filter((character) => !character?.isReferee && !character?.claimedSessionId);
+    return characters.filter(
+      (character) =>
+        !character?.claimedSessionId && (!character?.isReferee || Boolean(character?.isClaimable))
+    );
   }
 
   return {

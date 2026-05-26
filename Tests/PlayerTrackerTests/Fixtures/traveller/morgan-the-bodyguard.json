@@ -1,0 +1,36 @@
+{
+  "id": "morgan-the-bodyguard",
+  "name": "Morgan the Bodyguard",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=45",
+  "source": "Homecoming p. 44",
+  "type": "human",
+  "size": "Medium",
+  "notes": "A dangerous bodyguard hired by Yasul Parad to keep the funeral scene under control.",
+  "tags": ["bodyguard", "parad", "contact"],
+  "traits": [
+    { "key": "STR", "current": 9, "max": 9 },
+    { "key": "DEX", "current": 9, "max": 9 },
+    { "key": "END", "current": 10, "max": 10 },
+    { "key": "INT", "current": 6, "max": 6 },
+    { "key": "EDU", "current": 7, "max": 7 },
+    { "key": "SOC", "current": 4, "max": 4 }
+  ],
+  "skills": [
+    { "name": "Carouse", "level": 0 },
+    { "name": "Deception", "level": 0 },
+    { "name": "Gun Combat (slug)", "level": 2 },
+    { "name": "Melee (unarmed)", "level": 2 },
+    { "name": "Recon", "level": 1 },
+    { "name": "Stealth", "level": 1 },
+    { "name": "Survival", "level": 1 }
+  ],
+  "equipment": [
+    "Snub Pistol (3D-3)",
+    "Concealed Armoured Vest (+5)"
+  ],
+  "playingNotes": [
+    "Growl and hunch your shoulders. Move like the world is made of delicate glass and that you like breaking things.",
+    "You are terrified - not only have you been caught red-handed at a murder but you have also failed Ven Yasha.",
+    "Give the impression of barely-contained violence at all times."
+  ]
+}

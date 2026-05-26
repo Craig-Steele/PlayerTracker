@@ -565,6 +565,30 @@ func routes(
         return released
     }
 
+    app.post("referee", "campaigns", ":campaignId", "characters", ":id", "release-to-pool") { req async throws -> PlayerView in
+        guard let campaignIDString = req.parameters.get("campaignId"),
+              let routeCampaignID = UUID(uuidString: campaignIDString),
+              let idString = req.parameters.get("id"),
+              let id = UUID(uuidString: idString) else {
+            throw Abort(.badRequest)
+        }
+        let (campaign, session) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        guard campaign.id == routeCampaignID else {
+            throw Abort(.conflict, reason: "Campaign is not active.")
+        }
+        await userStore.expireStaleClaims(
+            campaignName: campaign.name,
+            claimTimeoutMinutes: campaign.claimTimeoutMinutes
+        )
+        let released = try await userStore.releaseCharacterToPool(
+            id: id,
+            campaignName: campaign.name
+        )
+        await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
+        return released
+    }
+
     app.post("referee", "campaigns", ":campaignId", "characters", ":id", "claim") { req async throws -> PlayerView in
         guard let campaignIDString = req.parameters.get("campaignId"),
               let routeCampaignID = UUID(uuidString: campaignIDString),
@@ -891,6 +915,7 @@ func routes(
             ownerName: resolvedOwnerName,
             characterName: input.name,
             referenceUrl: input.referenceUrl,
+            statBlockId: input.statBlockId,
             initiative: input.initiative,
             stats: input.stats,
             revealStats: input.revealStats,
@@ -992,6 +1017,7 @@ func routes(
             ownerName: session.displayName,
             characterName: input.name,
             referenceUrl: input.referenceUrl,
+            statBlockId: input.statBlockId,
             initiative: input.initiative,
             stats: input.stats,
             revealStats: input.revealStats,
@@ -1093,6 +1119,20 @@ func routes(
             query: query,
             limit: limit
         )
+    }
+
+    app.post("creature-library", "import") { req async throws -> CreatureLibraryImportResponse in
+        let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(CreatureLibraryImportInput.self)
+        let destination = AppPaths.userDataDirectory(rulesetId: campaign.rulesetId)
+        let response = try CreatureLibraryImportService.importFiles(
+            input.files,
+            into: destination,
+            overwrite: input.overwrite ?? false,
+            rulesetId: campaign.rulesetId
+        )
+        await CreatureLibraryStore.shared.invalidate(rulesetId: campaign.rulesetId)
+        return response
     }
 
     app.get("campaign") { req async throws -> Response in

@@ -1,0 +1,29 @@
+{
+  "id": "bunyip",
+  "name": "Bunyip",
+  "page": 41,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=41",
+  "rawText": "the myceloids. Unwilling to leave its companion, the infected bunyip’s mate remains as well. There is a 50% chance of encountering the two bunyips when the PCs first enter this chamber. Otherwise, anyone entering the river attracts the bunyips’ attention after 1d6 rounds. BUNYIP CR 3 XP 800 hp 32 (Pathfinder RPG Bestiary 2 50) PURPLE POX-AFFLICTED BUNYIP CR 3 XP 800 hp 27 (Pathfinder RPG Bestiary 2 50) Fort +4, Will +0 Weaknesses purple pox-afflicted, spore-dominated Special Attacks roar (DC 12)",
+  "cr": 3,
+  "xp": 800,
+  "hp": 32,
+  "savingThrows": {
+    "fort": 4,
+    "will": 0
+  },
+  "defense": {
+    "weaknesses": [
+      "purple pox-afflicted",
+      "spore-dominated"
+    ]
+  },
+  "specialAttacks": [
+    "roar (DC 12)"
+  ],
+  "specialAbilities": [
+    "Purple Pox-Afflicted (Ex) The bunyip is afflicted with the myceloids' purple pox disease and has taken 2 points of ability damage to its Constitution and Wisdom scores.",
+    "Spore-Dominated (Sp) The bunyip is currently under the effects of charm monster (CL 6th) because of the myceloids' spore domination ability."
+  ]
+}
