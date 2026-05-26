@@ -2976,7 +2976,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     const name = nameInput.value.trim();
     if (!ownerName || !name || !selectedCharacterId) {
       statusDiv.textContent = 'Player and character are required.';
-      return;
+      return false;
     }
     const selectedCharacter = myCharacters.find((character) => character.id === selectedCharacterId);
     let stats;
@@ -2986,14 +2986,14 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       });
     } catch (err) {
       statusDiv.textContent = err.message;
-      return;
+      return false;
     }
     const initiative = selectedCharacter ? selectedCharacter.initiative : null;
     const initiativeBonusRaw = initiativeBonusInput ? initiativeBonusInput.value.trim() : '0';
     const initiativeBonus = initiativeBonusRaw === '' ? 0 : Number(initiativeBonusRaw);
     if (!Number.isFinite(initiativeBonus)) {
       statusDiv.textContent = 'Initiative bonus must be a valid number.';
-      return;
+      return false;
     }
     const payload = {
       id: selectedCharacterId,
@@ -3012,10 +3012,11 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       showStatus,
       successMessage: `Saved ${name}.`
     });
-    if (!savedCharacter) return;
+    if (!savedCharacter) return false;
     upsertMyCharacter(savedCharacter);
     formDirty = false;
     updateDraftFromForm();
+    return true;
   }
 
   async function saveCharacterConditions({ showStatus = true } = {}) {
@@ -3023,7 +3024,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     const selectedCharacter = myCharacters.find((character) => character.id === selectedCharacterId);
     if (!ownerName || !selectedCharacter || !selectedCharacterId) {
       statusDiv.textContent = 'Player and character are required.';
-      return;
+      return false;
     }
     const conditionList = Array.from(selectedConditions);
     const payload = {
@@ -3043,9 +3044,10 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       showStatus,
       successMessage: `Saved ${selectedCharacter.name} — ${conditionList.length} condition${conditionList.length === 1 ? '' : 's'}.`
     });
-    if (!savedCharacter) return;
+    if (!savedCharacter) return false;
     conditionsDirty = false;
     lastConditionsSignatureFromState = conditionsSignature(conditionList);
+    return true;
   }
 
   // --- Clear all players (admin-only) --------------------------------------
@@ -3102,8 +3104,14 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
   if (detailsSaveBtn) {
-    detailsSaveBtn.addEventListener('click', () => {
-      saveCharacterDetails({ showStatus: true });
+    detailsSaveBtn.addEventListener('click', async () => {
+      const saved = await saveCharacterDetails({ showStatus: true });
+      if (!saved) return;
+      detailsPanel.classList.remove('details-panel-open');
+      detailsPanel.classList.add('details-panel-collapsed');
+      detailsPanel.classList.add('hidden');
+      detailsToggle?.setAttribute('aria-expanded', 'false');
+      detailsPanel.setAttribute('aria-hidden', 'true');
     });
   }
   if (detailsCancelBtn) {
@@ -3118,8 +3126,8 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   }
   if (conditionsSaveBtn) {
     conditionsSaveBtn.addEventListener('click', async () => {
-      await saveCharacterConditions({ showStatus: true });
-      if (!conditionsDirty) {
+      const saved = await saveCharacterConditions({ showStatus: true });
+      if (saved) {
         setConditionsPanelOpen(false);
       }
     });
