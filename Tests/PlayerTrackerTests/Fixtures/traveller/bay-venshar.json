@@ -1,0 +1,39 @@
+{
+  "id": "bay-venshar",
+  "name": "Bay Venshar",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=86",
+  "source": "The Hunt p. 85",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Ancients relic dealer and mastermind behind the university dig attack.",
+  "tags": ["dealer", "villain", "ancients"],
+  "traits": [
+    { "key": "STR", "current": 5, "max": 5 },
+    { "key": "DEX", "current": 10, "max": 10 },
+    { "key": "END", "current": 5, "max": 5 },
+    { "key": "INT", "current": 9, "max": 9 },
+    { "key": "EDU", "current": 8, "max": 8 },
+    { "key": "SOC", "current": 7, "max": 7 }
+  ],
+  "skills": [
+    { "name": "Admin", "level": 1 },
+    { "name": "Advocate", "level": 1 },
+    { "name": "Broker", "level": 2 },
+    { "name": "Deception", "level": 2 },
+    { "name": "Electronics (comms)", "level": 1 },
+    { "name": "Gambler", "level": 1 },
+    { "name": "Gun Combat (energy)", "level": 2 },
+    { "name": "Investigate", "level": 1 },
+    { "name": "Persuade", "level": 2 }
+  ],
+  "equipment": [
+    "Laser Pistol (3D+3, Zero-G)",
+    "Vacc Suit (+12)"
+  ],
+  "playingNotes": [
+    "Remember to speak in a high-pitched, childish voice.",
+    "Murder and suffering are your stock in trade.",
+    "Try to sound reasonable, even when talking about how you wiped out the entire university team just to hide your tracks.",
+    "Initially, when talking about the Ancients, do so with a fanatical, religious tone."
+  ]
+}

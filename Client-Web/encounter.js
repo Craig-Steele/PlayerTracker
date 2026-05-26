@@ -1,4 +1,10 @@
 (function () {
+  let currentHealthLabel = 'HP';
+
+  function setEncounterHealthLabel(label) {
+    currentHealthLabel = typeof label === 'string' && label.trim() ? label.trim() : 'HP';
+  }
+
   function normalizeConditionEntry(entry) {
     if (!entry || typeof entry.name !== 'string') {
       return null;
@@ -120,7 +126,7 @@
       .map((stat) =>
         stat.key === 'TempHP'
           ? `${stat.key} ${stat.current}`
-          : `${stat.key} ${stat.current}/${stat.max}`
+          : `${stat.key === 'HP' ? currentHealthLabel : stat.key} ${stat.current}/${stat.max}`
       )
       .join(' • ');
   }
@@ -167,6 +173,7 @@
     applyEncounterHealthClasses,
     formatEncounterStatsText,
     buildEncounterConditionsList,
-    createEmptyEncounterRow
+    createEmptyEncounterRow,
+    setEncounterHealthLabel
   };
 })();

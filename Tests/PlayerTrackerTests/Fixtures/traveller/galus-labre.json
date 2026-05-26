@@ -1,0 +1,40 @@
+{
+  "id": "galus-labre",
+  "name": "Galus Labre",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=25",
+  "source": "Bodysnatchers p. 24",
+  "type": "human",
+  "size": "Medium",
+  "notes": "A hired thug in Harlen's orbit who helps watch Vlen Backett and do dirty work.",
+  "tags": ["thug", "harlen", "regina"],
+  "traits": [
+    { "key": "STR", "current": 9, "max": 9 },
+    { "key": "DEX", "current": 6, "max": 6 },
+    { "key": "END", "current": 9, "max": 9 },
+    { "key": "INT", "current": 5, "max": 5 },
+    { "key": "EDU", "current": 6, "max": 6 },
+    { "key": "SOC", "current": 3, "max": 3 }
+  ],
+  "skills": [
+    { "name": "Gun Combat (slug)", "level": 2 },
+    { "name": "Melee (unarmed)", "level": 1 },
+    { "name": "Recon", "level": 2 },
+    { "name": "Stealth", "level": 1 },
+    { "name": "Streetwise", "level": 1 }
+  ],
+  "equipment": [
+    "Burglary Kit",
+    "Commdot",
+    "Mobile Comm",
+    "Gauss Pistol (3D, AP 3, Auto 2)",
+    "Knife (1D)",
+    "Snub Pistol (3D-3, Zero-G)",
+    "Flak Jacket (+5)"
+  ],
+  "playingNotes": [
+    "Growl and hunch your shoulders. Move like the world is made of delicate glass and that you like breaking things.",
+    "You are terrified - not only have you been caught red-handed at a murder but you have also failed Ven Yasha.",
+    "You can try to hide your fear through bravado and aggression, or bargain for a way out.",
+    "Give the impression of barely-contained violence at all times."
+  ]
+}

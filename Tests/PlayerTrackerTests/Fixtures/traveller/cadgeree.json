@@ -1,0 +1,25 @@
+{
+  "id": "cadgeree",
+  "name": "Cadgeree",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=51",
+  "source": "Secrets of the Ancients p. 51",
+  "type": "Alell fauna",
+  "size": "Medium",
+  "notes": "The cadgeree resembles a winged snake with a spiked tail. It dives on prey from a great height and drives its tail spikes deep into the target's flesh.",
+  "tags": ["creature", "predator", "jungle"],
+  "stats": [
+    { "key": "Hits", "current": 17, "max": 17 }
+  ],
+  "speed": "6m",
+  "statBlock": {
+    "skills": [
+      { "name": "Melee (natural)", "level": 1 },
+      { "name": "Recon", "level": 1 },
+      { "name": "Stealth", "level": 2 },
+      { "name": "Survival", "level": 1 }
+    ],
+    "attacks": ["Spiked Tail (3D)"],
+    "traits": ["Armour (+1)", "Flyer (very slow)"],
+    "behaviour": ["Carnivore", "Pouncer"]
+  }
+}

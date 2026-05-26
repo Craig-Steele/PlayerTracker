@@ -1,0 +1,85 @@
+{
+  "id": "merlucent",
+  "name": "Merlucent",
+  "page": 92,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=92",
+  "rawText": "MERLUCENT A mane of long, writhing tentacles crowns this translucent, humanoid figure. A crystalline skeleton supports its faintly glowing flesh. MERLUCENT CR 3 XP 800 CN Medium aberration (aquatic) Init +7; Senses darkvision 60 ft.; Perception +7 DEFENSE AC 16, touch 13, flat-footed 13 (+3 Dex, +3 natural) hp 26 (4d8+8) Fort +3, Ref +4, Will +6 Resist cold 5 OFFENSE Speed 15 ft., swim 40 ft. Melee 3 tentacles +6 (1d4+1 plus poison) Space 5 ft.; Reach 5 ft. (15 ft. with tentacle) Special Attacks",
+  "cr": 3,
+  "xp": 800,
+  "alignment": "CN",
+  "size": "Medium",
+  "type": "aberration (aquatic)",
+  "initiative": 7,
+  "senses": "darkvision 60 ft.; Perception +7",
+  "ac": {
+    "value": 16,
+    "touch": 13,
+    "flatFooted": 13,
+    "notes": "+3 Dex, +3 natural"
+  },
+  "hp": 26,
+  "hitDice": "4d8+8",
+  "savingThrows": {
+    "fort": 3,
+    "ref": 4,
+    "will": 6
+  },
+  "defense": {
+    "resist": [
+      "cold 5"
+    ]
+  },
+  "offense": {
+    "speed": "15 ft., swim 40 ft.",
+    "melee": "3 tentacles +6 (1d4+1 plus poison)"
+  },
+  "specialAttacks": [
+    "arcane echo",
+    "poison",
+    "pull (tentacle, 5 ft.)",
+    "vitrify"
+  ],
+  "spellLikeAbilities": [
+    "Constant—detect magic",
+    "3/day—delay poison, light"
+  ],
+  "statistics": {
+    "str": 12,
+    "dex": 16,
+    "con": 15,
+    "int": 11,
+    "wis": 14,
+    "cha": 11,
+    "baseAtk": 3,
+    "cmb": 4,
+    "cmd": 17
+  },
+  "feats": [
+    "Improved Initiative",
+    "Weapon Finesse"
+  ],
+  "skills": {
+    "Climb": 6,
+    "Handle Animal": 4,
+    "Perception": 7,
+    "Stealth": 10,
+    "Survival": 11,
+    "Swim": 14
+  },
+  "languages": [
+    "Aklo; telepathy 30 ft."
+  ],
+  "sq": [
+    "jellyfish empathy",
+    "transparent flesh"
+  ],
+  "specialAbilities": [
+    "Arcane Echo (Su)",
+    "Jellyfish Empathy (Ex)",
+    "Poison (Ex)",
+    "Transparent Flesh (Ex)",
+    "Vitrify (Su)"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "id": "yasul-parad",
+  "name": "Yasul Parad",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=45",
+  "source": "Homecoming p. 44",
+  "type": "human",
+  "size": "Medium",
+  "notes": "A big-fish Alell family patriarch demanding repayment of Vlen's debt at the funeral.",
+  "tags": ["parad", "family", "criminal"],
+  "traits": [
+    { "key": "STR", "current": 6, "max": 6 },
+    { "key": "DEX", "current": 6, "max": 6 },
+    { "key": "END", "current": 7, "max": 7 },
+    { "key": "INT", "current": 10, "max": 10 },
+    { "key": "EDU", "current": 10, "max": 10 },
+    { "key": "SOC", "current": 6, "max": 6 }
+  ],
+  "skills": [
+    { "name": "Admin", "level": 2 },
+    { "name": "Advocate", "level": 2 },
+    { "name": "Broker", "level": 1 },
+    { "name": "Deception", "level": 1 },
+    { "name": "Diplomat", "level": 0 },
+    { "name": "Gun Combat", "level": 0 },
+    { "name": "Persuade", "level": 3 },
+    { "name": "Streetwise", "level": 2 }
+  ],
+  "equipment": [
+    "Concealed Armoured Vest (+5)"
+  ],
+  "playingNotes": [
+    "You consider yourself to be a very big fish.",
+    "You are restraining yourself out of respect for the funeral ceremony.",
+    "Do not get your own hands dirty; you have hired goons for that."
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "maleficent",
+  "name": "Maleficent",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=51",
+  "source": "Secrets of the Ancients p. 51",
+  "type": "Alell fauna",
+  "size": "Medium",
+  "notes": "Fast, brutal canopy hunter with tentacles and ultraviolet markings.",
+  "tags": ["creature", "predator", "forest"],
+  "stats": [
+    { "key": "Hits", "current": 42, "max": 42 }
+  ],
+  "speed": "6m",
+  "statBlock": {
+    "skills": [
+      { "name": "Melee (natural)", "level": 1 },
+      { "name": "Recon", "level": 1 },
+      { "name": "Stealth", "level": 3 },
+      { "name": "Survival", "level": 1 }
+    ],
+    "attacks": ["Teeth (3D)"],
+    "traits": ["Armour (+1)", "Large (+2)"],
+    "behaviour": ["Carnivore", "Hunter"]
+  }
+}

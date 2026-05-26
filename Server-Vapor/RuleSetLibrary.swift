@@ -7,14 +7,46 @@ struct ConditionDefinition: Content {
     let description: String?
 }
 
+struct StatBlockDefinition: Content {
+    let id: String
+    let label: String
+    let appliesTo: [String]?
+    let stats: [String]
+    let defaultBlock: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case label
+        case appliesTo
+        case stats
+        case defaultBlock = "default"
+    }
+}
+
+struct InitiativeRule: Content {
+    let mode: String?
+    let stats: [String]?
+    let chart: [InitiativeChartEntry]?
+}
+
+struct InitiativeChartEntry: Content {
+    let min: Int
+    let max: Int?
+    let bonus: Int
+}
+
 struct RuleSetLibrary: Content {
     let id: String
     let label: String
+    let healthLabel: String?
     let icon: String?
     let rulesBaseUrl: String?
     let creatureLibrary: CreatureLibraryReference?
     let conditions: [ConditionDefinition]
     let stats: [String]?
+    let statAliases: [String: String]?
+    let statBlocks: [StatBlockDefinition]?
+    let initiative: InitiativeRule?
     let supportsTempHp: Bool?
     let allowNegativeHealth: Bool?
     let license: String?
@@ -131,11 +163,15 @@ enum RuleSetLibraryLoader {
         RuleSetLibrary(
             id: "none",
             label: "",
+            healthLabel: nil,
             icon: nil,
             rulesBaseUrl: nil,
             creatureLibrary: nil,
             conditions: [],
             stats: [],
+            statAliases: nil,
+            statBlocks: nil,
+            initiative: nil,
             supportsTempHp: nil,
             allowNegativeHealth: nil,
             license: nil,

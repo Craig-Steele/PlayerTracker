@@ -1,0 +1,36 @@
+{
+  "id": "detective-odoy",
+  "name": "Detective Odoy",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=19",
+  "source": "Bodysnatchers p. 18",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Public Order detective who investigates Vlen Backett's murder while remaining evasive about the bigger picture.",
+  "tags": ["detective", "public-order", "regina"],
+  "traits": [
+    { "key": "STR", "current": 6, "max": 6 },
+    { "key": "DEX", "current": 7, "max": 7 },
+    { "key": "END", "current": 7, "max": 7 },
+    { "key": "INT", "current": 7, "max": 7 },
+    { "key": "EDU", "current": 8, "max": 8 },
+    { "key": "SOC", "current": 6, "max": 6 }
+  ],
+  "skills": [
+    { "name": "Advocate", "level": 2 },
+    { "name": "Carouse", "level": 2 },
+    { "name": "Deception", "level": 1 },
+    { "name": "Gun Combat (slug)", "level": 1 },
+    { "name": "Investigate", "level": 2 },
+    { "name": "Recon", "level": 1 },
+    { "name": "Stealth", "level": 1 },
+    { "name": "Streetwise", "level": 1 }
+  ],
+  "equipment": [
+    "Body Pistol (3D-3)"
+  ],
+  "playingNotes": [
+    "Be nervous. Look over your shoulder a lot, glare suspiciously at anyone who asks you a personal question.",
+    "Mumble under your breath.",
+    "Lean in close, in a conspiratorial way."
+  ]
+}

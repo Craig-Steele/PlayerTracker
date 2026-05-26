@@ -1,0 +1,26 @@
+{
+  "id": "wreck-darter",
+  "name": "Wreck-Darter",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=95",
+  "source": "Secrets of the Ancients p. 95",
+  "type": "Komesh fauna",
+  "size": "Medium",
+  "notes": "A darter adapted to feeding around wrecks and damaged hulls. After attacking, it needs time to reinflate its gas bags before it can strike again.",
+  "tags": ["creature", "scavenger", "gas-giant"],
+  "stats": [
+    { "key": "Hits", "current": 22, "max": 22 }
+  ],
+  "speed": "—",
+  "statBlock": {
+    "skills": [
+      { "name": "Athletics (dexterity)", "level": 2 },
+      { "name": "Melee (natural)", "level": 3 },
+      { "name": "Recon", "level": 0 },
+      { "name": "Stealth", "level": 3 },
+      { "name": "Survival", "level": 2 }
+    ],
+    "attacks": ["Spike (2D)*"],
+    "traits": ["Flyer (very slow)"],
+    "behaviour": ["Carnivore", "Trapper"]
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "whisperhawk",
+  "name": "Whisperhawk",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=52",
+  "source": "Secrets of the Ancients p. 52",
+  "type": "Alell fauna",
+  "size": "Large",
+  "notes": "One of the most common sights in the jungle, whisperhawks are beautiful avians whose wings do double duty as locomotion and feeding organs.",
+  "tags": ["creature", "avian", "flier"],
+  "stats": [
+    { "key": "Hits", "current": 26, "max": 26 }
+  ],
+  "speed": "2m",
+  "statBlock": {
+    "skills": [
+      { "name": "Melee", "level": 0 },
+      { "name": "Stealth", "level": 2 }
+    ],
+    "attacks": ["Suffocate (1D)"],
+    "traits": ["Flyer (slow)", "Large (+1)"],
+    "behaviour": ["Herbivore", "Filter"]
+  }
+}

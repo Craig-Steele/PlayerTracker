@@ -948,16 +948,15 @@ Current status:
 
 - slice 1 is complete: read-only creature library lookup is wired into the referee add flow
 - the library is ruleset-driven through the ruleset manifest, with Pathfinder seeded from `Client-Web/rulesets/pathfinder-bestiary.json`
-- remaining M7A work is still pending: reusable templates, ruleset-provided imports, referee-specific stat-block variants, and the creature reference action in the card overflow menu
+- referee-specific stat-block variants are now wired through the ruleset manifest and referee add flow
+- the creature reference action now lives on the added creature card overflow menu
+- remaining M7A work is now focused on reusable templates and ruleset-provided imports
 
 Work:
 
 - add reusable encounter templates, ruleset-scoped where that makes sense
 - add creature libraries for referee workflows, including ruleset-provided imports where available
 - import creature templates from each ruleset's system reference documents where available
-- support ruleset-specific enemy stat blocks, including alternate layouts such as a single health pool instead of STR/DEX/END when the ruleset uses that structure
-- use `Client-Web/rulesets/traveller2.json` as the design example for polymorphic Traveller-style enemy stat blocks
-- keep the creature reference in the add-flow detail pane and also expose it from the added creature card overflow menu
 - leave room for future referee-only tools without forcing them into the core auth/membership milestones
 
 Acceptance:

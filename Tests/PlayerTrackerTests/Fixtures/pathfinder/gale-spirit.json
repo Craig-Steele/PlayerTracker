@@ -1,0 +1,81 @@
+{
+  "id": "gale-spirit",
+  "name": "Gale Spirit",
+  "page": 88,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=88",
+  "rawText": "GALE SPIRIT This translucent, floating head has a bluish tinge and a humanoid face twisted in an enraged scowl. GALE SPIRIT CR 6 XP 2,400 CE Small undead (incorporeal) Init +8; Senses darkvision 60 ft., lifesense; Perception +9 Aura unnatural aura (30 ft.) DEFENSE AC 20, touch 20, flat-footed 16 (+5 deflection, +4 Dex, +1 size) hp 57 (6d8+30) Fort +7, Ref +8, Will +5 Defensive Abilities incorporeal; Immune undead traits Weaknesses light sensitivity OFFENSE Speed fly 60 ft. (good) Melee incorpore",
+  "cr": 6,
+  "xp": 2400,
+  "alignment": "CE",
+  "size": "Small",
+  "type": "undead (incorporeal)",
+  "initiative": 8,
+  "senses": "darkvision 60 ft., lifesense; Perception +9",
+  "ac": {
+    "value": 20,
+    "touch": 20,
+    "flatFooted": 16,
+    "notes": "+5 deflection, +4 Dex, +1 size"
+  },
+  "hp": 57,
+  "hitDice": "6d8+30",
+  "savingThrows": {
+    "fort": 7,
+    "ref": 8,
+    "will": 5
+  },
+  "defense": {
+    "defensiveAbilities": [
+      "incorporeal"
+    ],
+    "immunities": [
+      "undead traits"
+    ],
+    "weaknesses": [
+      "light sensitivity"
+    ],
+    "aura": "unnatural aura (30 ft.)"
+  },
+  "offense": {
+    "speed": "fly 60 ft. (good)",
+    "melee": "incorporeal touch +9 (2d6 negative energy)"
+  },
+  "specialAttacks": [
+    "baleful gust",
+    "create spawn"
+  ],
+  "statistics": {
+    "str": null,
+    "dex": 18,
+    "con": null,
+    "int": 10,
+    "wis": 10,
+    "cha": 21,
+    "baseAtk": 4,
+    "cmb": 7,
+    "cmd": 22
+  },
+  "feats": [
+    "Flyby Attack",
+    "Improved Initiative",
+    "Lightning Reflexes"
+  ],
+  "skills": {
+    "Fly": 19,
+    "Intimidate": 14,
+    "Perception": 9,
+    "Stealth": 17
+  },
+  "languages": [
+    "Common"
+  ],
+  "sq": [],
+  "specialAbilities": [
+    "Baleful Gust (Su)",
+    "Create Spawn (Su)",
+    "Lifesense (Su)",
+    "Unnatural Aura (Su)"
+  ]
+}

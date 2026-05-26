@@ -1,0 +1,104 @@
+{
+  "id": "angel-erelim",
+  "name": "Angel, Erelim",
+  "page": 86,
+  "kind": "creature",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=86",
+  "rawText": "ANGEL, ERELIM This athletic, winged humanoid has handsome features and wields a shining lance. ANGEL, ERELIM CR 6 XP 2,400 NG Medium outsider (angel, extraplanar, good) Init +3; Senses darkvision 60 ft., low-light vision, detect evil; Perception +13 Aura protective aura DEFENSE AC 18, touch 13, flat-footed 15 (+3 Dex, +5 natural); +4 deflection vs. evil hp 68 (8d10+24) Fort +9, Ref +5, Will +8; +4 vs. poison, +4 resistance vs. evil DR 5/evil; Immune acid, cold, petrification; Resist electricity ",
+  "cr": 6,
+  "xp": 2400,
+  "alignment": "NG",
+  "size": "Medium",
+  "type": "outsider (angel, extraplanar, good)",
+  "initiative": 3,
+  "senses": "darkvision 60 ft., low-light vision, detect evil; Perception +13",
+  "ac": {
+    "value": 18,
+    "touch": 13,
+    "flatFooted": 15,
+    "notes": "+3 Dex, +5 natural; +4 deflection vs. evil"
+  },
+  "hp": 68,
+  "hitDice": "8d10+24",
+  "savingThrows": {
+    "fort": 9,
+    "ref": 5,
+    "will": 8
+  },
+  "defense": {
+    "dr": [
+      "5/evil"
+    ],
+    "immunities": [
+      "acid",
+      "cold",
+      "petrification"
+    ],
+    "resist": [
+      "electricity 10",
+      "fire 10"
+    ],
+    "sr": 17,
+    "defensiveAbilities": [
+      "protective aura"
+    ]
+  },
+  "offense": {
+    "speed": "30 ft., fly 30 ft. (good)",
+    "melee": "+1 lance +11/+6 (1d8+4/×3), or mwk greatsword +11/+6 (2d6+3/19-20)",
+    "ranged": "mwk longbow +12/+7 (1d8/×3)"
+  },
+  "specialAttacks": [
+    "celestial charge",
+    "righteous challenge"
+  ],
+  "spellLikeAbilities": [
+    "Constant—detect evil",
+    "At will—light, remove fear, stabilize, virtue",
+    "3/day—bless weapon, cure light wounds, remove curse",
+    "1/day—consecrate"
+  ],
+  "statistics": {
+    "str": 15,
+    "dex": 17,
+    "con": 16,
+    "int": 11,
+    "wis": 14,
+    "cha": 12,
+    "baseAtk": 8,
+    "cmb": 10,
+    "cmd": 23
+  },
+  "feats": [
+    "Cavalry FormationAPG",
+    "Mounted Combat",
+    "Ride-By Attack",
+    "Spirited Charge"
+  ],
+  "skills": {
+    "Fly": 7,
+    "Handle Animal": 12,
+    "Heal": 11,
+    "Knowledge (planes)": 7,
+    "Perception": 13,
+    "Profession (soldier)": 13,
+    "Ride": 14,
+    "Sense Motive": 11
+  },
+  "languages": [
+    "Celestial",
+    "Common",
+    "Infernal; truespeech"
+  ],
+  "sq": [
+    "inspiring presence",
+    "shining mount"
+  ],
+  "specialAbilities": [
+    "Celestial Charge (Su)",
+    "Inspiring Presence (Ex)",
+    "Righteous Challenge (Ex)",
+    "Shining Mount (Su)"
+  ]
+}

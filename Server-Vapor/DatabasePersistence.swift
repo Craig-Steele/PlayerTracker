@@ -375,6 +375,12 @@ final class CharacterRow: Model, @unchecked Sendable {
     @OptionalField(key: "reference_url")
     var referenceUrl: String?
 
+    @Field(key: "is_claimable")
+    var isClaimable: Bool
+
+    @OptionalField(key: "stat_block_id")
+    var statBlockId: String?
+
     @OptionalField(key: "last_played_by_name")
     var lastPlayedByName: String?
 
@@ -425,6 +431,8 @@ final class CharacterRow: Model, @unchecked Sendable {
         ownerID: UUID,
         ownerName: String,
         referenceUrl: String? = nil,
+        isClaimable: Bool = false,
+        statBlockId: String? = nil,
         lastPlayedByName: String? = nil,
         claimedSessionID: UUID? = nil,
         claimedDisplayName: String? = nil,
@@ -443,6 +451,8 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.ownerID = ownerID
         self.ownerName = ownerName
         self.referenceUrl = referenceUrl
+        self.isClaimable = isClaimable
+        self.statBlockId = statBlockId
         self.lastPlayedByName = lastPlayedByName
         self.claimedSessionID = claimedSessionID
         self.claimedDisplayName = claimedDisplayName
@@ -1484,33 +1494,38 @@ enum DatabasePersistence {
         let conditionsByCharacter = Dictionary(grouping: conditions) { $0.characterID }
 
         return rows.compactMap { row in
-            guard let id = row.id else { return nil }
-            let characterStats = Dictionary(uniqueKeysWithValues: (statsByCharacter[id] ?? []).map {
-                ($0.statKey, StatEntry(key: $0.statKey, current: $0.currentValue, max: $0.maxValue))
-            })
-            let conditionSet = Set((conditionsByCharacter[id] ?? []).map(\.condition))
-            return CharacterState(
-                id: id,
-                campaignName: campaignName,
-                ownerId: row.ownerID,
-                ownerName: row.ownerName,
-                referenceUrl: row.referenceUrl,
-                lastPlayedByName: row.lastPlayedByName,
-                claimedSessionId: row.claimedSessionID,
-                claimedDisplayName: row.claimedDisplayName,
-                claimedAt: row.claimedAt,
-                isReferee: false,
-                characterName: row.name,
-                initiative: row.initiative,
-                stats: characterStats,
-                revealStats: row.revealStats,
-                autoSkipTurn: row.autoSkipTurn,
-                useAppInitiativeRoll: row.useAppInitiativeRoll,
-                initiativeBonus: row.initiativeBonus,
-                isHidden: row.isHidden,
-                revealOnTurn: row.revealOnTurn,
-                conditions: conditionSet
-            )
+            if let id = row.id {
+                let characterStats = Dictionary(uniqueKeysWithValues: (statsByCharacter[id] ?? []).map {
+                    ($0.statKey, StatEntry(key: $0.statKey, current: $0.currentValue, max: $0.maxValue))
+                })
+                let conditionSet = Set((conditionsByCharacter[id] ?? []).map(\.condition))
+                return CharacterState(
+                    id: id,
+                    campaignName: campaignName,
+                    ownerId: row.ownerID,
+                    ownerName: row.ownerName,
+                    referenceUrl: row.referenceUrl,
+                    statBlockId: row.statBlockId,
+                    lastPlayedByName: row.lastPlayedByName,
+                    claimedSessionId: row.claimedSessionID,
+                    claimedDisplayName: row.claimedDisplayName,
+                    claimedAt: row.claimedAt,
+                    isReferee: false,
+                    isClaimable: row.isClaimable,
+                    characterName: row.name,
+                    initiative: row.initiative,
+                    stats: characterStats,
+                    revealStats: row.revealStats,
+                    autoSkipTurn: row.autoSkipTurn,
+                    useAppInitiativeRoll: row.useAppInitiativeRoll,
+                    initiativeBonus: row.initiativeBonus,
+                    isHidden: row.isHidden,
+                    revealOnTurn: row.revealOnTurn,
+                    conditions: conditionSet
+                )
+            } else {
+                return nil
+            }
         }
     }
 
@@ -1528,6 +1543,8 @@ enum DatabasePersistence {
                 row.ownerID = state.ownerId
                 row.ownerName = state.ownerName
                 row.referenceUrl = state.referenceUrl
+                row.isClaimable = state.isClaimable
+                row.statBlockId = state.statBlockId
                 row.lastPlayedByName = state.lastPlayedByName
                 row.claimedSessionID = state.claimedSessionId
                 row.claimedDisplayName = state.claimedDisplayName
@@ -1552,6 +1569,8 @@ enum DatabasePersistence {
                     ownerID: state.ownerId,
                     ownerName: state.ownerName,
                     referenceUrl: state.referenceUrl,
+                    isClaimable: state.isClaimable,
+                    statBlockId: state.statBlockId,
                     lastPlayedByName: state.lastPlayedByName,
                     claimedSessionID: state.claimedSessionId,
                     claimedDisplayName: state.claimedDisplayName,

@@ -216,6 +216,7 @@ actor UserStore {
         ownerName: String,
         characterName: String,
         referenceUrl: String? = nil,
+        statBlockId: String? = nil,
         initiative: Double?,
         stats: [StatEntry]?,
         revealStats: Bool?,
@@ -233,10 +234,12 @@ actor UserStore {
             ownerId: ownerId,
             ownerName: ownerName,
             referenceUrl: referenceUrl,
+            statBlockId: statBlockId,
             claimedSessionId: nil,
             claimedDisplayName: nil,
             claimedAt: nil,
             isReferee: isRefereeSession(ownerId),
+            isClaimable: false,
             characterName: characterName,
             initiative: initiative,
             stats: stats.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.key, $0) }) } ?? [:],
@@ -254,6 +257,9 @@ actor UserStore {
         state.ownerName = ownerName
         if let referenceUrl = referenceUrl?.trimmingCharacters(in: .whitespacesAndNewlines), !referenceUrl.isEmpty {
             state.referenceUrl = referenceUrl
+        }
+        if let statBlockId = statBlockId?.trimmingCharacters(in: .whitespacesAndNewlines), !statBlockId.isEmpty {
+            state.statBlockId = statBlockId
         }
         state.characterName = characterName
         state.initiative = initiative
@@ -482,6 +488,7 @@ actor UserStore {
         state.claimedDisplayName = ownerName
         state.claimedAt = Date()
         state.isReferee = isRefereeSession(ownerId)
+        state.isClaimable = false
         storage[id] = state
         if campaignName == currentCampaignName {
             do {
@@ -527,6 +534,28 @@ actor UserStore {
                 try await persistConfiguredCampaignCharacters()
             } catch {
                 print("Failed to persist forced character release:", error)
+            }
+        }
+        return view(from: state)
+    }
+
+    func releaseCharacterToPool(id: UUID, campaignName: String) async throws -> PlayerView {
+        guard var state = storage[id], state.campaignName == campaignName else {
+            throw Abort(.notFound)
+        }
+        guard state.isReferee else {
+            throw Abort(.conflict, reason: "Only referee-owned characters can be released to the claim pool.")
+        }
+        state.claimedSessionId = nil
+        state.claimedDisplayName = nil
+        state.claimedAt = nil
+        state.isClaimable = true
+        storage[id] = state
+        if campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist claim-pool release:", error)
             }
         }
         return view(from: state)
@@ -819,6 +848,7 @@ actor UserStore {
             ownerId: state.ownerId,
             ownerName: state.ownerName,
             referenceUrl: state.referenceUrl,
+            statBlockId: state.statBlockId,
             lastPlayedByName: state.lastPlayedByName,
             claimedSessionId: state.claimedSessionId,
             claimedDisplayName: state.claimedDisplayName,
@@ -833,7 +863,8 @@ actor UserStore {
             isHidden: state.isHidden,
             revealOnTurn: state.revealOnTurn,
             conditions: Array(state.conditions).sorted(),
-            isReferee: state.isReferee
+            isReferee: state.isReferee,
+            isClaimable: state.isClaimable
         )
     }
 

@@ -1,8 +1,41 @@
 {
   "id": "pathfinder",
   "label": "Pathfinder (1st)",
+  "healthLabel": "HP",
   "stats": ["HP"],
+  "statAliases": {
+    "Strength": "STR",
+    "Dexterity": "DEX",
+    "Constitution": "CON",
+    "Intelligence": "INT",
+    "Wisdom": "WIS",
+    "Charisma": "CHA",
+    "Hit Points": "HP",
+    "Armor Class": "AC"
+  },
   "standardDie": "1d20",
+  "initiative": {
+    "mode": "first",
+    "stats": ["DEX"],
+    "chart": [
+      { "min": 1, "max": 1, "bonus": -5 },
+      { "min": 2, "max": 3, "bonus": -4 },
+      { "min": 4, "max": 5, "bonus": -3 },
+      { "min": 6, "max": 7, "bonus": -2 },
+      { "min": 8, "max": 9, "bonus": -1 },
+      { "min": 10, "max": 11, "bonus": 0 },
+      { "min": 12, "max": 13, "bonus": 1 },
+      { "min": 14, "max": 15, "bonus": 2 },
+      { "min": 16, "max": 17, "bonus": 3 },
+      { "min": 18, "max": 19, "bonus": 4 },
+      { "min": 20, "max": 21, "bonus": 5 },
+      { "min": 22, "max": 23, "bonus": 6 },
+      { "min": 24, "max": 25, "bonus": 7 },
+      { "min": 26, "max": 27, "bonus": 8 },
+      { "min": 28, "max": 29, "bonus": 9 },
+      { "min": 30, "max": null, "bonus": 10 }
+    ]
+  },
   "icon": "pathfinder.png",
   "supportsTempHp": true,
   "allowNegativeHealth": true,

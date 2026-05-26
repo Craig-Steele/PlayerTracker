@@ -1,0 +1,55 @@
+{
+  "id": "vlen-beckett",
+  "name": "Uncle Vlen Beckett",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=244",
+  "source": "Grandfather Lies p. 243",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Traveller agent of the Ancients, super-augmented with advanced technology and working to destabilise the Imperium.",
+  "tags": ["contact", "alell", "inheritor", "ancients"],
+  "traits": [
+    { "key": "STR", "current": 10, "max": 10 },
+    { "key": "DEX", "current": 12, "max": 12 },
+    { "key": "END", "current": 12, "max": 12 },
+    { "key": "INT", "current": 10, "max": 10 },
+    { "key": "EDU", "current": 14, "max": 14 },
+    { "key": "SOC", "current": 8, "max": 8 }
+  ],
+  "skills": [
+    { "name": "Advocate", "level": 1 },
+    { "name": "Admin", "level": 1 },
+    { "name": "Astrogation", "level": 2 },
+    { "name": "Broker", "level": 2 },
+    { "name": "Carouse", "level": 2 },
+    { "name": "Deception", "level": 3 },
+    { "name": "Diplomat", "level": 2 },
+    { "name": "Drive", "level": 0 },
+    { "name": "Electronics (comms)", "level": 1 },
+    { "name": "Electronics (computers)", "level": 3 },
+    { "name": "Electronics (sensors)", "level": 2 },
+    { "name": "Engineer (all)", "level": 3 },
+    { "name": "Flyer (grav)", "level": 1 },
+    { "name": "Gambler", "level": 2 },
+    { "name": "Gun Combat (energy)", "level": 3 },
+    { "name": "Investigate", "level": 2 },
+    { "name": "Jack-of-all-Trades", "level": 2 },
+    { "name": "Leadership", "level": 2 },
+    { "name": "Mechanic", "level": 4 },
+    { "name": "Medic", "level": 2 },
+    { "name": "Navigation", "level": 1 },
+    { "name": "Persuade", "level": 2 },
+    { "name": "Pilot (spacecraft)", "level": 4 },
+    { "name": "Stealth", "level": 4 },
+    { "name": "Steward", "level": 2 },
+    { "name": "Vacc Suit", "level": 2 }
+  ],
+  "equipment": [
+    "Ancient Plasma Pistol (8D+8)",
+    "Shimmersuit"
+  ],
+  "playingNotes": [
+    "If all the Travellers join with Seven, the campaign can become radically transformed.",
+    "His mission is to destabilise the Imperium by whatever means possible and weaken it in advance of Seven's conquest.",
+    "The Travellers are now super-augmented spies working for an Ancient."
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "id": "spore-dominated-loyalists",
+  "name": "Spore-Dominated Loyalists",
+  "page": 39,
+  "kind": "group",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=39",
+  "rawText": "G. BLOOMING CAVES G6 G5 G2 G3 G7 G4 G1 G8 1 SQUARE = 5 FEET SPORE-DOMINATED LOYALISTS (4) CR 2 XP 600 each Human ranger 4 LN Medium humanoid (human) Init +2; Senses Perception +4 STATISTICS DEFENSE AC 16, touch 13, flat-footed 13 (+3 armor, +2 Dex, +1 dodge) hp 22 each (4d10–4) Fort +2, Ref +6, Will –2 Weaknesses purple pox-afflicted, spore-dominated OFFENSE Str 14, Dex 15, Con 14, Int 12, Wis 12, Cha 8 Base Atk +4; CMB +6; CMD 19 Feats Dodge, Endurance, Point-Blank Shot, Precise Shot, Rapid Sho",
+  "cr": 2,
+  "xp": 600,
+  "alignment": "LN",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 2,
+  "senses": "Perception +4",
+  "ac": {
+    "value": 16,
+    "touch": 13,
+    "flatFooted": 13,
+    "notes": "+3 armor, +2 Dex, +1 dodge"
+  },
+  "hp": 22,
+  "hitDice": "4d10-4",
+  "savingThrows": {
+    "fort": 2,
+    "ref": 6,
+    "will": -2
+  },
+  "defense": {
+    "weaknesses": [
+      "purple pox-afflicted",
+      "spore-dominated"
+    ]
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "short sword +6 (1d6+2/19-20)",
+    "ranged": "mwk composite longbow +7 (1d8+2/×3)"
+  },
+  "specialAttacks": [
+    "combat style (archery)",
+    "favored enemy (humans +2)"
+  ],
+  "statistics": {
+    "str": 14,
+    "dex": 15,
+    "con": 14,
+    "int": 12,
+    "wis": 12,
+    "cha": 8,
+    "baseAtk": 4,
+    "cmb": 6,
+    "cmd": 19
+  },
+  "feats": [
+    "Dodge",
+    "Endurance",
+    "Point-Blank Shot",
+    "Precise Shot",
+    "Rapid Shot"
+  ],
+  "skills": {
+    "Acrobatics": 5,
+    "Climb": 8,
+    "Handle Animal": 6,
+    "Heal": 2,
+    "Knowledge (geography)": 6,
+    "Knowledge (nature)": 6,
+    "Perception": 4,
+    "Ride": 6,
+    "Stealth": 8,
+    "Survival": 4
+  },
+  "languages": [
+    "Common",
+    "Infernal"
+  ],
+  "sq": [
+    "favored terrain (urban +2)",
+    "hunter's bond (companions)",
+    "track +2",
+    "wild empathy +3"
+  ],
+  "combatGear": [
+    "+1 arrows (5)",
+    "+1 halflingbane arrows (2)",
+    "+1 humanbane arrows (2)"
+  ],
+  "otherGear": [
+    "studded leather",
+    "mwk composite longbow (+2 Str) with 20 arrows",
+    "short sword"
+  ],
+  "tactics": "The loyalists use archery and work in groups to pin enemies down, relying on their solid firing positions and the support of the myceloid corruption."
+}

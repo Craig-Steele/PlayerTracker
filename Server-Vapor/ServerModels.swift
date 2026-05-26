@@ -54,6 +54,8 @@ struct StatEntry: Content {
 struct CreatureLibraryCreature: Content {
     let id: String
     let name: String
+    let baseCreatureId: String?
+    let baseCreatureName: String?
     let cr: String?
     let alignment: String?
     let type: String?
@@ -75,6 +77,23 @@ struct CreatureLibraryResponse: Content {
     let totalMatches: Int
     let hasMore: Bool
     let creatures: [CreatureLibraryCreature]
+}
+
+struct CreatureLibraryImportFile: Content {
+    let filename: String
+    let contents: String
+}
+
+struct CreatureLibraryImportInput: Content {
+    let files: [CreatureLibraryImportFile]
+    let overwrite: Bool?
+}
+
+struct CreatureLibraryImportResponse: Content {
+    let rulesetId: String
+    let destination: String
+    let imported: Int
+    let skipped: Int
 }
 
 enum EncounterState: String, Content, Codable {
@@ -174,11 +193,13 @@ struct CharacterState {
     var ownerId: UUID
     var ownerName: String
     var referenceUrl: String?
+    var statBlockId: String?
     var lastPlayedByName: String?
     var claimedSessionId: UUID?
     var claimedDisplayName: String?
     var claimedAt: Date?
     var isReferee: Bool
+    var isClaimable: Bool
     var characterName: String
     var initiative: Double?
     var stats: [String: StatEntry]
@@ -196,6 +217,7 @@ struct PlayerView: Content {
     let ownerId: UUID
     let ownerName: String
     let referenceUrl: String?
+    let statBlockId: String?
     let lastPlayedByName: String?
     let claimedSessionId: UUID?
     let claimedDisplayName: String?
@@ -211,6 +233,7 @@ struct PlayerView: Content {
     let revealOnTurn: Bool
     let conditions: [String]
     let isReferee: Bool
+    let isClaimable: Bool
 }
 
 struct GameState: Content {
@@ -265,6 +288,7 @@ struct CharacterInput: Content {
     let ownerName: String
     let name: String
     let referenceUrl: String?
+    let statBlockId: String?
     let initiative: Double?
     let stats: [StatEntry]?
     let revealStats: Bool?
@@ -282,6 +306,7 @@ struct CharacterInput: Content {
         ownerName: String,
         name: String,
         referenceUrl: String? = nil,
+        statBlockId: String? = nil,
         initiative: Double? = nil,
         stats: [StatEntry]? = nil,
         revealStats: Bool? = nil,
@@ -298,6 +323,7 @@ struct CharacterInput: Content {
         self.ownerName = ownerName
         self.name = name
         self.referenceUrl = referenceUrl
+        self.statBlockId = statBlockId
         self.initiative = initiative
         self.stats = stats
         self.revealStats = revealStats

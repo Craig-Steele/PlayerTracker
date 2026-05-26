@@ -1,0 +1,54 @@
+{
+  "id": "arisa",
+  "name": "Arisa",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=47",
+  "source": "Secrets of the Ancients p. 46",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Imperial Intelligence field agent posing as Vlen's aunt and quietly digging for information.",
+  "tags": ["agent", "spy", "contact", "imperial-intelligence"],
+  "traits": [
+    { "key": "STR", "current": 7, "max": 7 },
+    { "key": "DEX", "current": 9, "max": 9 },
+    { "key": "END", "current": 7, "max": 7 },
+    { "key": "INT", "current": 9, "max": 9 },
+    { "key": "EDU", "current": 11, "max": 11 },
+    { "key": "SOC", "current": 8, "max": 8 }
+  ],
+  "skills": [
+    { "name": "Admin", "level": 0 },
+    { "name": "Advocate", "level": 1 },
+    { "name": "Astrogation", "level": 1 },
+    { "name": "Athletics (dexterity)", "level": 2 },
+    { "name": "Carouse", "level": 1 },
+    { "name": "Deception", "level": 2 },
+    { "name": "Diplomat", "level": 1 },
+    { "name": "Electronics (comms)", "level": 0 },
+    { "name": "Electronics (computers)", "level": 2 },
+    { "name": "Electronics (sensors)", "level": 2 },
+    { "name": "Engineer", "level": 0 },
+    { "name": "Gun Combat (slug)", "level": 2 },
+    { "name": "Gunner (turret)", "level": 1 },
+    { "name": "Investigate", "level": 2 },
+    { "name": "Mechanic", "level": 1 },
+    { "name": "Medic", "level": 0 },
+    { "name": "Navigation", "level": 2 },
+    { "name": "Persuade", "level": 0 },
+    { "name": "Pilot (starship)", "level": 1 },
+    { "name": "Recon", "level": 1 },
+    { "name": "Stealth", "level": 1 },
+    { "name": "Survival", "level": 1 },
+    { "name": "Vacc Suit", "level": 1 }
+  ],
+  "equipment": [
+    "Body Pistol (3D-3)",
+    "Concealed Tailored Vacc Suit (+8)"
+  ],
+  "playingNotes": [
+    "Her presence here is deliberately provocative; she has no evidence that Vlen was married but decided this was the best way to draw out any contacts or allies of Vlen's.",
+    "She is a highly competent spy, who enjoys the challenging nature of her work. She hates boredom; better to be running from Zhodani border guards and dodging laser blasts than to be trapped behind a desk in some dull office.",
+    "Her cover identity is as a flighty air-head, the sort who would be incredibly impressed by a battered scout ship and the romance of a Traveller.",
+    "Never hesitate, always act. Doing something is always better than doing nothing.",
+    "Smile and touch people when talking to them. Arisa uses touch to secretly probe for hidden weapons or concealed electronics."
+  ]
+}

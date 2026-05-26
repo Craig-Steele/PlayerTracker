@@ -23,7 +23,8 @@ const {
   applyEncounterHealthClasses,
   formatEncounterStatsText,
   buildEncounterConditionsList,
-  createEmptyEncounterRow
+  createEmptyEncounterRow,
+  setEncounterHealthLabel
 } = window.PlayerTrackerEncounter || {
   normalizeConditionEntry: () => null,
   formatEncounterStateText: () => 'Encounter: New',
@@ -39,7 +40,8 @@ const {
     td.textContent = text || '(no players yet)';
     tr.appendChild(td);
     return tr;
-  }
+  },
+  setEncounterHealthLabel: () => {}
 };
 window.addEventListener('DOMContentLoaded', () => {
   const playersBody = document.getElementById('players-body');
@@ -70,11 +72,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const addManualTabBtn = document.getElementById('ref-add-tab-manual');
   const addLibraryTabBtn = document.getElementById('ref-add-tab-library');
   const addManualPanel = document.getElementById('ref-add-manual-panel');
+  const addStatBlockWrap = document.getElementById('ref-stat-block-wrap');
+  const addStatBlockSelect = document.getElementById('ref-stat-block');
   const librarySummary = document.getElementById('ref-library-summary');
+  const libraryImportStatus = document.getElementById('ref-library-import-status');
   const libraryPanel = document.getElementById('ref-library-panel');
   const libraryQueryInput = document.getElementById('ref-library-query');
   const libraryList = document.getElementById('ref-library-list');
   const libraryDetails = document.getElementById('ref-library-details');
+  const libraryImportButton = document.getElementById('ref-library-import');
+  const libraryImportInput = document.getElementById('ref-library-import-input');
   const healthHeading = document.getElementById('health-heading');
   const visibleToggle = document.getElementById('ref-visible');
   const addCurrentStats = document.getElementById('ref-add-current-stats');
@@ -112,7 +119,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
   let currentCampaignName = '';
   let currentRulesetId = '';
+  let currentHealthLabel = 'HP';
   let statKeys = ['HP'];
+  let statAliases = new Map();
+  let statBlockDefinitions = [];
+  let statBlockLookup = new Map();
+  let addStatBlockDefinitions = [];
+  let addStatBlockLookup = new Map();
+  let selectedAddStatBlockId = null;
+  let addStatKeys = ['HP'];
+  let editorStatKeys = [];
   let statInputs = new Map();
   let editorStatInputs = new Map();
   let conditionLookup = new Map();
@@ -153,6 +169,14 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (invitePlayerBtn) {
     invitePlayerBtn.addEventListener('click', invitePlayer);
+  }
+  if (libraryImportButton && libraryImportInput) {
+    libraryImportButton.addEventListener('click', () => {
+      libraryImportInput.click();
+    });
+    libraryImportInput.addEventListener('change', () => {
+      void importCreatureLibraryFiles(Array.from(libraryImportInput.files || []));
+    });
   }
 
   let activeCampaignId = null;
@@ -196,6 +220,307 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!editorInitiativeBonusInput || !editorInitiativeBonusWrap) return;
     editorInitiativeBonusInput.disabled = false;
     editorInitiativeBonusWrap.classList.remove('disabled');
+  }
+
+  function normalizeStatBlockDefinition(entry) {
+    if (!entry || typeof entry.id !== 'string' || typeof entry.label !== 'string') {
+      return null;
+    }
+    const id = entry.id.trim();
+    const label = entry.label.trim();
+    const stats = Array.isArray(entry.stats)
+      ? entry.stats
+          .map((stat) => (typeof stat === 'string' ? stat.trim() : ''))
+          .filter(Boolean)
+      : [];
+    if (!id || !label || stats.length === 0) {
+      return null;
+    }
+    const appliesTo = Array.isArray(entry.appliesTo)
+      ? entry.appliesTo
+          .map((role) => (typeof role === 'string' ? role.trim() : ''))
+          .filter(Boolean)
+      : [];
+    return {
+      id,
+      label,
+      appliesTo,
+      stats,
+      defaultBlock: Boolean(entry.default ?? entry.defaultBlock)
+    };
+  }
+
+  function normalizeStatToken(value) {
+    if (typeof value !== 'string') {
+      return '';
+    }
+    return value
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '');
+  }
+
+  function setStatAliases(aliases) {
+    statAliases = new Map();
+    if (!aliases || typeof aliases !== 'object') {
+      return;
+    }
+    Object.entries(aliases).forEach(([alias, canonical]) => {
+      const aliasToken = normalizeStatToken(alias);
+      const canonicalToken = normalizeStatToken(canonical);
+      if (!aliasToken || !canonicalToken) {
+        return;
+      }
+      statAliases.set(aliasToken, canonicalToken === 'TEMPHP' ? 'TempHP' : canonicalToken);
+    });
+  }
+
+  function normalizeStatKey(value) {
+    const token = normalizeStatToken(value);
+    if (!token) {
+      return '';
+    }
+    if (token === 'TEMPHP') {
+      return 'TempHP';
+    }
+    return statAliases.get(token) || token;
+  }
+
+  function normalizeStatEntries(stats) {
+    const normalized = [];
+    const seen = new Map();
+    (Array.isArray(stats) ? stats : []).forEach((stat) => {
+      const key = normalizeStatKey(stat?.key);
+      if (!key) {
+        return;
+      }
+      const current = Number.isFinite(stat?.current) ? stat.current : 0;
+      const max = Number.isFinite(stat?.max) ? stat.max : current;
+      seen.set(key, { key, current, max });
+    });
+    seen.forEach((value) => normalized.push(value));
+    return normalized;
+  }
+
+  function snapshotStatFieldValues(map) {
+    const snapshot = new Map();
+    map.forEach((entry, key) => {
+      snapshot.set(key, {
+        current: entry?.currentInput ? entry.currentInput.value : '',
+        max: entry?.maxInput ? entry.maxInput.value : ''
+      });
+    });
+    return snapshot;
+  }
+
+  function restoreStatFieldValues(map, snapshot) {
+    if (!(snapshot instanceof Map)) return;
+    map.forEach((entry, key) => {
+      const values = snapshot.get(key);
+      if (!values) return;
+      if (entry?.maxInput) {
+        entry.maxInput.value = values.max;
+      }
+      if (entry?.currentInput) {
+        entry.currentInput.value = values.current;
+      }
+    });
+  }
+
+  function getSelectedAddStatBlock() {
+    return addStatBlockLookup.get(selectedAddStatBlockId) || null;
+  }
+
+  function getAddStatKeys() {
+    const selected = getSelectedAddStatBlock();
+    const keys = Array.isArray(selected?.stats) && selected.stats.length > 0
+      ? selected.stats.slice()
+      : statKeys.slice();
+    if (supportsTempHp && keys.includes('HP') && !keys.includes('TempHP')) {
+      keys.push('TempHP');
+    }
+    return keys;
+  }
+
+  function getDefaultAddStatBlockId() {
+    return addStatBlockDefinitions.find((block) => block.defaultBlock)?.id
+      || addStatBlockDefinitions[0]?.id
+      || null;
+  }
+
+  function inferStatBlockIdFromStats(stats) {
+    const sourceKeys = normalizeStatEntries(stats)
+      .map((stat) => stat.key)
+      .filter((key) => typeof key === 'string' && key !== 'TempHP');
+    if (sourceKeys.length === 0) {
+      return null;
+    }
+    const normalizedSource = sourceKeys.slice().sort().join('|');
+    const exactMatch = statBlockDefinitions.find((block) => {
+      const blockKeys = normalizeStatEntries(
+        (Array.isArray(block.stats) ? block.stats : []).map((key) => ({ key, current: 0, max: 0 }))
+      ).map((stat) => stat.key)
+        .filter((key) => key !== 'TempHP')
+        .slice()
+        .sort()
+        .join('|');
+      return blockKeys === normalizedSource;
+    });
+    return exactMatch?.id || null;
+  }
+
+  function getCharacterStatKeys(player) {
+    const blockId = typeof player?.statBlockId === 'string' ? player.statBlockId : '';
+    const block = blockId ? statBlockLookup.get(blockId) : null;
+    const keys = Array.isArray(block?.stats) && block.stats.length > 0
+      ? block.stats.slice()
+      : (Array.isArray(player?.stats) ? normalizeStatEntries(player.stats).map((stat) => stat.key) : statKeys.slice());
+    const extras = Array.isArray(player?.stats)
+      ? normalizeStatEntries(player.stats)
+          .map((stat) => stat?.key)
+          .filter((key) => typeof key === 'string' && key === 'TempHP' && !keys.includes(key))
+      : [];
+    return keys.concat(extras);
+  }
+
+  function buildStatFields({
+    keys,
+    inputsMap,
+    fieldsContainer,
+    currentStatsContainer,
+    headingEl,
+    prefix,
+    preserveValues = null,
+    onInput
+  }) {
+    inputsMap.clear();
+    if (fieldsContainer) fieldsContainer.innerHTML = '';
+    if (currentStatsContainer) currentStatsContainer.innerHTML = '';
+    if (headingEl) {
+      headingEl.textContent =
+        keys.length === 1 && keys[0] === 'HP' ? creatureLibraryHealthLabel() : keys.length === 1 ? keys[0] : 'Stats';
+    }
+
+    keys.forEach((key) => {
+      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      const maxId = `${prefix}max-stat-${normalizedKey}`;
+      const currentId = `${prefix}current-stat-${normalizedKey}`;
+      const isTempHp = key === 'TempHP';
+      const currentInput = document.createElement('input');
+      currentInput.type = 'number';
+      currentInput.id = currentId;
+      if (key === 'TempHP' || !allowNegativeHealth) {
+        currentInput.min = '0';
+      }
+      if (typeof onInput === 'function') {
+        currentInput.addEventListener('input', onInput);
+      }
+
+      let maxInput = null;
+      if (!isTempHp) {
+        maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.id = maxId;
+        maxInput.min = '0';
+        if (typeof onInput === 'function') {
+          maxInput.addEventListener('input', onInput);
+        }
+      }
+
+      if (fieldsContainer) {
+        const row = document.createElement('div');
+        row.className = 'stat-editor-row';
+        if (isTempHp) row.classList.add('temp-hp-row');
+
+        const keyLabel = document.createElement('div');
+        keyLabel.className = 'stat-editor-key';
+        keyLabel.textContent = key;
+        row.appendChild(keyLabel);
+
+        const currentLabel = document.createElement('label');
+        currentLabel.className = 'stat-editor-input';
+        const currentText = document.createElement('span');
+        currentText.textContent = 'Current';
+        currentLabel.appendChild(currentText);
+        currentLabel.appendChild(currentInput);
+        row.appendChild(currentLabel);
+
+        if (maxInput) {
+          const maxLabel = document.createElement('label');
+          maxLabel.className = 'stat-editor-input';
+          const maxText = document.createElement('span');
+          maxText.textContent = 'Max';
+          maxLabel.appendChild(maxText);
+          maxLabel.appendChild(maxInput);
+          row.appendChild(maxLabel);
+        }
+
+        fieldsContainer.appendChild(row);
+      }
+
+      inputsMap.set(key, { maxInput, currentInput });
+    });
+
+    restoreStatFieldValues(inputsMap, preserveValues);
+  }
+
+  function syncAddStatBlockSelector() {
+    if (!addStatBlockSelect || !addStatBlockWrap) return;
+    const hasMultipleBlocks = addStatBlockDefinitions.length > 1;
+    addStatBlockWrap.classList.toggle('hidden', !hasMultipleBlocks);
+    if (!hasMultipleBlocks) {
+      addStatBlockSelect.innerHTML = '';
+      return;
+    }
+
+    const currentValue = selectedAddStatBlockId || getDefaultAddStatBlockId() || '';
+    addStatBlockSelect.innerHTML = '';
+    addStatBlockDefinitions.forEach((block) => {
+      const option = document.createElement('option');
+      option.value = block.id;
+      option.textContent = block.label;
+      option.selected = block.id === currentValue;
+      addStatBlockSelect.appendChild(option);
+    });
+    if (currentValue && addStatBlockSelect.value !== currentValue) {
+      addStatBlockSelect.value = currentValue;
+    }
+  }
+
+  function setAddStatBlockId(statBlockId, { preserveValues = true } = {}) {
+    const resolved = addStatBlockLookup.has(statBlockId)
+      ? statBlockId
+      : getDefaultAddStatBlockId();
+    if (!resolved) {
+      selectedAddStatBlockId = null;
+      addStatKeys = statKeys.slice();
+      buildStatFields({
+        keys: addStatKeys,
+        inputsMap: statInputs,
+        fieldsContainer: statsFields,
+        currentStatsContainer: addCurrentStats,
+        headingEl: healthHeading,
+        prefix: 'ref-',
+        preserveValues: preserveValues ? snapshotStatFieldValues(statInputs) : null
+      });
+      return;
+    }
+
+    const changed = selectedAddStatBlockId !== resolved;
+    selectedAddStatBlockId = resolved;
+    addStatKeys = getAddStatKeys();
+    if (addStatBlockSelect && addStatBlockSelect.value !== resolved) {
+      addStatBlockSelect.value = resolved;
+    }
+    buildStatFields({
+      keys: addStatKeys,
+      inputsMap: statInputs,
+      fieldsContainer: statsFields,
+      currentStatsContainer: addCurrentStats,
+      headingEl: healthHeading,
+      prefix: 'ref-',
+      preserveValues: preserveValues && changed ? snapshotStatFieldValues(statInputs) : null
+    });
   }
 
   function updateInvitePlayerButtonState() {
@@ -261,65 +586,13 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildStatsFields() {
-    statInputs.clear();
-    if (statsFields) statsFields.innerHTML = '';
-    if (addCurrentStats) addCurrentStats.innerHTML = '';
-    if (healthHeading) {
-      healthHeading.textContent = statKeys.length === 1 ? statKeys[0] : 'Stats';
-    }
-
-    statKeys.forEach((key) => {
-      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const maxId = `ref-max-stat-${normalizedKey}`;
-      const currentId = `ref-current-stat-${normalizedKey}`;
-      const isTempHp = key === 'TempHP';
-      const currentInput = document.createElement('input');
-      currentInput.type = 'number';
-      currentInput.id = currentId;
-      if (key === 'TempHP' || !allowNegativeHealth) {
-        currentInput.min = '0';
-      }
-
-      let maxInput = null;
-      if (!isTempHp) {
-        maxInput = document.createElement('input');
-        maxInput.type = 'number';
-        maxInput.id = maxId;
-        maxInput.min = '0';
-      }
-
-      if (statsFields) {
-        const row = document.createElement('div');
-        row.className = 'stat-editor-row';
-        if (isTempHp) row.classList.add('temp-hp-row');
-
-        const keyLabel = document.createElement('div');
-        keyLabel.className = 'stat-editor-key';
-        keyLabel.textContent = key;
-        row.appendChild(keyLabel);
-
-        const currentLabel = document.createElement('label');
-        currentLabel.className = 'stat-editor-input';
-        const currentText = document.createElement('span');
-        currentText.textContent = 'Current';
-        currentLabel.appendChild(currentText);
-        currentLabel.appendChild(currentInput);
-        row.appendChild(currentLabel);
-
-        if (maxInput) {
-          const maxLabel = document.createElement('label');
-          maxLabel.className = 'stat-editor-input';
-          const maxText = document.createElement('span');
-          maxText.textContent = 'Max';
-          maxLabel.appendChild(maxText);
-          maxLabel.appendChild(maxInput);
-          row.appendChild(maxLabel);
-        }
-
-        statsFields.appendChild(row);
-      }
-
-      statInputs.set(key, { maxInput, currentInput });
+    buildStatFields({
+      keys: addStatKeys,
+      inputsMap: statInputs,
+      fieldsContainer: statsFields,
+      currentStatsContainer: addCurrentStats,
+      headingEl: healthHeading,
+      prefix: 'ref-'
     });
   }
 
@@ -369,74 +642,26 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildEditorStatsFields() {
-    editorStatInputs.clear();
-    if (editorStatsFields) editorStatsFields.innerHTML = '';
-    if (editorCurrentStats) editorCurrentStats.innerHTML = '';
-
-    statKeys.forEach((key) => {
-      const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      const maxId = `ref-edit-max-stat-${normalizedKey}`;
-      const currentId = `ref-edit-current-stat-${normalizedKey}`;
-      const isTempHp = key === 'TempHP';
-      const currentInput = document.createElement('input');
-      currentInput.type = 'number';
-      currentInput.id = currentId;
-      if (key === 'TempHP' || !allowNegativeHealth) {
-        currentInput.min = '0';
-      }
-      currentInput.addEventListener('input', () => {
+    buildStatFields({
+      keys: editorStatKeys,
+      inputsMap: editorStatInputs,
+      fieldsContainer: editorStatsFields,
+      currentStatsContainer: editorCurrentStats,
+      prefix: 'ref-edit-',
+      onInput: () => {
         detailsDirty = true;
-      });
-
-      let maxInput = null;
-      if (!isTempHp) {
-        maxInput = document.createElement('input');
-        maxInput.type = 'number';
-        maxInput.id = maxId;
-        maxInput.min = '0';
-        maxInput.addEventListener('input', () => {
-          detailsDirty = true;
-        });
       }
-
-      if (editorStatsFields) {
-        const row = document.createElement('div');
-        row.className = 'stat-editor-row';
-        if (isTempHp) row.classList.add('temp-hp-row');
-
-        const keyLabel = document.createElement('div');
-        keyLabel.className = 'stat-editor-key';
-        keyLabel.textContent = key;
-        row.appendChild(keyLabel);
-
-        const currentLabel = document.createElement('label');
-        currentLabel.className = 'stat-editor-input';
-        const currentText = document.createElement('span');
-        currentText.textContent = 'Current';
-        currentLabel.appendChild(currentText);
-        currentLabel.appendChild(currentInput);
-        row.appendChild(currentLabel);
-
-        if (maxInput) {
-          const maxLabel = document.createElement('label');
-          maxLabel.className = 'stat-editor-input';
-          const maxText = document.createElement('span');
-          maxText.textContent = 'Max';
-          maxLabel.appendChild(maxText);
-          maxLabel.appendChild(maxInput);
-          row.appendChild(maxLabel);
-        }
-
-        editorStatsFields.appendChild(row);
-      }
-
-    editorStatInputs.set(key, { maxInput, currentInput });
     });
   }
 
   function setCreatureLibrarySummary(text) {
     if (!librarySummary) return;
     librarySummary.textContent = text || '';
+  }
+
+  function setCreatureLibraryImportStatus(text) {
+    if (!libraryImportStatus) return;
+    libraryImportStatus.textContent = text || '';
   }
 
   function updateAddDialogTabs() {
@@ -503,11 +728,13 @@ window.addEventListener('DOMContentLoaded', () => {
     creatureLibraryResults = [];
     clearCreatureLibrarySelection();
     if (libraryQueryInput) libraryQueryInput.value = '';
+    if (libraryImportInput) libraryImportInput.value = '';
     addDialogTab = 'manual';
     updateAddDialogTabs();
     renderCreatureLibraryList();
     renderCreatureLibraryDetails();
     setCreatureLibrarySummary('');
+    setCreatureLibraryImportStatus('');
   }
 
   function setCreatureLibraryOpen(open) {
@@ -531,7 +758,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function creatureLibraryStats(creature) {
     if (!creature) return [];
     if (Array.isArray(creature.stats) && creature.stats.length > 0) {
-      return creature.stats;
+      return normalizeStatEntries(creature.stats);
     }
     if (Number.isFinite(creature.hp)) {
       return [{ key: 'HP', current: creature.hp, max: creature.hp }];
@@ -539,17 +766,39 @@ window.addEventListener('DOMContentLoaded', () => {
     return [];
   }
 
+  function creatureLibraryFormStats(creature) {
+    return creatureLibraryStats(creature);
+  }
+
+  function creatureLibraryHealthLabel() {
+    return currentHealthLabel || 'HP';
+  }
+
+  function creatureLibraryStatLabel(key) {
+    if (key === 'HP') {
+      return creatureLibraryHealthLabel();
+    }
+    return key;
+  }
+
+  function selectAddStatBlockForCreature(creature) {
+    const inferredStatBlockId = inferStatBlockIdFromStats(creatureLibraryFormStats(creature));
+    const nextStatBlockId = inferredStatBlockId || getDefaultAddStatBlockId();
+    setAddStatBlockId(nextStatBlockId, { preserveValues: false });
+  }
+
   function applyCreatureLibraryCreature(creature) {
     if (!creature) return;
     clearCreatureLibrarySelection();
     selectedCreatureLibraryId = creature.id;
     selectedCreatureLibrary = creature;
+    selectAddStatBlockForCreature(creature);
     if (nameInput) nameInput.value = creature.name || '';
     if (quantityInput) quantityInput.value = '1';
     if (initiativeBonusInput) {
       initiativeBonusInput.value = Number.isFinite(creature.initiativeBonus) ? creature.initiativeBonus : '';
     }
-    const statsByKey = new Map(creatureLibraryStats(creature).map((stat) => [stat.key, stat]));
+    const statsByKey = new Map(creatureLibraryFormStats(creature).map((stat) => [stat.key, stat]));
     statInputs.forEach((entry, key) => {
       const stat = statsByKey.get(key);
       if (entry.maxInput) {
@@ -602,11 +851,9 @@ window.addEventListener('DOMContentLoaded', () => {
       const meta = document.createElement('div');
       meta.className = 'creature-library-item-meta';
       const metaParts = [];
-      if (creature.cr) metaParts.push(`CR ${creature.cr}`);
       if (creature.type) metaParts.push(creature.type);
-      if (creature.alignment) metaParts.push(creature.alignment);
-      if (Number.isFinite(creature.hp)) metaParts.push(`HP ${creature.hp}`);
-      if (Number.isFinite(creature.ac)) metaParts.push(`AC ${creature.ac}`);
+      if (creature.baseCreatureName) metaParts.push(`Derived from ${creature.baseCreatureName}`);
+      if (Number.isFinite(creature.hp)) metaParts.push(`${creatureLibraryHealthLabel()} ${creature.hp}`);
       meta.textContent = metaParts.join(' • ');
       button.appendChild(meta);
 
@@ -646,8 +893,6 @@ window.addEventListener('DOMContentLoaded', () => {
     const subtitle = document.createElement('div');
     subtitle.className = 'creature-library-detail-subtitle';
     const subtitleParts = [];
-    if (creature.cr) subtitleParts.push(`CR ${creature.cr}`);
-    if (creature.alignment) subtitleParts.push(creature.alignment);
     if (creature.type) subtitleParts.push(creature.type);
     subtitle.textContent = subtitleParts.join(' • ');
     libraryDetails.appendChild(subtitle);
@@ -682,11 +927,10 @@ window.addEventListener('DOMContentLoaded', () => {
       fields.appendChild(valueNode);
     };
 
+    addField('Derived from', creature.baseCreatureName);
     addField('Source', creature.source || 'Default');
     addField('Size', creature.size);
-    addField('HP', Number.isFinite(creature.hp) ? creature.hp : null);
-    addField('AC', Number.isFinite(creature.ac) ? creature.ac : null);
-    addField('Initiative', Number.isFinite(creature.initiativeBonus) ? creature.initiativeBonus : null);
+    addField(creatureLibraryHealthLabel(), Number.isFinite(creature.hp) ? creature.hp : null);
     addReferenceField('Reference', creature.referenceUrl);
     if (creature.notes) {
       addField('Notes', creature.notes);
@@ -697,7 +941,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const stats = creatureLibraryStats(creature);
     if (stats.length > 0) {
       const statSummary = stats
-        .map((stat) => (stat.key === 'TempHP' ? `${stat.key} ${stat.current}` : `${stat.key} ${stat.current}/${stat.max}`))
+        .map((stat) => {
+          const keyLabel = creatureLibraryStatLabel(stat.key);
+          return keyLabel === 'TempHP'
+            ? `${keyLabel} ${stat.current}`
+            : `${keyLabel} ${stat.current}/${stat.max}`;
+        })
         .join(' • ');
       addField('Play Stats', statSummary);
     }
@@ -760,6 +1009,51 @@ window.addEventListener('DOMContentLoaded', () => {
     } finally {
       if (creatureLibraryRequestController === requestController) {
         creatureLibraryRequestController = null;
+      }
+    }
+  }
+
+  async function importCreatureLibraryFiles(files) {
+    if (!files || files.length === 0) {
+      setCreatureLibraryImportStatus('');
+      return;
+    }
+    const selectedFiles = files.filter((file) => file && typeof file.name === 'string' && file.name.toLowerCase().endsWith('.json'));
+    if (selectedFiles.length === 0) {
+      setCreatureLibraryImportStatus('Select one or more JSON files.');
+      if (libraryImportInput) libraryImportInput.value = '';
+      return;
+    }
+
+    try {
+      setCreatureLibraryImportStatus(`Importing ${selectedFiles.length} file(s)...`);
+      const payloadFiles = await Promise.all(selectedFiles.map(async (file) => ({
+        filename: file.name,
+        contents: await file.text()
+      })));
+      const res = await fetch('/creature-library/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          files: payloadFiles,
+          overwrite: true
+        })
+      });
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+      const json = await res.json();
+      setCreatureLibraryImportStatus(
+        `Imported ${json.imported || 0} file(s)${json.skipped ? `, skipped ${json.skipped}` : ''}.`
+      );
+      await loadCreatureLibrary(creatureLibraryQuery || '');
+    } catch (err) {
+      setCreatureLibraryImportStatus(`Unable to import fixtures: ${err.message}`);
+    } finally {
+      if (libraryImportInput) {
+        libraryImportInput.value = '';
       }
     }
   }
@@ -867,17 +1161,41 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         statKeys = ['HP'];
       }
+      currentHealthLabel =
+        typeof json?.healthLabel === 'string' && json.healthLabel.trim()
+          ? json.healthLabel.trim()
+          : 'HP';
       supportsTempHp = Boolean(json?.supportsTempHp);
       if (supportsTempHp && !statKeys.includes('TempHP')) {
         statKeys = [...statKeys, 'TempHP'];
       }
       allowNegativeHealth = Boolean(json?.allowNegativeHealth);
+      setStatAliases(json?.statAliases);
+      setEncounterHealthLabel(currentHealthLabel);
       currentStandardDie =
         typeof json?.standardDie === 'string' && json.standardDie.trim()
           ? json.standardDie.trim()
           : null;
-      buildStatsFields();
-      buildEditorStatsFields();
+      statBlockDefinitions = Array.isArray(json?.statBlocks)
+        ? json.statBlocks.map((entry) => normalizeStatBlockDefinition(entry)).filter(Boolean)
+        : [];
+      statBlockLookup = new Map(statBlockDefinitions.map((block) => [block.id, block]));
+      addStatBlockDefinitions = statBlockDefinitions.filter(
+        (block) => !Array.isArray(block.appliesTo) || block.appliesTo.length === 0 || block.appliesTo.includes('referee')
+      );
+      if (addStatBlockDefinitions.length === 0) {
+        addStatBlockDefinitions = [{
+          id: 'default',
+          label: statKeys.length === 1 ? statKeys[0] : 'Stats',
+          appliesTo: ['referee'],
+          stats: statKeys.slice(),
+          defaultBlock: true
+        }];
+      }
+      addStatBlockLookup = new Map(addStatBlockDefinitions.map((block) => [block.id, block]));
+      selectedAddStatBlockId = getDefaultAddStatBlockId();
+      syncAddStatBlockSelector();
+      setAddStatBlockId(selectedAddStatBlockId, { preserveValues: false });
 
       const baseUrl =
         typeof json?.rulesBaseUrl === 'string' && json.rulesBaseUrl.trim()
@@ -942,8 +1260,20 @@ window.addEventListener('DOMContentLoaded', () => {
       supportsTempHp = false;
       currentStandardDie = null;
       statKeys = ['HP'];
-      buildStatsFields();
-      buildEditorStatsFields();
+      setStatAliases(null);
+      statBlockDefinitions = [];
+      statBlockLookup = new Map();
+      addStatBlockDefinitions = [{
+        id: 'default',
+        label: statKeys.length === 1 ? statKeys[0] : 'Stats',
+        appliesTo: ['referee'],
+        stats: statKeys.slice(),
+        defaultBlock: true
+      }];
+      addStatBlockLookup = new Map(addStatBlockDefinitions.map((block) => [block.id, block]));
+      selectedAddStatBlockId = getDefaultAddStatBlockId();
+      syncAddStatBlockSelector();
+      setAddStatBlockId(selectedAddStatBlockId, { preserveValues: false });
     }
   }
 
@@ -1204,8 +1534,9 @@ window.addEventListener('DOMContentLoaded', () => {
       statsWrap.className = 'character-stats';
       const stats = Array.isArray(player.stats) ? player.stats : [];
       const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
+      const displayStatKeys = getCharacterStatKeys(player);
 
-      statKeys.forEach((key) => {
+      displayStatKeys.forEach((key) => {
         const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
         const line = document.createElement('div');
         line.className = 'character-stat-line';
@@ -1395,7 +1726,15 @@ window.addEventListener('DOMContentLoaded', () => {
       editorInitiativeBonusInput.value = Number.isFinite(player.initiativeBonus) ? player.initiativeBonus : '';
     }
     updateEditorInitiativeBonusAvailability();
-    const stats = Array.isArray(player.stats) ? player.stats : [];
+      const stats = Array.isArray(player.stats) ? player.stats : [];
+      if (!player.statBlockId) {
+        const inferredStatBlockId = inferStatBlockIdFromStats(stats);
+        if (inferredStatBlockId) {
+          player.statBlockId = inferredStatBlockId;
+      }
+    }
+    editorStatKeys = getCharacterStatKeys(player);
+    buildEditorStatsFields();
     const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
     editorStatInputs.forEach((entry, key) => {
       const stat = statsByKey.get(key);
@@ -1468,7 +1807,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const isReferee = Boolean(player?.isReferee);
     const isHidden = Boolean(player?.isHidden);
     const canClaim = Boolean(player && !isReferee && !player.claimedSessionId);
-    const canRelease = Boolean(player && !isReferee && player.claimedSessionId);
+    const canRelease = Boolean(player && (player.claimedSessionId || isReferee));
     const canDelete = Boolean(player);
     const hasReference = Boolean(player?.referenceUrl);
     if (revealNowBtn) {
@@ -1492,6 +1831,7 @@ window.addEventListener('DOMContentLoaded', () => {
       releaseCharacterBtn.classList.toggle('hidden', !canRelease);
       releaseCharacterBtn.disabled = !canRelease;
       releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
+      releaseCharacterBtn.textContent = isReferee ? 'Release to Pool' : 'Release Character';
     }
     if (deleteCharacterBtn) {
       deleteCharacterBtn.disabled = !canDelete;
@@ -1671,7 +2011,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const statsPayload = [];
-    for (const key of statKeys) {
+    for (const key of editorStatKeys) {
       const entry = editorStatInputs.get(key);
       const maxStr = entry?.maxInput ? entry.maxInput.value.trim() : '';
       const currentStr = entry?.currentInput ? entry.currentInput.value.trim() : '';
@@ -1716,6 +2056,7 @@ window.addEventListener('DOMContentLoaded', () => {
       id: selectedCharacterId,
       ownerName: current?.ownerName || 'Referee',
       name,
+      statBlockId: current?.statBlockId || inferStatBlockIdFromStats(current?.stats) || null,
       initiative: current?.initiative ?? null,
       useAppInitiativeRoll: true,
       initiativeBonus,
@@ -1801,7 +2142,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     const statsPayload = [];
-    for (const key of statKeys) {
+    for (const key of addStatKeys) {
       const entry = statInputs.get(key);
       const maxStr = entry?.maxInput ? entry.maxInput.value.trim() : '';
       const currentStr = entry?.currentInput ? entry.currentInput.value.trim() : '';
@@ -1840,12 +2181,14 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const shouldReveal = Boolean(visibleToggle && visibleToggle.checked);
       const referenceUrl = selectedCreatureLibrary?.referenceUrl || null;
+      const statBlockId = selectedAddStatBlockId || getDefaultAddStatBlockId() || null;
       for (let i = 1; i <= quantity; i += 1) {
         const suffix = quantity > 1 ? ` (${i})` : '';
         const payload = {
           ownerName: 'Referee',
           name: `${name}${suffix}`,
           referenceUrl,
+          statBlockId,
           initiative: null,
           useAppInitiativeRoll: true,
           initiativeBonus,
@@ -1908,6 +2251,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function clearAddForm() {
     resetCreatureLibraryState();
+    setAddStatBlockId(getDefaultAddStatBlockId(), { preserveValues: false });
     if (nameInput) nameInput.value = '';
     if (quantityInput) quantityInput.value = '1';
     if (initiativeBonusInput) initiativeBonusInput.value = '';
@@ -1924,6 +2268,7 @@ window.addEventListener('DOMContentLoaded', () => {
         id: player.id,
         ownerName: player.ownerName,
         name: player.name,
+        statBlockId: player.statBlockId || inferStatBlockIdFromStats(player.stats) || null,
         initiative: player.initiative,
         useAppInitiativeRoll: player.useAppInitiativeRoll,
         initiativeBonus: player.initiativeBonus,
@@ -2038,13 +2383,18 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   if (releaseCharacterBtn) {
-    releaseCharacterBtn.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      closeOverflowMenu();
+      releaseCharacterBtn.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeOverflowMenu();
       const selected = selectedCharacterId
         ? currentPlayers.find((player) => player.id === selectedCharacterId)
         : null;
-      if (!selected || selected.isReferee || !selected.claimedSessionId) return;
+      if (!selected) return;
+      if (selected.isReferee) {
+        await releaseCharacterToPool(selected);
+        return;
+      }
+      if (!selected.claimedSessionId) return;
       await forceReleaseCharacter(selected);
     });
   }
@@ -2060,6 +2410,28 @@ window.addEventListener('DOMContentLoaded', () => {
       statusDiv.textContent = 'Releasing character...';
       const res = await fetch(
         `/referee/campaigns/${encodeURIComponent(activeCampaignId)}/characters/${encodeURIComponent(player.id)}/release`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
+      statusDiv.textContent = '';
+      await loadState();
+    } catch (err) {
+      if (statusDiv) statusDiv.textContent = `Release failed: ${err.message}`;
+    }
+  }
+
+  async function releaseCharacterToPool(player) {
+    if (!player || !activeCampaignId) return;
+    try {
+      statusDiv.textContent = 'Releasing to pool...';
+      const res = await fetch(
+        `/referee/campaigns/${encodeURIComponent(activeCampaignId)}/characters/${encodeURIComponent(player.id)}/release-to-pool`,
         { method: 'POST' }
       );
       if (!res.ok) {
@@ -2258,6 +2630,11 @@ window.addEventListener('DOMContentLoaded', () => {
   if (addLibraryTabBtn) {
     addLibraryTabBtn.addEventListener('click', () => {
       setAddDialogTab('library', { focus: true });
+    });
+  }
+  if (addStatBlockSelect) {
+    addStatBlockSelect.addEventListener('change', (event) => {
+      setAddStatBlockId(event.target.value, { preserveValues: true });
     });
   }
   if (libraryQueryInput) {

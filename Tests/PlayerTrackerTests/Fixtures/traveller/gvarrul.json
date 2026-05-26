@@ -1,0 +1,30 @@
+{
+  "id": "gvarrul",
+  "name": "Gvarrul",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=78",
+  "source": "The Hunt p. 77",
+  "type": "Vargr",
+  "size": "Medium",
+  "notes": "A wounded Vargr corsair turned wilderness guide on Beck's World.",
+  "tags": ["vargr", "guide", "contact"],
+  "traits": [
+    { "key": "STR", "current": 7, "max": 7 },
+    { "key": "DEX", "current": 9, "max": 9 },
+    { "key": "END", "current": 6, "max": 6 },
+    { "key": "INT", "current": 7, "max": 7 },
+    { "key": "EDU", "current": 4, "max": 4 },
+    { "key": "SOC", "current": 3, "max": 3 }
+  ],
+  "skills": [
+    { "name": "Athletics (dexterity)", "level": 2 },
+    { "name": "Melee (natural)", "level": 1 },
+    { "name": "Navigate", "level": 1 },
+    { "name": "Survival", "level": 2 },
+    { "name": "Vacc Suit", "level": 1 }
+  ],
+  "playingNotes": [
+    "Growl everything you say.",
+    "If there's one thing you've learned, it is that friends always betray you.",
+    "Respect the natural world. Spacers flit from world to world and port to port; it takes 30 long years of living on a rockball to appreciate the dangers of groundside."
+  ]
+}

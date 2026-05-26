@@ -1,0 +1,93 @@
+{
+  "id": "loredana-viorica",
+  "name": "Loredana Viorica",
+  "page": 14,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=14",
+  "rawText": "A. THE LITTLE USKWOOD 1 SQUARE = 5 FEET A4 A4 A4 A5 A4 A4 A4 A5 A1 LOREDANA VIORICA CR 1 XP 400 Female human rogue 2 NE Medium humanoid (human) Init +2; Senses Perception +6 DEFENSE AC 14, touch 12, flat-footed 12 (+2 armor, +2 Dex) hp 16 (2d8+4) Fort +1, Ref +5, Will +2 Defensive Abilities evasion OFFENSE Speed 30 ft. Melee dagger +1 (1d4/19–20) Ranged mwk hand crossbow +4 (1d4/19–20) Special Attacks sneak attack +1d6 TACTICS During Combat Loredana prefers to attack from range, using her hand c",
+  "cr": 1,
+  "xp": 400,
+  "alignment": "NE",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 2,
+  "senses": "Perception +6",
+  "ac": {
+    "value": 14,
+    "touch": 12,
+    "flatFooted": 12,
+    "notes": "+2 armor, +2 Dex"
+  },
+  "hp": 16,
+  "hitDice": "2d8+4",
+  "savingThrows": {
+    "fort": 1,
+    "ref": 5,
+    "will": 2
+  },
+  "defense": {
+    "defensiveAbilities": [
+      "evasion"
+    ]
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "dagger +1 (1d4/19-20)",
+    "ranged": "mwk hand crossbow +4 (1d4/19-20)"
+  },
+  "specialAttacks": [
+    "sneak attack +1d6"
+  ],
+  "statistics": {
+    "str": 10,
+    "dex": 15,
+    "con": 13,
+    "int": 14,
+    "wis": 14,
+    "cha": 8,
+    "baseAtk": 1,
+    "cmb": 1,
+    "cmd": 13
+  },
+  "feats": [
+    "Point-Blank Shot",
+    "Skill Focus (Use Magic Device)"
+  ],
+  "skills": {
+    "Acrobatics": 7,
+    "Appraise": 7,
+    "Bluff": 4,
+    "Diplomacy": 4,
+    "Disable Device": 8,
+    "Knowledge (local)": 7,
+    "Knowledge (nobility)": 3,
+    "Perception": 6,
+    "Profession (innkeeper)": 7,
+    "Sense Motive": 7,
+    "Stealth": 7,
+    "Use Magic Device": 7
+  },
+  "languages": [
+    "Common",
+    "Dwarven",
+    "Infernal",
+    "Shadowtongue"
+  ],
+  "sq": [
+    "rogue talent (surprise attack)",
+    "trapfinding +1"
+  ],
+  "combatGear": [
+    "wand of shocking grasp (20 charges)"
+  ],
+  "otherGear": [
+    "leather armor",
+    "dagger",
+    "mwk hand crossbow with 10 bolts",
+    "thieves' tools",
+    "37 gp"
+  ],
+  "tactics": "During Combat Loredana prefers to attack from range, using her hand crossbow from behind the inn's bar. If approached, she draws her holdout weapon, a wand of shocking grasp, and attempts Use Magic Device checks to activate it.",
+  "morale": "Loredana does whatever she must to survive. If combat turns against her and it seems like she might be overwhelmed, Loredana does not hesitate to betray her allies."
+}

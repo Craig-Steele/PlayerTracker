@@ -1,0 +1,122 @@
+{
+  "id": "linton-demeer",
+  "name": "Linton Demeer",
+  "page": 58,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=58",
+  "rawText": "LINTON DEMEER Proprietor of Healthy Heart Alchemicals, Linton Demeer is also a member of Kantaria’s new governing council. He conceals a secret, however: he also leads a ragged band of faceless stalkers who have settled in Kantaria. LINTON DEMEER CR 7 XP 3,200 Male faceless stalker alchemist (chirurgeon) 5 (Pathfinder RPG Bestiary 2 122, Pathfinder RPG Advanced Player’s Guide 26, Pathfinder RPG Ultimate Magic 18) NE Medium aberration (shapechanger) Init +15; Senses darkvision 60 ft.; Perception ",
+  "cr": 7,
+  "xp": 3200,
+  "alignment": "NE",
+  "size": "Medium",
+  "type": "aberration (shapechanger)",
+  "initiative": 15,
+  "senses": "darkvision 60 ft.; Perception +10",
+  "ac": {
+    "value": 26,
+    "touch": 16,
+    "flatFooted": 20,
+    "notes": "+2 armor, +6 Dex, +4 natural, +4 shield"
+  },
+  "hp": 95,
+  "hitDice": "10d8+41",
+  "savingThrows": {
+    "fort": 9,
+    "ref": 11,
+    "will": 8
+  },
+  "defense": {
+    "resist": [
+      "+2 vs. poison"
+    ],
+    "dr": [
+      "5/piercing or slashing"
+    ]
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "slam +9 (1d6+4 plus grab)",
+    "ranged": "bomb +13 (3d6+3 fire) or acid bomb +13 (3d6+3 acid) or smoke bomb +13 (3d6+3 fire plus smoke)"
+  },
+  "specialAttacks": [
+    "blood drain (1 Con)",
+    "bomb 8/day (3d6+3 fire, DC 15)",
+    "sneak attack +2d6"
+  ],
+  "spellLikeAbilities": [
+    "Constant—tongues"
+  ],
+  "spellsPrepared": [
+    "2nd—cure moderate wounds, false life, invisibility",
+    "1st—anticipate perilUM (DC 14), cure light wounds, expeditious retreat, shield, true strike"
+  ],
+  "statistics": {
+    "str": 16,
+    "dex": 22,
+    "con": 18,
+    "int": 17,
+    "wis": 17,
+    "cha": 18,
+    "baseAtk": 6,
+    "cmb": 9,
+    "cmd": 25
+  },
+  "feats": [
+    "Brew Potion",
+    "Combat Reflexes",
+    "Deceitful",
+    "Extra DiscoveryAPG",
+    "Improved Initiative",
+    "Ricochet Splash WeaponUM",
+    "Skill Focus (Heal)",
+    "Throw Anything"
+  ],
+  "skills": {
+    "Bluff": 18,
+    "Craft (alchemy)": 16,
+    "Disguise": 22,
+    "Escape Artist": 22,
+    "Heal": 24,
+    "Knowledge (arcana)": 8,
+    "Knowledge (local)": 8,
+    "Perception": 10,
+    "Sleight of Hand": 14,
+    "Spellcraft": 10,
+    "Stealth": 18
+  },
+  "languages": [
+    "Aquan",
+    "Celestial",
+    "Common",
+    "Infernal"
+  ],
+  "sq": [
+    "alchemy (alchemy crafting +5)",
+    "anaesthetic",
+    "change shape",
+    "discoveries (acid bomb, infusion, smoke bomb [10-ft. radius, 5 rounds])",
+    "faceless",
+    "infused curative",
+    "mutagen (+4/–2, +2 natural armor, 50 minutes)",
+    "swift alchemy"
+  ],
+  "combatGear": [
+    "potion of cure moderate wounds",
+    "potion of lesser restoration",
+    "potion of undetectable alignment",
+    "acid (2)",
+    "alchemist's fire (2)",
+    "antitoxin (2)",
+    "oil of taggit (2)"
+  ],
+  "otherGear": [
+    "bracers of armor +2",
+    "ring of mind shielding",
+    "alchemy crafting kit",
+    "formula book (contains formulae for all prepared extracts, plus 2d6 additional formulae)",
+    "healer's kit"
+  ],
+  "tactics": "Before Combat If he expects any sort of trouble, Linton drinks extracts of anticipate peril, false life, and shield. During Combat Linton deplores combat, but knows his strength rests in the efficiency of his bombs.",
+  "morale": "Linton is a born and bred survivor, and attempts to retreat from combat using all means available once reduced to 20 hit points or fewer."
+}

@@ -1,0 +1,42 @@
+{
+  "id": "harlen",
+  "name": "Harlen",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Traveller/Mongoose/Secrets%20of%20the%20Ancients/Secrets_of_the_Ancients_16-10-2024.pdf#page=37",
+  "source": "Bodysnatchers p. 36",
+  "type": "human",
+  "size": "Medium",
+  "notes": "Ven Yasha's tech-obsessed fixer who coordinates the smuggling, spying and murder around Winter Shipping.",
+  "tags": ["harlen", "fixer", "enemy"],
+  "traits": [
+    { "key": "STR", "current": 5, "max": 5 },
+    { "key": "DEX", "current": 7, "max": 7 },
+    { "key": "END", "current": 6, "max": 6 },
+    { "key": "INT", "current": 11, "max": 11 },
+    { "key": "EDU", "current": 11, "max": 11 },
+    { "key": "SOC", "current": 8, "max": 8 }
+  ],
+  "skills": [
+    { "name": "Admin", "level": 2 },
+    { "name": "Advocate", "level": 1 },
+    { "name": "Athletics (dexterity)", "level": 1 },
+    { "name": "Electronics (comms)", "level": 4 },
+    { "name": "Electronics (computers)", "level": 3 },
+    { "name": "Electronics (sensors)", "level": 2 },
+    { "name": "Engineer", "level": 0 },
+    { "name": "Gun Combat", "level": 0 },
+    { "name": "Vacc Suit", "level": 1 }
+  ],
+  "equipment": [
+    "Neural Comm Taster",
+    "Taser",
+    "Gauss Pistol (3D, AP 3, Auto 2)",
+    "Vacc Suit (+8)"
+  ],
+  "playingNotes": [
+    "Look at everyone like they are samples under a microscope. Blink as little as possible.",
+    "Say exactly what you mean. Do not prevaricate.",
+    "All other sophonts are morons. Most are useless morons; a small few, like Exceedingly Discreet, are useful morons.",
+    "The only thing you respect is superior technology.",
+    "Ven Yasha is your connection to this superior technology; you will do anything to win that prize."
+  ]
+}

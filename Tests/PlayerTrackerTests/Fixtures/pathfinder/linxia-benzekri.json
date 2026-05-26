@@ -1,0 +1,109 @@
+{
+  "id": "linxia-benzekri",
+  "name": "Linxia Benzekri",
+  "page": 64,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=64",
+  "rawText": "MEET THE VILLAIN: LINXIA BENZEKRI Linxia is the iconic Hellknight for the Hell’s Vengeance Adventure Path. Although she does not appear as a character in the campaign, she can be used as an NPC or pregenerated player character. Note that her CR is 1 higher than normal because she has PC wealth. LINXIA BENZEKRI CR 7 XP 3,200 Female human fighter 5/Hellknight 2 (Pathfinder Campaign Setting: The Inner Sea World Guide 278) LE Medium humanoid (human) Init +4; Senses Perception +6 DEFENSE AC 21, touch",
+  "cr": 7,
+  "xp": 3200,
+  "alignment": "LE",
+  "size": "Medium",
+  "type": "humanoid (human)",
+  "initiative": 4,
+  "senses": "Perception +6",
+  "ac": {
+    "value": 21,
+    "touch": 10,
+    "flatFooted": 21,
+    "notes": "+11 armor"
+  },
+  "hp": 69,
+  "hitDice": "7d10+26",
+  "savingThrows": {
+    "fort": 9,
+    "ref": 3,
+    "will": 6
+  },
+  "defense": {
+    "resist": [
+      "+1 vs. fear"
+    ]
+  },
+  "offense": {
+    "speed": "30 ft.",
+    "melee": "+1 longsword +14/+9 (1d8+10/19-20) or mwk whip +12/+7 (1d3+4 nonlethal)",
+    "ranged": "mwk composite shortbow +8/+3 (1d6+4/x3)"
+  },
+  "specialAttacks": [
+    "smite chaos",
+    "weapon training (heavy blades +1)"
+  ],
+  "spellLikeAbilities": [
+    "At will—detect chaos",
+    "4/day—discern lies"
+  ],
+  "statistics": {
+    "str": 18,
+    "dex": 10,
+    "con": 16,
+    "int": 10,
+    "wis": 13,
+    "cha": 12,
+    "baseAtk": 7,
+    "cmb": 11,
+    "cmd": 21
+  },
+  "feats": [
+    "Exotic Weapon Proficiency (whip)",
+    "Furious FocusAPG",
+    "Improved Initiative",
+    "Iron Will",
+    "Power Attack",
+    "Vital Strike",
+    "Weapon Focus (longsword)",
+    "Weapon Specialization (longsword)"
+  ],
+  "skills": {
+    "Climb": 6,
+    "Intimidate": 11,
+    "Knowledge (engineering)": 5,
+    "Knowledge (local)": 5,
+    "Knowledge (planes)": 2,
+    "Perception": 6,
+    "Sense Motive": 8
+  },
+  "languages": [
+    "Common"
+  ],
+  "sq": [
+    "armor training 1",
+    "aura of law",
+    "Hellknight armor 1",
+    "Hellknight order (Order of the Rack)"
+  ],
+  "combatGear": [
+    "feather token (whip)",
+    "potion of cure moderate wounds",
+    "potion of haste",
+    "alchemist's fire (2)",
+    "caltrops",
+    "tanglefoot bag"
+  ],
+  "otherGear": [
+    "+2 Hellknight plateISWG",
+    "+1 longsword",
+    "dagger",
+    "mwk composite shortbow (+4 Str) with 20 arrows",
+    "mwk whip",
+    "aegis of recoveryUE",
+    "belt of physical might +2 (Dex, Con)",
+    "cloak of resistance +1",
+    "manacles",
+    "silk rope (50 ft.)",
+    "sunrods (4)",
+    "waterskin",
+    "26 gp"
+  ]
+}

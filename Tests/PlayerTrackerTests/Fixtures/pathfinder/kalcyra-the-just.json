@@ -1,0 +1,113 @@
+{
+  "id": "kalcyra-the-just",
+  "name": "Kalcyra the Just",
+  "page": 23,
+  "kind": "npc",
+  "source": "Wrath of Thrune",
+  "url": "file:///Users/craig/Documents/TableTop/RPG/%E2%80%A2Pathfinder/%E2%80%A2AdventurePaths/Hell%27s%20Vengeance/2%20Wrath%20of%20Thrune%20PZO90104E.pdf#page=23",
+  "rawText": "Morale Believing she has a divine mandate, Kalcyra fights to the death. STATISTICS Str 14, Dex 10, Con 16, Int 8, Wis 17, Cha 10 Base Atk +5; CMB +10; CMD 19 (23 vs. bull rush and trip) Feats Combat Casting, Duck And CoverAPG, Power Attack, Shake It OffUC, Skill Focus (Intimidate), Toughness Skills Appraise –2 (+0 to assess nonmagical metals or gemstones), Diplomacy +10, Intimidate +16, Knowledge (religion) +8, Perception +12 (+14 to notice unusual stonework), Sense Motive +16, Spellcraft +4 Lan",
+  "cr": 6,
+  "xp": 2400,
+  "alignment": "LN",
+  "size": "Medium",
+  "type": "humanoid (dwarf)",
+  "initiative": 3,
+  "senses": "darkvision 60 ft.; Perception +12",
+  "ac": {
+    "value": 21,
+    "touch": 12,
+    "flatFooted": 21,
+    "notes": "+7 armor, +2 deflection, +2 shield"
+  },
+  "hp": 70,
+  "hitDice": "7d8+35",
+  "savingThrows": {
+    "fort": 10,
+    "ref": 4,
+    "will": 10
+  },
+  "defense": {
+    "resist": [
+      "+1 vs. fear",
+      "+2 vs. poison, spells, and spell-like abilities"
+    ],
+    "defensiveAbilities": [
+      "defensive training"
+    ]
+  },
+  "offense": {
+    "speed": "20 ft.",
+    "melee": "+1 morningstar +11 (1d8+5)",
+    "ranged": "repeating light crossbow +8 (1d8+2/19-20)"
+  },
+  "specialAttacks": [
+    "bane (7 rounds/day)",
+    "hatred",
+    "judgment 3/day"
+  ],
+  "spellLikeAbilities": [
+    "At will—detect alignment",
+    "7 rounds/day—discern lies",
+    "6/day—resistant touch (+2)"
+  ],
+  "spellsKnown": [
+    "3rd (2/day)—litany of righteousnessUC, retributionAPG (DC 16)",
+    "2nd (4/day)—blistering invectiveUC (DC 15), confessAPG (DC 15), flames of the faithfulAPG (DC 15), hold person (DC 15)",
+    "1st (5/day)—bless, command (DC 14), divine favor, lock gazeUC (DC 14), protection from evil",
+    "0 (at will)—acid splash, brandAPG (DC 13), daze (DC 13), guidance, siftAPG, stabilize"
+  ],
+  "domains": [
+    "Protection"
+  ],
+  "statistics": {
+    "str": 14,
+    "dex": 10,
+    "con": 16,
+    "int": 8,
+    "wis": 17,
+    "cha": 10,
+    "baseAtk": 5,
+    "cmb": 10,
+    "cmd": 19
+  },
+  "feats": [
+    "Combat Casting",
+    "Duck And CoverAPG",
+    "Power Attack",
+    "Shake It OffUC",
+    "Skill Focus (Intimidate)",
+    "Toughness"
+  ],
+  "skills": {
+    "Appraise": -2,
+    "Diplomacy": 10,
+    "Intimidate": 16,
+    "Knowledge (religion)": 8,
+    "Perception": 12,
+    "Sense Motive": 16,
+    "Spellcraft": 4
+  },
+  "languages": [
+    "Common",
+    "Dwarven"
+  ],
+  "sq": [
+    "monster lore +3",
+    "solo tactics",
+    "stern gaze +3",
+    "track +3"
+  ],
+  "combatGear": [
+    "potion of cure serious wounds",
+    "potion of spider climb"
+  ],
+  "otherGear": [
+    "+1 chainmail",
+    "+1 buckler",
+    "+1 morningstar",
+    "repeating light crossbow with 10 bolts",
+    "iron holy symbol"
+  ],
+  "tactics": "Before Combat Kalcyra casts divine favor and protection from evil on herself before battle, and then bless. During Combat Kalcyra begins combat by casting blistering invective while the foo dogs attack. She prefers to stay out of melee combat, using her spells to debilitate her foes from a distance.",
+  "morale": "Believing she has a divine mandate, Kalcyra fights to the death."
+}
