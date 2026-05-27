@@ -21,6 +21,21 @@ final class CreatureLibraryImportTests: XCTestCase {
         XCTAssertEqual(dnd5e.healthLabel, "HP")
     }
 
+    func testPathfinderThirdPartyProductsFixtureIncludesBeanSidheVariant() throws {
+        let fixtureURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("Fixtures/pathfinder/third-party-products.json")
+        let data = try Data(contentsOf: fixtureURL)
+        let fixture = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let creatures = try XCTUnwrap(fixture["creatures"] as? [[String: Any]])
+
+        XCTAssertTrue(creatures.contains { creature in
+            creature["name"] as? String == "Banshee, Bean Sidhe (3pp)"
+                && creature["baseCreatureName"] as? String == "Banshee"
+                && creature["cr"] as? String == "13"
+        })
+    }
+
     func testCreatureLibraryImportNormalizesFixtureShapeIntoUserDataFile() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)

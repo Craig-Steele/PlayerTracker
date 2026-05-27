@@ -10,6 +10,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app?.asyncShutdown()
         await userStore.resetMemoryForTesting()
         CreatureLibraryConfiguration.includeLocalCreatures = true
+        AppPaths.appDataDirectoryOverride = nil
         app = nil
     }
 
@@ -53,7 +54,7 @@ final class ServerRoutesTests: XCTestCase {
         })
     }
 
-    func testCreatureLibraryReturnsThirdPartyCreaturesForPathfinder() async throws {
+    func testCreatureLibraryDoesNotReturnThirdPartyCreaturesByDefaultForPathfinder() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
 
@@ -64,8 +65,94 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(response.status, .ok)
         let library = try response.content.decode(CreatureLibraryResponse.self)
         XCTAssertEqual(library.rulesetId, "pathfinder")
-        XCTAssertTrue(library.creatures.contains { creature in
+        XCTAssertEqual(library.totalMatches, 0)
+        XCTAssertFalse(library.creatures.contains { creature in
             creature.name == "Afanc (3pp)"
+        })
+    }
+
+    func testCreatureLibraryReturnsBansheeVariantsForPathfinder() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Banshee&limit=10"
+        )
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(CreatureLibraryResponse.self)
+        XCTAssertEqual(library.rulesetId, "pathfinder")
+        XCTAssertEqual(library.totalMatches, 2)
+        XCTAssertTrue(library.creatures.contains { creature in
+            creature.name == "Banshee" && creature.cr == "13" && creature.alignment == "CE" && creature.type == "Medium undead (incorporeal)"
+        })
+        XCTAssertTrue(library.creatures.contains { creature in
+            creature.name == "Greater Banshee" && creature.cr == "15" && creature.baseCreatureName == "Banshee"
+        })
+    }
+
+    func testCreatureLibraryReturnsSplitVariantCreaturesForPathfinder() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+
+        let roperResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Crusher&limit=10"
+        )
+        XCTAssertEqual(roperResponse.status, .ok)
+        let roperLibrary = try roperResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertTrue(roperLibrary.creatures.contains { creature in
+            creature.name == "Roper, Crusher" && creature.cr == "12" && creature.baseCreatureName == "Roper"
+        })
+
+        let shardstrikerResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Shardstriker&limit=10"
+        )
+        XCTAssertEqual(shardstrikerResponse.status, .ok)
+        let shardstrikerLibrary = try shardstrikerResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertTrue(shardstrikerLibrary.creatures.contains { creature in
+            creature.name == "Shardstriker" && creature.cr == "13" && creature.baseCreatureName == "Roper"
+        })
+
+        let medusaResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Euryale&limit=10"
+        )
+        XCTAssertEqual(medusaResponse.status, .ok)
+        let medusaLibrary = try medusaResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertTrue(medusaLibrary.creatures.contains { creature in
+            creature.name == "Medusa, Euryale" && creature.cr == "7" && creature.baseCreatureName == "Medusa"
+        })
+
+        let dustResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Dust%20Wendigo&limit=10"
+        )
+        XCTAssertEqual(dustResponse.status, .ok)
+        let dustLibrary = try dustResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertTrue(dustLibrary.creatures.contains { creature in
+            creature.name == "Dust Wendigo" && creature.cr == "18" && creature.baseCreatureName == "Wendigo"
+        })
+
+        let voidResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Void%20Wendigo&limit=10"
+        )
+        XCTAssertEqual(voidResponse.status, .ok)
+        let voidLibrary = try voidResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertTrue(voidLibrary.creatures.contains { creature in
+            creature.name == "Void Wendigo" && creature.cr == "18" && creature.baseCreatureName == "Wendigo"
+        })
+
+        let shokujinkiResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Shokujinki&limit=10"
+        )
+        XCTAssertEqual(shokujinkiResponse.status, .ok)
+        let shokujinkiLibrary = try shokujinkiResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertTrue(shokujinkiLibrary.creatures.contains { creature in
+            creature.name == "Wendigo, Shokujinki" && creature.cr == "17" && creature.baseCreatureName == "Wendigo"
         })
     }
 
@@ -193,6 +280,212 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(updatedLibraryResponse.status, .ok)
         let updatedLibrary = try updatedLibraryResponse.content.decode(CreatureLibraryResponse.self)
         XCTAssertTrue(updatedLibrary.creatures.contains { $0.name == "Local Alpha" })
+    }
+
+    func testCampaignUserdataRoutesRejectNonReferees() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+        let playerSession = try await join(displayName: "Player", in: tester)
+        let cookieHeader = HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+
+        let getResponse = try await tester.sendRequest(
+            .GET,
+            "/campaign/userdata",
+            headers: cookieHeader
+        )
+        XCTAssertEqual(getResponse.status, .forbidden)
+
+        let updatePayload = CampaignUserDataUpdateInput(files: ["custom-local.json"])
+        let putResponse = try await tester.sendRequest(
+            .PUT,
+            "/campaign/userdata",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(updatePayload))
+        )
+        XCTAssertEqual(putResponse.status, .forbidden)
+    }
+
+    func testCreatureLibraryImportRoutePersistsImportedFileForReferee() async throws {
+        let tempBaseDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-import-route-\(UUID().uuidString)", isDirectory: true)
+        let tempUserDataDirectory = tempBaseDirectory
+            .appendingPathComponent("userdata", isDirectory: true)
+            .appendingPathComponent("pathfinder", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempBaseDirectory)
+        }
+        let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
+        AppPaths.appDataDirectoryOverride = tempBaseDirectory
+        defer {
+            AppPaths.appDataDirectoryOverride = priorAppDataDirectoryOverride
+        }
+
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
+        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
+        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
+        CreatureLibraryConfiguration.includeLocalCreatures = true
+        defer {
+            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
+            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
+        }
+
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+
+        let payload = CreatureLibraryImportInput(
+            files: [
+                CreatureLibraryImportFile(
+                    filename: "imported-aasimar.json",
+                    contents: """
+                    {
+                      "name": "Imported Aasimar",
+                      "cr": 1,
+                      "initiative": 2,
+                      "url": "https://example.com/reference",
+                      "type": "outsider (native)",
+                      "hp": 11
+                    }
+                    """
+                )
+            ],
+            overwrite: false
+        )
+
+        let response = try await tester.sendRequest(
+            .POST,
+            "/creature-library/import",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(refereeCookie)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        )
+
+        XCTAssertEqual(response.status, .ok)
+        let imported = try response.content.decode(CreatureLibraryImportResponse.self)
+        XCTAssertEqual(imported.rulesetId, "pathfinder")
+        XCTAssertTrue(imported.destination.hasSuffix("/userdata/pathfinder"))
+        XCTAssertEqual(imported.imported, 1)
+        XCTAssertEqual(imported.skipped, 0)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: tempUserDataDirectory.appendingPathComponent("imported-aasimar.json").path))
+    }
+
+    func testCreatureLibraryImportRouteRejectsNonReferees() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+        let playerSession = try await join(displayName: "Player", in: tester)
+
+        let payload = CreatureLibraryImportInput(
+            files: [
+                CreatureLibraryImportFile(
+                    filename: "imported-aasimar.json",
+                    contents: """
+                    {
+                      "name": "Imported Aasimar",
+                      "cr": 1,
+                      "initiative": 2,
+                      "hp": 11
+                    }
+                    """
+                )
+            ],
+            overwrite: false
+        )
+
+        let response = try await tester.sendRequest(
+            .POST,
+            "/creature-library/import",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        )
+
+        XCTAssertEqual(response.status, .forbidden)
+    }
+
+    func testCreatureLibraryImportRouteSkipsExistingFileWhenOverwriteIsFalse() async throws {
+        let tempBaseDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-import-skip-\(UUID().uuidString)", isDirectory: true)
+        let tempUserDataDirectory = tempBaseDirectory
+            .appendingPathComponent("userdata", isDirectory: true)
+            .appendingPathComponent("pathfinder", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempBaseDirectory)
+        }
+        let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
+        AppPaths.appDataDirectoryOverride = tempBaseDirectory
+        defer {
+            AppPaths.appDataDirectoryOverride = priorAppDataDirectoryOverride
+        }
+
+        let existingURL = tempUserDataDirectory.appendingPathComponent("imported-aasimar.json")
+        let existingData = """
+        {
+          "name": "Imported Aasimar",
+          "cr": 1,
+          "initiativeBonus": 1,
+          "hp": 9
+        }
+        """
+        try existingData.write(to: existingURL, atomically: true, encoding: .utf8)
+
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
+        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
+        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
+        CreatureLibraryConfiguration.includeLocalCreatures = true
+        defer {
+            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
+            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
+        }
+
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+
+        let payload = CreatureLibraryImportInput(
+            files: [
+                CreatureLibraryImportFile(
+                    filename: "imported-aasimar.json",
+                    contents: """
+                    {
+                      "name": "Imported Aasimar",
+                      "cr": 1,
+                      "initiative": 4,
+                      "hp": 11
+                    }
+                    """
+                )
+            ],
+            overwrite: false
+        )
+
+        let response = try await tester.sendRequest(
+            .POST,
+            "/creature-library/import",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(refereeCookie)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(payload))
+        )
+
+        XCTAssertEqual(response.status, .ok)
+        let imported = try response.content.decode(CreatureLibraryImportResponse.self)
+        XCTAssertEqual(imported.imported, 0)
+        XCTAssertEqual(imported.skipped, 1)
+
+        let resultingData = try Data(contentsOf: existingURL)
+        let resultingObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: resultingData) as? [String: Any])
+        XCTAssertEqual(resultingObject["initiativeBonus"] as? Int, 1)
+        XCTAssertEqual(resultingObject["hp"] as? Int, 9)
     }
 
     func testConditionsLibraryReturnsStatBlocksForTraveller2() async throws {

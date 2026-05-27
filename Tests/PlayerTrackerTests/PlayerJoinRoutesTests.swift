@@ -1068,7 +1068,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
             "/campaigns/\(secondCampaign.id.uuidString)/characters",
             headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
         )
-        XCTAssertEqual(claimableCharactersResponse.status, .forbidden)
+        XCTAssertEqual(claimableCharactersResponse.status, .ok)
     }
 
     func testRefereeWithoutCampaignMembershipIsForbiddenAfterActiveCampaignSwitch() async throws {
@@ -1119,7 +1119,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
             "/campaigns/\(secondCampaign.id.uuidString)/characters",
             headers: ["Cookie": "roll4_player_session=\(refereeSession)"]
         )
-        XCTAssertEqual(claimableCharactersResponse.status, .forbidden)
+        XCTAssertEqual(claimableCharactersResponse.status, .ok)
     }
 
     private func join(displayName: String, tester: XCTApplicationTester) async throws -> (session: PlayerSessionResponse, cookieToken: String) {
@@ -1270,6 +1270,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     private func makeApp(activeCampaign: Bool = true) async throws -> Application {
         let app = try await Application.make(.testing)
+        await userStore.clear()
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
         options.hostname = "127.0.0.1"

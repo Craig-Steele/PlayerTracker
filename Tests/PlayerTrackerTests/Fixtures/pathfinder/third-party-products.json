@@ -4506,6 +4506,15 @@
       "ac": 14,
       "alignment": "N",
       "type": "Large vermin"
+    },
+    {
+      "name": "Banshee, Bean Sidhe (3pp)",
+      "baseCreatureName": "Banshee",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/banshee/",
+      "cr": "13",
+      "alignment": "LN",
+      "type": "Medium fey (incorporeal)",
+      "notes": "Variant: Banshee, Bean Sidhe (CR 13) (3pp); Song of Mourning replaces wail; Portent of Doom replaces terror"
     }
   ]
 }

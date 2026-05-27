@@ -1,15 +1,20 @@
 import Foundation
 
 enum AppPaths {
+    nonisolated(unsafe) static var appDataDirectoryOverride: URL?
+
     static func appDataDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
+        if let override = appDataDirectoryOverride {
+            return override
+        }
         #if os(macOS)
-        FileManager.default.homeDirectoryForCurrentUser
+        return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/Roll4Initiative", isDirectory: true)
         #elseif os(Windows)
-        environmentDirectory("LOCALAPPDATA", environment: environment)
+        return environmentDirectory("LOCALAPPDATA", environment: environment)
             .appendingPathComponent("Roll4Initiative", isDirectory: true)
         #else
-        xdgDirectory(environmentKey: "XDG_DATA_HOME", fallbackPath: ".local/share", environment: environment)
+        return xdgDirectory(environmentKey: "XDG_DATA_HOME", fallbackPath: ".local/share", environment: environment)
             .appendingPathComponent("Roll4Initiative", isDirectory: true)
         #endif
     }

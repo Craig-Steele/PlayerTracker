@@ -460,7 +460,7 @@
     {
       "name": "Charybdis, Giant (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/charybdis-giant-mythic/",
-      "cr": "17/MR 6",
+      "cr": "17",
       "init": 2,
       "hp": 280,
       "ac": 32,
@@ -790,7 +790,7 @@
     {
       "name": "Decapus",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/decapus/",
-      "cr": "4 XP 1,200",
+      "cr": "4",
       "init": 1,
       "hp": 45,
       "ac": 16,
@@ -850,7 +850,7 @@
     {
       "name": "Drakainia",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/drakainia/",
-      "cr": "25/MR 10",
+      "cr": "25",
       "init": 9,
       "hp": 642,
       "ac": 48,
@@ -1320,7 +1320,7 @@
     {
       "name": "Froghemoth",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/froghemoth/",
-      "cr": "13) Ability Drain (Ex) Immunity to Magic (Ex) Strands (Ex) Vulnerability to Divine (Ex)",
+      "cr": "13",
       "init": 5,
       "hp": 184,
       "ac": 28,
@@ -1408,16 +1408,6 @@
       "type": "Large aberration"
     },
     {
-      "name": "Giant Mythic Charybdis",
-      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/giant-mythic-charybdis/",
-      "cr": "17/MR 6",
-      "init": 2,
-      "hp": 280,
-      "ac": 32,
-      "alignment": "CN",
-      "type": "Colossal aberration (aquatic, mythic)"
-    },
-    {
       "name": "Gibbering Abomination",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/gibbering-abomination-fgg/",
       "cr": "13",
@@ -1430,7 +1420,7 @@
     {
       "name": "Gibbering Mouther",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/gibbering-mouther/",
-      "cr": "5) Eye Rays (Sp)",
+      "cr": "5",
       "init": 3,
       "hp": 46,
       "ac": 19,
@@ -1540,7 +1530,7 @@
     {
       "name": "Great Old One, Cthulhu",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/great-old-ones/great-old-one-cthulhu/",
-      "cr": "30 (XP 9,830,400)",
+      "cr": "30",
       "init": 15,
       "hp": 774,
       "ac": 49,
@@ -1890,7 +1880,7 @@
     {
       "name": "Incutilis (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/incutilis-mythic/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 6,
       "hp": 26,
       "ac": 18,
@@ -1980,7 +1970,7 @@
     {
       "name": "Jorganth",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/jorganth/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 6,
       "hp": 100,
       "ac": 24,
@@ -2260,7 +2250,7 @@
     {
       "name": "Mythic Elder Thing",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-elder-thing/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 2,
       "hp": 75,
       "ac": 24,
@@ -2270,7 +2260,7 @@
     {
       "name": "Mythic Faceless Stalker",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-faceless-stalker/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 7,
       "hp": 58,
       "ac": 19,
@@ -2280,7 +2270,7 @@
     {
       "name": "Mythic Fachen",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-fachen/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 1,
       "hp": 61,
       "ac": 20,
@@ -2290,7 +2280,7 @@
     {
       "name": "Mythic Flumph",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-flumph/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 3,
       "hp": 17,
       "ac": 19,
@@ -2300,7 +2290,7 @@
     {
       "name": "Mythic Gibbering Mouther",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-gibbering-mouther/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 4,
       "hp": 62,
       "ac": 22,
@@ -2310,7 +2300,7 @@
     {
       "name": "Mythic Gug",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-gug/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 1,
       "hp": 182,
       "ac": 29,
@@ -2320,7 +2310,7 @@
     {
       "name": "Mythic Naga, Guardian",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-naga-guardian/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 6,
       "hp": 154,
       "ac": 29,
@@ -2330,7 +2320,7 @@
     {
       "name": "Mythic Naga, Spirit",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-naga-spirit/",
-      "cr": "11/ MR 4",
+      "cr": "11",
       "init": 5,
       "hp": 127,
       "ac": 27,
@@ -2340,7 +2330,7 @@
     {
       "name": "Mythic Naga, Water",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-naga-water/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 6,
       "hp": 100,
       "ac": 24,
@@ -2350,7 +2340,7 @@
     {
       "name": "Mythic Seugathi",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-seugathi/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 9,
       "hp": 91,
       "ac": 22,
@@ -2360,7 +2350,7 @@
     {
       "name": "Mythic Yithian",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/mythic-yithian/",
-      "cr": "11/MR 4",
+      "cr": "11",
       "init": 10,
       "hp": 137,
       "ac": 27,
@@ -2440,7 +2430,7 @@
     {
       "name": "Naga, Dark",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-dark/",
-      "cr": "9 (XP 4,800)",
+      "cr": "9",
       "init": 5,
       "hp": 85,
       "ac": 22,
@@ -2460,7 +2450,7 @@
     {
       "name": "Naga, Dream",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-dream/",
-      "cr": "9 (XP 6,400)",
+      "cr": "9",
       "init": 6,
       "hp": 123,
       "ac": 23,
@@ -2480,7 +2470,7 @@
     {
       "name": "Naga, Guardian",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-guardian/",
-      "cr": "10 (XP 9,600)",
+      "cr": "10",
       "init": 6,
       "hp": 114,
       "ac": 24,
@@ -2500,7 +2490,7 @@
     {
       "name": "Naga, Lunar",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-lunar/",
-      "cr": "6 (XP 2,400)",
+      "cr": "6",
       "init": 4,
       "hp": 68,
       "ac": 20,
@@ -2520,7 +2510,7 @@
     {
       "name": "Naga, Royal",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-royal/",
-      "cr": "11 (XP 12,800)",
+      "cr": "11",
       "init": 7,
       "hp": 133,
       "ac": 26,
@@ -2530,7 +2520,7 @@
     {
       "name": "Naga, Slime",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-slime/",
-      "cr": "9 (XP 6,400)",
+      "cr": "9",
       "init": 4,
       "hp": 115,
       "ac": 24,
@@ -2540,7 +2530,7 @@
     {
       "name": "Naga, Spirit",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-spirit/",
-      "cr": "9 (XP 6,400)",
+      "cr": "9",
       "init": 5,
       "hp": 95,
       "ac": 23,
@@ -2560,7 +2550,7 @@
     {
       "name": "Naga, Water",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/naga/naga-water/",
-      "cr": "7) Beguiling Gaze (Su) Spit Poison (Ex) Rejuvenation (Su)",
+      "cr": "7",
       "init": 6,
       "hp": 76,
       "ac": 20,
@@ -2650,7 +2640,7 @@
     {
       "name": "Neh-Thalggu",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/neh-thalggu/",
-      "cr": "8) Brain Collection (Ex) Poison (Ex) Spells Strange Knowledge (Ex)",
+      "cr": "8",
       "init": 7,
       "hp": 105,
       "ac": 21,
@@ -2860,7 +2850,7 @@
     {
       "name": "Phrenic Scourge",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/phrenic-scourge-2/",
-      "cr": "10/MR 4",
+      "cr": "10",
       "init": 4,
       "hp": 76,
       "ac": 21,
@@ -3000,7 +2990,7 @@
     {
       "name": "Roper",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/roper/",
-      "cr": "13) Shardstriker (CR 13) Variant: Roper, Crusher (CR 12) Boulder (Su)",
+      "cr": "13",
       "init": 5,
       "hp": 162,
       "ac": 27,
@@ -3060,7 +3050,7 @@
     {
       "name": "Rust Monster",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/rust-monster/",
-      "cr": "3) Necrotizing (Su)",
+      "cr": "3",
       "init": 3,
       "hp": 27,
       "ac": 18,
@@ -3310,7 +3300,7 @@
     {
       "name": "Spawning Canker Sheriff",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/spawning-canker-sheriff/",
-      "cr": "10*",
+      "cr": "10",
       "init": 6,
       "hp": 115,
       "ac": 26,
@@ -3320,7 +3310,7 @@
     {
       "name": "Spookling",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/spookling-cr-%c2%bc/",
-      "cr": "¼",
+      "cr": "1/4",
       "init": 3,
       "hp": 5,
       "ac": 17,
@@ -3580,7 +3570,7 @@
     {
       "name": "Trench Newt",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/trench-newt/",
-      "cr": "5 XP 1,600",
+      "cr": "5",
       "init": 3,
       "hp": 53,
       "ac": 17,
@@ -3770,7 +3760,7 @@
     {
       "name": "Will-o’-Wisp",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/will-o-wisp/",
-      "cr": "6) Create Pit (Su)",
+      "cr": "6",
       "init": 13,
       "hp": 40,
       "ac": 26,
@@ -4060,7 +4050,7 @@
     {
       "name": "Ape, Colossal",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/ape-colossal/",
-      "cr": "15/MR 6",
+      "cr": "15",
       "init": 2,
       "hp": 309,
       "ac": 26,
@@ -4700,7 +4690,7 @@
     {
       "name": "Crocotta, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/crocotta-mythic/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 4,
       "hp": 50,
       "ac": 21,
@@ -5900,7 +5890,7 @@
     {
       "name": "Herd Animal, Elk (Giant)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/herd-animals/elk/herd-animal-elk-giant/",
-      "cr": "2 N Large animal",
+      "cr": "2",
       "init": 6,
       "hp": 76,
       "ac": 15,
@@ -6510,7 +6500,7 @@
     {
       "name": "Man-Eating Ewe",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/man-eating-ewe/",
-      "cr": "½",
+      "cr": "1/2",
       "init": 1,
       "hp": 8,
       "ac": 15,
@@ -6620,7 +6610,7 @@
     {
       "name": "Maw, Horned (CR 4)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/maw-horned-cr-4/",
-      "cr": "4) – d20PFSRD",
+      "cr": "4",
       "init": 0,
       "hp": 37,
       "ac": 17,
@@ -6930,7 +6920,7 @@
     {
       "name": "Mythic Cheetah",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/mythic-cheetah/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 9,
       "hp": 27,
       "ac": 16,
@@ -6940,7 +6930,7 @@
     {
       "name": "Mythic Dire Crocodile",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/mythic-dire-crocodile/",
-      "cr": "11/MR 4",
+      "cr": "11",
       "init": 8,
       "hp": 170,
       "ac": 25,
@@ -6950,7 +6940,7 @@
     {
       "name": "Mythic Dire Lion",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/mythic-dire-lion/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 6,
       "hp": 76,
       "ac": 17,
@@ -6960,7 +6950,7 @@
     {
       "name": "Mythic Megalania",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/mythic-megalania/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 1,
       "hp": 109,
       "ac": 24,
@@ -6970,7 +6960,7 @@
     {
       "name": "Mythic Moa",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/mythic-moa/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 7,
       "hp": 27,
       "ac": 16,
@@ -6980,7 +6970,7 @@
     {
       "name": "Mythic Ostrich",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/mythic-ostrich/",
-      "cr": "2/MR 1",
+      "cr": "2",
       "init": 2,
       "hp": 21,
       "ac": 14,
@@ -7180,7 +7170,7 @@
     {
       "name": "Otter",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/otter/",
-      "cr": "1/4 XP 100",
+      "cr": "1/4",
       "init": 3,
       "hp": 4,
       "ac": 15,
@@ -7260,7 +7250,7 @@
     {
       "name": "Phaea",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/phaea/",
-      "cr": "7/MR 2",
+      "cr": "7",
       "init": -1,
       "hp": 85,
       "ac": 18,
@@ -7700,7 +7690,7 @@
     {
       "name": "Rhinoceros",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/rhinoceros-2/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 0,
       "hp": 58,
       "ac": 18,
@@ -7890,7 +7880,7 @@
     {
       "name": "Shark, Dire (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/shark-dire-mythic/",
-      "cr": "11/MR 4",
+      "cr": "11",
       "init": 6,
       "hp": 144,
       "ac": 27,
@@ -8530,7 +8520,7 @@
     {
       "name": "Tuatara, Giant",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/tuatara-giant-tohc/",
-      "cr": "4 (XP 1,200)",
+      "cr": "4",
       "init": 1,
       "hp": 42,
       "ac": 15,
@@ -8830,7 +8820,7 @@
     {
       "name": "Abyssal Devastator",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/abyssal-devastator/",
-      "cr": "23/MR 8",
+      "cr": "23",
       "init": 6,
       "hp": 365,
       "ac": 44,
@@ -8880,7 +8870,7 @@
     {
       "name": "Alter Ego",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/alter-ego/",
-      "cr": "6 (XP 2,400)",
+      "cr": "6",
       "init": 3,
       "hp": 75,
       "ac": 20,
@@ -9960,7 +9950,7 @@
     {
       "name": "Colossus, Flesh",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/colossus/colossus-flesh/",
-      "cr": "16/MR 6",
+      "cr": "16",
       "init": 0,
       "hp": 224,
       "ac": 30,
@@ -9970,7 +9960,7 @@
     {
       "name": "Colossus, Gold",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/colossus/champion-of-the-gilded-host/",
-      "cr": "18/MR 7",
+      "cr": "18",
       "init": 1,
       "hp": 273,
       "ac": 32,
@@ -9980,7 +9970,7 @@
     {
       "name": "Colossus, Sphinx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/colossus/colossus-sphinx/",
-      "cr": "14/MR 4",
+      "cr": "14",
       "init": 5,
       "hp": 199,
       "ac": 31,
@@ -9990,7 +9980,7 @@
     {
       "name": "Colossus, Wood",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/colossus/colossus-wood/",
-      "cr": "17/MR 6",
+      "cr": "17",
       "init": 9,
       "hp": 237,
       "ac": 35,
@@ -10100,7 +10090,7 @@
     {
       "name": "Devastator",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/devastator/",
-      "cr": "22/MR 8",
+      "cr": "22",
       "init": 6,
       "hp": 365,
       "ac": 44,
@@ -10130,7 +10120,7 @@
     {
       "name": "Dragon Molt",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/dragon-molt/",
-      "cr": "13)",
+      "cr": "13",
       "init": 5,
       "hp": 146,
       "ac": 24,
@@ -10250,7 +10240,7 @@
     {
       "name": "Golem, Brass",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-brass/",
-      "cr": "14) Volatile Toxicity (Su)",
+      "cr": "14",
       "init": 0,
       "hp": 150,
       "ac": 30,
@@ -10260,7 +10250,7 @@
     {
       "name": "Golem, Cannon",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-cannon/",
-      "cr": "15) Alloyed (Ex) Impale Opponent (Ex) Devastating Harpoon (Ex) Pull (Ex) Immunity to Magic (Ex) Crafting a Cannon Golem",
+      "cr": "15",
       "init": 7,
       "hp": 140,
       "ac": 31,
@@ -10350,7 +10340,7 @@
     {
       "name": "Golem, Coral (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem-coral-mythic/",
-      "cr": "11/MR 4",
+      "cr": "11",
       "init": 0,
       "hp": 160,
       "ac": 25,
@@ -10420,7 +10410,7 @@
     {
       "name": "Golem, Inubrix",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-inubrix/",
-      "cr": "+0) Ghost Metal Golem (CR +0)",
+      "cr": "14",
       "init": 3,
       "hp": 140,
       "ac": 28,
@@ -10470,7 +10460,7 @@
     {
       "name": "Golem, Mithral",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-mithral/",
-      "cr": "15) Reflection (Su)",
+      "cr": "15",
       "init": 7,
       "hp": 172,
       "ac": 32,
@@ -10560,7 +10550,7 @@
     {
       "name": "Golem, Sand",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-sand/",
-      "cr": ") Quicksand Golem (+0 CR) Crafting a Sand Golem",
+      "cr": "9",
       "init": 2,
       "hp": 96,
       "ac": 23,
@@ -10820,7 +10810,7 @@
     {
       "name": "Mythic Aballonian",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/mythic-aballonian/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 2,
       "hp": 105,
       "ac": 25,
@@ -10830,7 +10820,7 @@
     {
       "name": "Mythic Clockwork Mage",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/mythic-clockwork-mage/",
-      "cr": "12/MR 4",
+      "cr": "12",
       "init": 14,
       "hp": 142,
       "ac": 30,
@@ -10840,7 +10830,7 @@
     {
       "name": "Mythic Clockwork Spy",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/mythic-clockwork-spy/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 5,
       "hp": 15,
       "ac": 16,
@@ -10850,7 +10840,7 @@
     {
       "name": "Mythic Cyberphrenic Tadpole",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/mythic-cyberphrenic-tadpole/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 3,
       "hp": 15,
       "ac": 18,
@@ -10860,7 +10850,7 @@
     {
       "name": "Mythic Terra-cotta Soldier",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/mythic-terra-cotta-soldier/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 7,
       "hp": 94,
       "ac": 22,
@@ -10870,7 +10860,7 @@
     {
       "name": "Mythic Tiberolith",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/mythic-tiberolith/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 9,
       "hp": 187,
       "ac": 31,
@@ -10910,7 +10900,7 @@
     {
       "name": "Poppet, Small",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/poppet/poppet-small/",
-      "cr": "1/2)",
+      "cr": "1/2",
       "init": 1,
       "hp": 15,
       "ac": 12,
@@ -10920,7 +10910,7 @@
     {
       "name": "Poppet, Tiny",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/poppet/poppet-tiny/",
-      "cr": "1/3)",
+      "cr": "1/3",
       "init": 2,
       "hp": 5,
       "ac": 14,
@@ -11300,7 +11290,7 @@
     {
       "name": "Taotieh",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/taotieh/",
-      "cr": "11 (XP 12,800)",
+      "cr": "11",
       "init": 2,
       "hp": 107,
       "ac": 28,
@@ -11310,7 +11300,7 @@
     {
       "name": "Tattoo Guardian",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/tattoo-guardian/",
-      "cr": "3 (XP 800)",
+      "cr": "3",
       "init": 9,
       "hp": 42,
       "ac": 15,
@@ -11500,7 +11490,7 @@
     {
       "name": "Wyrwood Rogue 1 (CR 1/2)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/wyrwood/",
-      "cr": "1/2) – d20PFSRD",
+      "cr": "1/2",
       "init": 3,
       "hp": 18,
       "ac": 16,
@@ -11510,7 +11500,7 @@
     {
       "name": "Adult Crypt Dragon CR 16",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-crypt/adult-crypt-dragon-cr-16/",
-      "cr": "16 – d20PFSRD",
+      "cr": "16",
       "init": 4,
       "hp": 250,
       "ac": 31,
@@ -11520,7 +11510,7 @@
     {
       "name": "Adult Havoc Dragon CR 16",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-havoc/adult-havoc-dragon-cr-16/",
-      "cr": "16 – d20PFSRD",
+      "cr": "16",
       "init": 6,
       "hp": 230,
       "ac": 32,
@@ -11530,7 +11520,7 @@
     {
       "name": "Adult Infernal Dragon CR 16",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-infernal/adult-infernal-dragon-cr-16/",
-      "cr": "16 – d20PFSRD",
+      "cr": "16",
       "init": 3,
       "hp": 250,
       "ac": 31,
@@ -11540,7 +11530,7 @@
     {
       "name": "Adult Paradise Dragon CR 16",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-paradise/adult-paradise-dragon-cr-16/",
-      "cr": "16 – d20PFSRD",
+      "cr": "16",
       "init": 4,
       "hp": 270,
       "ac": 31,
@@ -11550,7 +11540,7 @@
     {
       "name": "Adult Rift Dragon CR 16",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-rift/adult-rift-dragon-cr-16/",
-      "cr": "16 – d20PFSRD",
+      "cr": "16",
       "init": 4,
       "hp": 270,
       "ac": 31,
@@ -11570,7 +11560,7 @@
     {
       "name": "Ancient Crypt Dragon CR 21",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-crypt/ancient-crypt-dragon-cr-21/",
-      "cr": "21 – d20PFSRD",
+      "cr": "21",
       "init": 3,
       "hp": 406,
       "ac": 40,
@@ -11580,7 +11570,7 @@
     {
       "name": "Ancient Havoc Dragon CR 21",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-havoc/ancient-havoc-dragon-cr-21/",
-      "cr": "21 – d20PFSRD",
+      "cr": "21",
       "init": 5,
       "hp": 378,
       "ac": 41,
@@ -11590,7 +11580,7 @@
     {
       "name": "Ancient Infernal Dragon CR 21",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-infernal/ancient-infernal-dragon-cr-21/",
-      "cr": "21 – d20PFSRD",
+      "cr": "21",
       "init": 2,
       "hp": 406,
       "ac": 40,
@@ -11600,7 +11590,7 @@
     {
       "name": "Ancient Paradise Dragon CR 21",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-paradise/ancient-paradise-dragon-cr-21/",
-      "cr": "21 – d20PFSRD",
+      "cr": "21",
       "init": 3,
       "hp": 434,
       "ac": 40,
@@ -11610,7 +11600,7 @@
     {
       "name": "Ancient Rift Dragon CR 21",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-rift/ancient-rift-dragon-cr-21/",
-      "cr": "21 – d20PFSRD",
+      "cr": "21",
       "init": 3,
       "hp": 434,
       "ac": 40,
@@ -12780,7 +12770,7 @@
     {
       "name": "Dragon Turtle (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-turtle-mythic/",
-      "cr": "11/MR 4",
+      "cr": "11",
       "init": 4,
       "hp": 166,
       "ac": 27,
@@ -12830,7 +12820,7 @@
     {
       "name": "Dragon, Faerie",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-faerie/",
-      "cr": "2) Faerie Dust Bite (Su)",
+      "cr": "2",
       "init": 3,
       "hp": 22,
       "ac": 18,
@@ -12840,7 +12830,7 @@
     {
       "name": "Dragon, Faerie",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-faerie-tohc/",
-      "cr": "2) Faerie Dust Bite (Su)",
+      "cr": "2",
       "init": 3,
       "hp": 22,
       "ac": 18,
@@ -13160,7 +13150,7 @@
     {
       "name": "Drake, Rift",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/drakes/drake-rift/",
-      "cr": "9 XP 6,400",
+      "cr": "9",
       "init": 7,
       "hp": 126,
       "ac": 23,
@@ -13200,7 +13190,7 @@
     {
       "name": "Drake, Sea (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/drake-sea-mythic/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 6,
       "hp": 103,
       "ac": 22,
@@ -13280,7 +13270,7 @@
     {
       "name": "Dungeon Dragon, Ancient",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dungeon-dragon-tohc/dungeon-dragon-ancient-tohc/",
-      "cr": "14 XP 38,400",
+      "cr": "14",
       "init": 3,
       "hp": 218,
       "ac": 35,
@@ -13300,7 +13290,7 @@
     {
       "name": "Dungeon Dragon, Young",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dungeon-dragon-tohc/dungeon-dragon-young-tohc/",
-      "cr": "5 XP 1,600",
+      "cr": "5",
       "init": 1,
       "hp": 37,
       "ac": 17,
@@ -13590,7 +13580,7 @@
     {
       "name": "Gorynych",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/gorynych/",
-      "cr": "15) Breath Weapon (Su) Hurricane Gust (Ex) Regeneration (Ex) Vulnerability to Mind-Affecting (Su)",
+      "cr": "15",
       "init": 2,
       "hp": 212,
       "ac": 28,
@@ -13770,7 +13760,7 @@
     {
       "name": "Kongamato, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/kongamato-mythic/",
-      "cr": "18/MR7",
+      "cr": "18",
       "init": 7,
       "hp": 403,
       "ac": 38,
@@ -13810,7 +13800,7 @@
     {
       "name": "Linnorm, Cairn",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/linnorm/linnorm-cairn/",
-      "cr": "17) Chaotic Immunity (Su) Breath Weapon (Su) Death Curse (Su) Poison (Su)",
+      "cr": "17",
       "init": 11,
       "hp": 290,
       "ac": 35,
@@ -13820,7 +13810,7 @@
     {
       "name": "Linnorm, Crag",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/linnorm/linnorm-crag/",
-      "cr": "14) Breath Weapon (Su) Death Curse (Su)",
+      "cr": "14",
       "init": 8,
       "hp": 202,
       "ac": 29,
@@ -13840,7 +13830,7 @@
     {
       "name": "Linnorm, Fjord",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/linnorm/linnorm-fjord/",
-      "cr": "16) Breath Weapon (Su) Death Curse (Su)",
+      "cr": "16",
       "init": 10,
       "hp": 248,
       "ac": 30,
@@ -13860,7 +13850,7 @@
     {
       "name": "Linnorm, Ice",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/linnorm/linnorm-ice/",
-      "cr": "17) Breath Weapon (Su) Death Curse (Su) Poison (Su)",
+      "cr": "17",
       "init": 10,
       "hp": 279,
       "ac": 32,
@@ -13880,7 +13870,7 @@
     {
       "name": "Linnorm, Taiga",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/linnorm/linnorm-taiga/",
-      "cr": "19) Breath Weapon (Su) Death Curse (Su) Poison (Su)",
+      "cr": "19",
       "init": 11,
       "hp": 346,
       "ac": 34,
@@ -13890,7 +13880,7 @@
     {
       "name": "Linnorm, Tarn",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/linnorm/linnorm-tarn/",
-      "cr": "20) Breath Weapon (Su) Death Curse (Su) Chronal Displacement (Su) Poison (Su) Starflight (Su) No breath (Ex)",
+      "cr": "20",
       "init": 12,
       "hp": 385,
       "ac": 36,
@@ -14120,7 +14110,7 @@
     {
       "name": "Mythic Forest Dragon, Mature Adult",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/mythic-forest-dragon-mature-adult/",
-      "cr": "19/MR 7",
+      "cr": "19",
       "init": 4,
       "hp": 345,
       "ac": 40,
@@ -14130,7 +14120,7 @@
     {
       "name": "Mythic Sea Dragon, Very Old",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/mythic-sea-dragon-very-old/",
-      "cr": "20/MR 8",
+      "cr": "20",
       "init": 3,
       "hp": 405,
       "ac": 42,
@@ -14140,7 +14130,7 @@
     {
       "name": "Mythic Sky Dragon, Adult",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/mythic-sky-dragon-adult/",
-      "cr": "16/MR 6",
+      "cr": "16",
       "init": 10,
       "hp": 262,
       "ac": 36,
@@ -14150,7 +14140,7 @@
     {
       "name": "Mythic Underworld Dragon, Wyrm",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/mythic-underworld-dragon-wyrm/",
-      "cr": "21/MR 8",
+      "cr": "21",
       "init": 10,
       "hp": 404,
       "ac": 48,
@@ -14730,7 +14720,7 @@
     {
       "name": "Silver Dragon, Ancient",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/metallic-silver/ancient-silver-dragon/",
-      "cr": "19 XP 204,800",
+      "cr": "19",
       "init": 3,
       "hp": 337,
       "ac": 38,
@@ -15760,7 +15750,7 @@
     {
       "name": "Young Crypt Dragon CR 12",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-crypt/young-crypt-dragon-cr-12/",
-      "cr": "12 – d20PFSRD",
+      "cr": "12",
       "init": 5,
       "hp": 147,
       "ac": 24,
@@ -15770,7 +15760,7 @@
     {
       "name": "Young Havoc Dragon CR 12",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-havoc/young-havoc-dragon-cr-12/",
-      "cr": "12 – d20PFSRD",
+      "cr": "12",
       "init": 7,
       "hp": 133,
       "ac": 25,
@@ -15780,7 +15770,7 @@
     {
       "name": "Young Infernal Dragon CR 12",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-infernal/young-infernal-dragon-cr-12/",
-      "cr": "12 – d20PFSRD",
+      "cr": "12",
       "init": 4,
       "hp": 147,
       "ac": 24,
@@ -15790,7 +15780,7 @@
     {
       "name": "Young Paradise Dragon CR 12",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-paradise/young-paradise-dragon-cr-12/",
-      "cr": "12 – d20PFSRD",
+      "cr": "12",
       "init": 5,
       "hp": 161,
       "ac": 24,
@@ -15800,7 +15790,7 @@
     {
       "name": "Young Rift Dragon CR 12",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-planar/planar-dragon-rift/young-rift-dragon-cr-12/",
-      "cr": "12 – d20PFSRD",
+      "cr": "12",
       "init": 5,
       "hp": 161,
       "ac": 24,
@@ -15840,7 +15830,7 @@
     {
       "name": "Alpluachra",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/alpluachra-2/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 1,
       "hp": 11,
       "ac": 16,
@@ -16070,7 +16060,7 @@
     {
       "name": "Bogeyman",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/bogeyman-2/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 10,
       "hp": 123,
       "ac": 29,
@@ -16120,7 +16110,7 @@
     {
       "name": "Brownie",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/brownie-2/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 8,
       "hp": 10,
       "ac": 19,
@@ -16200,7 +16190,7 @@
     {
       "name": "Chaneque",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/chaneque/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 3,
       "hp": 19,
       "ac": 15,
@@ -16340,7 +16330,7 @@
     {
       "name": "Dryad",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/dryad/",
-      "cr": "3) Nature’s Prison (Su)",
+      "cr": "3",
       "init": 4,
       "hp": 27,
       "ac": 17,
@@ -16540,7 +16530,7 @@
     {
       "name": "Fata",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/fata/",
-      "cr": "20/MR 8",
+      "cr": "20",
       "init": 6,
       "hp": 295,
       "ac": 36,
@@ -16710,7 +16700,7 @@
     {
       "name": "Glaistig",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/glaistig/",
-      "cr": "21/MR 10",
+      "cr": "21",
       "init": 26,
       "hp": 422,
       "ac": 40,
@@ -16760,7 +16750,7 @@
     {
       "name": "Gremlin, Fuath",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/gremlins/gremlin-fuath/",
-      "cr": "1)",
+      "cr": "1",
       "init": 5,
       "hp": 7,
       "ac": 15,
@@ -16820,7 +16810,7 @@
     {
       "name": "Gremlin, Jinkin",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/gremlins/gremlin-jinkin/",
-      "cr": "1)",
+      "cr": "1",
       "init": 4,
       "hp": 6,
       "ac": 18,
@@ -16950,7 +16940,7 @@
     {
       "name": "Hamadryad Queen",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/hamadryad-queen/",
-      "cr": "30/MR 6",
+      "cr": "30",
       "init": 13,
       "hp": 418,
       "ac": 50,
@@ -17050,7 +17040,7 @@
     {
       "name": "Horzitoth",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/horzitoth/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 0,
       "hp": 132,
       "ac": 21,
@@ -17220,7 +17210,7 @@
     {
       "name": "Lamp Blighter",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/lamp-blighter/",
-      "cr": "6 (XP 2,400)",
+      "cr": "6",
       "init": 5,
       "hp": 45,
       "ac": 17,
@@ -17420,7 +17410,7 @@
     {
       "name": "Mythic Forlarren",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mythic-forlarren/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 2,
       "hp": 24,
       "ac": 16,
@@ -17430,7 +17420,7 @@
     {
       "name": "Mythic Fossegrim",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mythic-fossegrim/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 7,
       "hp": 74,
       "ac": 20,
@@ -17440,7 +17430,7 @@
     {
       "name": "Mythic Gremlin, Fuath",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mythic-gremlin-fuath/",
-      "cr": "2/MR 1",
+      "cr": "2",
       "init": 5,
       "hp": 13,
       "ac": 16,
@@ -17450,7 +17440,7 @@
     {
       "name": "Mythic Gremlin, Jinkin",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mythic-gremlin-jinkin/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 4,
       "hp": 12,
       "ac": 20,
@@ -17460,7 +17450,7 @@
     {
       "name": "Mythic Gremlin, Nuglub",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mythic-gremlin-nuglub/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 4,
       "hp": 25,
       "ac": 19,
@@ -17470,7 +17460,7 @@
     {
       "name": "Mythic Grig",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mythic-grig/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 4,
       "hp": 10,
       "ac": 18,
@@ -17480,7 +17470,7 @@
     {
       "name": "Mythic Oceanid",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mythic-oceanid/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 8,
       "hp": 94,
       "ac": 25,
@@ -17530,7 +17520,7 @@
     {
       "name": "Nereid (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/nereid-mythic/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 9,
       "hp": 156,
       "ac": 32,
@@ -17590,7 +17580,7 @@
     {
       "name": "Norn",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/norn/",
-      "cr": "17) Improved Evasion (Su) Pluck the Thread (Su) Pronounced Doom (Su) Stalwart (Ex)",
+      "cr": "17",
       "init": 16,
       "hp": 270,
       "ac": 33,
@@ -17600,7 +17590,7 @@
     {
       "name": "Norn, Immature",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/norn/norn-immature/",
-      "cr": "17) Improved Evasion (Su) Pluck the Thread (Su) Pronounced Doom (Su) Stalwart (Ex)",
+      "cr": "17",
       "init": 10,
       "hp": 138,
       "ac": 24,
@@ -17630,7 +17620,7 @@
     {
       "name": "Nymph",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/nymph/",
-      "cr": "7) Circle of Stars (Su) Interplanetary Teleportation (Sp)",
+      "cr": "7",
       "init": 5,
       "hp": 60,
       "ac": 23,
@@ -17880,7 +17870,7 @@
     {
       "name": "Sidhe Lord (CR 23)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/sidhe-lord-cr-23/",
-      "cr": "23) – d20PFSRD",
+      "cr": "23",
       "init": 8,
       "hp": 434,
       "ac": 30,
@@ -17930,7 +17920,7 @@
     {
       "name": "Sprite Swarm",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/sprite/sprite-swarm/",
-      "cr": "5 (XP 1,600)",
+      "cr": "5",
       "init": 7,
       "hp": 45,
       "ac": 18,
@@ -18030,7 +18020,7 @@
     {
       "name": "Thalia, Muse of Comedy",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/thalia-muse-of-comedy/",
-      "cr": "24/MR 9",
+      "cr": "24",
       "init": 13,
       "hp": 419,
       "ac": 43,
@@ -18510,7 +18500,7 @@
     {
       "name": "Bugbear",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/bugbear/",
-      "cr": "4) Wikkawak (CR 4) Murd (CR 3) Slate-Stalker (CR 4) Koblak (CR 6) Lore",
+      "cr": "4",
       "init": 1,
       "hp": 16,
       "ac": 17,
@@ -18690,7 +18680,7 @@
     {
       "name": "Cyclops, Great",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/cyclops/cyclops-great/",
-      "cr": "12) Mirrored Premonition (Su) Cyclops Encounters Expanded Ecology Habitat & Society Campaign Role Treasure Cyclops Bags",
+      "cr": "12",
       "init": 1,
       "hp": 195,
       "ac": 26,
@@ -19070,7 +19060,7 @@
     {
       "name": "Ettin",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/ettin/",
-      "cr": "6)",
+      "cr": "6",
       "init": 3,
       "hp": 65,
       "ac": 18,
@@ -19190,7 +19180,7 @@
     {
       "name": "Giant, Cloud",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/giant-true/giant-cloud/",
-      "cr": "11)",
+      "cr": "11",
       "init": 1,
       "hp": 168,
       "ac": 25,
@@ -19440,7 +19430,7 @@
     {
       "name": "Giant, Storm",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/giant-true/giant-storm/",
-      "cr": "13) Deadly Tempest (Su) Ecology Habitat & Society Campaign Role Treasure Storm Giant Bags Examples",
+      "cr": "13",
       "init": 2,
       "hp": 199,
       "ac": 28,
@@ -19570,7 +19560,7 @@
     {
       "name": "Gnoll, Flind",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/gnoll/gnoll-flind-tohc/",
-      "cr": "2 (XP 600)",
+      "cr": "2",
       "init": 2,
       "hp": 15,
       "ac": 20,
@@ -19630,7 +19620,7 @@
     {
       "name": "Goblin",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/goblin/",
-      "cr": "+0) Gibberling (CR +1) Hellion (CR +1) Lasher (CR +1) Thorn (CR +1)",
+      "cr": "1/3",
       "init": 6,
       "hp": 6,
       "ac": 16,
@@ -19850,7 +19840,7 @@
     {
       "name": "Human, Neanderthal",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/human-neandethal/",
-      "cr": "1) Neanderthal Characters",
+      "cr": "1",
       "init": 2,
       "hp": 23,
       "ac": 17,
@@ -20130,7 +20120,7 @@
     {
       "name": "Lycanthrope, Werebear",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/lycanthrope/werebear/",
-      "cr": "4* XP 1,200",
+      "cr": "4",
       "init": 2,
       "hp": 34,
       "ac": 16,
@@ -20180,7 +20170,7 @@
     {
       "name": "Lycanthrope, Wereshark (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/lycanthrope-wereshark-mythic/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 1,
       "hp": 46,
       "ac": 17,
@@ -20190,7 +20180,7 @@
     {
       "name": "Lycanthrope, Wereshark Chieftain (hybrid)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/lycanthrope-wereshark-chieftain-hybrid/",
-      "cr": "13/MR 5",
+      "cr": "13",
       "init": 3,
       "hp": 224,
       "ac": 34,
@@ -20220,7 +20210,7 @@
     {
       "name": "Merfolk (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/merfolk-mythic/",
-      "cr": "1/MR 1",
+      "cr": "1",
       "init": 1,
       "hp": 15,
       "ac": 13,
@@ -20270,7 +20260,7 @@
     {
       "name": "Merrow, Freshwater (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/merrow-freshwater-mythic/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 4,
       "hp": 38,
       "ac": 18,
@@ -20290,7 +20280,7 @@
     {
       "name": "Merrow, Saltwater (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/merrow-saltwater-mythic/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 3,
       "hp": 97,
       "ac": 22,
@@ -20370,7 +20360,7 @@
     {
       "name": "Mythic Cyclops, Kabandha",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/mythic-cyclops-kabandha/",
-      "cr": "11/ MR 4",
+      "cr": "11",
       "init": 7,
       "hp": 151,
       "ac": 29,
@@ -20380,7 +20370,7 @@
     {
       "name": "Mythic Firbolg",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/mythic-firbolg/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 5,
       "hp": 55,
       "ac": 20,
@@ -20390,7 +20380,7 @@
     {
       "name": "Mythic Papinijuwari",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/mythic-papinijuwari/",
-      "cr": "16/MR 6",
+      "cr": "16",
       "init": 14,
       "hp": 250,
       "ac": 34,
@@ -20650,7 +20640,7 @@
     {
       "name": "Orc, Black",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/orcs/orc-black/",
-      "cr": "1/3)",
+      "cr": "1/3",
       "init": 1,
       "hp": 8,
       "ac": 17,
@@ -20670,7 +20660,7 @@
     {
       "name": "Orc, Common",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/orcs/orc/",
-      "cr": "1/3)",
+      "cr": "1/3",
       "init": 0,
       "hp": 6,
       "ac": 13,
@@ -20680,7 +20670,7 @@
     {
       "name": "Orc, Ghost-Faced",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/orcs/orc-ghost-faced/",
-      "cr": "1/3)",
+      "cr": "1/3",
       "init": 0,
       "hp": 7,
       "ac": 13,
@@ -20690,7 +20680,7 @@
     {
       "name": "Orc, Greenskin",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/orcs/orc-greenskin/",
-      "cr": "1/3)",
+      "cr": "1/3",
       "init": 2,
       "hp": 7,
       "ac": 14,
@@ -20930,7 +20920,7 @@
     {
       "name": "Slugspawn Infested Sheriff",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/slugspawn-infested-sheriff/",
-      "cr": "7*",
+      "cr": "7",
       "init": 5,
       "hp": 64,
       "ac": 16,
@@ -21290,7 +21280,7 @@
     {
       "name": "Troll, Jotund",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/troll/troll-jotund/",
-      "cr": "15) Aura of Trepidation (Su) Barbed Defense (Su) Susceptibility to Grappling (Ex)",
+      "cr": "15",
       "init": 3,
       "hp": 216,
       "ac": 30,
@@ -21380,7 +21370,7 @@
     {
       "name": "Troop, Axers",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/troop/troop-axers/",
-      "cr": "12) Evasion (Ex) Favored Enemy (Ex) Volley (Ex)",
+      "cr": "12",
       "init": 7,
       "hp": 161,
       "ac": 26,
@@ -21400,7 +21390,7 @@
     {
       "name": "Troop, Forest Guardians",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/troop/troop-forest-guardians/",
-      "cr": "10) Favored Enemy (Ex) Volley (Ex) Wild Allies (Ex) About",
+      "cr": "10",
       "init": 9,
       "hp": 123,
       "ac": 23,
@@ -21490,7 +21480,7 @@
     {
       "name": "Troop, Imperial Archers",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/troop/troop-imperial-archers/",
-      "cr": "10) Elite Troop (Ex) United Spirit (Ex) Volley (Ex) About",
+      "cr": "10",
       "init": 10,
       "hp": 114,
       "ac": 24,
@@ -21500,7 +21490,7 @@
     {
       "name": "Troop, Imperial Infantry",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/troop/troop-imperial-infantry/",
-      "cr": "9) Elite Troop (Ex) Protect Ally (Ex) United Spirit (Ex) About",
+      "cr": "9",
       "init": 2,
       "hp": 126,
       "ac": 25,
@@ -21510,7 +21500,7 @@
     {
       "name": "Troop, Imperial Phalanx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/troop/troop-imperial-phalanx/",
-      "cr": "11) Elite Troop (Ex) Phalanx Troop (Ex) United Spirit (Ex) About",
+      "cr": "11",
       "init": 0,
       "hp": 150,
       "ac": 28,
@@ -21570,7 +21560,7 @@
     {
       "name": "Udaeus",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/udaeus/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 1,
       "hp": 38,
       "ac": 22,
@@ -21910,7 +21900,7 @@
     {
       "name": "Ammut",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/ammut/",
-      "cr": "17/MR 7",
+      "cr": "17",
       "init": 1,
       "hp": 360,
       "ac": 34,
@@ -22050,7 +22040,7 @@
     {
       "name": "Aurumvorax",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/aurumvorax/",
-      "cr": "9) Adamantine Attacks (Ex)",
+      "cr": "9",
       "init": 8,
       "hp": 114,
       "ac": 23,
@@ -22080,7 +22070,7 @@
     {
       "name": "Bad Wolf",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/bad-wolf/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 7,
       "hp": 71,
       "ac": 20,
@@ -22120,7 +22110,7 @@
     {
       "name": "Bandersnatch",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/bandersnatch/",
-      "cr": "17) Ravenous Starvation (Su)",
+      "cr": "17",
       "init": 11,
       "hp": 310,
       "ac": 33,
@@ -22350,7 +22340,7 @@
     {
       "name": "Behemoth, Thalassic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/behemoth/behemoth-thalassic/",
-      "cr": "20) Breath Weapon (Su) Internal Realm (Ex) Powerful Charge (Ex) Trample (Ex) Vile Blood (Ex)",
+      "cr": "20",
       "init": -1,
       "hp": 391,
       "ac": 37,
@@ -22360,7 +22350,7 @@
     {
       "name": "Behemoth, Thunder",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/behemoth/behemoth-thunder/",
-      "cr": "17) Lava Burn (Ex) Pyroclastic Aura (Ex) Breath Weapon (Su) Breath Weapon",
+      "cr": "17",
       "init": -2,
       "hp": 337,
       "ac": 35,
@@ -22370,7 +22360,7 @@
     {
       "name": "Behir",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/behir/",
-      "cr": "8) Breath Weapon (Su) Disease (Ex) Jaws of Death (Ex) Smoke Sight (Su)",
+      "cr": "8",
       "init": 1,
       "hp": 105,
       "ac": 21,
@@ -22490,7 +22480,7 @@
     {
       "name": "Blink Dog",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/blink-dog/",
-      "cr": "2) Portal Bite (Su)",
+      "cr": "2",
       "init": 2,
       "hp": 22,
       "ac": 14,
@@ -22690,7 +22680,7 @@
     {
       "name": "Bunyip (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/bunyip-mythic/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 3,
       "hp": 42,
       "ac": 16,
@@ -22910,7 +22900,7 @@
     {
       "name": "Chimera",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/chimera/",
-      "cr": "7) The First Chimeras Chimeras in Mythology",
+      "cr": "7",
       "init": 5,
       "hp": 85,
       "ac": 19,
@@ -23080,7 +23070,7 @@
     {
       "name": "Cockatrice",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/cockatrice/",
-      "cr": "3) Vitrification (Su)",
+      "cr": "3",
       "init": 3,
       "hp": 27,
       "ac": 15,
@@ -23320,7 +23310,7 @@
     {
       "name": "Darkmantle",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/darkmantle/",
-      "cr": "1) Envelop Head (Ex)",
+      "cr": "1",
       "init": 6,
       "hp": 15,
       "ac": 15,
@@ -23460,7 +23450,7 @@
     {
       "name": "Devilfish (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/devilfish-mythic/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 3,
       "hp": 67,
       "ac": 19,
@@ -23660,7 +23650,7 @@
     {
       "name": "Emela-Ntouka",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/emela-ntouka/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 7,
       "hp": 114,
       "ac": 22,
@@ -23790,7 +23780,7 @@
     {
       "name": "Flail Snail",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/flail-snail/",
-      "cr": "4) Knockout (Ex)",
+      "cr": "4",
       "init": -1,
       "hp": 30,
       "ac": 18,
@@ -23830,7 +23820,7 @@
     {
       "name": "Frost Worm",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/frost-worm/",
-      "cr": "12) Breath Weapon (Su) Sunlight Powerlessness (Su) Severe (Su) Death Throes (Su) Sonic Pulse (Su)",
+      "cr": "12",
       "init": 7,
       "hp": 168,
       "ac": 27,
@@ -23840,7 +23830,7 @@
     {
       "name": "Frost Worm, Advanced",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/frost-worm/frost-worm-advanced/",
-      "cr": "12) Breath Weapon (Su) Sunlight Powerlessness (Su) Severe (Su) Death Throes (Su) Sonic Pulse (Su)",
+      "cr": "12",
       "init": 9,
       "hp": 200,
       "ac": 31,
@@ -23870,7 +23860,7 @@
     {
       "name": "Galluvix",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/galluvix/",
-      "cr": "2 (XP 600)",
+      "cr": "2",
       "init": 6,
       "hp": 16,
       "ac": 14,
@@ -24160,7 +24150,7 @@
     {
       "name": "Goldpebble",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/goldpebble/",
-      "cr": "5 (XP 1,600)",
+      "cr": "5",
       "init": 7,
       "hp": 51,
       "ac": 18,
@@ -24300,7 +24290,7 @@
     {
       "name": "Griffon",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/griffon/",
-      "cr": ") GRIFFONS IN MYTHOLOGY",
+      "cr": "4",
       "init": 2,
       "hp": 42,
       "ac": 17,
@@ -24360,7 +24350,7 @@
     {
       "name": "Grootslang, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/grootslang-mythic/",
-      "cr": "20/MR 8",
+      "cr": "20",
       "init": 4,
       "hp": 405,
       "ac": 39,
@@ -24410,7 +24400,7 @@
     {
       "name": "Hippocampus, Advanced (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/hippocampus-advanced-mythic/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 1,
       "hp": 41,
       "ac": 17,
@@ -24490,7 +24480,7 @@
     {
       "name": "Hydra",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/hydra/",
-      "cr": ") Pyrohydra (+2 CR) Schism Hydra (+0 CR) Warden Hydra (+2 CR) Grave Hydra (+3 CR) Miasma Hydra (+9 CR) Hydra Larvae Schism Hydra (+0 CR) Warden Hydra (+2 CR) Grave Hydra (+3 CR) 3rd Party Publisher Options ( NwP) Hydras in Mythology",
+      "cr": "4",
       "init": 1,
       "hp": 47,
       "ac": 15,
@@ -24680,7 +24670,7 @@
     {
       "name": "Juvenile Rukh, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/juvenile-rukh-mythic/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 2,
       "hp": 47,
       "ac": 16,
@@ -24690,7 +24680,7 @@
     {
       "name": "Juvenile Seps, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/juvenile-seps-mythic/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 5,
       "hp": 32,
       "ac": 17,
@@ -25050,7 +25040,7 @@
     {
       "name": "Lasiodon",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/lasiodon/",
-      "cr": "15/MR 2",
+      "cr": "15",
       "init": 6,
       "hp": 219,
       "ac": 34,
@@ -25100,7 +25090,7 @@
     {
       "name": "Leucrotta, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/leucrotta-mythic/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 5,
       "hp": 77,
       "ac": 20,
@@ -25180,7 +25170,7 @@
     {
       "name": "Lukwata, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/lukwata-mythic/",
-      "cr": "13/MR 5",
+      "cr": "13",
       "init": 4,
       "hp": 197,
       "ac": 30,
@@ -25430,7 +25420,7 @@
     {
       "name": "Muhuru, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/muhuru-mythic/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 5,
       "hp": 199,
       "ac": 29,
@@ -25460,7 +25450,7 @@
     {
       "name": "Mythic Advanced Hippogriff",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-advanced-hippogriff/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 5,
       "hp": 48,
       "ac": 21,
@@ -25470,7 +25460,7 @@
     {
       "name": "Mythic Fire Monkey",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-fire-monkey/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 3,
       "hp": 32,
       "ac": 16,
@@ -25480,7 +25470,7 @@
     {
       "name": "Mythic Gorgon (Khalkatauroi)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-gorgon-khalkatauroi/",
-      "cr": "10/MR 4",
+      "cr": "10",
       "init": 4,
       "hp": 140,
       "ac": 24,
@@ -25490,7 +25480,7 @@
     {
       "name": "Mythic Kirin",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-kirin/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 6,
       "hp": 115,
       "ac": 23,
@@ -25500,7 +25490,7 @@
     {
       "name": "Mythic Nian",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-nian/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 1,
       "hp": 98,
       "ac": 21,
@@ -25510,7 +25500,7 @@
     {
       "name": "Mythic Pipefox",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-pipefox/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 7,
       "hp": 23,
       "ac": 18,
@@ -25520,7 +25510,7 @@
     {
       "name": "Mythic Shantak",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-shantak/",
-      "cr": "10/MR 4",
+      "cr": "10",
       "init": 3,
       "hp": 155,
       "ac": 29,
@@ -25530,7 +25520,7 @@
     {
       "name": "Mythic Siren",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-siren/",
-      "cr": "6/MR 3",
+      "cr": "6",
       "init": 3,
       "hp": 82,
       "ac": 21,
@@ -25540,7 +25530,7 @@
     {
       "name": "Mythic Sphinx, Criosphinx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-sphinx-criosphinx/",
-      "cr": "9/MR 4",
+      "cr": "9",
       "init": 0,
       "hp": 125,
       "ac": 24,
@@ -25550,7 +25540,7 @@
     {
       "name": "Mythic Yaoguai",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/mythic-yaoguai/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 0,
       "hp": 114,
       "ac": 21,
@@ -25630,7 +25620,7 @@
     {
       "name": "Nemean Lion",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/nemean-lion/",
-      "cr": "7/MR 2",
+      "cr": "7",
       "init": 4,
       "hp": 86,
       "ac": 19,
@@ -25690,7 +25680,7 @@
     {
       "name": "Olympios",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/olympios/",
-      "cr": "9/MR 3",
+      "cr": "9",
       "init": 6,
       "hp": 124,
       "ac": 24,
@@ -25810,7 +25800,7 @@
     {
       "name": "Pegasus, Belleros",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/pegasus-belleros/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 2,
       "hp": 44,
       "ac": 15,
@@ -25870,7 +25860,7 @@
     {
       "name": "Phoenix",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/phoenix/",
-      "cr": "15) Song of Blooming (Sp) Spellbinding Spectacle (Su) Shed a Feather (Sp)",
+      "cr": "15",
       "init": 11,
       "hp": 210,
       "ac": 28,
@@ -26270,7 +26260,7 @@
     {
       "name": "Rukh, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/rukh-mythic/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 2,
       "hp": 197,
       "ac": 29,
@@ -26290,7 +26280,7 @@
     {
       "name": "Sacred Sha, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sacred-sha-mythic/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 6,
       "hp": 93,
       "ac": 25,
@@ -26400,7 +26390,7 @@
     {
       "name": "Sea Serpent, Deep",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/serpent-deep-sea/",
-      "cr": "19) Abrogate (Su) Entropic Wounds (Ex)",
+      "cr": "19",
       "init": 9,
       "hp": 333,
       "ac": 34,
@@ -26450,7 +26440,7 @@
     {
       "name": "Seaweed Siren (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/seaweed-siren-mythic/",
-      "cr": "16/MR 6",
+      "cr": "16",
       "init": 3,
       "hp": 260,
       "ac": 33,
@@ -26490,7 +26480,7 @@
     {
       "name": "Seps, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/seps-mythic/",
-      "cr": "13/MR 5",
+      "cr": "13",
       "init": 6,
       "hp": 211,
       "ac": 31,
@@ -26520,7 +26510,7 @@
     {
       "name": "Sha",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sha/",
-      "cr": "6)",
+      "cr": "6",
       "init": 4,
       "hp": 45,
       "ac": 17,
@@ -26530,7 +26520,7 @@
     {
       "name": "Sha, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sha-mythic/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 4,
       "hp": 71,
       "ac": 19,
@@ -26580,7 +26570,7 @@
     {
       "name": "Shedu",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/shedu/",
-      "cr": "9) Detect Poison (Sp) Harm’s Way (Ex) Discern Ward (Sp) Ward-Bond (Su)",
+      "cr": "9",
       "init": 7,
       "hp": 115,
       "ac": 24,
@@ -26640,7 +26630,7 @@
     {
       "name": "Siren (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/siren-mythic/",
-      "cr": "6/MR 3",
+      "cr": "6",
       "init": 3,
       "hp": 82,
       "ac": 21,
@@ -26670,7 +26660,7 @@
     {
       "name": "Skiurid",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/skiurid/",
-      "cr": "½",
+      "cr": "1/2",
       "init": 6,
       "hp": 5,
       "ac": 14,
@@ -26780,7 +26770,7 @@
     {
       "name": "Sphinx, Androsphinx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sphinx-androsphinx/",
-      "cr": "11/MR 4",
+      "cr": "11",
       "init": 0,
       "hp": 163,
       "ac": 27,
@@ -26830,7 +26820,7 @@
     {
       "name": "Sphinx, Gynosphinx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sphinx/sphinx-gynosphinx/",
-      "cr": "8) Conundrum Curse (Su)",
+      "cr": "8",
       "init": 5,
       "hp": 102,
       "ac": 21,
@@ -26840,7 +26830,7 @@
     {
       "name": "Sphinx, Hieracosphinx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sphinx-hieracosphinx/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 3,
       "hp": 80,
       "ac": 20,
@@ -26850,7 +26840,7 @@
     {
       "name": "Sphinx, Hieracosphinx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sphinx/hieracosphinx/",
-      "cr": "5) Riddled Wounding (Su)",
+      "cr": "5",
       "init": 2,
       "hp": 60,
       "ac": 17,
@@ -27080,7 +27070,7 @@
     {
       "name": "Tarrasque",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/spawn-of-destruction/tarrasque/",
-      "cr": "25) Breath Weapon (Su)",
+      "cr": "25",
       "init": 7,
       "hp": 525,
       "ac": 40,
@@ -27310,7 +27300,7 @@
     {
       "name": "Tiddalik",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/tiddalik/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 6,
       "hp": 62,
       "ac": 18,
@@ -27360,7 +27350,7 @@
     {
       "name": "Trollhound",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/trollhound/",
-      "cr": "3)",
+      "cr": "3",
       "init": 5,
       "hp": 30,
       "ac": 15,
@@ -27400,7 +27390,7 @@
     {
       "name": "Turtle-Shark",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/turtle-shark/",
-      "cr": "6)",
+      "cr": "6",
       "init": 3,
       "hp": 63,
       "ac": 21,
@@ -27460,7 +27450,7 @@
     {
       "name": "Unicorn",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/unicorn/",
-      "cr": "3) Horn Song (Su) Magical Strike (Ex)",
+      "cr": "3",
       "init": 3,
       "hp": 34,
       "ac": 15,
@@ -27690,7 +27680,7 @@
     {
       "name": "Winter Wolf",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/winter-wolf/",
-      "cr": "5)",
+      "cr": "5",
       "init": 5,
       "hp": 57,
       "ac": 17,
@@ -27900,7 +27890,7 @@
     {
       "name": "Adaro (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/adaro-mythic/",
-      "cr": "4/MR 2",
+      "cr": "4",
       "init": 3,
       "hp": 50,
       "ac": 17,
@@ -27940,7 +27930,7 @@
     {
       "name": "Adherer",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/adherer/",
-      "cr": ") Binding Shroud (Ex) Tattered (Ex) Treasure",
+      "cr": "3",
       "init": 3,
       "hp": 30,
       "ac": 17,
@@ -28030,7 +28020,7 @@
     {
       "name": "Asquenti",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/asquenti/",
-      "cr": "4) Scintillating Asquenti (CR 3) Transparent Asquenti (CR 3)",
+      "cr": "4",
       "init": 2,
       "hp": 25,
       "ac": 15,
@@ -28180,7 +28170,7 @@
     {
       "name": "Centaur, Chiron",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/centaur-chiron/",
-      "cr": "9/MR 4",
+      "cr": "9",
       "init": 6,
       "hp": 133,
       "ac": 24,
@@ -28190,7 +28180,7 @@
     {
       "name": "Centaur, Ixion",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/centaur-ixion/",
-      "cr": "5/MR 1",
+      "cr": "5",
       "init": 2,
       "hp": 52,
       "ac": 21,
@@ -28320,7 +28310,7 @@
     {
       "name": "Crabman",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/crabman/",
-      "cr": "ABMAN CR 2",
+      "cr": "2",
       "init": 0,
       "hp": 19,
       "ac": 16,
@@ -28390,7 +28380,7 @@
     {
       "name": "Doppelganger",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/doppelganger/",
-      "cr": "3)",
+      "cr": "3",
       "init": 1,
       "hp": 26,
       "ac": 16,
@@ -28430,7 +28420,7 @@
     {
       "name": "Eekhayab",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/eekhayab/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 3,
       "hp": 105,
       "ac": 23,
@@ -28680,7 +28670,7 @@
     {
       "name": "Graeae",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/graeae/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 3,
       "hp": 65,
       "ac": 19,
@@ -28740,7 +28730,7 @@
     {
       "name": "Grendel",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/grendel/",
-      "cr": "19/MR 7",
+      "cr": "19",
       "init": 4,
       "hp": 340,
       "ac": 34,
@@ -28940,7 +28930,7 @@
     {
       "name": "Hag, Sea (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/hag-sea-mythic/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 3,
       "hp": 58,
       "ac": 18,
@@ -28960,7 +28950,7 @@
     {
       "name": "Hag, Storm (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/hag-storm-mythic/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 2,
       "hp": 115,
       "ac": 25,
@@ -28970,7 +28960,7 @@
     {
       "name": "Hag, Winter",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/hag/winter-hag/",
-      "cr": "7)",
+      "cr": "7",
       "init": 1,
       "hp": 85,
       "ac": 20,
@@ -29140,7 +29130,7 @@
     {
       "name": "Jorogumo",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/jorogumo/",
-      "cr": "12) Harlot’s Chamber (Su) Poison (Ex)",
+      "cr": "12",
       "init": 4,
       "hp": 161,
       "ac": 27,
@@ -29250,7 +29240,7 @@
     {
       "name": "Lamia",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/lamia/",
-      "cr": "6) God-Cursed (Su)",
+      "cr": "6",
       "init": 3,
       "hp": 67,
       "ac": 20,
@@ -29320,7 +29310,7 @@
     {
       "name": "Maftet, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/maftet-mythic/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 3,
       "hp": 98,
       "ac": 23,
@@ -29350,7 +29340,7 @@
     {
       "name": "Medusa",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/medusa/",
-      "cr": ") Variant: Medusa, Euryale (CR 7) Bloody Hair (Ex) Petrifying Critical (Ex)",
+      "cr": "7",
       "init": 6,
       "hp": 76,
       "ac": 15,
@@ -29390,7 +29380,7 @@
     {
       "name": "Medusa, Stheno",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/medusa-stheno/",
-      "cr": "13/MR 5",
+      "cr": "13",
       "init": 1,
       "hp": 199,
       "ac": 25,
@@ -29410,7 +29400,7 @@
     {
       "name": "Minotaur",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/minotaur/",
-      "cr": "4)",
+      "cr": "4",
       "init": 0,
       "hp": 45,
       "ac": 14,
@@ -29520,7 +29510,7 @@
     {
       "name": "Mythic Hag, Annis",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-hag-annis/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 1,
       "hp": 96,
       "ac": 23,
@@ -29530,7 +29520,7 @@
     {
       "name": "Mythic Harpy",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-harpy/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 2,
       "hp": 58,
       "ac": 18,
@@ -29540,7 +29530,7 @@
     {
       "name": "Mythic Jorogumo",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-jorogumo/",
-      "cr": "15/ MR 6",
+      "cr": "15",
       "init": 4,
       "hp": 235,
       "ac": 34,
@@ -29550,7 +29540,7 @@
     {
       "name": "Mythic Kappa",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-kappa/",
-      "cr": "3/ MR 1",
+      "cr": "3",
       "init": 3,
       "hp": 29,
       "ac": 21,
@@ -29560,7 +29550,7 @@
     {
       "name": "Mythic Morlock",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-morlock/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 8,
       "hp": 32,
       "ac": 16,
@@ -29570,7 +29560,7 @@
     {
       "name": "Mythic Nightgaunt",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-nightgaunt/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 7,
       "hp": 57,
       "ac": 22,
@@ -29580,7 +29570,7 @@
     {
       "name": "Mythic Skum",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-skum/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 1,
       "hp": 33,
       "ac": 14,
@@ -29590,7 +29580,7 @@
     {
       "name": "Mythic Tanuki",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mythic-tanuki/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 3,
       "hp": 67,
       "ac": 20,
@@ -29640,7 +29630,7 @@
     {
       "name": "Onyvolan",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/onyvolan/",
-      "cr": "3 (XP 800)",
+      "cr": "3",
       "init": 3,
       "hp": 30,
       "ac": 14,
@@ -29840,7 +29830,7 @@
     {
       "name": "Sahuagin (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/sahuagin-mythic/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 1,
       "hp": 25,
       "ac": 17,
@@ -29890,7 +29880,7 @@
     {
       "name": "Selkie (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/selkie-mythic/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 7,
       "hp": 65,
       "ac": 20,
@@ -30030,7 +30020,7 @@
     {
       "name": "Svathurim",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/svathurim/",
-      "cr": "11 (XP 12,800)",
+      "cr": "11",
       "init": 3,
       "hp": 147,
       "ac": 26,
@@ -30200,7 +30190,7 @@
     {
       "name": "Umasi",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/umasi/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 6,
       "hp": 62,
       "ac": 20,
@@ -30480,7 +30470,7 @@
     {
       "name": "Diger",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/diger-tohc/",
-      "cr": "2 XP 600",
+      "cr": "2",
       "init": 0,
       "hp": 31,
       "ac": 14,
@@ -30590,7 +30580,7 @@
     {
       "name": "Globster (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/globster-mythic/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": -5,
       "hp": 79,
       "ac": 18,
@@ -30620,7 +30610,7 @@
     {
       "name": "Guardian Spirit Silvanshee (CR 2)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/guardian-spirit-silvanshee-cr-2/",
-      "cr": "2) – d20PFSRD",
+      "cr": "2",
       "init": 7,
       "hp": 15,
       "ac": 16,
@@ -30810,7 +30800,7 @@
     {
       "name": "Mythic Colour out of Space",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/mythic-colour-out-of-space/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 12,
       "hp": 178,
       "ac": 29,
@@ -30980,7 +30970,7 @@
     {
       "name": "Ooze, Plasma",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/ooze-plasma/",
-      "cr": "16) Force Damage (Ex) Displacement (Ex) Immune to Force (Su) Natural Invisibility (Ex) Force Spear (Su)",
+      "cr": "16",
       "init": 0,
       "hp": 241,
       "ac": 6,
@@ -31050,7 +31040,7 @@
     {
       "name": "Proto-Shoggoth",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/proto-shoggoth/",
-      "cr": "19) Mind Drain (Su) Severe Teratophobia Mental Degradation (Su) Divine Electricity (Ex)",
+      "cr": "19",
       "init": 7,
       "hp": 138,
       "ac": 25,
@@ -31140,7 +31130,7 @@
     {
       "name": "Shoggoth",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/shoggoth/",
-      "cr": "19) Mind Drain (Su) Severe Teratophobia Mental Degradation (Su) Divine Electricity (Ex)",
+      "cr": "19",
       "init": 11,
       "hp": 333,
       "ac": 33,
@@ -31150,7 +31140,7 @@
     {
       "name": "Shoggoth, Proto-",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/shoggoth-proto/",
-      "cr": "19) Mind Drain (Su) Severe Teratophobia Mental Degradation (Su) Divine Electricity (Ex)",
+      "cr": "19",
       "init": 11,
       "hp": 187,
       "ac": 28,
@@ -31170,7 +31160,7 @@
     {
       "name": "Slithering Tracker",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/slithering-tracker/",
-      "cr": "4) Parasite (Ex)",
+      "cr": "4",
       "init": 4,
       "hp": 42,
       "ac": 15,
@@ -31330,7 +31320,7 @@
     {
       "name": "Aeon, Proskilisi",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/aeon-proskilisi/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 7,
       "hp": 42,
       "ac": 26,
@@ -31650,7 +31640,7 @@
     {
       "name": "Air Elemental, Tiny",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-air/air-elemental-tiny/",
-      "cr": "½",
+      "cr": "1/2",
       "init": 6,
       "hp": 6,
       "ac": 17,
@@ -31900,7 +31890,7 @@
     {
       "name": "Apocalypse Locust",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/apocalypse-locust/",
-      "cr": "6/MR 3",
+      "cr": "6",
       "init": 0,
       "hp": 75,
       "ac": 20,
@@ -32190,7 +32180,7 @@
     {
       "name": "Ares (CR 30)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/ares-cr-30/",
-      "cr": "30) – d20PFSRD",
+      "cr": "30",
       "init": 16,
       "hp": 960,
       "ac": 56,
@@ -32210,7 +32200,7 @@
     {
       "name": "Asphyx",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/asphyx/",
-      "cr": "7 (XP 3,200)",
+      "cr": "7",
       "init": 5,
       "hp": 73,
       "ac": 17,
@@ -32310,7 +32300,7 @@
     {
       "name": "Athena (CR 30)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/athena-cr-30/",
-      "cr": "30) – d20PFSRD",
+      "cr": "30",
       "init": 16,
       "hp": 960,
       "ac": 64,
@@ -32400,7 +32390,7 @@
     {
       "name": "Azata, Ghaele",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/azata/ghaele/",
-      "cr": "13)",
+      "cr": "13",
       "init": 5,
       "hp": 136,
       "ac": 28,
@@ -32410,7 +32400,7 @@
     {
       "name": "Azata, Lillend",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/azata/lillend/",
-      "cr": "7 XP 3,200",
+      "cr": "7",
       "init": 3,
       "hp": 73,
       "ac": 20,
@@ -32930,7 +32920,7 @@
     {
       "name": "Couatl",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/couatl/",
-      "cr": "10) Aura of Sunlight (Su) Shield of Mercy (Su) Wing Gust (Su)",
+      "cr": "10",
       "init": 7,
       "hp": 126,
       "ac": 22,
@@ -33160,7 +33150,7 @@
     {
       "name": "Daemon, Derghodaemon",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/derghodaemon/",
-      "cr": "12 (XP 19,200)",
+      "cr": "12",
       "init": 5,
       "hp": 161,
       "ac": 27,
@@ -33310,7 +33300,7 @@
     {
       "name": "Daemon, Olethrodaemon",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/olethrodaemon/",
-      "cr": "20) Melee Torment (Su) Spell Torment (Su) Olethrodaemon Paragons",
+      "cr": "20",
       "init": 12,
       "hp": 370,
       "ac": 38,
@@ -33900,7 +33890,7 @@
     {
       "name": "Demon, Marilith",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/marilith/",
-      "cr": "17) Strangle Foe (Ex)",
+      "cr": "17",
       "init": 4,
       "hp": 264,
       "ac": 32,
@@ -34260,7 +34250,7 @@
     {
       "name": "Devil, Cornugon (Horned Devil)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/horned/",
-      "cr": "16) Thickening Cilia (Su) Poison (Ex)",
+      "cr": "16",
       "init": 8,
       "hp": 217,
       "ac": 35,
@@ -34300,7 +34290,7 @@
     {
       "name": "Devil, Gelugon (Ice Devil)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/ice/",
-      "cr": "13) Gaze of Ice (Su)",
+      "cr": "13",
       "init": 9,
       "hp": 161,
       "ac": 32,
@@ -34370,7 +34360,7 @@
     {
       "name": "Devil, Imp",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/imp/",
-      "cr": "2) Soothing Gaze (Su) Waking Dream (Su) Poison Sting",
+      "cr": "2",
       "init": 3,
       "hp": 16,
       "ac": 17,
@@ -34500,7 +34490,7 @@
     {
       "name": "Devil, Salikotal (Vengeance Devil)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-salikotal/",
-      "cr": "7 3,200 XP",
+      "cr": "7",
       "init": 10,
       "hp": 76,
       "ac": 23,
@@ -34740,7 +34730,7 @@
     {
       "name": "Drelb (Haunting Custodian)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/drelb-haunting-custodian-tohc/",
-      "cr": "5 XP 1,600",
+      "cr": "5",
       "init": 7,
       "hp": 50,
       "ac": 15,
@@ -34790,7 +34780,7 @@
     {
       "name": "Earth Elemental, Tiny",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-earth/earth-elemental-tiny/",
-      "cr": "½",
+      "cr": "1/2",
       "init": 0,
       "hp": 6,
       "ac": 18,
@@ -34950,7 +34940,7 @@
     {
       "name": "Fantionette",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/fantionette/",
-      "cr": "4 (XP 1,200)",
+      "cr": "4",
       "init": 8,
       "hp": 37,
       "ac": 17,
@@ -35070,7 +35060,7 @@
     {
       "name": "Fire Elemental, Tiny",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-fire/fire-elemental-tiny/",
-      "cr": "½",
+      "cr": "1/2",
       "init": 6,
       "hp": 5,
       "ac": 17,
@@ -35110,7 +35100,7 @@
     {
       "name": "Foo Lion",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/foo-lion/",
-      "cr": "4 XP 1,200",
+      "cr": "4",
       "init": 7,
       "hp": 42,
       "ac": 15,
@@ -35200,7 +35190,7 @@
     {
       "name": "Genie, Djinni",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/djinni/",
-      "cr": "6) Silence Vulnerability (Ex) Thunder and Lightning (Su) Thundering (Ex)",
+      "cr": "6",
       "init": 8,
       "hp": 52,
       "ac": 19,
@@ -35220,7 +35210,7 @@
     {
       "name": "Genie, Janni",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/janni/",
-      "cr": "7) Other Examples and Types",
+      "cr": "7",
       "init": 6,
       "hp": 39,
       "ac": 20,
@@ -35230,7 +35220,7 @@
     {
       "name": "Genie, Marid",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/marid/",
-      "cr": "9) Water Mastery (Ex) Water’s Fury (Su) Vortex (Su)",
+      "cr": "9",
       "init": 8,
       "hp": 114,
       "ac": 23,
@@ -35240,7 +35230,7 @@
     {
       "name": "Gishvit",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/gishvit/",
-      "cr": "1/2 (XP 200)",
+      "cr": "1/2",
       "init": 6,
       "hp": 4,
       "ac": 14,
@@ -35380,7 +35370,7 @@
     {
       "name": "Guardian Spirit Silvanshee (CR 4)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/guardian-spirit-silvanshee-cr-4/",
-      "cr": "4) – d20PFSRD",
+      "cr": "4",
       "init": 8,
       "hp": 34,
       "ac": 19,
@@ -35390,7 +35380,7 @@
     {
       "name": "Guardian Spirit Silvanshee (CR 6)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/guardian-spirit-silvanshee-cr-6/",
-      "cr": "6) – d20PFSRD",
+      "cr": "6",
       "init": 9,
       "hp": 57,
       "ac": 22,
@@ -35440,7 +35430,7 @@
     {
       "name": "Hell Hound",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/hell-hound/",
-      "cr": "3) Consume Blood (Su)",
+      "cr": "3",
       "init": 5,
       "hp": 30,
       "ac": 16,
@@ -36470,7 +36460,7 @@
     {
       "name": "Madness Slug Alternate Form",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/madness-slug/madness-slug-alternate-form/",
-      "cr": "11 CE Female",
+      "cr": "11",
       "init": 8,
       "hp": 80,
       "ac": 23,
@@ -36950,7 +36940,7 @@
     {
       "name": "Mythic Asura, Aghasura",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-asura-aghasura/",
-      "cr": "13/ MR 5",
+      "cr": "13",
       "init": 3,
       "hp": 225,
       "ac": 28,
@@ -36960,7 +36950,7 @@
     {
       "name": "Mythic Asura, Triparasura",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-asura-triparasura/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 2,
       "hp": 29,
       "ac": 17,
@@ -36970,7 +36960,7 @@
     {
       "name": "Mythic Asura, Upasunda",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-asura-upasunda/",
-      "cr": "11/ MR 4",
+      "cr": "11",
       "init": 8,
       "hp": 154,
       "ac": 29,
@@ -36980,7 +36970,7 @@
     {
       "name": "Mythic Cerberi",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-cerberi/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 6,
       "hp": 106,
       "ac": 21,
@@ -36990,7 +36980,7 @@
     {
       "name": "Mythic Garuda",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-garuda/",
-      "cr": "11/ MR 4",
+      "cr": "11",
       "init": 5,
       "hp": 155,
       "ac": 23,
@@ -37000,7 +36990,7 @@
     {
       "name": "Mythic Gloomwing",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-gloomwing/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 3,
       "hp": 57,
       "ac": 21,
@@ -37010,7 +37000,7 @@
     {
       "name": "Mythic Hekatonkheires",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-hekatonkheires/",
-      "cr": "29/MR 10",
+      "cr": "29",
       "init": 6,
       "hp": 664,
       "ac": 52,
@@ -37020,7 +37010,7 @@
     {
       "name": "Mythic Oni, Ogre Mage",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-oni-ogre-mage/",
-      "cr": "10/MR 4",
+      "cr": "10",
       "init": 7,
       "hp": 140,
       "ac": 25,
@@ -37030,7 +37020,7 @@
     {
       "name": "Mythic Rakshasa Ambari",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-rakshasa-ambari/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 1,
       "hp": 128,
       "ac": 24,
@@ -37040,7 +37030,7 @@
     {
       "name": "Mythic Rakshasa, Raktavarna",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-rakshasa-raktavarna/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 3,
       "hp": 32,
       "ac": 18,
@@ -37050,7 +37040,7 @@
     {
       "name": "Mythic Stone Lion",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/mythic-stone-lion/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 7,
       "hp": 62,
       "ac": 19,
@@ -37340,7 +37330,7 @@
     {
       "name": "Oni, Ice Yai",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/oni/oni-ice-yai/",
-      "cr": "14) Affinity for Metal (Ex) Blade Barrier (Sp) Manipulate Metal (Su) Metal Multiweapon Mastery (Ex) Iron Grenade (Su) Non-Metal Vulnerability (Ex)",
+      "cr": "14",
       "init": 2,
       "hp": 200,
       "ac": 27,
@@ -37690,7 +37680,7 @@
     {
       "name": "Pisacha",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/pisacha/",
-      "cr": "5/MR 2",
+      "cr": "5",
       "init": 6,
       "hp": 62,
       "ac": 19,
@@ -37700,7 +37690,7 @@
     {
       "name": "Portunus",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/portunus/",
-      "cr": "16/MR 6",
+      "cr": "16",
       "init": 6,
       "hp": 238,
       "ac": 32,
@@ -39050,7 +39040,7 @@
     {
       "name": "Shining Child",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/shining-child/",
-      "cr": "12) Blinding Light (Ex) Burning Touch (Su) Radiant Armor (Su) Searing Ray (Su)",
+      "cr": "12",
       "init": 7,
       "hp": 152,
       "ac": 28,
@@ -39140,7 +39130,7 @@
     {
       "name": "Spark Eaters (CR 22)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/spark-eaters-cr-22/",
-      "cr": "22) – d20PFSRD",
+      "cr": "22",
       "init": 15,
       "hp": 380,
       "ac": 40,
@@ -39370,7 +39360,7 @@
     {
       "name": "Tiefling",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/tiefling/",
-      "cr": "1/2)",
+      "cr": "1/2",
       "init": 3,
       "hp": 10,
       "ac": 16,
@@ -39440,7 +39430,7 @@
     {
       "name": "Titan, Fomorian",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/titan/titan-fomorian/",
-      "cr": "22/MR 8",
+      "cr": "22",
       "init": 1,
       "hp": 413,
       "ac": 41,
@@ -39500,7 +39490,7 @@
     {
       "name": "Triton (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/triton-mythic/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 0,
       "hp": 19,
       "ac": 15,
@@ -39680,7 +39670,7 @@
     {
       "name": "Vargouille, Giant",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/vargouille/vargouille-giant/",
-      "cr": "3 (XP 800)",
+      "cr": "3",
       "init": 0,
       "hp": 25,
       "ac": 16,
@@ -39700,7 +39690,7 @@
     {
       "name": "Vault Builder",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/vault-builder/",
-      "cr": "20/MR 8",
+      "cr": "20",
       "init": 10,
       "hp": 317,
       "ac": 38,
@@ -39960,7 +39950,7 @@
     {
       "name": "Wendigo",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/wendigo/",
-      "cr": ") Dust Wendigo (+1 CR) Void Wendigo (+1 CR) Variant: Wendigo, Shokujinki (CR 17) Cowering Gaze (Su) Alter Self (Sp) Shokujinki Curse (Su) The Legend of the Wendigo",
+      "cr": "17",
       "init": 13,
       "hp": 279,
       "ac": 32,
@@ -40320,7 +40310,7 @@
     {
       "name": "Begedhi, Mother Plant",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/begedhi/begedhi-mother-plant/",
-      "cr": "10/MR 4",
+      "cr": "10",
       "init": 4,
       "hp": 146,
       "ac": 25,
@@ -40700,7 +40690,7 @@
     {
       "name": "Fetid Spore Mound",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fetid-spore-mound/",
-      "cr": "6) Poison (Ex) Rolling Engulf (Ex)",
+      "cr": "6",
       "init": 0,
       "hp": 90,
       "ac": 21,
@@ -40800,7 +40790,7 @@
     {
       "name": "Fungus Man King (FGG, CR 11)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fungus-man-king/",
-      "cr": "11) – d20PFSRD",
+      "cr": "11",
       "init": 0,
       "hp": 132,
       "ac": 16,
@@ -40810,7 +40800,7 @@
     {
       "name": "Fungus Man King (FGG, CR 4)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fungus-man-fgg/fungus-man-king-fgg/",
-      "cr": "4) – d20PFSRD",
+      "cr": "4",
       "init": 1,
       "hp": 45,
       "ac": 16,
@@ -40820,7 +40810,7 @@
     {
       "name": "Fungus Queen",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fungus-queen-2/",
-      "cr": "+1)",
+      "cr": "1",
       "init": 7,
       "hp": 114,
       "ac": 23,
@@ -40870,7 +40860,7 @@
     {
       "name": "Gallows Tree",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/gallows-tree-tohc/",
-      "cr": "13)",
+      "cr": "13",
       "init": 5,
       "hp": 218,
       "ac": 24,
@@ -40880,7 +40870,7 @@
     {
       "name": "Gallows Tree Zombie",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/gallows-tree-zombie-tohc/",
-      "cr": "4)",
+      "cr": "4",
       "init": 6,
       "hp": 33,
       "ac": 17,
@@ -40900,7 +40890,7 @@
     {
       "name": "Giant Devil’s Tooth",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/giant-devils-tooth/",
-      "cr": "6 (XP 2,400)",
+      "cr": "6",
       "init": 2,
       "hp": 58,
       "ac": 19,
@@ -40920,7 +40910,7 @@
     {
       "name": "Gluttongrass",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/gluttongrass/",
-      "cr": "1 >",
+      "cr": "1",
       "init": 1,
       "hp": 9,
       "ac": 12,
@@ -41300,7 +41290,7 @@
     {
       "name": "Leshy, Seaweed (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/leshy-seaweed-mythic/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 1,
       "hp": 38,
       "ac": 16,
@@ -41550,7 +41540,7 @@
     {
       "name": "Mythic Cerebric Fungus",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/mythic-cerebric-fungus/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 4,
       "hp": 38,
       "ac": 16,
@@ -41560,7 +41550,7 @@
     {
       "name": "Mythic Jinmenju",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/mythic-jinmenju/",
-      "cr": "13/MR 5",
+      "cr": "13",
       "init": 3,
       "hp": 202,
       "ac": 30,
@@ -41570,7 +41560,7 @@
     {
       "name": "Mythic Kapre",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/mythic-kapre/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 2,
       "hp": 197,
       "ac": 29,
@@ -41580,7 +41570,7 @@
     {
       "name": "Mythic Kawa Akago",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/mythic-kawa-akago/",
-      "cr": "4/MR 1",
+      "cr": "4",
       "init": 7,
       "hp": 34,
       "ac": 17,
@@ -41590,7 +41580,7 @@
     {
       "name": "Mythic Mi-go",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/mythic-mi-go/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 6,
       "hp": 90,
       "ac": 23,
@@ -41820,7 +41810,7 @@
     {
       "name": "Shambling Mound",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/shambling-mound/",
-      "cr": "6) Poison (Ex) Rolling Engulf (Ex)",
+      "cr": "6",
       "init": 0,
       "hp": 67,
       "ac": 19,
@@ -42140,7 +42130,7 @@
     {
       "name": "Treant",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/treant/",
-      "cr": "8) Animate Leaves (Su)",
+      "cr": "8",
       "init": -1,
       "hp": 114,
       "ac": 21,
@@ -42550,7 +42540,7 @@
     {
       "name": "Banshee",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/banshee/",
-      "cr": "13) Variant: Greater Banshee (CR 15) (DnD 3.5e material) Improved Wail Intelligent Bardic Magic Variant: Banshee, Bean Sidhe (CR 13) (3pp) Song of Mourning (Su) Portent of Doom (Su)",
+      "cr": "13",
       "init": 15,
       "hp": 161,
       "ac": 26,
@@ -42630,7 +42620,7 @@
     {
       "name": "Beheaded, Giant",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/beheaded/beheaded-giant/",
-      "cr": ") Burning (+1 CR) Grabbing (+0 CR) Screaming (+0 CR)",
+      "cr": "2",
       "init": 1,
       "hp": 19,
       "ac": 13,
@@ -42650,7 +42640,7 @@
     {
       "name": "Beheaded, Medusa",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/beheaded/medusa-head/",
-      "cr": ") Burning (+1 CR) Grabbing (+0 CR) Screaming (+0 CR)",
+      "cr": "3",
       "init": 1,
       "hp": 30,
       "ac": 15,
@@ -43200,7 +43190,7 @@
     {
       "name": "Cyhyraeth",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/cyhyraeth/",
-      "cr": "15/MR 6",
+      "cr": "15",
       "init": 12,
       "hp": 260,
       "ac": 33,
@@ -43320,7 +43310,7 @@
     {
       "name": "Demilich",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/demilich/",
-      "cr": "14) Ray of Temporal Entropy (Su) Venerable Anointing (Su) Wounding Susceptibility (Su)",
+      "cr": "14",
       "init": 7,
       "hp": 142,
       "ac": 25,
@@ -43360,7 +43350,7 @@
     {
       "name": "Devourer",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/devourer/",
-      "cr": "11) Amorphous Anatomy (Ex) Inflict Warpwave (Su) Freedom of Movement (Su) Spatial Riptide (Su) Warpwave (Su) Former Devils Former Daemons Former Demons Lore",
+      "cr": "11",
       "init": 7,
       "hp": 133,
       "ac": 25,
@@ -43430,7 +43420,7 @@
     {
       "name": "Draugr (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/draugr-mythic/",
-      "cr": "3/MR 1",
+      "cr": "3",
       "init": 0,
       "hp": 27,
       "ac": 15,
@@ -43450,7 +43440,7 @@
     {
       "name": "Draugr Crew (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/draugr-crew-mythic/",
-      "cr": "12/MR 5",
+      "cr": "12",
       "init": 4,
       "hp": 150,
       "ac": 25,
@@ -43560,7 +43550,7 @@
     {
       "name": "Duppy (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/duppy-mythic/",
-      "cr": "9/MR 3",
+      "cr": "9",
       "init": 10,
       "hp": 109,
       "ac": 23,
@@ -44020,7 +44010,7 @@
     {
       "name": "Ghoul",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/ghoul/",
-      "cr": "1) Cannibalistic Healing (Su) Change Shape (Su)",
+      "cr": "1",
       "init": 2,
       "hp": 13,
       "ac": 14,
@@ -44600,7 +44590,7 @@
     {
       "name": "Lich",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/lich/",
-      "cr": "12 XP 19,200",
+      "cr": "12",
       "init": 2,
       "hp": 111,
       "ac": 23,
@@ -44740,7 +44730,7 @@
     {
       "name": "Mohrg",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mohrg/",
-      "cr": ") Fleshwalker Mohrg (+0 CR) Frost Mohrg (+1 CR) Mohrg-Mother (+1 CR)",
+      "cr": "8",
       "init": 8,
       "hp": 91,
       "ac": 23,
@@ -45000,7 +44990,7 @@
     {
       "name": "Mythic Bakekujira",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-bakekujira/",
-      "cr": "21/MR 8",
+      "cr": "21",
       "init": 4,
       "hp": 351,
       "ac": 40,
@@ -45010,7 +45000,7 @@
     {
       "name": "Mythic Bhuta",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-bhuta/",
-      "cr": "13/ MR 5",
+      "cr": "13",
       "init": 7,
       "hp": 187,
       "ac": 31,
@@ -45020,7 +45010,7 @@
     {
       "name": "Mythic Gashadokuro",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-gashadokuro/",
-      "cr": "16/MR 6",
+      "cr": "16",
       "init": 4,
       "hp": 228,
       "ac": 34,
@@ -45030,7 +45020,7 @@
     {
       "name": "Mythic Harionago",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-harionago/",
-      "cr": "13/ MR 5",
+      "cr": "13",
       "init": 10,
       "hp": 187,
       "ac": 31,
@@ -45040,7 +45030,7 @@
     {
       "name": "Mythic Manananggal",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-manananggal/",
-      "cr": "8/MR 3",
+      "cr": "8",
       "init": 3,
       "hp": 119,
       "ac": 24,
@@ -45050,7 +45040,7 @@
     {
       "name": "Mythic Penanggalen",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-penanggalen/",
-      "cr": "6/MR 2",
+      "cr": "6",
       "init": 7,
       "hp": 74,
       "ac": 23,
@@ -45060,7 +45050,7 @@
     {
       "name": "Mythic Polong",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-polong/",
-      "cr": "10/MR 4",
+      "cr": "10",
       "init": 8,
       "hp": 147,
       "ac": 23,
@@ -45070,7 +45060,7 @@
     {
       "name": "Mythic Vampire, Jiang-Shi",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-vampire-jiang-shi/",
-      "cr": "7/MR 3",
+      "cr": "7",
       "init": 9,
       "hp": 82,
       "ac": 23,
@@ -45080,7 +45070,7 @@
     {
       "name": "Mythic Yuki-onna",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mythic-yuki-onna/",
-      "cr": "10/ MR4",
+      "cr": "10",
       "init": 8,
       "hp": 126,
       "ac": 26,
@@ -45120,7 +45110,7 @@
     {
       "name": "Nightshade, Nightcrawler",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/nightshade/nightcrawler/",
-      "cr": "17) Lightsense (Ex) Darkness Aversion (Ex) Prismatic Bite (Su)",
+      "cr": "17",
       "init": 4,
       "hp": 312,
       "ac": 33,
@@ -45140,7 +45130,7 @@
     {
       "name": "Nightshade, Nightwalker",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/nightshade/nightwalker/",
-      "cr": "15) Lightsense (Ex) Darkness Aversion (Ex) Blinding Gaze (Su)",
+      "cr": "15",
       "init": 2,
       "hp": 241,
       "ac": 31,
@@ -45160,7 +45150,7 @@
     {
       "name": "Nightshade, Nightwave",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/nightshade/nightwave/",
-      "cr": "20) Lightsense (Ex) Darkness Aversion (Ex) Glittering Surface (Su)",
+      "cr": "20",
       "init": 7,
       "hp": 391,
       "ac": 36,
@@ -45170,7 +45160,7 @@
     {
       "name": "Nightshade, Nightwing",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/nightshade/nightwing/",
-      "cr": "14) Lightsense (Ex) Darkness Aversion (Ex) Prismatic Bite (Su)",
+      "cr": "14",
       "init": 8,
       "hp": 195,
       "ac": 29,
@@ -45420,7 +45410,7 @@
     {
       "name": "Rasping Skeleton",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/rasping-skeleton/",
-      "cr": "½",
+      "cr": "1/2",
       "init": 6,
       "hp": 4,
       "ac": 16,
@@ -45710,7 +45700,7 @@
     {
       "name": "Skeleton, Acid",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/skeleton-medium/skeleton-acid/",
-      "cr": "1/3)",
+      "cr": "1/3",
       "init": 6,
       "hp": 4,
       "ac": 16,
@@ -45720,7 +45710,7 @@
     {
       "name": "Skeleton, Black",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/skeleton-medium/skeleton-black/",
-      "cr": "5)",
+      "cr": "5",
       "init": 8,
       "hp": 45,
       "ac": 20,
@@ -45740,7 +45730,7 @@
     {
       "name": "Skeleton, Burning",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/skeleton-medium/skeleton-burning/",
-      "cr": "1/2)",
+      "cr": "1/2",
       "init": 6,
       "hp": 5,
       "ac": 16,
@@ -45770,7 +45760,7 @@
     {
       "name": "Skeleton, Exploding",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/skeleton-medium/skeleton-exploding/",
-      "cr": "1/3)",
+      "cr": "1/3",
       "init": 6,
       "hp": 4,
       "ac": 16,
@@ -46040,7 +46030,7 @@
     {
       "name": "Tokoloshe, Mythic",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/tokoloshe-mythic/",
-      "cr": "4/1",
+      "cr": "4",
       "init": 2,
       "hp": 34,
       "ac": 16,
@@ -46210,7 +46200,7 @@
     {
       "name": "Vampire, Stellar",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/vampire/stellar-vampire/",
-      "cr": "11 (XP 12,800)",
+      "cr": "11",
       "init": 10,
       "hp": 95,
       "ac": 24,
@@ -46320,7 +46310,7 @@
     {
       "name": "Walcofinde",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/walcofinde/",
-      "cr": "2 (XP 600)",
+      "cr": "2",
       "init": 5,
       "hp": 19,
       "ac": 14,
@@ -46890,7 +46880,7 @@
     {
       "name": "Ant, Giant (Worker)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/ant/ant-giant-worker/",
-      "cr": "1)",
+      "cr": "1",
       "init": 0,
       "hp": 18,
       "ac": 15,
@@ -47150,7 +47140,7 @@
     {
       "name": "Beetle, Giant Stag",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/beetle/beetle-stag/",
-      "cr": "4) Vicious Critical (Ex)",
+      "cr": "4",
       "init": 0,
       "hp": 45,
       "ac": 17,
@@ -47420,7 +47410,7 @@
     {
       "name": "Centipede, Sewer",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/centipede/centipede-sewer/",
-      "cr": "1/4 XP 100",
+      "cr": "1/4",
       "init": 3,
       "hp": 4,
       "ac": 16,
@@ -47640,7 +47630,7 @@
     {
       "name": "Crab, Muck",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/crab-muck/",
-      "cr": "½",
+      "cr": "1/2",
       "init": 1,
       "hp": 5,
       "ac": 17,
@@ -47650,7 +47640,7 @@
     {
       "name": "Crab, Muck (CR ½)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/crab-muck-cr-%c2%bd/",
-      "cr": "½) – d20PFSRD",
+      "cr": "1/2",
       "init": 1,
       "hp": 5,
       "ac": 17,
@@ -47670,7 +47660,7 @@
     {
       "name": "Crab, Muck, Giant (CR 1)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/crab-muck-giant-cr-1/",
-      "cr": "1) – d20PFSRD",
+      "cr": "1",
       "init": 0,
       "hp": 19,
       "ac": 16,
@@ -47690,7 +47680,7 @@
     {
       "name": "Crab, Muck, Titan (CR 11)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/crab-muck-titan-cr-11/",
-      "cr": "11) – d20PFSRD",
+      "cr": "11",
       "init": -1,
       "hp": 189,
       "ac": 23,
@@ -47730,7 +47720,7 @@
     {
       "name": "Crab, Shipwrecker (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/crab-shipwrecker-mythic/",
-      "cr": "16/MR 6",
+      "cr": "16",
       "init": 3,
       "hp": 251,
       "ac": 33,
@@ -47750,7 +47740,7 @@
     {
       "name": "Deadly Mantis",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/mantis/giant-mantis/deadly-mantis/",
-      "cr": "14.",
+      "cr": "14",
       "init": 1,
       "hp": 216,
       "ac": 20,
@@ -47870,7 +47860,7 @@
     {
       "name": "False Spider, Pedipalp",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/false-spider-pedipalp/",
-      "cr": "3)",
+      "cr": "3",
       "init": 2,
       "hp": 11,
       "ac": 16,
@@ -48810,7 +48800,7 @@
     {
       "name": "Spider, Drain (Diminutive)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/spider/spider-drain/",
-      "cr": "1/6 (XP 65)",
+      "cr": "1/6",
       "init": 7,
       "hp": 2,
       "ac": 21,
@@ -48840,7 +48830,7 @@
     {
       "name": "Spider, Giant (Medium)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/spider/giant-spider/",
-      "cr": "1) Poison (Ex)",
+      "cr": "1",
       "init": 3,
       "hp": 16,
       "ac": 14,
@@ -48910,7 +48900,7 @@
     {
       "name": "Spider, Giant, Spitter (CR 2)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/spider-giant-spitter-cr-2/",
-      "cr": "2) – d20PFSRD",
+      "cr": "2",
       "init": 4,
       "hp": 16,
       "ac": 15,
@@ -48970,7 +48960,7 @@
     {
       "name": "Squid, Giant (Mythic)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/squid-giant-mythic/",
-      "cr": "11/MR 4",
+      "cr": "11",
       "init": 7,
       "hp": 134,
       "ac": 24,
@@ -49370,7 +49360,7 @@
     {
       "name": "Worm That Walks, Human (CR 14)",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/worm-that-walks-human-conjurer/",
-      "cr": "14) – d20PFSRD",
+      "cr": "14",
       "init": 8,
       "hp": 113,
       "ac": 23,
@@ -49380,7 +49370,7 @@
     {
       "name": "Worm That Walks, Locust",
       "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/worm-that-walks-human-conjurer/worm-that-walks-locust/",
-      "cr": "14)  >",
+      "cr": "14",
       "init": 2,
       "hp": 77,
       "ac": 19,
@@ -49396,6 +49386,69 @@
       "ac": 21,
       "alignment": "N",
       "type": "Medium vermin"
+    },
+    {
+      "name": "Greater Banshee",
+      "baseCreatureName": "Banshee",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/banshee/",
+      "cr": "15",
+      "alignment": "CE",
+      "type": "Medium undead (incorporeal)",
+      "notes": "Variant: Greater Banshee (CR 15) (DnD 3.5e material); Improved Wail; Intelligent; Bardic Magic"
+    },
+    {
+      "name": "Roper, Crusher",
+      "baseCreatureName": "Roper",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/roper/",
+      "cr": "12",
+      "alignment": "CE",
+      "type": "Large aberration",
+      "notes": "Variant: Roper, Crusher (CR 12); Boulder (Su) replaces speed, ranged attacks, and melee strands"
+    },
+    {
+      "name": "Shardstriker",
+      "baseCreatureName": "Roper",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/roper/",
+      "cr": "13",
+      "alignment": "CE",
+      "type": "Large aberration",
+      "notes": "Shardstriker (CR 13); strand attacks deal slashing damage and can rend"
+    },
+    {
+      "name": "Medusa, Euryale",
+      "baseCreatureName": "Medusa",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/medusa/",
+      "cr": "7",
+      "alignment": "LE",
+      "type": "Medium monstrous humanoid (aquatic)",
+      "notes": "Variant: Medusa, Euryale (CR 7); Bloody Hair and Petrifying Critical; replaces the medusa's normal speed, melee attacks, and reach"
+    },
+    {
+      "name": "Dust Wendigo",
+      "baseCreatureName": "Wendigo",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/wendigo/",
+      "cr": "18",
+      "alignment": "CE",
+      "type": "Large outsider (air, fire, native)",
+      "notes": "Dust Wendigo (+1 CR); gains fire and air subtypes and replaces cold regeneration with cold damage"
+    },
+    {
+      "name": "Void Wendigo",
+      "baseCreatureName": "Wendigo",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/wendigo/",
+      "cr": "18",
+      "alignment": "CE",
+      "type": "Large outsider (cold, native)",
+      "notes": "Void Wendigo (+1 CR); lifeless stony stasis, lifesense 60 ft., greater teleport, and statue"
+    },
+    {
+      "name": "Wendigo, Shokujinki",
+      "baseCreatureName": "Wendigo",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/wendigo/",
+      "cr": "17",
+      "alignment": "CE",
+      "type": "Large undead",
+      "notes": "Variant: Wendigo, Shokujinki (CR 17); Cowering Gaze, Alter Self, and Shokujinki Curse replace the wendigo's default abilities"
     }
   ]
 }
