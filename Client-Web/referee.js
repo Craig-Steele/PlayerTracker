@@ -59,6 +59,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const refereeRulesetIcon = document.getElementById('ref-ruleset-icon');
   const invitePlayerBtn = document.getElementById('ref-invite-player');
   const campaignSettingsBtn = document.getElementById('ref-campaign-settings');
+  const campaignSettingsModal = document.getElementById('ref-campaign-settings-modal');
+  const campaignSettingsModalSummary = document.getElementById('ref-campaign-settings-modal-summary');
+  const campaignSettingsModalStatus = document.getElementById('ref-campaign-settings-modal-status');
+  const campaignSettingsTitle = document.getElementById('ref-campaign-settings-dialog-title');
+  const campaignSettingsCancelBtn = document.getElementById('ref-campaign-settings-cancel');
+  const campaignSettingsSaveBtn = document.getElementById('ref-campaign-settings-save');
+  const campaignNameInput = document.getElementById('ref-campaign-name-input');
+  const campaignRulesetSelect = document.getElementById('ref-ruleset-select');
+  const campaignClaimTimeoutManualInput = document.getElementById('ref-campaign-claim-timeout-manual');
+  const campaignClaimTimeoutTimedInput = document.getElementById('ref-campaign-claim-timeout-timed');
+  const campaignClaimTimeoutInput = document.getElementById('ref-campaign-claim-timeout-input');
+  const campaignInviteOnlyInput = document.getElementById('ref-campaign-invite-only');
 
   const form = document.getElementById('ref-add-panel');
   const nameInput = document.getElementById('ref-name');
@@ -80,13 +92,13 @@ window.addEventListener('DOMContentLoaded', () => {
   const libraryQueryInput = document.getElementById('ref-library-query');
   const libraryList = document.getElementById('ref-library-list');
   const libraryDetails = document.getElementById('ref-library-details');
-  const libraryImportButton = document.getElementById('ref-library-import');
-  const libraryImportInput = document.getElementById('ref-library-import-input');
-  const userdataSummary = document.getElementById('ref-userdata-summary');
-  const userdataStatus = document.getElementById('ref-userdata-status');
-  const userdataList = document.getElementById('ref-userdata-list');
-  const userdataRefreshButton = document.getElementById('ref-userdata-refresh');
-  const userdataSaveButton = document.getElementById('ref-userdata-save');
+  const libraryImportButton = document.getElementById('ref-campaign-library-import');
+  const libraryImportInput = document.getElementById('ref-campaign-library-import-input');
+  const userdataSummary = document.getElementById('ref-campaign-userdata-summary');
+  const userdataStatus = document.getElementById('ref-campaign-userdata-status');
+  const userdataList = document.getElementById('ref-campaign-userdata-list');
+  const userdataRefreshButton = document.getElementById('ref-campaign-userdata-refresh');
+  const userdataSaveButton = document.getElementById('ref-campaign-userdata-save');
   const healthHeading = document.getElementById('health-heading');
   const visibleToggle = document.getElementById('ref-visible');
   const addCurrentStats = document.getElementById('ref-add-current-stats');
@@ -124,6 +136,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
   let currentCampaignName = '';
   let currentRulesetId = '';
+  let currentCampaignClaimTimeoutMinutes = 5;
+  let currentCampaignInviteOnly = false;
+  let availableRulesets = [];
   let currentHealthLabel = 'HP';
   let statKeys = ['HP'];
   let statAliases = new Map();
@@ -179,6 +194,51 @@ window.addEventListener('DOMContentLoaded', () => {
   if (invitePlayerBtn) {
     invitePlayerBtn.addEventListener('click', invitePlayer);
   }
+  if (campaignSettingsBtn) {
+    campaignSettingsBtn.addEventListener('click', () => {
+      openCampaignSettingsModal();
+    });
+  }
+  if (campaignSettingsCancelBtn) {
+    campaignSettingsCancelBtn.addEventListener('click', () => {
+      closeCampaignSettingsModal();
+    });
+  }
+  if (campaignSettingsSaveBtn) {
+    campaignSettingsSaveBtn.addEventListener('click', () => {
+      void saveCampaignSettings();
+    });
+  }
+  if (campaignSettingsModal) {
+    campaignSettingsModal.addEventListener('click', (event) => {
+      if (event.target !== campaignSettingsModal) return;
+      closeCampaignSettingsModal();
+    });
+  }
+  if (campaignNameInput) {
+    campaignNameInput.addEventListener('input', () => validateCampaignSettingsModal());
+  }
+  if (campaignRulesetSelect) {
+    campaignRulesetSelect.addEventListener('change', () => validateCampaignSettingsModal());
+  }
+  if (campaignClaimTimeoutManualInput) {
+    campaignClaimTimeoutManualInput.addEventListener('change', () => {
+      syncCampaignClaimTimeoutUi();
+      validateCampaignSettingsModal();
+    });
+  }
+  if (campaignClaimTimeoutTimedInput) {
+    campaignClaimTimeoutTimedInput.addEventListener('change', () => {
+      syncCampaignClaimTimeoutUi();
+      validateCampaignSettingsModal();
+    });
+  }
+  if (campaignClaimTimeoutInput) {
+    campaignClaimTimeoutInput.addEventListener('input', () => validateCampaignSettingsModal());
+  }
+  if (campaignInviteOnlyInput) {
+    campaignInviteOnlyInput.addEventListener('change', () => validateCampaignSettingsModal());
+  }
   if (libraryImportButton && libraryImportInput) {
     libraryImportButton.addEventListener('click', () => {
       libraryImportInput.click();
@@ -221,7 +281,230 @@ window.addEventListener('DOMContentLoaded', () => {
     sync() {},
     close() {}
   };
-  function setCampaignSummary() {}
+  function setCampaignSummary(campaign) {
+    if (!campaignSettingsModalSummary) return;
+    if (!campaign) {
+      campaignSettingsModalSummary.textContent = 'No active campaign selected.';
+      return;
+    }
+    const claimTimeoutLabel = campaign.claimTimeoutMinutes < 0
+      ? 'explicit release only'
+      : campaign.claimTimeoutMinutes === 0
+        ? 'release immediately on disconnect'
+        : `${campaign.claimTimeoutMinutes}m claim timeout`;
+    const inviteLabel = campaign.isInviteOnly ? 'invite only' : 'open join';
+    campaignSettingsModalSummary.textContent = `${campaign.name} · ${campaign.rulesetLabel || campaign.rulesetId || 'No Conditions'} · ${claimTimeoutLabel} · ${inviteLabel}`;
+  }
+
+  function setCampaignSettingsModalStatus(text = '', isError = false) {
+    if (!campaignSettingsModalStatus) return;
+    campaignSettingsModalStatus.textContent = text;
+    campaignSettingsModalStatus.style.color = isError ? '#b00020' : '';
+  }
+
+  function populateCampaignRulesetSelect() {
+    if (!campaignRulesetSelect) return;
+    campaignRulesetSelect.innerHTML = '';
+    if (availableRulesets.length === 0) {
+      const option = document.createElement('option');
+      option.value = currentRulesetId || 'none';
+      option.textContent = currentRulesetId || 'No Conditions';
+      campaignRulesetSelect.appendChild(option);
+      return;
+    }
+    availableRulesets.forEach((ruleset) => {
+      const option = document.createElement('option');
+      option.value = ruleset.id;
+      option.textContent = ruleset.label || ruleset.id;
+      campaignRulesetSelect.appendChild(option);
+    });
+  }
+
+  async function loadAvailableRulesets() {
+    if (!campaignRulesetSelect) return;
+    try {
+      const res = await fetch('/rulesets');
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+      const json = await res.json();
+      availableRulesets = Array.isArray(json) ? json : [];
+      populateCampaignRulesetSelect();
+      if (currentRulesetId) {
+        campaignRulesetSelect.value = currentRulesetId;
+      }
+    } catch (err) {
+      availableRulesets = [];
+      populateCampaignRulesetSelect();
+      console.warn('Unable to load ruleset list:', err);
+    }
+  }
+
+  function isCampaignSettingsModalOpen() {
+    return Boolean(campaignSettingsModal && !campaignSettingsModal.classList.contains('hidden'));
+  }
+
+  function normalizeClaimTimeoutMinutes(value) {
+    const parsed = Number.parseInt(String(value || '').trim(), 10);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return null;
+    }
+    return parsed;
+  }
+
+  function getCampaignClaimTimeoutMode() {
+    if (campaignClaimTimeoutManualInput?.checked) {
+      return 'manual';
+    }
+    return 'timed';
+  }
+
+  function getCampaignClaimTimeoutMinutes() {
+    return getCampaignClaimTimeoutMode() === 'manual'
+      ? -1
+      : normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value);
+  }
+
+  function syncCampaignClaimTimeoutUi() {
+    const manual = getCampaignClaimTimeoutMode() === 'manual';
+    if (campaignClaimTimeoutInput) {
+      campaignClaimTimeoutInput.disabled = manual;
+      campaignClaimTimeoutInput.classList.toggle('hidden', manual);
+    }
+  }
+
+  function populateCampaignSettingsForm() {
+    populateCampaignRulesetSelect();
+    if (campaignNameInput) {
+      campaignNameInput.value = currentCampaignName;
+    }
+    if (campaignRulesetSelect) {
+      campaignRulesetSelect.value = currentRulesetId || campaignRulesetSelect.value || 'none';
+    }
+    if (campaignClaimTimeoutManualInput) {
+      campaignClaimTimeoutManualInput.checked = currentCampaignClaimTimeoutMinutes < 0;
+    }
+    if (campaignClaimTimeoutTimedInput) {
+      campaignClaimTimeoutTimedInput.checked = currentCampaignClaimTimeoutMinutes >= 0;
+    }
+    if (campaignClaimTimeoutInput) {
+      campaignClaimTimeoutInput.value = String(
+        Number.isInteger(currentCampaignClaimTimeoutMinutes) && currentCampaignClaimTimeoutMinutes >= 0
+          ? currentCampaignClaimTimeoutMinutes
+          : 5
+      );
+    }
+    if (campaignInviteOnlyInput) {
+      campaignInviteOnlyInput.checked = currentCampaignInviteOnly;
+    }
+    syncCampaignClaimTimeoutUi();
+    setCampaignSettingsModalStatus('');
+  }
+
+  function campaignSettingsHaveChanges() {
+    const name = (campaignNameInput?.value || '').trim();
+    const rulesetId = campaignRulesetSelect?.value || '';
+    const claimTimeoutMinutes = getCampaignClaimTimeoutMinutes();
+    const inviteOnly = Boolean(campaignInviteOnlyInput?.checked);
+    return (
+      name !== currentCampaignName ||
+      rulesetId !== currentRulesetId ||
+      claimTimeoutMinutes !== currentCampaignClaimTimeoutMinutes ||
+      inviteOnly !== currentCampaignInviteOnly
+    );
+  }
+
+  function campaignSettingsAreValid() {
+    const name = (campaignNameInput?.value || '').trim();
+    const rulesetId = campaignRulesetSelect?.value || '';
+    if (!name || !rulesetId || rulesetId === 'none') return false;
+    if (getCampaignClaimTimeoutMode() !== 'manual' && getCampaignClaimTimeoutMinutes() === null) return false;
+    return true;
+  }
+
+  function validateCampaignSettingsModal() {
+    if (!campaignSettingsSaveBtn) return;
+    const valid = campaignSettingsAreValid();
+    const changed = campaignSettingsHaveChanges();
+    campaignSettingsSaveBtn.disabled = !(valid && changed && Boolean(activeCampaignId));
+  }
+
+  function openCampaignSettingsModal() {
+    if (!campaignSettingsModal || !activeCampaignId) {
+      return;
+    }
+    populateCampaignSettingsForm();
+    renderCampaignUserDataFiles();
+    updateCampaignUserDataSummary();
+    updateCampaignUserDataSaveState();
+    campaignSettingsModal.classList.remove('hidden');
+    campaignSettingsModal.setAttribute('aria-hidden', 'false');
+    validateCampaignSettingsModal();
+    campaignNameInput?.focus();
+  }
+
+  function closeCampaignSettingsModal() {
+    if (!campaignSettingsModal) return;
+    campaignSettingsModal.classList.add('hidden');
+    campaignSettingsModal.setAttribute('aria-hidden', 'true');
+    setCampaignSettingsModalStatus('');
+  }
+
+  async function saveCampaignSettings() {
+    if (!activeCampaignId) {
+      setCampaignSettingsModalStatus('No active campaign selected.', true);
+      return;
+    }
+    if (!campaignSettingsAreValid()) {
+      setCampaignSettingsModalStatus('Fix the campaign settings before saving.', true);
+      validateCampaignSettingsModal();
+      return;
+    }
+
+    const name = (campaignNameInput?.value || '').trim();
+    const rulesetId = campaignRulesetSelect?.value || '';
+    const claimTimeoutMode = getCampaignClaimTimeoutMode();
+    const claimTimeoutMinutes = claimTimeoutMode === 'manual'
+      ? -1
+      : getCampaignClaimTimeoutMinutes();
+    const inviteOnly = Boolean(campaignInviteOnlyInput?.checked);
+
+    setCampaignSettingsModalStatus('Saving campaign settings...');
+    try {
+      const res = await fetch(`/campaigns/${encodeURIComponent(activeCampaignId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          rulesetId,
+          claimTimeoutMinutes,
+          isInviteOnly: inviteOnly
+        })
+      });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.replace('/index.html');
+          return;
+        }
+        throw new Error('Server returned ' + res.status);
+      }
+      const updated = await res.json();
+      currentCampaignName = updated.name || currentCampaignName;
+      currentRulesetId = updated.rulesetId || currentRulesetId;
+      currentCampaignClaimTimeoutMinutes = Number.isInteger(updated.claimTimeoutMinutes)
+        ? updated.claimTimeoutMinutes
+        : claimTimeoutMinutes;
+      currentCampaignInviteOnly = Boolean(updated.isInviteOnly);
+      await loadCampaign();
+      await loadConditionLibrary();
+      await loadCampaignUserData();
+      await loadState();
+      setCampaignSettingsModalStatus('Campaign settings saved.');
+      validateCampaignSettingsModal();
+    } catch (err) {
+      setCampaignSettingsModalStatus(`Unable to save campaign settings: ${err.message}`, true);
+    }
+  }
 
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
     if (!refereeEncounterState) return;
@@ -801,6 +1084,50 @@ window.addEventListener('DOMContentLoaded', () => {
     updateCampaignUserDataSaveState();
   }
 
+  function updateAddDialogTabs() {
+    const libraryOpen = addDialogTab === 'library';
+    creatureLibraryOpen = libraryOpen;
+
+    if (addManualTabBtn) {
+      addManualTabBtn.setAttribute('aria-selected', (!libraryOpen).toString());
+      addManualTabBtn.tabIndex = libraryOpen ? -1 : 0;
+    }
+    if (addLibraryTabBtn) {
+      addLibraryTabBtn.setAttribute('aria-selected', libraryOpen.toString());
+      addLibraryTabBtn.tabIndex = libraryOpen ? 0 : -1;
+    }
+    if (addManualPanel) {
+      addManualPanel.classList.toggle('hidden', libraryOpen);
+      addManualPanel.setAttribute('aria-hidden', libraryOpen.toString());
+    }
+    if (libraryPanel) {
+      libraryPanel.classList.toggle('hidden', !libraryOpen);
+      libraryPanel.setAttribute('aria-hidden', (!libraryOpen).toString());
+    }
+  }
+
+  function setAddDialogTab(tab, options = {}) {
+    const nextTab = tab === 'library' ? 'library' : 'manual';
+    const previousTab = addDialogTab;
+    addDialogTab = nextTab;
+    updateAddDialogTabs();
+
+    if (nextTab === 'library') {
+      const query = libraryQueryInput ? libraryQueryInput.value : creatureLibraryQuery;
+      if ((previousTab !== 'library' || !creatureLibraryResults.length) && !creatureLibraryLoading) {
+        loadCreatureLibrary(query || '');
+      }
+      if (options.focus && libraryQueryInput) {
+        libraryQueryInput.focus();
+      }
+      return;
+    }
+
+    if (options.focus && nameInput) {
+      nameInput.focus();
+    }
+  }
+
   async function loadCampaignUserData() {
     if (!activeCampaignId) {
       resetCampaignUserDataState();
@@ -879,50 +1206,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function updateAddDialogTabs() {
-    const libraryOpen = addDialogTab === 'library';
-    creatureLibraryOpen = libraryOpen;
-
-    if (addManualTabBtn) {
-      addManualTabBtn.setAttribute('aria-selected', (!libraryOpen).toString());
-      addManualTabBtn.tabIndex = libraryOpen ? -1 : 0;
-    }
-    if (addLibraryTabBtn) {
-      addLibraryTabBtn.setAttribute('aria-selected', libraryOpen.toString());
-      addLibraryTabBtn.tabIndex = libraryOpen ? 0 : -1;
-    }
-    if (addManualPanel) {
-      addManualPanel.classList.toggle('hidden', libraryOpen);
-      addManualPanel.setAttribute('aria-hidden', libraryOpen.toString());
-    }
-    if (libraryPanel) {
-      libraryPanel.classList.toggle('hidden', !libraryOpen);
-      libraryPanel.setAttribute('aria-hidden', (!libraryOpen).toString());
-    }
-  }
-
-  function setAddDialogTab(tab, options = {}) {
-    const nextTab = tab === 'library' ? 'library' : 'manual';
-    const previousTab = addDialogTab;
-    addDialogTab = nextTab;
-    updateAddDialogTabs();
-
-    if (nextTab === 'library') {
-      const query = libraryQueryInput ? libraryQueryInput.value : creatureLibraryQuery;
-      if ((previousTab !== 'library' || !creatureLibraryResults.length) && !creatureLibraryLoading) {
-        loadCreatureLibrary(query || '');
-      }
-      if (options.focus && libraryQueryInput) {
-        libraryQueryInput.focus();
-      }
-      return;
-    }
-
-    if (options.focus && nameInput) {
-      nameInput.focus();
-    }
-  }
-
   function clearCreatureLibrarySelection() {
     selectedCreatureLibraryId = null;
     selectedCreatureLibrary = null;
@@ -938,7 +1221,6 @@ window.addEventListener('DOMContentLoaded', () => {
       creatureLibrarySearchTimer = null;
     }
     creatureLibraryQuery = '';
-    creatureLibraryOpen = false;
     creatureLibraryLoading = false;
     creatureLibraryResults = [];
     clearCreatureLibrarySelection();
@@ -1286,8 +1568,11 @@ window.addEventListener('DOMContentLoaded', () => {
           currentCampaignName = '';
           activeCampaignId = null;
           currentRulesetId = '';
+          currentCampaignClaimTimeoutMinutes = 5;
+          currentCampaignInviteOnly = false;
           resetCampaignUserDataState();
           resetCreatureLibraryState();
+          closeCampaignSettingsModal();
           updateCampaignHeader(
             {
               nameTargets: refereeHeaderNameTargets,
@@ -1319,6 +1604,10 @@ window.addEventListener('DOMContentLoaded', () => {
       currentCampaignName = campaign.name || '';
       activeCampaignId = campaign.id || null;
       currentRulesetId = campaign.rulesetId || '';
+      currentCampaignClaimTimeoutMinutes = Number.isInteger(campaign.claimTimeoutMinutes)
+        ? campaign.claimTimeoutMinutes
+        : 5;
+      currentCampaignInviteOnly = Boolean(campaign.isInviteOnly);
       campaignUserdataSelection = Array.isArray(campaign?.userdataFiles)
         ? campaign.userdataFiles.map((name) => normalizeUserdataFileName(name)).filter(Boolean).sort((lhs, rhs) => lhs.localeCompare(rhs))
         : [];
@@ -1333,7 +1622,8 @@ window.addEventListener('DOMContentLoaded', () => {
           campaignName: currentCampaignName || null,
           rulesetLabel: campaign.rulesetLabel || '',
           rulesBaseUrl: null,
-          licenseUrl: null
+          licenseUrl: null,
+          iconUrl: null
         }
       );
       setCampaignSummary(campaign);
@@ -1351,6 +1641,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return true;
     } catch (err) {
       console.error('Failed to load campaign:', err);
+      closeCampaignSettingsModal();
       updateCampaignHeader(
         {
           nameTargets: refereeHeaderNameTargets,
@@ -2713,6 +3004,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function init() {
     const hasActiveCampaign = await loadCampaign();
+    await loadAvailableRulesets();
     await loadConditionLibrary();
     if (hasActiveCampaign) {
       await loadCampaignUserData();
@@ -2890,6 +3182,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   bindActionButtons();
+  updateAddDialogTabs();
   updateSelectionControls();
 
   init();
