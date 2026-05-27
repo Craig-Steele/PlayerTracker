@@ -82,6 +82,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const libraryDetails = document.getElementById('ref-library-details');
   const libraryImportButton = document.getElementById('ref-library-import');
   const libraryImportInput = document.getElementById('ref-library-import-input');
+  const userdataSummary = document.getElementById('ref-userdata-summary');
+  const userdataStatus = document.getElementById('ref-userdata-status');
+  const userdataList = document.getElementById('ref-userdata-list');
+  const userdataRefreshButton = document.getElementById('ref-userdata-refresh');
+  const userdataSaveButton = document.getElementById('ref-userdata-save');
   const healthHeading = document.getElementById('health-heading');
   const visibleToggle = document.getElementById('ref-visible');
   const addCurrentStats = document.getElementById('ref-add-current-stats');
@@ -122,6 +127,10 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentHealthLabel = 'HP';
   let statKeys = ['HP'];
   let statAliases = new Map();
+  let campaignUserdataFiles = [];
+  let campaignUserdataSelection = [];
+  let campaignUserdataDirty = false;
+  let campaignUserdataLoading = false;
   let statBlockDefinitions = [];
   let statBlockLookup = new Map();
   let addStatBlockDefinitions = [];
@@ -178,6 +187,16 @@ window.addEventListener('DOMContentLoaded', () => {
       void importCreatureLibraryFiles(Array.from(libraryImportInput.files || []));
     });
   }
+  if (userdataRefreshButton) {
+    userdataRefreshButton.addEventListener('click', () => {
+      void loadCampaignUserData();
+    });
+  }
+  if (userdataSaveButton) {
+    userdataSaveButton.addEventListener('click', () => {
+      void saveCampaignUserDataSelection();
+    });
+  }
 
   let activeCampaignId = null;
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
@@ -185,6 +204,7 @@ window.addEventListener('DOMContentLoaded', () => {
     refresh: async () => {
       const hasActiveCampaign = await loadCampaign();
       if (hasActiveCampaign) {
+        await loadCampaignUserData();
         await loadState();
       }
     },
@@ -664,6 +684,201 @@ window.addEventListener('DOMContentLoaded', () => {
     libraryImportStatus.textContent = text || '';
   }
 
+  function setCampaignUserDataStatus(text) {
+    if (!userdataStatus) return;
+    userdataStatus.textContent = text || '';
+  }
+
+  function resetCampaignUserDataState() {
+    campaignUserdataFiles = [];
+    campaignUserdataSelection = [];
+    campaignUserdataDirty = false;
+    campaignUserdataLoading = false;
+    if (userdataList) {
+      userdataList.innerHTML = '';
+    }
+    setCampaignUserDataStatus('');
+    updateCampaignUserDataSaveState();
+  }
+
+  function updateCampaignUserDataSaveState() {
+    if (!userdataSaveButton) return;
+    userdataSaveButton.disabled = !campaignUserdataDirty || campaignUserdataLoading;
+    userdataSaveButton.setAttribute('aria-disabled', userdataSaveButton.disabled.toString());
+  }
+
+  function normalizeUserdataFileName(name) {
+    if (typeof name !== 'string') return '';
+    return name.trim();
+  }
+
+  function currentUserdataSelectionSet() {
+    return new Set(campaignUserdataSelection.map((name) => normalizeUserdataFileName(name)).filter(Boolean));
+  }
+
+  function renderCampaignUserDataFiles(files = campaignUserdataFiles) {
+    if (!userdataList) return;
+    const selected = currentUserdataSelectionSet();
+    userdataList.innerHTML = '';
+    const normalizedFiles = Array.isArray(files)
+      ? files
+          .map((entry) => {
+            if (typeof entry === 'string') {
+              return { name: normalizeUserdataFileName(entry), selected: selected.has(normalizeUserdataFileName(entry)), missing: false };
+            }
+            if (!entry || typeof entry.name !== 'string') {
+              return null;
+            }
+            return {
+              name: normalizeUserdataFileName(entry.name),
+              selected: Boolean(entry.selected ?? selected.has(normalizeUserdataFileName(entry.name))),
+              missing: Boolean(entry.missing)
+            };
+          })
+          .filter((entry) => entry && entry.name)
+      : [];
+
+    if (normalizedFiles.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'creature-library-empty userdata-empty';
+      empty.textContent = 'No userdata files available.';
+      userdataList.appendChild(empty);
+      return;
+    }
+
+    normalizedFiles.forEach((entry) => {
+      const row = document.createElement('label');
+      row.className = 'userdata-file-row';
+      if (entry.missing) {
+        row.classList.add('userdata-file-missing');
+      }
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = Boolean(entry.selected);
+      checkbox.disabled = Boolean(entry.missing);
+      checkbox.addEventListener('change', () => {
+        const nextSelection = new Set(campaignUserdataSelection.map((value) => normalizeUserdataFileName(value)).filter(Boolean));
+        if (checkbox.checked) {
+          nextSelection.add(entry.name);
+        } else {
+          nextSelection.delete(entry.name);
+        }
+        campaignUserdataSelection = Array.from(nextSelection).sort((lhs, rhs) => lhs.localeCompare(rhs));
+        campaignUserdataDirty = true;
+        updateCampaignUserDataSaveState();
+      });
+
+      const text = document.createElement('span');
+      text.className = 'userdata-file-name';
+      text.textContent = entry.missing ? `${entry.name} (missing)` : entry.name;
+
+      row.appendChild(checkbox);
+      row.appendChild(text);
+      userdataList.appendChild(row);
+    });
+  }
+
+  function updateCampaignUserDataSummary() {
+    if (!userdataSummary) return;
+    const selectedCount = campaignUserdataSelection.length;
+    const availableCount = campaignUserdataFiles.filter((entry) => !entry.missing).length;
+    userdataSummary.textContent = availableCount > 0
+      ? `Userdata: ${selectedCount} selected from ${availableCount} file(s)`
+      : 'Userdata: no files available';
+  }
+
+  function setCampaignUserDataSelection(selection) {
+    const normalized = Array.from(new Set((Array.isArray(selection) ? selection : [])
+      .map((name) => normalizeUserdataFileName(name))
+      .filter(Boolean)))
+      .sort((lhs, rhs) => lhs.localeCompare(rhs));
+    const changed = normalized.join('|') !== campaignUserdataSelection.join('|');
+    campaignUserdataSelection = normalized;
+    campaignUserdataDirty = campaignUserdataDirty || changed;
+    renderCampaignUserDataFiles();
+    updateCampaignUserDataSummary();
+    updateCampaignUserDataSaveState();
+  }
+
+  async function loadCampaignUserData() {
+    if (!activeCampaignId) {
+      resetCampaignUserDataState();
+      return false;
+    }
+    if (campaignUserdataLoading) {
+      return false;
+    }
+    campaignUserdataLoading = true;
+    updateCampaignUserDataSaveState();
+    try {
+      const res = await fetch('/campaign/userdata');
+      if (!res.ok) {
+        if (res.status === 409 || res.status === 403 || res.status === 401) {
+          resetCampaignUserDataState();
+          return false;
+        }
+        throw new Error(`Server returned ${res.status}`);
+      }
+      const json = await res.json();
+      const files = Array.isArray(json?.files) ? json.files : [];
+      campaignUserdataFiles = files.map((entry) => ({
+        name: normalizeUserdataFileName(entry?.name),
+        selected: Boolean(entry?.selected),
+        missing: Boolean(entry?.missing)
+      })).filter((entry) => entry.name);
+      campaignUserdataSelection = campaignUserdataFiles
+        .filter((entry) => entry.selected)
+        .map((entry) => entry.name)
+        .sort((lhs, rhs) => lhs.localeCompare(rhs));
+      campaignUserdataDirty = false;
+      setCampaignUserDataStatus('');
+      renderCampaignUserDataFiles(campaignUserdataFiles);
+      updateCampaignUserDataSummary();
+      updateCampaignUserDataSaveState();
+      return true;
+    } catch (err) {
+      setCampaignUserDataStatus(`Unable to load userdata: ${err.message}`);
+      return false;
+    } finally {
+      campaignUserdataLoading = false;
+      updateCampaignUserDataSaveState();
+    }
+  }
+
+  async function saveCampaignUserDataSelection() {
+    if (!activeCampaignId) {
+      setCampaignUserDataStatus('No active campaign selected.');
+      return false;
+    }
+    if (!campaignUserdataDirty) {
+      setCampaignUserDataStatus('No userdata changes to save.');
+      return true;
+    }
+    const selectedFiles = campaignUserdataSelection.slice();
+    setCampaignUserDataStatus('Saving userdata selection...');
+    try {
+      const res = await fetch('/campaign/userdata', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ files: selectedFiles })
+      });
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+      campaignUserdataDirty = false;
+      await loadCampaignUserData();
+      await loadCreatureLibrary(creatureLibraryQuery || '');
+      setCampaignUserDataStatus('Saved userdata selection.');
+      return true;
+    } catch (err) {
+      setCampaignUserDataStatus(`Unable to save userdata: ${err.message}`);
+      return false;
+    }
+  }
+
   function updateAddDialogTabs() {
     const libraryOpen = addDialogTab === 'library';
     creatureLibraryOpen = libraryOpen;
@@ -1048,6 +1263,7 @@ window.addEventListener('DOMContentLoaded', () => {
       setCreatureLibraryImportStatus(
         `Imported ${json.imported || 0} file(s)${json.skipped ? `, skipped ${json.skipped}` : ''}.`
       );
+      await loadCampaignUserData();
       await loadCreatureLibrary(creatureLibraryQuery || '');
     } catch (err) {
       setCreatureLibraryImportStatus(`Unable to import fixtures: ${err.message}`);
@@ -1070,6 +1286,7 @@ window.addEventListener('DOMContentLoaded', () => {
           currentCampaignName = '';
           activeCampaignId = null;
           currentRulesetId = '';
+          resetCampaignUserDataState();
           resetCreatureLibraryState();
           updateCampaignHeader(
             {
@@ -1102,6 +1319,10 @@ window.addEventListener('DOMContentLoaded', () => {
       currentCampaignName = campaign.name || '';
       activeCampaignId = campaign.id || null;
       currentRulesetId = campaign.rulesetId || '';
+      campaignUserdataSelection = Array.isArray(campaign?.userdataFiles)
+        ? campaign.userdataFiles.map((name) => normalizeUserdataFileName(name)).filter(Boolean).sort((lhs, rhs) => lhs.localeCompare(rhs))
+        : [];
+      campaignUserdataDirty = false;
       updateCampaignHeader(
         {
           nameTargets: refereeHeaderNameTargets,
@@ -1145,6 +1366,9 @@ window.addEventListener('DOMContentLoaded', () => {
           iconUrl: currentCampaignName ? undefined : APP_ICON_URL
         }
       );
+      if (!activeCampaignId) {
+        resetCampaignUserDataState();
+      }
       campaignLiveStream.close();
       document.title = currentCampaignName ? `${currentCampaignName} - Referee` : APP_NAME;
       return false;
@@ -2491,6 +2715,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const hasActiveCampaign = await loadCampaign();
     await loadConditionLibrary();
     if (hasActiveCampaign) {
+      await loadCampaignUserData();
       await loadState();
     }
     campaignLiveStream.start();

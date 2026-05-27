@@ -12,7 +12,8 @@ final class CampaignEventHubTests: XCTestCase {
             rulesetLabel: "Traveller (SRD)",
             encounterState: .active,
             claimTimeoutMinutes: 5,
-            isInviteOnly: false
+            isInviteOnly: false,
+            userdataFiles: []
         )
         let snapshot = CampaignStreamSnapshot(
             campaign: campaign,
@@ -47,7 +48,8 @@ final class CampaignEventHubTests: XCTestCase {
             rulesetLabel: "Traveller (SRD)",
             encounterState: .active,
             claimTimeoutMinutes: 5,
-            isInviteOnly: false
+            isInviteOnly: false,
+            userdataFiles: []
         )
         let snapshot = CampaignStreamSnapshot(
             campaign: campaign,
@@ -83,7 +85,8 @@ final class CampaignEventHubTests: XCTestCase {
             rulesetLabel: "Traveller (SRD)",
             encounterState: .active,
             claimTimeoutMinutes: 5,
-            isInviteOnly: false
+            isInviteOnly: false,
+            userdataFiles: []
         )
         let stream = await hub.subscribe(campaignID: campaign.id)
         var iterator = stream.makeAsyncIterator()

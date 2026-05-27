@@ -38,6 +38,9 @@
   },
   "rulesBaseUrl": "https://www.5esrd.com/",
   "icon": "dnd5e.png",
+  "creatureLibrary": {
+    "file": "dnd5e-bestiary"
+  },
   "supportsTempHp": true,
   "license": "https://www.5esrd.com/legal-information",
   "conditions": [

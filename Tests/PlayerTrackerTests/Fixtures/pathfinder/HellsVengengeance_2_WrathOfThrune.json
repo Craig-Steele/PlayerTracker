@@ -1,0 +1,386 @@
+{
+  "id": "hells-vengeance-2-wrath-of-thrune",
+  "label": "Hell's Vengeance 2: Wrath of Thrune",
+  "rulesetId": "pathfinder",
+  "generatedAt": "2026-05-27T00:28:40Z",
+  "creatures": [
+    {
+      "id": "angel-erelim",
+      "name": "Angel, Erelim",
+      "cr": "6",
+      "alignment": "NG",
+      "type": "outsider (angel, extraplanar, good)",
+      "size": "Medium",
+      "hp": 68,
+      "ac": 18,
+      "init": 3,
+      "source": "Wrath of Thrune, page 86",
+      "notes": "ANGEL, ERELIM This athletic, winged humanoid has handsome features and wields a shining lance. ANGEL, ERELIM CR 6 XP 2,400 NG Medium outsider (angel, extraplanar, good) Init +3; Senses darkvision 60 ft., low-light vision, detect evil; Perception +13 Aura protective aura DEFENSE AC 18, touch 13, flat-footed 15 (+3 Dex, +5 natural); +4 deflection vs. evil hp 68 (8d10+24) Fort +9, Ref +5, Will +8; +4 vs. poison, +4 resistance vs. evil DR 5/evil; Immune acid, cold, petrification; Resist electricity",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "brextur",
+      "name": "Brextur",
+      "cr": "4",
+      "alignment": "LE",
+      "type": "outsider (devil, evil, extraplanar, lawful)",
+      "size": "Small",
+      "hp": 37,
+      "ac": 17,
+      "init": 8,
+      "source": "Wrath of Thrune, page 26",
+      "notes": "When the PCs first arrive at the smithy, Brextur hides in the ruins. Noticing that they are (most likely) not wearing any Iomedaean paraphernalia, the devil has enough confidence to stealthily initiate combat with the intruders by animating the nearby fire plumes with his animate flames ability. If the PCs detect Brextur, they can attempt to talk to the devil. Brextur’s initial attitude is unfriendly; he can be made indifferent with a successful DC 21 Diplomacy check, or friendly with a successful DC 26 Diplomacy check. Alternatively, the PCs can bully the devil with a successful DC 18 Intimidate check. If the PCs reveal their status as Thrune agents, they gain a +4 circumstance bonus on these checks. See Development below for details on befriending the devil. BREXTUR CR 4 XP 1,200 Male ukobach (Pathfinder Adventure Path #25 86) LE Small outsider (devil, evil, extraplanar, lawful) Init +8; Senses darkvision 60 ft., see in darkness; Perception +3 DEFENSE AC 17, touch 15, flat-footed 13 (+4 Dex, +2 natural, +1 size) hp 37 (5d10+10) Fort +3, Ref +10, Will +7 DR 5/good or silver; Immune fire, poison; Resist acid 10, cold 10; SR 15 OFFENSE Speed 30 ft. Melee fire poker +5 (1d6-1 plus 1d4 fire) or 2 claws +5 (1d3-1 plus 1d4 fire) Ranged ember +10 (1d6 fire) Special Attacks animate flames, fire-breathing, scorch TACTICS During Combat From hiding, Brextur attempts to animate one of the fire plumes as a Small fire elemental, which then attacks the PCs. If the devil remains undetected, he continues this tactic. If he’s spotted, Brextur stays to defend his home, but uses his flame leap ability to move around the battlefield through the fire plumes. Morale If reduced to fewer than 10 hit points, Brextur offers unconditional surrender, pleading for his life and cursing \"the Inheritor and her lackeys for ever coming to Kantaria.\" SPECIAL ABILITIES Animate Flames (Su) As a standard action, an ukobach can animate an existing Small or larger fire. Doing so requires the ukobach to succeed at a DC 15 Wisdom check as it impresses its will upon the fire. This DC increases by +5 for every size category of the flame above Small. If it’s successful, the flame animates and follows the ukobach’s mental commands, functioning as a fire elemental of the same size. The flame remains animate for a number of rounds equal to the ukobach’s Wisdom modifier—usually 3—after which it returns to being simple flame, setting the square it ceases moving in alight or being extinguished, as its surroundings warrant. Ember (Ex) An ukobach can hurl a red-hot ember as an improvised thrown weapon that deals 1d6 points of fire damage. A thrown ember has a range increment of 10 feet. Fire Leap (Su) As a swift action, an ukobach occupying the same space as a fire, a pool of lava, a vent of searing steam, or a similar blaze (such as the fire plumes in the smithy ruins) can teleport from that burning feature and emerge from another within 100 feet. This ability functions similarly to dimension door, but only between fires. Upon entering a flame, an ukobach is instantly aware of all flames within range through which it might exit. If an ukobach enters a flame and there are no others to exit through within 100 feet, the devil’s movement immediately ends and it is stunned for 1 round. Fire-Breathing (Su) An ukobach can spend a standard action to guzzle a pint of oil, alcohol, or a similarly flammable fluid and hold the combustible liquid within its body. At any point within 10 minutes of doing so, the ukobach can ignite and expel the liquid as either a 10-foot cone or a 20-foot line of fire, dealing 3d6 points of fire damage (Reflex DC 14 half). Once it has breathed fire, an ukobach cannot make use of this ability again until it drinks another pint of flammable liquid. The save DC is Constitution-based. Scorch (Su) An ukobach’s touch is searing hot, and its natural weapons and any metal weapons it grasps deal an additional 1d4 points of fire damage.",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "bunyip",
+      "name": "Bunyip",
+      "cr": "3",
+      "hp": 32,
+      "source": "Wrath of Thrune, page 41",
+      "notes": "the myceloids. Unwilling to leave its companion, the infected bunyip’s mate remains as well. There is a 50% chance of encountering the two bunyips when the PCs first enter this chamber. Otherwise, anyone entering the river attracts the bunyips’ attention after 1d6 rounds. BUNYIP CR 3 XP 800 hp 32 (Pathfinder RPG Bestiary 2 50) PURPLE POX-AFFLICTED BUNYIP CR 3 XP 800 hp 27 (Pathfinder RPG Bestiary 2 50) Fort +4, Will +0 Weaknesses purple pox-afflicted, spore-dominated Special Attacks roar (DC 12)",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "exemplar",
+      "name": "Exemplar",
+      "cr": "7",
+      "alignment": "LG",
+      "type": "outsider (extraplanar, incorporeal)",
+      "size": "Small",
+      "hp": 67,
+      "ac": 17,
+      "init": 3,
+      "source": "Wrath of Thrune, page 47",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "gale-spirit",
+      "name": "Gale Spirit",
+      "cr": "6",
+      "alignment": "CE",
+      "type": "undead (incorporeal)",
+      "size": "Small",
+      "hp": 57,
+      "ac": 20,
+      "init": 8,
+      "source": "Wrath of Thrune, page 88",
+      "notes": "GALE SPIRIT This translucent, floating head has a bluish tinge and a humanoid face twisted in an enraged scowl. GALE SPIRIT CR 6 XP 2,400 CE Small undead (incorporeal) Init +8; Senses darkvision 60 ft., lifesense; Perception +9 Aura unnatural aura (30 ft.) DEFENSE AC 20, touch 20, flat-footed 16 (+5 deflection, +4 Dex, +1 size) hp 57 (6d8+30) Fort +7, Ref +8, Will +5 Defensive Abilities incorporeal; Immune undead traits Weaknesses light sensitivity OFFENSE Speed fly 60 ft. (good) Melee incorpore",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "glorious-reclamation-sergeant",
+      "name": "Glorious Reclamation Sergeant",
+      "cr": "2",
+      "alignment": "LG",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 24,
+      "ac": 18,
+      "init": 2,
+      "source": "Wrath of Thrune, page 11",
+      "notes": "GLORIOUS RECLAMATION SERGEANT CR 2 XP 600 Human fighter 3 LG Medium humanoid (human) Init +2; Senses Perception +4 DEFENSE AC 18, touch 12, flat-footed 16 (+6 armor, +2 Dex) hp 24 (3d10+3) Fort +4, Ref +3, Will +5 (+1 vs. fear) OFFENSE Speed 30 ft. Melee mwk bastard sword +7 (1d10+3/19-20) Ranged mwk longbow +6 (1d8/x3) TACTICS Before Combat If she has time before combat, a sergeant drinks her potion of bear’s endurance. During Combat A sergeant uses her longbow against distant foes or those engaged by allies. In melee combat, a sergeant makes Power Attacks with her bastard sword. Morale A sergeant surrenders or attempts to flee when reduced below 7 hit points. STATISTICS Str 15, Dex 15, Con 12, Int 10, Wis 14, Cha 8 Base Atk +3; CMB +5; CMD 17 Feats Iron Will, Point-Blank Shot, Power Attack, Precise Shot, Weapon Focus (bastard sword) Skills Climb +5, Handle Animal +4, Perception +4, Profession (soldier) +7, Ride +5 Languages Common SQ armor training 1 Combat Gear potion of bear's endurance, potion of cure moderate wounds; Other Gear mwk chainmail, mwk bastard sword, mwk longbow with 20 arrows, wooden holy symbol of Iomedae, 38 gp",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "glorious-reclamation-squire",
+      "name": "Glorious Reclamation Squire",
+      "cr": "1",
+      "alignment": "LG",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 19,
+      "ac": 15,
+      "source": "Wrath of Thrune, page 12",
+      "notes": "GLORIOUS RECLAMATION SQUIRE CR 1 XP 400 Human paladin of Iomedae 2 LG Medium humanoid (human) Init +0; Senses Perception +1 DEFENSE AC 15, touch 10, flat-footed 15 (+4 armor, +1 shield) hp 19 (2d10+4) Fort +7, Ref +2, Will +6 OFFENSE Speed 30 ft. Melee mwk longsword +5 (1d8+2/19-20) Ranged shortbow +2 (1d6/x3) Special Attacks smite evil 1/day (+2 attack and AC, +2 damage) Paladin Spell-Like Abilities (CL 2nd; concentration +4) at will—detect evil TACTICS During Combat A squire first attempts to deal nonlethal damage to subdue foes. Once any allies have been slain, the squire instead attacks with lethal damage, targeting foes with obvious evil affiliations (such as those wearing Hellknight armor, displaying unholy symbols, using evil magic, etc.) with smite evil. Morale When reduced to fewer than 7 hp, a squire attempts to withdraw and summon reinforcements, using lay on hands to remain conscious. STATISTICS Str 15, Dex 10, Con 14, Int 8, Wis 13, Cha 14 Base Atk +2; CMB +4; CMD 14 Feats Power Attack, Step Up Skills Diplomacy +6, Heal +5, Intimidate +3, Knowledge (nobility) +3, Knowledge (religion) +3, Ride +1 Languages Common SQ lay on hands 3/day (1d6) Combat Gear oil (2), thunderstone; Other Gear chain shirt, light wooden shield, mwk longsword, shortbow with 20 arrows, bullseye lantern, wooden holy symbol of Iomedae, 8 gp",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "halfling-slinger",
+      "name": "Halfling Slinger",
+      "cr": "0.5",
+      "alignment": "NG",
+      "type": "humanoid (halfling)",
+      "size": "Small",
+      "hp": 13,
+      "ac": 15,
+      "init": 2,
+      "source": "Wrath of Thrune, page 11",
+      "notes": "HALFLING SLINGER CR 1/2 XP 200 Halfling warrior 2 NG Small humanoid (halfling) Init +2; Senses Perception +2 DEFENSE AC 15, touch 13, flat-footed 13 (+2 armor, +2 Dex, +1 size) hp 13 (2d10+2) Fort +4, Ref +3, Will +0; +2 vs. fear OFFENSE Speed 20 ft. Melee short sword +3 (1d4/19-20) or halfling sling staff +3 (1d4) Ranged halfling sling staff +5 (1d6/x3) TACTICS During Combat Slingers target opponents at range with their sling staffs, preferring to strike at enemies not yet engaged by allies, or using tanglefoot bags against heavily armored opponents. If forced into melee combat, a slinger takes 5-foot steps backward to continue making missile attacks, switching to use a short sword (or using the sling staff as a club) only if he has no other choice. Morale A halfling slinger flees when reduced to 4 hit points or fewer. STATISTICS Str 10, Dex 15, Con 11, Int 10, Wis 9, Cha 10 Base Atk +2; CMB +1; CMD 13 Feats Point-Blank Shot Skills Acrobatics +4, Climb +2, Handle Animal +4, Perception +2, Profession (servant) +3, Stealth +7; Racial Modifiers +2 Acrobatics, +2 Climb, +2 Perception Languages Common, Halfling Combat Gear tanglefoot bag; Other Gear leather armor, halfling sling staff with 10 bullets, short sword",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "hiracapath",
+      "name": "Hiracapath",
+      "cr": "7",
+      "alignment": "LG",
+      "type": "outsider (extraplanar, good, lawful)",
+      "size": "Large",
+      "hp": 94,
+      "ac": 18,
+      "init": 1,
+      "source": "Wrath of Thrune, page 90",
+      "notes": "HIRACAPATH Silvery armor in the shape of a powerful ram barely contains the brilliant radiance shining from within it, and curling, steel horns emerge from its helm. HIRACAPATH CR 7 XP 3,200 LG Large outsider (extraplanar, good, lawful) Init +1; Senses darkvision 60 ft., scent; Perception +12 DEFENSE AC 18, touch 10, flat-footed 17 (+1 Dex, +8 natural, –1 size) hp 94 (9d10+45) Fort +11, Ref +6, Will +9 DR 5/evil; Resist electricity 5, fire 5 OFFENSE Speed 40 ft. Melee gore +14 (1d8+6), 2 hooves",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "kalcyra-the-just",
+      "name": "Kalcyra the Just",
+      "cr": "6",
+      "alignment": "LN",
+      "type": "humanoid (dwarf)",
+      "size": "Medium",
+      "hp": 70,
+      "ac": 21,
+      "init": 3,
+      "source": "Wrath of Thrune, page 23",
+      "notes": "Morale Believing she has a divine mandate, Kalcyra fights to the death. STATISTICS Str 14, Dex 10, Con 16, Int 8, Wis 17, Cha 10 Base Atk +5; CMB +10; CMD 19 (23 vs. bull rush and trip) Feats Combat Casting, Duck And CoverAPG, Power Attack, Shake It OffUC, Skill Focus (Intimidate), Toughness Skills Appraise –2 (+0 to assess nonmagical metals or gemstones), Diplomacy +10, Intimidate +16, Knowledge (religion) +8, Perception +12 (+14 to notice unusual stonework), Sense Motive +16, Spellcraft +4 Lan",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "linton-demeer",
+      "name": "Linton Demeer",
+      "cr": "7",
+      "alignment": "NE",
+      "type": "aberration (shapechanger)",
+      "size": "Medium",
+      "hp": 95,
+      "ac": 26,
+      "init": 15,
+      "source": "Wrath of Thrune, page 58",
+      "notes": "LINTON DEMEER Proprietor of Healthy Heart Alchemicals, Linton Demeer is also a member of Kantaria’s new governing council. He conceals a secret, however: he also leads a ragged band of faceless stalkers who have settled in Kantaria. LINTON DEMEER CR 7 XP 3,200 Male faceless stalker alchemist (chirurgeon) 5 (Pathfinder RPG Bestiary 2 122, Pathfinder RPG Advanced Player’s Guide 26, Pathfinder RPG Ultimate Magic 18) NE Medium aberration (shapechanger) Init +15; Senses darkvision 60 ft.; Perception",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "linxia-benzekri",
+      "name": "Linxia Benzekri",
+      "cr": "7",
+      "alignment": "LE",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 69,
+      "ac": 21,
+      "init": 4,
+      "source": "Wrath of Thrune, page 64",
+      "notes": "MEET THE VILLAIN: LINXIA BENZEKRI Linxia is the iconic Hellknight for the Hell’s Vengeance Adventure Path. Although she does not appear as a character in the campaign, she can be used as an NPC or pregenerated player character. Note that her CR is 1 higher than normal because she has PC wealth. LINXIA BENZEKRI CR 7 XP 3,200 Female human fighter 5/Hellknight 2 (Pathfinder Campaign Setting: The Inner Sea World Guide 278) LE Medium humanoid (human) Init +4; Senses Perception +6 DEFENSE AC 21, touch",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "loredana-viorica",
+      "name": "Loredana Viorica",
+      "cr": "1",
+      "alignment": "NE",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 16,
+      "ac": 14,
+      "init": 2,
+      "source": "Wrath of Thrune, page 14",
+      "notes": "A. THE LITTLE USKWOOD 1 SQUARE = 5 FEET A4 A4 A4 A5 A4 A4 A4 A5 A1 LOREDANA VIORICA CR 1 XP 400 Female human rogue 2 NE Medium humanoid (human) Init +2; Senses Perception +6 DEFENSE AC 14, touch 12, flat-footed 12 (+2 armor, +2 Dex) hp 16 (2d8+4) Fort +1, Ref +5, Will +2 Defensive Abilities evasion OFFENSE Speed 30 ft. Melee dagger +1 (1d4/19–20) Ranged mwk hand crossbow +4 (1d4/19–20) Special Attacks sneak attack +1d6 TACTICS During Combat Loredana prefers to attack from range, using her hand c",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "masimo-viorica",
+      "name": "Masimo Viorica",
+      "cr": "5",
+      "alignment": "NE",
+      "type": "undead",
+      "size": "Small",
+      "hp": 62,
+      "ac": 18,
+      "init": 4,
+      "source": "Wrath of Thrune, page 19",
+      "notes": "connection to Zon-Kuthon. Unable to open the boarded- up cellar door, the shredskin is trapped beneath the Little Uskwood, but finds some solace in endlessly scratching the walls. He waits in the small chamber to the south of the main cellar. When living creatures enter the cellar, Masimo rises up from among the haphazardly placed barrels, boxes, and other abandoned stores to find a host body he can control to confront his daughter. MASIMO VIORICA CR 5 XP 1,600 Male advanced variant shredskin cl",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "merlucent",
+      "name": "Merlucent",
+      "cr": "3",
+      "alignment": "CN",
+      "type": "aberration (aquatic)",
+      "size": "Medium",
+      "hp": 26,
+      "ac": 16,
+      "init": 7,
+      "source": "Wrath of Thrune, page 92",
+      "notes": "MERLUCENT A mane of long, writhing tentacles crowns this translucent, humanoid figure. A crystalline skeleton supports its faintly glowing flesh. MERLUCENT CR 3 XP 800 CN Medium aberration (aquatic) Init +7; Senses darkvision 60 ft.; Perception +7 DEFENSE AC 16, touch 13, flat-footed 13 (+3 Dex, +3 natural) hp 26 (4d8+8) Fort +3, Ref +4, Will +6 Resist cold 5 OFFENSE Speed 15 ft., swim 40 ft. Melee 3 tentacles +6 (1d4+1 plus poison) Space 5 ft.; Reach 5 ft. (15 ft. with tentacle) Special Attacks",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "militia-volunteer",
+      "name": "Militia Volunteer",
+      "cr": "1",
+      "alignment": "LN",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 21,
+      "ac": 16,
+      "init": 1,
+      "source": "Wrath of Thrune, page 11",
+      "notes": "MILITIA VOLUNTEER CR 1 XP 400 Human fighter (polearm master) 2 (Pathfinder RPG Advanced Player's Guide 106) LN Medium humanoid (human) Init +1; Senses Perception +2 DEFENSE AC 16, touch 11, flat-footed 15 (+5 armor, +1 Dex) hp 21 (2d10+6) Fort +5, Ref +1, Will +1 OFFENSE Speed 20 ft. Melee guisarme +5 (2d4+3/x3) Ranged light crossbow +3 (1d8/19-20) Space 5 ft., Reach 5 ft. (10 ft. with guisarme) Special Attacks pole fighting TACTICS During Combat Militia volunteers prefer fighting in groups, moving to surround lone enemies and subdue them. Morale A militia volunteer flees when reduced to fewer than 7 hit points. STATISTICS Str 15, Dex 13, Con 14, Int 10, Wis 12, Cha 10 Base Atk +2; CMB +4; CMD 15 Feats Athletic, Cleave, Power Attack, Weapon Focus (guisarme) Skills Climb +4, Handle Animal +4, Perception +2, Profession (farmer) +5, Ride +1, Swim +4 Languages Common Gear scale mail, guisarme, light crossbow with 10 bolts",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "myceloid-younguns",
+      "name": "Myceloid Young'uns",
+      "cr": "3",
+      "hp": 27,
+      "source": "Wrath of Thrune, page 43",
+      "notes": "Young myceloid (2)",
+      "tags": [
+        "group"
+      ]
+    },
+    {
+      "id": "oppian-nevilindor",
+      "name": "Oppian Nevilindor",
+      "cr": "7",
+      "alignment": "LG",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 79,
+      "ac": 25,
+      "init": -1,
+      "source": "Wrath of Thrune, page 60",
+      "notes": "FOURTH SWORD KNIGHT OPPIAN NEVILINDOR Appointed governor of Kantaria by its Glorious Reclamation liberators, Oppian Nevilindor is a devout servant of Iomedae. Oppian dedicates himself to the ideals of the Inheritor, maintaining peak martial, physical, and spiritual condition. OPPIAN NEVILINDOR CR 7 XP 3,200 Male human cleric of Iomedae 8 LG Medium humanoid (human) Init –1; Senses Perception +3 Aura divine presence (30 ft., DC 17, 8 rounds/day) TACTICS DEFENSE AC 25, touch 12, flat-footed 25 (+10",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "purple-pox-afflicted-bunyip",
+      "name": "Purple Pox-Afflicted Bunyip",
+      "cr": "3",
+      "hp": 27,
+      "source": "Wrath of Thrune, page 41",
+      "notes": "the myceloids. Unwilling to leave its companion, the infected bunyip’s mate remains as well. There is a 50% chance of encountering the two bunyips when the PCs first enter this chamber. Otherwise, anyone entering the river attracts the bunyips’ attention after 1d6 rounds. BUNYIP CR 3 XP 800 hp 32 (Pathfinder RPG Bestiary 2 50) PURPLE POX-AFFLICTED BUNYIP CR 3 XP 800 hp 27 (Pathfinder RPG Bestiary 2 50) Fort +4, Will +0 Weaknesses purple pox-afflicted, spore-dominated Special Attacks roar (DC 12)",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "reikman",
+      "name": "Reikman",
+      "cr": "4",
+      "alignment": "N",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 42,
+      "ac": 17,
+      "init": 7,
+      "source": "Wrath of Thrune, page 29",
+      "notes": "Morale Having thrown in his lot with the Glorious Reclamation, Reikman fights until reduced to fewer than 10 hit points, at which point he attempts to flee Kantaria. STATISTICS Str 14, Dex 17, Con 14, Int 12, Wis 8, Cha 10 Base Atk +4; CMB +6; CMD 19 Feats Exotic Weapon Proficiency (scorpion whip), Improved Initiative, Iron Will, Sea LegsUC, Two-Weapon Fighting, Weapon Finesse, Weapon Focus (scorpion whip) Skills Acrobatics +12, Appraise +6, Bluff +7, Climb +11, Disable Device +6, Escape Artist",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "rima",
+      "name": "Rima",
+      "cr": "4",
+      "hp": 42,
+      "source": "Wrath of Thrune, page 32",
+      "notes": "Female faceless stalker (Pathfinder RPG Bestiary 2 122)",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "sixth-sword-knight",
+      "name": "Sixth Sword Knight",
+      "cr": "3",
+      "alignment": "LG",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 33,
+      "ac": 17,
+      "init": 4,
+      "source": "Wrath of Thrune, page 12",
+      "notes": "SIXTH SWORD KNIGHT CR 3 XP 800 Human cleric of Iomedae 4 LG Medium humanoid (human) Init +4; Senses Perception +2 DEFENSE AC 17, touch 10, flat-footed 17 (+7 armor) hp 33 (4d8+12) Fort +6, Ref +3, Will +6 OFFENSE Speed 20 ft. Melee mwk longsword +5 (1d8+1/19-20) Ranged javelin +3 (1d6+1) Special Attacks channel positive energy 5/day (DC 14, 2d6) Domain Spell-Like Abilities (CL 4th; concentration +6) 5/day—battle rage (+2), touch of good (+2) Cleric Spells Prepared (CL 4th; concentration +6) 2nd—aid, shield other, sound burst (DC 14), spiritual weapon 1st—bless, command (DC 13), divine favor, protection from evil, shield of faith 0 (at will)—guidance, light, resistance, stabilize D domain spell; Domains Good, War TACTICS During Combat If accompanying allies, a sword knight casts shield other on those expected to move into melee. A sword knight attempts to stay back to support and heal allies, using offensive spells when able. If pressed into melee, a sword knight casts divine favor before attacking. Morale Zealous defenders of the faith, sword knights fight to the death. STATISTICS Str 12, Dex 10, Con 14, Int 10, Wis 15, Cha 14 Base Atk +3; CMB +4; CMD 14 Feats Improved Initiative, Lightning Reflexes, Selective Channeling Skills Diplomacy +8, Heal +8, Knowledge (religion) +6, Spellcraft +6 Languages Common",
+      "tags": [
+        "npc"
+      ]
+    },
+    {
+      "id": "spore-dominated-loyalists",
+      "name": "Spore-Dominated Loyalists",
+      "cr": "2",
+      "alignment": "LN",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 22,
+      "ac": 16,
+      "init": 2,
+      "source": "Wrath of Thrune, page 39",
+      "notes": "G. BLOOMING CAVES G6 G5 G2 G3 G7 G4 G1 G8 1 SQUARE = 5 FEET SPORE-DOMINATED LOYALISTS (4) CR 2 XP 600 each Human ranger 4 LN Medium humanoid (human) Init +2; Senses Perception +4 STATISTICS DEFENSE AC 16, touch 13, flat-footed 13 (+3 armor, +2 Dex, +1 dodge) hp 22 each (4d10–4) Fort +2, Ref +6, Will –2 Weaknesses purple pox-afflicted, spore-dominated OFFENSE Str 14, Dex 15, Con 14, Int 12, Wis 12, Cha 8 Base Atk +4; CMB +6; CMD 19 Feats Dodge, Endurance, Point-Blank Shot, Precise Shot, Rapid Sho",
+      "tags": [
+        "group"
+      ]
+    },
+    {
+      "id": "the-wrong-one",
+      "name": "The Wrong One",
+      "cr": "5",
+      "alignment": "NE",
+      "type": "aberration (augmented plant)",
+      "size": "Medium",
+      "hp": 52,
+      "ac": 18,
+      "init": 6,
+      "source": "Wrath of Thrune, page 43",
+      "notes": "their mutated “sibling.” When the PCs first enter this cavern, the young’uns are poking the writhing creature with sticks, but they quickly try to run off to get Mam and Pap in area G6 or their allies in area G5 if combat occurs. MYCELOID YOUNG’UNS (2) CR 3 XP 800 each Young myceloid (Pathfinder RPG Bestiary 3 291, 196) hp 27 each THE WRONG ONE CR 5 XP 1,600 Unique flesh myceloid (Advanced Bestiary 148, Pathfinder RPG Bestiary 3 196) NE Medium aberration (augmented plant) Init +6; Senses darkvis",
+      "tags": [
+        "creature"
+      ]
+    },
+    {
+      "id": "zara-orcelani",
+      "name": "Zara Orcelani",
+      "cr": "5",
+      "alignment": "LE",
+      "type": "humanoid (human)",
+      "size": "Medium",
+      "hp": 58,
+      "ac": 25,
+      "init": 2,
+      "source": "Wrath of Thrune, page 62",
+      "notes": "SHIELD-MARALICTOR ZARA ORCELANI Dedicated to law above all else, Zara Orcelani represents the ideals of the Hellknight Order of the Rack. Imprisoned during the fall of Kantaria, she seeks to escape and exact vengeance for the death of the maralictor she was sworn to defend. ZARA ORCELANI CR 5 XP 1,600 Female human fighter 5/Hellknight 1 (Pathfinder Campaign Setting: The Inner Sea World Guide 278) LE Medium humanoid (human) Init +2; Senses Perception +5 DEFENSE AC 25, touch 12, flat-footed 23 (+9",
+      "tags": [
+        "npc"
+      ]
+    }
+  ]
+}

@@ -300,4 +300,119 @@ final class CreatureLibraryImportTests: XCTestCase {
         XCTAssertEqual(result.skipped, 1)
         XCTAssertFalse(FileManager.default.fileExists(atPath: tempDirectory.appendingPathComponent("bunyip.json").path))
     }
+
+    func testCreatureLibraryImportPreservesMultiCreatureBundles() throws {
+        let tempDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempDirectory)
+        }
+
+        let sourceJSON = """
+        {
+          "id": "custom-bestiary",
+          "label": "Custom Bestiary",
+          "source": {
+            "website": "https://example.com",
+            "api": "https://example.com/api"
+          },
+          "generatedAt": "2026-05-26T12:00:00Z",
+          "creatures": [
+            {
+              "name": "Bundle Alpha",
+              "initiativeBonus": 3,
+              "hp": 11
+            },
+            {
+              "name": "Bundle Beta",
+              "initiativeBonus": 2,
+              "hp": 8
+            }
+          ]
+        }
+        """
+
+        let result = try CreatureLibraryImportService.importFiles(
+            [
+                CreatureLibraryImportFile(
+                    filename: "custom-bestiary.json",
+                    contents: sourceJSON
+                )
+            ],
+            into: tempDirectory,
+            overwrite: true,
+            rulesetId: "pathfinder"
+        )
+
+        XCTAssertEqual(result.imported, 1)
+        XCTAssertEqual(result.skipped, 0)
+
+        let outputURL = tempDirectory.appendingPathComponent("custom-bestiary.json")
+        let outputData = try Data(contentsOf: outputURL)
+        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let creatures = try XCTUnwrap(outputObject["creatures"] as? [[String: Any]])
+
+        XCTAssertEqual(outputObject["rulesetId"] as? String, "pathfinder")
+        XCTAssertEqual(creatures.count, 2)
+        XCTAssertEqual(creatures[0]["name"] as? String, "Bundle Alpha")
+        XCTAssertEqual(creatures[0]["init"] as? Int, 3)
+        XCTAssertEqual(creatures[1]["name"] as? String, "Bundle Beta")
+        XCTAssertEqual(creatures[1]["init"] as? Int, 2)
+    }
+
+    func testCreatureLibraryStoreLoadsMultiCreatureUserDataFiles() async throws {
+        let tempBaseDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-userdata-\(UUID().uuidString)", isDirectory: true)
+        let tempUserDataDirectory = tempBaseDirectory
+            .appendingPathComponent("userdata", isDirectory: true)
+            .appendingPathComponent("pathfinder", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempBaseDirectory)
+        }
+
+        let bundleJSON = """
+        {
+          "id": "custom-user-bestiary",
+          "label": "Custom User Bestiary",
+          "creatures": [
+            {
+              "name": "Local Alpha",
+              "init": 2,
+              "hp": 11
+            },
+            {
+              "name": "Local Beta",
+              "init": 4,
+              "hp": 8
+            }
+          ]
+        }
+        """
+
+        try bundleJSON.write(to: tempUserDataDirectory.appendingPathComponent("custom-user-bestiary.json"), atomically: true, encoding: .utf8)
+
+        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
+        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
+        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
+        CreatureLibraryConfiguration.includeLocalCreatures = true
+        defer {
+            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
+            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
+        }
+
+        await CreatureLibraryStore.shared.invalidate(rulesetId: "pathfinder")
+        let response = try await CreatureLibraryStore.shared.library(
+            rulesetId: "pathfinder",
+            rulesetLabel: "Pathfinder",
+            query: "Local",
+            limit: 50,
+            selectedLocalCreatureFiles: ["custom-user-bestiary.json"]
+        )
+
+        XCTAssertEqual(response.totalMatches, 2)
+        XCTAssertEqual(response.creatures.map(\.name).sorted(), ["Local Alpha", "Local Beta"])
+        XCTAssertEqual(response.creatures.first(where: { $0.name == "Local Alpha" })?.initiativeBonus, 2)
+        XCTAssertEqual(response.creatures.first(where: { $0.name == "Local Beta" })?.initiativeBonus, 4)
+    }
 }

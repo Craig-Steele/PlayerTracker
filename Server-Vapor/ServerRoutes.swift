@@ -144,6 +144,28 @@ private func requireActiveCampaignMemberSession(
     return (campaign, session)
 }
 
+private func requireActiveCampaignParticipantSession(
+    _ req: Request,
+    campaignStore: CampaignStore
+) async throws -> (campaign: CampaignState, session: PlayerSessionPersistenceState) {
+    let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
+    let memberCampaignIDs = try await DatabasePersistence.loadCampaignIDs(
+        for: session.id,
+        on: req.db
+    )
+    if memberCampaignIDs.contains(campaign.id) {
+        return (campaign, session)
+    }
+    let refereeIDs = try await DatabasePersistence.loadCampaignRefereeSessionIDs(
+        campaignID: campaign.id,
+        on: req.db
+    )
+    guard refereeIDs.contains(session.id) else {
+        throw Abort(.forbidden, reason: "Campaign access required.")
+    }
+    return (campaign, session)
+}
+
 private func requireRefereeSession(
     _ req: Request,
     campaignStore: CampaignStore
@@ -698,7 +720,7 @@ func routes(
             await refreshPlayerClaimActivity(campaign: campaign, session: refereeSession, userStore: userStore)
             includeHidden = true
         } else {
-            let (_, playerSession) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+            let (_, playerSession) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
             await refreshPlayerClaimActivity(campaign: campaign, session: playerSession, userStore: userStore)
             includeHidden = false
         }
@@ -716,7 +738,7 @@ func routes(
     // POST /turn-complete - advance to next turn
     app.post("turn-complete") { req async throws -> GameState in
         logConnection(req, action: "turn-complete")
-        let (campaign, _) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, _) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
         let campaignName = campaign.name
         let encounterState = campaign.encounterState
         guard encounterState == .active else {
@@ -866,7 +888,7 @@ func routes(
               let routeCampaignID = UUID(uuidString: campaignIDString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -946,7 +968,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -971,7 +993,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -996,7 +1018,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -1040,7 +1062,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
-        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
+        let (campaign, session) = try await requireActiveCampaignSession(req, campaignStore: campaignStore)
         guard campaign.id == routeCampaignID else {
             throw Abort(.conflict, reason: "Campaign is not active.")
         }
@@ -1113,11 +1135,14 @@ func routes(
         let library = await campaignStore.library()
         let query = req.query[String.self, at: "query"]
         let limit = req.query[Int.self, at: "limit"] ?? 50
+        let activeCampaign = await campaignStore.activeCampaign()
+        let selectedUserDataFiles = activeCampaign?.userdataFiles ?? []
         return try await CreatureLibraryStore.shared.library(
             rulesetId: library.id,
             rulesetLabel: library.label,
             query: query,
-            limit: limit
+            limit: limit,
+            selectedLocalCreatureFiles: selectedUserDataFiles
         )
     }
 
@@ -1143,6 +1168,48 @@ func routes(
         disableResponseCaching(&response)
         try response.content.encode(campaign)
         return response
+    }
+
+    app.get("campaign", "userdata") { req async throws -> CampaignUserDataResponse in
+        let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let selected = Set(campaign.userdataFiles)
+        let available = try await CreatureLibraryStore.shared.availableLocalCreatureFiles(rulesetId: campaign.rulesetId)
+        var seen = Set<String>()
+        let files = available.map { name -> CampaignUserDataFileSummary in
+            seen.insert(name)
+            return CampaignUserDataFileSummary(
+                name: name,
+                selected: selected.contains(name),
+                missing: false
+            )
+        }
+        let missingFiles = campaign.userdataFiles
+            .filter { seen.contains($0) == false }
+            .map { name in
+                CampaignUserDataFileSummary(
+                    name: name,
+                    selected: true,
+                    missing: true
+                )
+            }
+        return CampaignUserDataResponse(
+            rulesetId: campaign.rulesetId,
+            files: files + missingFiles
+        )
+    }
+
+    app.put("campaign", "userdata") { req async throws -> CampaignState in
+        let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(CampaignUserDataUpdateInput.self)
+        let updated = try await campaignStore.updateUserdataFiles(input.files)
+        await CreatureLibraryStore.shared.invalidate(rulesetId: campaign.rulesetId)
+        await publishCampaignUpdate(
+            campaign: updated,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "campaign-updated"
+        )
+        return updated
     }
 
     app.get("campaign", "events") { req async throws -> Response in

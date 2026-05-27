@@ -42,7 +42,7 @@
   "license": "https://www.d20pfsrd.com/extras/legal/",
   "rulesBaseUrl": "https://www.d20pfsrd.com/",
   "creatureLibrary": {
-    "file": "pathfinder-bestiary.json"
+    "file": "pathfinder-bestiary"
   },
   "conditions": [
     {

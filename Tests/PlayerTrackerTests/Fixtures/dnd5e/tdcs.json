@@ -1,0 +1,55 @@
+{
+  "id": "dnd5e-bestiary-tdcs",
+  "label": "D&D 5e - Tal'dorei Campaign Setting",
+  "source": {
+    "website": "https://open5e.com/",
+    "api": "https://api.open5e.com/v2/creatures/"
+  },
+  "generatedAt": "2026-05-26T23:33:21Z",
+  "creatures": [
+    {
+      "name": "Firetamer",
+      "url": "https://open5e.com/monsters/firetamer?source=tdcs",
+      "cr": "7",
+      "init": 2,
+      "hp": 92,
+      "ac": 17,
+      "alignment": "neutral good",
+      "type": "Medium humanoid",
+      "source": "Tal'dorei Campaign Setting"
+    },
+    {
+      "name": "Skydancer",
+      "url": "https://open5e.com/monsters/skydancer?source=tdcs",
+      "cr": "5",
+      "init": 4,
+      "hp": 63,
+      "ac": 14,
+      "alignment": "chaotic neutral",
+      "type": "Medium humanoid",
+      "source": "Tal'dorei Campaign Setting"
+    },
+    {
+      "name": "Stoneguard",
+      "url": "https://open5e.com/monsters/stoneguard?source=tdcs",
+      "cr": "7",
+      "init": 0,
+      "hp": 152,
+      "ac": 15,
+      "alignment": "lawful neutral",
+      "type": "Medium humanoid",
+      "source": "Tal'dorei Campaign Setting"
+    },
+    {
+      "name": "Waverider",
+      "url": "https://open5e.com/monsters/waverider?source=tdcs",
+      "cr": "4",
+      "init": 2,
+      "hp": 77,
+      "ac": 14,
+      "alignment": "neutral good",
+      "type": "Medium humanoid",
+      "source": "Tal'dorei Campaign Setting"
+    }
+  ]
+}

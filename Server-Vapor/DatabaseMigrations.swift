@@ -395,6 +395,32 @@ struct AddInviteOnlyToCampaigns: AsyncMigration {
     }
 }
 
+struct AddUserDataFilesToCampaigns: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaigns)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "userdata_files_json" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE campaigns ADD COLUMN userdata_files_json TEXT")
+                .run()
+            connection.logger.notice("Patched campaigns with userdata_files_json.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct DatabaseShapeVerification {
     static func verify(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -465,7 +491,8 @@ struct DatabaseShapeVerification {
                 .all(decoding: SQLiteTableInfoRow.self)
             let requiredCampaignColumns = [
                 "claim_timeout_minutes",
-                "is_invite_only"
+                "is_invite_only",
+                "userdata_files_json"
             ]
             let missingCampaignColumns = requiredCampaignColumns.filter { required in
                 campaignColumns.contains(where: { $0.name == required }) == false
@@ -677,6 +704,7 @@ enum DatabaseMigrations {
         app.migrations.add(CreateCampaigns())
         app.migrations.add(AddClaimTimeoutMinutesToCampaigns())
         app.migrations.add(AddInviteOnlyToCampaigns())
+        app.migrations.add(AddUserDataFilesToCampaigns())
         app.migrations.add(CreateCampaignMemberships())
         app.migrations.add(CreateCampaignInvites())
         app.migrations.add(AddInviteTargetNameToCampaignInvites())

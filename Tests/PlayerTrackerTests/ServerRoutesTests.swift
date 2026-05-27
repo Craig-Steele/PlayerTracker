@@ -36,7 +36,7 @@ final class ServerRoutesTests: XCTestCase {
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
 
         let pathfinderLibrary = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
-        XCTAssertEqual(pathfinderLibrary.creatureLibrary?.file, "pathfinder-bestiary.json")
+        XCTAssertEqual(pathfinderLibrary.creatureLibrary?.file, "pathfinder-bestiary")
 
         let response = try await tester.sendRequest(
             .GET,
@@ -53,6 +53,22 @@ final class ServerRoutesTests: XCTestCase {
         })
     }
 
+    func testCreatureLibraryReturnsThirdPartyCreaturesForPathfinder() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Afanc&limit=5"
+        )
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(CreatureLibraryResponse.self)
+        XCTAssertEqual(library.rulesetId, "pathfinder")
+        XCTAssertTrue(library.creatures.contains { creature in
+            creature.name == "Afanc (3pp)"
+        })
+    }
+
     func testCreatureLibraryNormalizesTypeCommaSpacing() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -66,6 +82,117 @@ final class ServerRoutesTests: XCTestCase {
         let creature = try XCTUnwrap(library.creatures.first(where: { $0.name == "Archon, Codex" }))
         XCTAssertFalse(creature.type?.contains(" ,") ?? false)
         XCTAssertEqual(creature.type, "Medium outsider (archon, extraplanar, good, lawful)")
+    }
+
+    func testCreatureLibraryReturnsOpen5eBestiaryForDnd5e() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
+
+        let dnd5eLibrary = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
+        XCTAssertEqual(dnd5eLibrary.creatureLibrary?.file, "dnd5e-bestiary")
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Aboleth&limit=5"
+        )
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(CreatureLibraryResponse.self)
+        XCTAssertEqual(library.rulesetId, "dnd5e")
+        XCTAssertEqual(library.rulesetLabel, "D&D 5e (SRD)")
+        XCTAssertGreaterThan(library.totalMatches, 0)
+        XCTAssertTrue(library.creatures.contains { creature in
+            creature.name == "Aboleth" && creature.referenceUrl?.contains("open5e.com/monsters/aboleth") == true
+        })
+    }
+
+    func testCampaignUserdataSelectionControlsLoadedCreatureLibrary() async throws {
+        let tempBaseDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-userdata-\(UUID().uuidString)", isDirectory: true)
+        let tempUserDataDirectory = tempBaseDirectory
+            .appendingPathComponent("userdata", isDirectory: true)
+            .appendingPathComponent("pathfinder", isDirectory: true)
+        try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempBaseDirectory)
+        }
+
+        let localCreatureJSON = """
+        {
+          "id": "local-alpha",
+          "name": "Local Alpha",
+          "init": 7,
+          "hp": 12
+        }
+        """
+        try localCreatureJSON.write(
+            to: tempUserDataDirectory.appendingPathComponent("custom-local.json"),
+            atomically: true,
+            encoding: .utf8
+        )
+
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
+        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
+        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
+        CreatureLibraryConfiguration.includeLocalCreatures = true
+        defer {
+            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
+            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
+        }
+
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let cookieHeader = HTTPHeaders([("Cookie", "roll4_player_session=\(refereeCookie)")])
+
+        let initialUserDataResponse = try await tester.sendRequest(
+            .GET,
+            "/campaign/userdata",
+            headers: cookieHeader
+        )
+        XCTAssertEqual(initialUserDataResponse.status, .ok)
+        let initialUserData = try initialUserDataResponse.content.decode(CampaignUserDataResponse.self)
+        XCTAssertEqual(initialUserData.rulesetId, "pathfinder")
+        XCTAssertTrue(initialUserData.files.contains { file in
+            file.name == "custom-local.json" && file.selected == false && file.missing == false
+        })
+
+        let initialLibraryResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Local&limit=5"
+        )
+        XCTAssertEqual(initialLibraryResponse.status, .ok)
+        let initialLibrary = try initialLibraryResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertEqual(initialLibrary.totalMatches, 0)
+
+        let updatePayload = CampaignUserDataUpdateInput(files: ["custom-local.json"])
+        let updateResponse = try await tester.sendRequest(
+            .PUT,
+            "/campaign/userdata",
+            headers: HTTPHeaders([("Content-Type", "application/json"), ("Cookie", "roll4_player_session=\(refereeCookie)")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(updatePayload))
+        )
+        XCTAssertEqual(updateResponse.status, .ok)
+        let updatedCampaign = try updateResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(updatedCampaign.userdataFiles, ["custom-local.json"])
+
+        let updatedUserDataResponse = try await tester.sendRequest(
+            .GET,
+            "/campaign/userdata",
+            headers: cookieHeader
+        )
+        XCTAssertEqual(updatedUserDataResponse.status, .ok)
+        let updatedUserData = try updatedUserDataResponse.content.decode(CampaignUserDataResponse.self)
+        XCTAssertTrue(updatedUserData.files.contains { file in
+            file.name == "custom-local.json" && file.selected && file.missing == false
+        })
+
+        let updatedLibraryResponse = try await tester.sendRequest(
+            .GET,
+            "/creature-library?query=Local&limit=5"
+        )
+        XCTAssertEqual(updatedLibraryResponse.status, .ok)
+        let updatedLibrary = try updatedLibraryResponse.content.decode(CreatureLibraryResponse.self)
+        XCTAssertTrue(updatedLibrary.creatures.contains { $0.name == "Local Alpha" })
     }
 
     func testConditionsLibraryReturnsStatBlocksForTraveller2() async throws {

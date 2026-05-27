@@ -23,6 +23,21 @@ struct CampaignSummary: Content {
     let isInviteOnly: Bool
 }
 
+struct CampaignUserDataFileSummary: Content {
+    let name: String
+    let selected: Bool
+    let missing: Bool
+}
+
+struct CampaignUserDataResponse: Content {
+    let rulesetId: String
+    let files: [CampaignUserDataFileSummary]
+}
+
+struct CampaignUserDataUpdateInput: Content {
+    let files: [String]
+}
+
 struct CampaignInviteResponse: Content {
     let campaign: CampaignSummary
     let token: String
@@ -110,6 +125,7 @@ struct CampaignState: Content {
     let encounterState: EncounterState
     let claimTimeoutMinutes: Int
     let isInviteOnly: Bool
+    let userdataFiles: [String]
 }
 
 struct CampaignUpdateInput: Content {

@@ -2,6 +2,7 @@ import Foundation
 
 enum CreatureLibraryConfiguration {
     nonisolated(unsafe) static var includeLocalCreatures = true
+    nonisolated(unsafe) static var localCreaturesDirectoryProvider: ((String) -> URL)?
 }
 
 actor CreatureLibraryStore {
@@ -13,9 +14,10 @@ actor CreatureLibraryStore {
         rulesetId: String,
         rulesetLabel: String,
         query: String? = nil,
-        limit: Int = 50
+        limit: Int = 50,
+        selectedLocalCreatureFiles: [String] = []
     ) throws -> CreatureLibraryResponse {
-        let allCreatures = try creatures(for: rulesetId)
+        let allCreatures = try creatures(for: rulesetId, selectedLocalCreatureFiles: selectedLocalCreatureFiles)
         let trimmedQuery = query?.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedQuery = trimmedQuery?.lowercased()
         let filtered = allCreatures.filter { creature in
@@ -38,29 +40,85 @@ actor CreatureLibraryStore {
 
     func invalidate(rulesetId: String? = nil) {
         if let rulesetId {
-            cache.removeValue(forKey: rulesetId)
+            cache.keys
+                .filter { $0.hasPrefix("\(rulesetId)::") }
+                .forEach { cache.removeValue(forKey: $0) }
         } else {
             cache.removeAll()
         }
     }
 
-    private func creatures(for rulesetId: String) throws -> [CreatureLibraryCreature] {
-        if let cached = cache[rulesetId] {
+    func availableLocalCreatureFiles(rulesetId: String) throws -> [String] {
+        guard CreatureLibraryConfiguration.includeLocalCreatures else {
+            return []
+        }
+
+        let directory = CreatureLibraryConfiguration.localCreaturesDirectoryProvider?(rulesetId)
+            ?? AppPaths.userDataDirectory(rulesetId: rulesetId)
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            return []
+        }
+
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        )) ?? []
+
+        return files
+            .filter { $0.pathExtension.lowercased() == "json" }
+            .filter { url in
+                let lowercasedName = url.deletingPathExtension().lastPathComponent.lowercased()
+                return lowercasedName != "index" && lowercasedName != "manifest"
+            }
+            .map(\.lastPathComponent)
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    private func creatures(
+        for rulesetId: String,
+        selectedLocalCreatureFiles: [String]
+    ) throws -> [CreatureLibraryCreature] {
+        let cacheKey = cacheKey(rulesetId: rulesetId, selectedLocalCreatureFiles: selectedLocalCreatureFiles)
+        if let cached = cache[cacheKey] {
             return cached
         }
-        let loaded = try loadCreatures(for: rulesetId)
-        cache[rulesetId] = loaded
+        let loaded = try loadCreatures(for: rulesetId, selectedLocalCreatureFiles: selectedLocalCreatureFiles)
+        cache[cacheKey] = loaded
         return loaded
     }
 
-    private func loadCreatures(for rulesetId: String) throws -> [CreatureLibraryCreature] {
+    private func cacheKey(rulesetId: String, selectedLocalCreatureFiles: [String]) -> String {
+        let localKey = normalizeFileNames(selectedLocalCreatureFiles).joined(separator: "|")
+        return "\(rulesetId)::\(localKey)"
+    }
+
+    private func normalizeFileNames(_ fileNames: [String]) -> [String] {
+        fileNames
+            .compactMap { fileName -> String? in
+                let trimmed = fileName.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return nil }
+                return URL(fileURLWithPath: trimmed).lastPathComponent
+            }
+            .sorted { lhs, rhs in
+                lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+            }
+    }
+
+    private func loadCreatures(
+        for rulesetId: String,
+        selectedLocalCreatureFiles: [String]
+    ) throws -> [CreatureLibraryCreature] {
         let ruleset = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
         var creaturesByID: [String: CreatureLibraryCreature] = [:]
 
         try loadBuiltinCreatures(for: ruleset, rulesetId: rulesetId).forEach { creature in
             creaturesByID[creature.id] = creature
         }
-        try loadLocalCreatures(for: ruleset, rulesetId: rulesetId).forEach { creature in
+        try loadLocalCreatures(
+            for: ruleset,
+            rulesetId: rulesetId,
+            selectedLocalCreatureFiles: selectedLocalCreatureFiles
+        ).forEach { creature in
             creaturesByID[creature.id] = creature
         }
 
@@ -79,16 +137,95 @@ actor CreatureLibraryStore {
 
         let directory = AppPaths.webClientDirectory().appendingPathComponent("rulesets", isDirectory: true)
         let url = directory.appendingPathComponent(reference, isDirectory: false)
-        guard FileManager.default.fileExists(atPath: url.path) else {
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
             return []
         }
 
-        let file = try loadBuiltinFile(from: url)
+        if isDirectory.boolValue {
+            return try loadBuiltinDirectory(from: url, rulesetId: rulesetId, ruleset: ruleset)
+        }
+        return try loadBuiltinFile(from: url, rulesetId: rulesetId, ruleset: ruleset)
+    }
+
+    private func loadLocalCreatures(
+        for ruleset: RuleSetLibrary,
+        rulesetId: String,
+        selectedLocalCreatureFiles: [String]
+    ) throws -> [CreatureLibraryCreature] {
+        guard CreatureLibraryConfiguration.includeLocalCreatures else {
+            return []
+        }
+        let selectedFiles = Set(normalizeFileNames(selectedLocalCreatureFiles))
+        guard !selectedFiles.isEmpty else {
+            return []
+        }
+
+        let directory = CreatureLibraryConfiguration.localCreaturesDirectoryProvider?(rulesetId)
+            ?? AppPaths.userDataDirectory(rulesetId: rulesetId)
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            return []
+        }
+
+        let files = (try? FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: nil
+        )) ?? []
+
+        return files
+            .filter { $0.pathExtension.lowercased() == "json" }
+            .filter { selectedFiles.contains($0.lastPathComponent) }
+            .filter { url in
+                let lowercasedName = url.deletingPathExtension().lastPathComponent.lowercased()
+                return lowercasedName != "index" && lowercasedName != "manifest"
+            }
+            .flatMap { url -> [CreatureLibraryCreature] in
+                guard let data = try? Data(contentsOf: url) else {
+                    return []
+                }
+                if let file = try? JSONDecoder().decode(BuiltinCreatureLibraryFile.self, from: data) {
+                    if let fileRulesetId = trimmedNonEmpty(file.rulesetId),
+                       fileRulesetId != rulesetId {
+                        return []
+                    }
+                    return file.creatures.enumerated().map { index, record in
+                        normalizeCreature(
+                            record,
+                            rulesetId: rulesetId,
+                            fallbackIDSeed: "\(file.id)-\(index)",
+                            source: record.source,
+                            initiativeRule: ruleset.initiative,
+                            statAliases: ruleset.statAliases
+                        )
+                    }
+                }
+                if let record = try? JSONDecoder().decode(CreatureLibraryRecord.self, from: data) {
+                    return [
+                        normalizeCreature(
+                            record,
+                            rulesetId: rulesetId,
+                            fallbackIDSeed: url.deletingPathExtension().lastPathComponent,
+                            source: record.source,
+                            initiativeRule: ruleset.initiative,
+                            statAliases: ruleset.statAliases
+                        )
+                    ]
+                }
+                return []
+            }
+    }
+
+    private func loadBuiltinFile(
+        from url: URL,
+        rulesetId: String,
+        ruleset: RuleSetLibrary
+    ) throws -> [CreatureLibraryCreature] {
+        let data = try Data(contentsOf: url)
+        let file = try JSONDecoder().decode(BuiltinCreatureLibraryFile.self, from: data)
         if let fileRulesetId = trimmedNonEmpty(file.rulesetId),
            fileRulesetId != rulesetId {
             return []
         }
-
         return file.creatures.enumerated().map { index, record in
             normalizeCreature(
                 record,
@@ -101,46 +238,37 @@ actor CreatureLibraryStore {
         }
     }
 
-    private func loadLocalCreatures(for ruleset: RuleSetLibrary, rulesetId: String) throws -> [CreatureLibraryCreature] {
-        guard CreatureLibraryConfiguration.includeLocalCreatures else {
-            return []
-        }
-
-        let directory = AppPaths.userDataDirectory(rulesetId: rulesetId)
-        guard FileManager.default.fileExists(atPath: directory.path) else {
-            return []
-        }
-
+    private func loadBuiltinDirectory(
+        from directory: URL,
+        rulesetId: String,
+        ruleset: RuleSetLibrary
+    ) throws -> [CreatureLibraryCreature] {
         let files = (try? FileManager.default.contentsOfDirectory(
             at: directory,
             includingPropertiesForKeys: nil
         )) ?? []
 
-        return files
+        return try files
             .filter { $0.pathExtension.lowercased() == "json" }
-            .filter { url in
-                let lowercasedName = url.deletingPathExtension().lastPathComponent.lowercased()
-                return lowercasedName != "index" && lowercasedName != "manifest"
-            }
-            .compactMap { url -> CreatureLibraryCreature? in
-                guard let data = try? Data(contentsOf: url),
-                      let record = try? JSONDecoder().decode(CreatureLibraryRecord.self, from: data) else {
-                    return nil
+            .sorted { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }
+            .flatMap { url -> [CreatureLibraryCreature] in
+                let data = try Data(contentsOf: url)
+                let file = try JSONDecoder().decode(BuiltinCreatureLibraryFile.self, from: data)
+                if let fileRulesetId = trimmedNonEmpty(file.rulesetId),
+                   fileRulesetId != rulesetId {
+                    return []
                 }
-                return normalizeCreature(
-                    record,
-                    rulesetId: rulesetId,
-                    fallbackIDSeed: url.deletingPathExtension().lastPathComponent,
-                    source: record.source,
-                    initiativeRule: ruleset.initiative,
-                    statAliases: ruleset.statAliases
-                )
+                return file.creatures.enumerated().map { index, record in
+                    normalizeCreature(
+                        record,
+                        rulesetId: rulesetId,
+                        fallbackIDSeed: "\(file.id)-\(index)",
+                        source: record.source,
+                        initiativeRule: ruleset.initiative,
+                        statAliases: ruleset.statAliases
+                    )
+                }
             }
-    }
-
-    private func loadBuiltinFile(from url: URL) throws -> BuiltinCreatureLibraryFile {
-        let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(BuiltinCreatureLibraryFile.self, from: data)
     }
 
     private func normalizeCreature(

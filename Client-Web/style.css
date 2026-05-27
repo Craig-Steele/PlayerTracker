@@ -1071,6 +1071,64 @@ body.referee-page .referee-panel {
   min-height: 1.1em;
 }
 
+.creature-library-userdata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.7rem;
+  background: var(--bg-panel);
+}
+
+.creature-library-userdata-header {
+  align-items: center;
+}
+
+.creature-library-userdata-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.creature-library-userdata-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 11rem;
+  overflow: auto;
+}
+
+.userdata-file-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.55rem;
+  background: var(--bg-panel-subtle);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+}
+
+.userdata-file-row input[type="checkbox"] {
+  margin: 0;
+}
+
+.userdata-file-missing {
+  opacity: 0.65;
+  color: var(--text-secondary);
+}
+
+.userdata-file-name {
+  word-break: break-word;
+}
+
+.userdata-empty {
+  padding: 0.15rem 0.1rem;
+}
+
 .creature-library-panel {
   display: flex;
   flex-direction: column;

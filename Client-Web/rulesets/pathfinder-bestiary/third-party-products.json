@@ -1,0 +1,4511 @@
+{
+  "id": "pathfinder-bestiary-third-party-products",
+  "label": "Pathfinder Bestiary - Third-Party Products",
+  "source": {
+    "website": "https://www.d20pfsrd.com/bestiary/",
+    "license": "https://www.d20pfsrd.com/extras/legal/"
+  },
+  "generatedAt": "2026-05-22T01:02:28Z",
+  "creatures": [
+    {
+      "name": "Aatheriexa (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/aatheriexa-2/",
+      "cr": "7",
+      "init": 9,
+      "hp": 84,
+      "ac": 21,
+      "alignment": "NE",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Abyssal Harvester (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/abyssal-harvester-tohc/",
+      "cr": "17",
+      "init": 0,
+      "hp": 283,
+      "ac": 28,
+      "alignment": "CE",
+      "type": "Gargantuan aberration (chaotic , evil , extraplanar)"
+    },
+    {
+      "name": "Adherer (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/adherer-tohc/",
+      "cr": "3",
+      "init": 1,
+      "hp": 26,
+      "ac": 16,
+      "alignment": "LE",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Amphisbaena Encephalon Gorger (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/amphisbaena-encephalon-gorger-tohc/",
+      "cr": "10",
+      "init": 6,
+      "hp": 97,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Medium aberration (extraplanar)"
+    },
+    {
+      "name": "Arcanoplasm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/arcanoplasm-tohc/",
+      "cr": "7",
+      "init": 4,
+      "hp": 73,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Large aberration"
+    },
+    {
+      "name": "Bagiennik (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/bagiennik-kp/",
+      "cr": "5",
+      "init": 4,
+      "hp": 52,
+      "ac": 18,
+      "alignment": "CN",
+      "type": "Medium aberration (aquatic)"
+    },
+    {
+      "name": "Boggart (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/boggart-fgg/",
+      "cr": "5",
+      "init": 4,
+      "hp": 39,
+      "ac": 21,
+      "alignment": "CE",
+      "type": "Small aberration (air , shapechanger)"
+    },
+    {
+      "name": "Bone Crawler (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/bone-crawler-fgg/",
+      "cr": "12",
+      "init": 3,
+      "hp": 114,
+      "ac": 11,
+      "alignment": "N",
+      "type": "Huge aberration"
+    },
+    {
+      "name": "Byakhee (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/byakhee-2/",
+      "cr": "6",
+      "init": 9,
+      "hp": 68,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Large aberration"
+    },
+    {
+      "name": "Carbuncle (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/carbuncle-tohc/",
+      "cr": "1/2",
+      "init": 0,
+      "hp": 8,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Small aberration"
+    },
+    {
+      "name": "Decapus (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/decapus-tohc/",
+      "cr": "3",
+      "init": 1,
+      "hp": 26,
+      "ac": 15,
+      "alignment": "CE",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Dust Digger (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/dust-digger-tohc/",
+      "cr": "4",
+      "init": 0,
+      "hp": 27,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Large aberration"
+    },
+    {
+      "name": "Elder Thing (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/elder-thing-2/",
+      "cr": "14",
+      "init": 8,
+      "hp": 200,
+      "ac": 29,
+      "alignment": "LN",
+      "type": "Medium aberration (aquatic)"
+    },
+    {
+      "name": "Ethereal Filcher (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/ethereal-filcher/",
+      "cr": "2",
+      "init": 8,
+      "hp": 22,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Evil Eye (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/evil-eye-ff/",
+      "cr": "10",
+      "init": 7,
+      "hp": 120,
+      "ac": 23,
+      "alignment": "LE",
+      "type": "Large aberration"
+    },
+    {
+      "name": "Flumph (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/flumph-tohc/",
+      "cr": "1",
+      "init": 3,
+      "hp": 9,
+      "ac": 18,
+      "alignment": "LG",
+      "type": "Small aberration"
+    },
+    {
+      "name": "Flying Polyp (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/flying-polyp-3pp/",
+      "cr": "14",
+      "init": 6,
+      "hp": 207,
+      "ac": 29,
+      "alignment": "CE",
+      "type": "Huge aberration (air)"
+    },
+    {
+      "name": "Froghemoth (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/froghemoth-tohc/",
+      "cr": "13) Ability Drain (Ex) Immunity to Magic (Ex) Strands (Ex) Vulnerability to Divine (Ex)",
+      "init": 5,
+      "hp": 184,
+      "ac": 28,
+      "alignment": "N",
+      "type": "Huge aberration"
+    },
+    {
+      "name": "Moonbeast (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/moonbeast/",
+      "cr": "2",
+      "init": 5,
+      "hp": 19,
+      "ac": 14,
+      "alignment": "CE",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Nuckalavee (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/nuckalavee-tohc/",
+      "cr": "9",
+      "init": 6,
+      "hp": 104,
+      "ac": 22,
+      "alignment": "CE",
+      "type": "Large aberration"
+    },
+    {
+      "name": "Phasm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/phasm/",
+      "cr": "7",
+      "init": 7,
+      "hp": 84,
+      "ac": 20,
+      "alignment": "CN",
+      "type": "Medium aberration (shapechanger)"
+    },
+    {
+      "name": "Phrenic Scourge (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/phrenic-scourge/",
+      "cr": "8",
+      "init": 3,
+      "hp": 52,
+      "ac": 17,
+      "alignment": "LE",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Possessor (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/possessor/",
+      "cr": "5",
+      "init": 7,
+      "hp": 42,
+      "ac": 16,
+      "alignment": "LE",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Sea Sphere (Blubble) (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/sea-sphere-blubble/",
+      "cr": "9",
+      "init": 11,
+      "hp": 119,
+      "ac": 24,
+      "alignment": "N",
+      "type": "Huge aberration (aquatic)"
+    },
+    {
+      "name": "Snowcloak (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/snowcloak/",
+      "cr": "4",
+      "init": 3,
+      "hp": 37,
+      "ac": 16,
+      "alignment": "CN",
+      "type": "Large aberration"
+    },
+    {
+      "name": "Star Vampire (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/star-vampire-2/",
+      "cr": "9",
+      "init": 9,
+      "hp": 114,
+      "ac": 23,
+      "alignment": "CE",
+      "type": "Large aberration"
+    },
+    {
+      "name": "Tentamort (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/tentamort-tohc/",
+      "cr": "4",
+      "init": 5,
+      "hp": 22,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Thessalhydra (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/thessalhydra-tohc/",
+      "cr": "10",
+      "init": 1,
+      "hp": 150,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Gargantuan aberration"
+    },
+    {
+      "name": "Wolf-in-Sheep’s-Clothing (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/aberrations/wolf-in-sheep-s-clothing-tohc/",
+      "cr": "8",
+      "init": 4,
+      "hp": 93,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Medium aberration"
+    },
+    {
+      "name": "Axe Beak (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/birds/axe-beak-tohc/",
+      "cr": "2",
+      "init": 3,
+      "hp": 22,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Barracuda, Large (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/fish/fish-barracuda/barracuda-large-tohc/",
+      "cr": "5",
+      "init": 1,
+      "hp": 59,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large animal (aquatic)"
+    },
+    {
+      "name": "Barracuda, Medium (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/fish/fish-barracuda/barracuda-medium-tohc/",
+      "cr": "1",
+      "init": 2,
+      "hp": 16,
+      "ac": 13,
+      "alignment": "N",
+      "type": "Medium animal (aquatic)"
+    },
+    {
+      "name": "Barracuda, Small (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/fish/fish-barracuda/barracuda-small-tohc/",
+      "cr": "1/4",
+      "init": 3,
+      "hp": 4,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small animal (aquatic)"
+    },
+    {
+      "name": "Cooshee (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/cooshee-ff/",
+      "cr": "1",
+      "init": 3,
+      "hp": 13,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Medium animal"
+    },
+    {
+      "name": "Dog, Corgi, Dire (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/canines/dog/corgi-dire/",
+      "cr": "1",
+      "init": 2,
+      "hp": 15,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Medium animal"
+    },
+    {
+      "name": "Eel, Electric (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/eel/eel-electric-tohc/",
+      "cr": "2",
+      "init": 4,
+      "hp": 22,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Large animal (aquatic)"
+    },
+    {
+      "name": "Eel, Giant Moray (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/eel/eel-giant-moray-tohc/",
+      "cr": "5",
+      "init": 6,
+      "hp": 52,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Large animal (aquatic)"
+    },
+    {
+      "name": "Elephant, Mastodon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/elephant/mastodon-tohc/",
+      "cr": "13",
+      "init": 0,
+      "hp": 200,
+      "ac": 23,
+      "alignment": "N",
+      "type": "Huge animal"
+    },
+    {
+      "name": "Fish, Piranha Swarm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/fish/fish-piranha-swarm-jbe/",
+      "cr": "2",
+      "init": 7,
+      "hp": 14,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Tiny animal (aquatic , swarm)"
+    },
+    {
+      "name": "Fish, Piranha Swarm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/fish/swarm-piranha-tohc/",
+      "cr": "2",
+      "init": 2,
+      "hp": 16,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Diminutive animal (aquatic , swarm)"
+    },
+    {
+      "name": "Fox (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/canines/fox-tohc/",
+      "cr": "1/3",
+      "init": 3,
+      "hp": 4,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Small animal"
+    },
+    {
+      "name": "Fox, Creamfoot Fennec (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/canines/fox/fox-creamfoot-fennec/",
+      "cr": "1/4",
+      "init": 3,
+      "hp": 4,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Tiny animal"
+    },
+    {
+      "name": "Frog, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/frog/frog-giant-tohc/",
+      "cr": "1",
+      "init": 1,
+      "hp": 15,
+      "ac": 12,
+      "alignment": "N",
+      "type": "Medium animal"
+    },
+    {
+      "name": "Frog, Giant Dire (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/frog/frog-giant-dire-ff/",
+      "cr": "4",
+      "init": 1,
+      "hp": 42,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Frog, Giant Dire (3PP-FGG)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/frog/frog-giant-dire-tohc/",
+      "cr": "3",
+      "init": 6,
+      "hp": 50,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Frog, Killer (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/frog/frog-killer-ff/",
+      "cr": "1",
+      "init": 5,
+      "hp": 13,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small animal"
+    },
+    {
+      "name": "Frog, Killer (3PP-FGG)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/frog/frog-killer-tohc/",
+      "cr": "1",
+      "init": 1,
+      "hp": 6,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small animal"
+    },
+    {
+      "name": "Frog, Poisonous (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/frog/frog-poisonous-tohc/",
+      "cr": "1/2",
+      "init": 1,
+      "hp": 4,
+      "ac": 13,
+      "alignment": "N",
+      "type": "Tiny animal"
+    },
+    {
+      "name": "Herd Animal, Moose (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/herd-animals/herd-animal-moose-fgg/",
+      "cr": "3",
+      "init": 1,
+      "hp": 30,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Herd Animal, Ram (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/herd-animals/sheep-ram-tohc/",
+      "cr": "1",
+      "init": 1,
+      "hp": 19,
+      "ac": 13,
+      "alignment": "N",
+      "type": "Medium animal"
+    },
+    {
+      "name": "Hippopotamus (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/hippopotamus-tohc/",
+      "cr": "4",
+      "init": 4,
+      "hp": 51,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Lizard, Chameleon (Giant, 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/lizard/lizard-chameleon-giant-tohc/",
+      "cr": "3",
+      "init": 2,
+      "hp": 30,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Raccoon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/raccoon-tohc/",
+      "cr": "1/6",
+      "init": 2,
+      "hp": 4,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Tiny animal"
+    },
+    {
+      "name": "Raven Swarm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/birds/raven/swarm-raven-tohc/",
+      "cr": "3",
+      "init": 2,
+      "hp": 18,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Tiny animal (swarm)"
+    },
+    {
+      "name": "Rhinoceros, Woolly (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/rhinoceros/rhinoceros-woolly-tohc/",
+      "cr": "10",
+      "init": 0,
+      "hp": 138,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Seahorse, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/sea-horse-giant-tohc/",
+      "cr": "2",
+      "init": 2,
+      "hp": 26,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Large animal (aquatic)"
+    },
+    {
+      "name": "Skunk (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/skunk-tohc/",
+      "cr": "1/8",
+      "init": 1,
+      "hp": 4,
+      "ac": 13,
+      "alignment": "N",
+      "type": "Tiny animal"
+    },
+    {
+      "name": "Smilodon (Saber-Toothed Tiger) (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/felines/smilodon-tohc/",
+      "cr": "5",
+      "init": 2,
+      "hp": 51,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Medium animal"
+    },
+    {
+      "name": "Snake, Sea (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/snake/snake-sea-cnv/",
+      "cr": "1",
+      "init": 2,
+      "hp": 19,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Medium animal (aquatic)"
+    },
+    {
+      "name": "Stingray, Large (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/ray-stingray/stingray-large-tohc/",
+      "cr": "5",
+      "init": 0,
+      "hp": 68,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Large animal (aquatic)"
+    },
+    {
+      "name": "Stingray, Medium (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/ray-stingray/stingray-medium-tohc/",
+      "cr": "2",
+      "init": 1,
+      "hp": 22,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Medium animal (aquatic)"
+    },
+    {
+      "name": "Stingray, Small (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/ray-stingray/stingray-small-tohc/",
+      "cr": "1/2",
+      "init": 2,
+      "hp": 4,
+      "ac": 13,
+      "alignment": "N",
+      "type": "Small animal (aquatic)"
+    },
+    {
+      "name": "Turtle, Giant Snapping (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/turtle/snapping-turtle-giant-tohc/",
+      "cr": "10",
+      "init": 2,
+      "hp": 150,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Gargantuan animal (aquatic)"
+    },
+    {
+      "name": "Walrus (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/walrus-ap/",
+      "cr": "7",
+      "init": 5,
+      "hp": 95,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large animal"
+    },
+    {
+      "name": "Weasel, Dire (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/animals/weasel/weasel-dire-kp/",
+      "cr": "2",
+      "init": 4,
+      "hp": 13,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Medium animal"
+    },
+    {
+      "name": "Amalgamation (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/amalgamation-fgg/",
+      "cr": "20",
+      "init": 9,
+      "hp": 225,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Gargantuan construct"
+    },
+    {
+      "name": "Amber Unicorn[3pp]",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/amber-unicorn/",
+      "cr": "4 (XP 800)",
+      "init": 5,
+      "hp": 52,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Large construct"
+    },
+    {
+      "name": "Bone Reaper Reflection (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/bone-reaper-reflection-fgg/",
+      "cr": "10",
+      "init": 2,
+      "hp": 90,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Large Construct"
+    },
+    {
+      "name": "Brass Man (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/brass-man/",
+      "cr": "7 (XP 3,200)",
+      "init": 0,
+      "hp": 85,
+      "ac": 23,
+      "alignment": "N",
+      "type": "Large construct (extraplanar , fire)"
+    },
+    {
+      "name": "Broodiken (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/broodiken-kp/",
+      "cr": "2",
+      "init": 2,
+      "hp": 22,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Tiny construct"
+    },
+    {
+      "name": "Cobra, Iron (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/cobra-constructs/iron-cobra-tohc/",
+      "cr": "2",
+      "init": 2,
+      "hp": 15,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Small construct"
+    },
+    {
+      "name": "Colossus, Jade (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/colossus/colossus-jade/",
+      "cr": "16",
+      "init": 0,
+      "hp": 256,
+      "ac": 34,
+      "alignment": "N",
+      "type": "Colossal construct"
+    },
+    {
+      "name": "Fellforged (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/fellforged-kp/",
+      "cr": "5",
+      "init": 5,
+      "hp": 53,
+      "ac": 17,
+      "alignment": "LE",
+      "type": "Medium construct (evil)"
+    },
+    {
+      "name": "Feyward Tree (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/feyward-tree-kp/",
+      "cr": "8",
+      "init": 0,
+      "hp": 100,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Huge construct"
+    },
+    {
+      "name": "Golem, Cacophony (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/screaming-skull-cacophony-golem/",
+      "cr": "4",
+      "init": -5,
+      "hp": 33,
+      "ac": 13,
+      "alignment": "N",
+      "type": "Tiny construct"
+    },
+    {
+      "name": "Golem, Flagstone (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-flagstone-tohc/",
+      "cr": "7",
+      "init": 1,
+      "hp": 74,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Golem, Gelatinous (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-gelatinous-tohc/",
+      "cr": "10",
+      "init": 1,
+      "hp": 114,
+      "ac": 24,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Golem, Ice (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-ice-tohc/",
+      "cr": "5",
+      "init": -1,
+      "hp": 63,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Large construct (cold)"
+    },
+    {
+      "name": "Golem, Iron Maiden (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-iron-maiden-tohc/",
+      "cr": "9",
+      "init": 0,
+      "hp": 96,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Golem, Magebane (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-magebane/",
+      "cr": "21",
+      "init": 4,
+      "hp": 195,
+      "ac": 39,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Golem, Magnesium (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-magnesium-tohc/",
+      "cr": "6",
+      "init": 1,
+      "hp": 64,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Golem, Mummy(3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-mummy-tohc/",
+      "cr": "6",
+      "init": 0,
+      "hp": 64,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Golem, Ooze (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-ooze-tohc/",
+      "cr": "8",
+      "init": -2,
+      "hp": 85,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Golem, Rope (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-rope-tohc/",
+      "cr": "5",
+      "init": 0,
+      "hp": 53,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Golem, Tallow(3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-tallow-tohc/",
+      "cr": "7",
+      "init": -1,
+      "hp": 75,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Golem, Witch-Doll (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-witch-doll-tohc/",
+      "cr": "11",
+      "init": 0,
+      "hp": 107,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Golem, Wood (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/golem/golem-wood-tohc/",
+      "cr": "6",
+      "init": -1,
+      "hp": 64,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Guardian, Reliquary (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/guardian-reliquary/",
+      "cr": "13",
+      "init": 1,
+      "hp": 118,
+      "ac": 28,
+      "alignment": "LE",
+      "type": "Large construct"
+    },
+    {
+      "name": "Guardian, Sepulchral (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/guardian-sepulchral/",
+      "cr": "8 (XP 4,800)",
+      "init": 0,
+      "hp": 75,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Necrophidius (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/necrophidius-tohc/",
+      "cr": "2",
+      "init": 3,
+      "hp": 46,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Obsidian Minotaur (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/obsidian-minotaur/",
+      "cr": "9",
+      "init": 0,
+      "hp": 96,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Large construct"
+    },
+    {
+      "name": "Pendula (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/pendula/",
+      "cr": "20",
+      "init": 9,
+      "hp": 137,
+      "ac": 36,
+      "alignment": "CE",
+      "type": "Medium construct (augmented fey)"
+    },
+    {
+      "name": "Scarecrow (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/scarecrow-tohc/",
+      "cr": "4",
+      "init": 0,
+      "hp": 47,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Shrine Stone, Animated (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/shrine-stone-animated/",
+      "cr": "7",
+      "init": -2,
+      "hp": 78,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Huge construct"
+    },
+    {
+      "name": "Skeleton, Lead (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/skeleton-lead/",
+      "cr": "7",
+      "init": 4,
+      "hp": 75,
+      "ac": 24,
+      "alignment": "N",
+      "type": "Medium construct"
+    },
+    {
+      "name": "Swarm, Adamantine Wasp (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/swarm-adamantine-wasp-tohc/",
+      "cr": "10",
+      "init": 6,
+      "hp": 82,
+      "ac": 24,
+      "alignment": "N",
+      "type": "Fine construct (swarm)"
+    },
+    {
+      "name": "Tome of Horrors (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/tome-of-horrors/",
+      "cr": "20",
+      "init": 8,
+      "hp": 211,
+      "ac": 36,
+      "alignment": "CE",
+      "type": "Small construct"
+    },
+    {
+      "name": "Warden Jack Swarm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/constructs/swarm-warden-jack-tohc/",
+      "cr": "4",
+      "init": 2,
+      "hp": 27,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Fine construct (swarm)"
+    },
+    {
+      "name": "Cloud Dragon, Adult (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/dragon-cloud-adult-tohc/",
+      "cr": "11",
+      "init": 5,
+      "hp": 161,
+      "ac": 28,
+      "alignment": "N",
+      "type": "Huge dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Ancient (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/dragon-cloud-ancient-tohc/",
+      "cr": "16",
+      "init": 4,
+      "hp": 297,
+      "ac": 37,
+      "alignment": "N",
+      "type": "Gargantuan dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Great Wyrm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/dragon-cloud-great-wyrm-tohc/",
+      "cr": "19",
+      "init": 3,
+      "hp": 377,
+      "ac": 38,
+      "alignment": "N",
+      "type": "Colossal dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Juvenile (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-juvenile-tohc/",
+      "cr": "8",
+      "init": 6,
+      "hp": 105,
+      "ac": 24,
+      "alignment": "N",
+      "type": "Large dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Mature Adult (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-mature-adult-tohc/",
+      "cr": "12",
+      "init": 5,
+      "hp": 184,
+      "ac": 31,
+      "alignment": "N",
+      "type": "Huge dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Old (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-old-tohc/",
+      "cr": "14",
+      "init": 4,
+      "hp": 225,
+      "ac": 31,
+      "alignment": "N",
+      "type": "Gargantuan dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Very Old (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-very-old-tohc/",
+      "cr": "15",
+      "init": 4,
+      "hp": 250,
+      "ac": 34,
+      "alignment": "N",
+      "type": "Gargantuan dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Very Young (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-very-young-tohc/",
+      "cr": "5",
+      "init": 6,
+      "hp": 51,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Medium dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Wyrm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-wyrm-tohc/",
+      "cr": "17",
+      "init": 3,
+      "hp": 324,
+      "ac": 39,
+      "alignment": "N",
+      "type": "Gargantuan dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Wyrmling (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-wyrmling-tohc/",
+      "cr": "3",
+      "init": 7,
+      "hp": 30,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Small dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Young (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/dragon-cloud-young-tohc/",
+      "cr": "7",
+      "init": 6,
+      "hp": 76,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Large dragon (air)"
+    },
+    {
+      "name": "Cloud Dragon, Young Adult (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon/dragon-cloud-tohc/cloud-dragon-young-adult-tohc/",
+      "cr": "10",
+      "init": 5,
+      "hp": 126,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Huge dragon (air)"
+    },
+    {
+      "name": "Dragon Turtle, Ancestral (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-turtle-ancestral/",
+      "cr": "11",
+      "init": 6,
+      "hp": 126,
+      "ac": 25,
+      "alignment": "NG",
+      "type": "Huge dragon (air , aquatic)"
+    },
+    {
+      "name": "Dragon, Aeetes’ (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dragon-aeetes-cnv/",
+      "cr": "8 (XP 4,800)",
+      "init": 6,
+      "hp": 103,
+      "ac": 23,
+      "alignment": "N",
+      "type": "Large dragon"
+    },
+    {
+      "name": "Dream Imp Companion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dream-imp-companion/",
+      "cr": "1",
+      "init": 2,
+      "hp": 15,
+      "ac": 13,
+      "alignment": "NG",
+      "type": "small dragon"
+    },
+    {
+      "name": "Dream Imp Companion, Wild (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dream-imp-companion-wild/",
+      "cr": "5",
+      "init": 2,
+      "hp": 45,
+      "ac": 19,
+      "alignment": "NG",
+      "type": "small dragon"
+    },
+    {
+      "name": "Dream Imp Cousin (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dream-imp-cousin-3pp/",
+      "cr": "2",
+      "init": 1,
+      "hp": 22,
+      "ac": 14,
+      "alignment": "NG",
+      "type": "tiny dragon"
+    },
+    {
+      "name": "Dream Imp Hero (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dream-imp-hero/",
+      "cr": "6",
+      "init": 3,
+      "hp": 73,
+      "ac": 20,
+      "alignment": "NG",
+      "type": "Medium dragon"
+    },
+    {
+      "name": "Dream Imp Hero, Wild (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/dream-imp-hero-w/",
+      "cr": "9",
+      "init": 3,
+      "hp": 73,
+      "ac": 24,
+      "alignment": "NG",
+      "type": "Medium dragon"
+    },
+    {
+      "name": "Wyvern, Lead-Clad [3pp]",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/wyvern/wyvern-lead-clad/",
+      "cr": "7",
+      "init": 2,
+      "hp": 87,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Large dragon"
+    },
+    {
+      "name": "Wyvern, Night (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/dragons/wyvern/wyvern-night/",
+      "cr": "7",
+      "init": 7,
+      "hp": 80,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Large nocturnal Dragon"
+    },
+    {
+      "name": "Atomie (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/atomie-3pp/",
+      "cr": "1",
+      "init": 7,
+      "hp": 10,
+      "ac": 15,
+      "alignment": "CN",
+      "type": "Tiny fey"
+    },
+    {
+      "name": "Battle Imp (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/battle-imp/",
+      "cr": "11",
+      "init": 7,
+      "hp": 153,
+      "ac": 25,
+      "alignment": "CG",
+      "type": "Medium fey"
+    },
+    {
+      "name": "Brownie (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/brownie-tohc/",
+      "cr": "1",
+      "init": 8,
+      "hp": 9,
+      "ac": 17,
+      "alignment": "LG",
+      "type": "Tiny fey"
+    },
+    {
+      "name": "Celedeen (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/celedeen-3pp/",
+      "cr": "17",
+      "init": 9,
+      "hp": 143,
+      "ac": 30,
+      "alignment": "CG",
+      "type": "small fey"
+    },
+    {
+      "name": "Faerie Seer",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/faerie-seer-3pp/",
+      "cr": "7",
+      "init": 2,
+      "hp": 65,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Medium fey"
+    },
+    {
+      "name": "Forlarren (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/forlarren-tohc/",
+      "cr": "2",
+      "init": 2,
+      "hp": 13,
+      "ac": 18,
+      "alignment": "N(E)Medium",
+      "type": "fey"
+    },
+    {
+      "name": "Gremlin (3pp-FGG)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/gremlin-tohc/",
+      "cr": "1/2",
+      "init": 3,
+      "hp": 3,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Small fey"
+    },
+    {
+      "name": "Gremlin Batspawn (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/gremlin-nwp/gremlin-batspawn/",
+      "cr": "5",
+      "init": 4,
+      "hp": 27,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Small fey"
+    },
+    {
+      "name": "Gremlin Lightningspawn (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/gremlin-nwp/gremlin-lightningspawn/",
+      "cr": "3",
+      "init": 4,
+      "hp": 13,
+      "ac": 17,
+      "alignment": "CE",
+      "type": "Tiny fey (air)"
+    },
+    {
+      "name": "Gremlin Spiderspawn (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/gremlin-nwp/gremlin-spiderspawn/",
+      "cr": "5",
+      "init": 4,
+      "hp": 37,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium fey"
+    },
+    {
+      "name": "Grimstalker (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/grimstalker-tohc/",
+      "cr": "5",
+      "init": 9,
+      "hp": 52,
+      "ac": 18,
+      "alignment": "NE",
+      "type": "Medium fey"
+    },
+    {
+      "name": "Harvest Haunt",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/harvest-haunt-3pp/",
+      "cr": "6",
+      "init": 6,
+      "hp": 24,
+      "ac": 19,
+      "alignment": "CN",
+      "type": "Tiny fey"
+    },
+    {
+      "name": "Korred (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/korred-tohc/",
+      "cr": "4",
+      "init": 2,
+      "hp": 27,
+      "ac": 16,
+      "alignment": "CN",
+      "type": "Small fey"
+    },
+    {
+      "name": "Leprechaun (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/leprechaun-tohc/",
+      "cr": "4",
+      "init": 7,
+      "hp": 7,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small fey"
+    },
+    {
+      "name": "Mimi (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mimi/",
+      "cr": "1",
+      "init": 4,
+      "hp": 4,
+      "ac": 19,
+      "alignment": "N(G)Tiny",
+      "type": "fey (cold)"
+    },
+    {
+      "name": "Mite (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/mite-tohc/",
+      "cr": "1/2",
+      "init": 1,
+      "hp": 3,
+      "ac": 12,
+      "alignment": "LE",
+      "type": "Small fey"
+    },
+    {
+      "name": "Nereid (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/nereid-tohc/",
+      "cr": "10",
+      "init": 9,
+      "hp": 126,
+      "ac": 25,
+      "alignment": "CN",
+      "type": "Medium fey (water)"
+    },
+    {
+      "name": "Pech (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/pech-tohc/",
+      "cr": "3",
+      "init": 1,
+      "hp": 18,
+      "ac": 17,
+      "alignment": "N(G)Small",
+      "type": "fey (earth , extraplanar)"
+    },
+    {
+      "name": "Quickling (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/quickling-tohc/",
+      "cr": "3",
+      "init": 7,
+      "hp": 14,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Small fey"
+    },
+    {
+      "name": "Redcap (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/redcap-tohc/",
+      "cr": "2",
+      "init": 8,
+      "hp": 4,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Tiny fey"
+    },
+    {
+      "name": "Spindler (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/spindler-3pp/",
+      "cr": "4",
+      "init": 3,
+      "hp": 33,
+      "ac": 16,
+      "alignment": "CN",
+      "type": "Medium fey"
+    },
+    {
+      "name": "Spriggan (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/spriggan-tohc/",
+      "cr": "3",
+      "init": 4,
+      "hp": 22,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Small fey"
+    },
+    {
+      "name": "Sprite (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/sprite-tohc/",
+      "cr": "1",
+      "init": 4,
+      "hp": 4,
+      "ac": 16,
+      "alignment": "N(G)Small",
+      "type": "fey"
+    },
+    {
+      "name": "Thin Man (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/fey/thin-man-3pp/",
+      "cr": "7",
+      "init": 10,
+      "hp": 66,
+      "ac": 21,
+      "alignment": "NE",
+      "type": "Medium fey"
+    },
+    {
+      "name": "Barbegazi (Ice Gnome) (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/barbegazi-ice-gnome/",
+      "cr": "1",
+      "init": 1,
+      "hp": 11,
+      "ac": 14,
+      "alignment": "N(E)Small",
+      "type": "humanoid (cold , gnome)"
+    },
+    {
+      "name": "Biclops (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/biclops/",
+      "cr": "12",
+      "init": 1,
+      "hp": 178,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Huge humanoid (giant)"
+    },
+    {
+      "name": "Dark Creeper (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/dark-creeper-tohc/",
+      "cr": "2",
+      "init": 3,
+      "hp": 19,
+      "ac": 16,
+      "alignment": "CN",
+      "type": "Small humanoid (dark folk)"
+    },
+    {
+      "name": "Dark Stalker (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/dark-stalker-tohc/",
+      "cr": "4",
+      "init": 4,
+      "hp": 39,
+      "ac": 18,
+      "alignment": "CN",
+      "type": "Medium humanoid (dark folk)"
+    },
+    {
+      "name": "Giant, Cave (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/giant-true/giant-cave-tohc/",
+      "cr": "9",
+      "init": 1,
+      "hp": 126,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Huge humanoid (giant)"
+    },
+    {
+      "name": "Giant, Wood (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/giant-true/giant-wood-tohc/",
+      "cr": "5",
+      "init": 3,
+      "hp": 52,
+      "ac": 18,
+      "alignment": "CG",
+      "type": "Large humanoid (giant)"
+    },
+    {
+      "name": "Grippli (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/grippli-tohc/",
+      "cr": "1/3",
+      "init": 1,
+      "hp": 7,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small humanoid (grippli)"
+    },
+    {
+      "name": "Huggermugger (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/huggermugger/",
+      "cr": "1",
+      "init": 3,
+      "hp": 9,
+      "ac": 15,
+      "alignment": "CN",
+      "type": "Small humanoid (dark folk)"
+    },
+    {
+      "name": "Nilbog (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/nilbog/",
+      "cr": "1 (XP 400)",
+      "init": 1,
+      "hp": 5,
+      "ac": 15,
+      "alignment": "NE",
+      "type": "Small humanoid (goblinoid)"
+    },
+    {
+      "name": "Skulk (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/skulk-tohc/",
+      "cr": "1",
+      "init": 6,
+      "hp": 11,
+      "ac": 13,
+      "alignment": "CE",
+      "type": "Medium humanoid (skulk)"
+    },
+    {
+      "name": "Troblin (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/troblin/",
+      "cr": "2",
+      "init": 1,
+      "hp": 22,
+      "ac": 13,
+      "alignment": "CE",
+      "type": "Medium humanoid (goblinoid)"
+    },
+    {
+      "name": "Troll, Ice (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/troll/troll-ice-tohc/",
+      "cr": "3",
+      "init": 1,
+      "hp": 18,
+      "ac": 12,
+      "alignment": "CE",
+      "type": "Large humanoid (cold , giant)"
+    },
+    {
+      "name": "Troll, River (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/troll/troll-river-fgg/",
+      "cr": "5",
+      "init": 2,
+      "hp": 63,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Large humanoid (amphibious , giant)"
+    },
+    {
+      "name": "Troll, Rock (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/troll/troll-rock-tohc/",
+      "cr": "6",
+      "init": 1,
+      "hp": 92,
+      "ac": 20,
+      "alignment": "CE",
+      "type": "Large humanoid (earth , giant)"
+    },
+    {
+      "name": "Troll, Swamp (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/troll/troll-swamp-tohc/",
+      "cr": "3",
+      "init": 2,
+      "hp": 38,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Large humanoid (giant)"
+    },
+    {
+      "name": "Troll, Two-Headed (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/troll/troll-two-headed-tohc/",
+      "cr": "7",
+      "init": 0,
+      "hp": 95,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Large humanoid (giant)"
+    },
+    {
+      "name": "Ubue (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/humanoids/giants/ubue/",
+      "cr": "2",
+      "init": -1,
+      "hp": 19,
+      "ac": 18,
+      "alignment": "CN",
+      "type": "Large humanoid (giant)"
+    },
+    {
+      "name": "Afanc (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/afanc-smg/",
+      "cr": "11",
+      "init": 2,
+      "hp": 157,
+      "ac": 16,
+      "alignment": "NE",
+      "type": "Huge magical beast (aquatic)"
+    },
+    {
+      "name": "Afanc (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/afanc-tohc/",
+      "cr": "17",
+      "init": 1,
+      "hp": 333,
+      "ac": 23,
+      "alignment": "N",
+      "type": "Colossal magical beast (aquatic)"
+    },
+    {
+      "name": "Ailuro",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/ailuro-3pp/",
+      "cr": "5",
+      "init": 7,
+      "hp": 51,
+      "ac": 19,
+      "alignment": "N",
+      "type": "small magical beast"
+    },
+    {
+      "name": "Al-mi’raj (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/al-mi-raj-tohc/",
+      "cr": "1/2",
+      "init": 3,
+      "hp": 6,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small magical beast"
+    },
+    {
+      "name": "Amphisbaena (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/amphisbaena-tohc/",
+      "cr": "4",
+      "init": 2,
+      "hp": 42,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Aurumvorax (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/aurumvorax-tohc/",
+      "cr": "9) Adamantine Attacks (Ex)",
+      "init": 8,
+      "hp": 114,
+      "ac": 23,
+      "alignment": "N",
+      "type": "Small magical beast"
+    },
+    {
+      "name": "Basilisk, Greater (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/basilisk/basilisk-greater-ff/",
+      "cr": "7",
+      "init": -2,
+      "hp": 105,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Basilisk, Greater (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/basilisk/basilisk-greater-tohc/",
+      "cr": "7",
+      "init": -1,
+      "hp": 85,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Bat, Mobat (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/bat-mobat-tohc/",
+      "cr": "3",
+      "init": 5,
+      "hp": 34,
+      "ac": 15,
+      "alignment": "N(E)Large",
+      "type": "magical beast"
+    },
+    {
+      "name": "Bunyip (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/bunyip-tohc/",
+      "cr": "4",
+      "init": 3,
+      "hp": 42,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Medium magical beast (aquatic)"
+    },
+    {
+      "name": "Carbuncle Champion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/carbuncle-champion/",
+      "cr": "10",
+      "init": 3,
+      "hp": 85,
+      "ac": 24,
+      "alignment": "N",
+      "type": "Small magical beast"
+    },
+    {
+      "name": "Carbuncle Companion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/carbuncle-companion/",
+      "cr": "1",
+      "init": -2,
+      "hp": 13,
+      "ac": 12,
+      "alignment": "N",
+      "type": "Tiny magical beast"
+    },
+    {
+      "name": "Carbuncle Hero (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/carbuncle-hero/",
+      "cr": "5",
+      "init": -2,
+      "hp": 39,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Tiny magical beast"
+    },
+    {
+      "name": "Catoblepas (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/catoblepas-ff/",
+      "cr": "6",
+      "init": 1,
+      "hp": 76,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Cave Leech (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/cave-leech/",
+      "cr": "6",
+      "init": 4,
+      "hp": 76,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Medium magical beast"
+    },
+    {
+      "name": "Chupacabra (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/chupacabra-tohc/",
+      "cr": "2",
+      "init": 2,
+      "hp": 19,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Small magical beast"
+    },
+    {
+      "name": "Death Dog (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/death-dog-tohc/",
+      "cr": "2",
+      "init": 2,
+      "hp": 18,
+      "ac": 15,
+      "alignment": "NE",
+      "type": "Medium magical beast"
+    },
+    {
+      "name": "Death Worm (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/death-worm-tohc/",
+      "cr": "6",
+      "init": 5,
+      "hp": 66,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large magical beast (earth)"
+    },
+    {
+      "name": "Digester (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/digester/",
+      "cr": "6",
+      "init": 6,
+      "hp": 68,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Medium magical beast"
+    },
+    {
+      "name": "Disenchanter (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/disenchanter-tohc/",
+      "cr": "3 XP 800",
+      "init": 3,
+      "hp": 37,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Dragon Horse (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/dragon-horse-tohc/",
+      "cr": "7 XP 3,200",
+      "init": 7,
+      "hp": 76,
+      "ac": 21,
+      "alignment": "NG",
+      "type": "Large magical beast (air)"
+    },
+    {
+      "name": "Ethereal Marauder (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/ethereal-marauder/",
+      "cr": "3",
+      "init": 5,
+      "hp": 22,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Medium magical beast"
+    },
+    {
+      "name": "Fire Bird Companion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/fire-bird-companion/",
+      "cr": "1",
+      "init": 3,
+      "hp": 11,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Tiny magical beast (fire)"
+    },
+    {
+      "name": "Fire Whale (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/fire-whale/",
+      "cr": "10",
+      "init": 1,
+      "hp": 136,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Huge magical beast (extraplanar , fire)"
+    },
+    {
+      "name": "Flail Snail (3pp:TOHC)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/flail-snail-tohc/",
+      "cr": "3",
+      "init": -1,
+      "hp": 30,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Gorgimera (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/gorgimera-tohc/",
+      "cr": "9",
+      "init": 1,
+      "hp": 95,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Gorgimera (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/gorgimera/",
+      "cr": "8",
+      "init": 7,
+      "hp": 105,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Gorgimera, Metallic (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/gorgimera/gorgimera-metallic/",
+      "cr": "10",
+      "init": 7,
+      "hp": 105,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Gorgon, Ancestral (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/ancestral-gorgon/",
+      "cr": "10",
+      "init": 1,
+      "hp": 103,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Huge magical beast"
+    },
+    {
+      "name": "Greymalkin (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/greymalkin/",
+      "cr": "5",
+      "init": 8,
+      "hp": 51,
+      "ac": 18,
+      "alignment": "NE",
+      "type": "Large magical beast (extraplanar)"
+    },
+    {
+      "name": "Gryph (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/gryph-tohc/",
+      "cr": "1",
+      "init": 2,
+      "hp": 15,
+      "ac": 13,
+      "alignment": "NE",
+      "type": "Small magical beast"
+    },
+    {
+      "name": "Hippocampus (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/hippocampus-tohc/",
+      "cr": "3",
+      "init": 2,
+      "hp": 34,
+      "ac": 15,
+      "alignment": "CG",
+      "type": "Large magical beast (aquatic)"
+    },
+    {
+      "name": "Jinx Cat Companion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/jinx-cat/",
+      "cr": "1",
+      "init": 3,
+      "hp": 15,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Tiny magical beast"
+    },
+    {
+      "name": "Kamadan (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/kamadan-tohc/",
+      "cr": "4",
+      "init": 2,
+      "hp": 30,
+      "ac": 18,
+      "alignment": "N(E)Large",
+      "type": "magical beast"
+    },
+    {
+      "name": "Lightning Cat Champion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/lightning-cat-champion/",
+      "cr": "6",
+      "init": 10,
+      "hp": 34,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Medium magical beast"
+    },
+    {
+      "name": "Lightning Cat Companion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/lightning-cat-companion/",
+      "cr": "1",
+      "init": 9,
+      "hp": 11,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Tiny magical beast"
+    },
+    {
+      "name": "Lightning Cat Hero (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/lightning-cat-hero/",
+      "cr": "3",
+      "init": 8,
+      "hp": 16,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Small magical beast"
+    },
+    {
+      "name": "Lion Beast of Chaos (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/lion-beast-of-chaos-tohc/",
+      "cr": "5",
+      "init": 7,
+      "hp": 37,
+      "ac": 19,
+      "alignment": "CN",
+      "type": "Large magical beast (augmented animal)"
+    },
+    {
+      "name": "Manticore, Poisonous (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/manticore/manticore-poisonous/",
+      "cr": "6",
+      "init": 2,
+      "hp": 69,
+      "ac": 17,
+      "alignment": "LE",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Muckdweller (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/muckdweller-3pp/",
+      "cr": "1/4",
+      "init": 2,
+      "hp": 5,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small magical beast (reptilian)"
+    },
+    {
+      "name": "Pyrolisk (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/pyrolisk/",
+      "cr": "3",
+      "init": 3,
+      "hp": 26,
+      "ac": 16,
+      "alignment": "NE",
+      "type": "Small magical beast"
+    },
+    {
+      "name": "Pyrolisk (3pp:TOHC)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/pyrolisk-tohc/",
+      "cr": "3",
+      "init": 3,
+      "hp": 22,
+      "ac": 14,
+      "alignment": "NE",
+      "type": "Small magical beast (fire)"
+    },
+    {
+      "name": "Ravager (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/ravager-fgg/",
+      "cr": "30",
+      "init": 7,
+      "hp": 857,
+      "ac": 45,
+      "alignment": "N",
+      "type": "Gargantuan magical beast"
+    },
+    {
+      "name": "Ravager Spawn (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/ravager-spawn-fgg/",
+      "cr": "20",
+      "init": 5,
+      "hp": 495,
+      "ac": 40,
+      "alignment": "N",
+      "type": "Huge magical beast"
+    },
+    {
+      "name": "Sea Cat (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/sea-cat-ff/",
+      "cr": "4",
+      "init": 1,
+      "hp": 42,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Shadow Hunter (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/shadow-hunter-fgg/",
+      "cr": "8",
+      "init": 2,
+      "hp": 76,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Huge magical beast"
+    },
+    {
+      "name": "Shadow Hunter Hatchling (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/shadow-hunter-hatchling-fgg/",
+      "cr": "2",
+      "init": 1,
+      "hp": 22,
+      "ac": 13,
+      "alignment": "N",
+      "type": "Medium magical beast"
+    },
+    {
+      "name": "Shantak (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/shantak-2/",
+      "cr": "7",
+      "init": 3,
+      "hp": 85,
+      "ac": 20,
+      "alignment": "CE",
+      "type": "Huge magical beast"
+    },
+    {
+      "name": "Shedu (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/shedu-ff/",
+      "cr": "6",
+      "init": 5,
+      "hp": 76,
+      "ac": 18,
+      "alignment": "LG",
+      "type": "Large magical beast (good , lawful)"
+    },
+    {
+      "name": "Shedu, Greater (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/shedu-ff/shedu-greater-ff/",
+      "cr": "10",
+      "init": 5,
+      "hp": 147,
+      "ac": 21,
+      "alignment": "LG",
+      "type": "Large magical beast (good , lawful)"
+    },
+    {
+      "name": "Shedu, Greater (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/shedu-tohc/shedu-greater-tohc/",
+      "cr": "9) Detect Poison (Sp) Harm’s Way (Ex) Discern Ward (Sp) Ward-Bond (Su)",
+      "init": 5,
+      "hp": 147,
+      "ac": 18,
+      "alignment": "LG",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Spider Eater (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/magical-beasts/spider-eater-ff/",
+      "cr": "5",
+      "init": 6,
+      "hp": 47,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Large magical beast"
+    },
+    {
+      "name": "Corby, Dire (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/dire-corby-tohc/",
+      "cr": "1",
+      "init": 1,
+      "hp": 13,
+      "ac": 14,
+      "alignment": "NE",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Gargoyle, Four-Armed (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/gargoyle/gargoyle-four-armed-tohc/",
+      "cr": "5",
+      "init": 6,
+      "hp": 57,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Medium monstrous humanoid (earth)"
+    },
+    {
+      "name": "Gargoyle, Fungus (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/gargoyle/gargoyle-fungus-tohc/",
+      "cr": "5",
+      "init": 2,
+      "hp": 59,
+      "ac": 17,
+      "alignment": "N(E)Medium",
+      "type": "plant (fungus)"
+    },
+    {
+      "name": "Gargoyle, Green Guardian (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/gargoyle/gargoyle-green-guardian-tohc/",
+      "cr": "4",
+      "init": 2,
+      "hp": 38,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Medium monstrous humanoid (earth)"
+    },
+    {
+      "name": "Grimlock (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/grimlock/",
+      "cr": "1",
+      "init": 1,
+      "hp": 13,
+      "ac": 15,
+      "alignment": "NE",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Hag, Blood (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/hag/blood-hag-kp/",
+      "cr": "9",
+      "init": 3,
+      "hp": 114,
+      "ac": 24,
+      "alignment": "CE",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Hag, Flue (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/hag/hag-flue/",
+      "cr": "4",
+      "init": 4,
+      "hp": 37,
+      "ac": 17,
+      "alignment": "CE",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Hag, Pit (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/hag/hag-pit/",
+      "cr": "13",
+      "init": 9,
+      "hp": 171,
+      "ac": 28,
+      "alignment": "CE",
+      "type": "Medium monstrous humanoid (chaotic , evil , extraplanar)"
+    },
+    {
+      "name": "Hag, Sand (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/hag/hag-sand/",
+      "cr": "5",
+      "init": 1,
+      "hp": 78,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Kech (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/kech-tohc/",
+      "cr": "3",
+      "init": 6,
+      "hp": 32,
+      "ac": 17,
+      "alignment": "NE",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Mongrelman (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/mongrelman-tohc/",
+      "cr": "2",
+      "init": 1,
+      "hp": 13,
+      "ac": 15,
+      "alignment": "LN",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Nightgaunt (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/nightgaunt-2/",
+      "cr": "3",
+      "init": 5,
+      "hp": 30,
+      "ac": 15,
+      "alignment": "CN",
+      "type": "Medium monstrous humanoid"
+    },
+    {
+      "name": "Serpentfolk (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/serpentfolk-2/",
+      "cr": "5",
+      "init": 10,
+      "hp": 57,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Medium monstrous humanoid (shapechanger)"
+    },
+    {
+      "name": "Troglodyte Magic User (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/troglodyte-magic-user/",
+      "cr": "6",
+      "init": 5,
+      "hp": 73,
+      "ac": 19,
+      "alignment": "CN",
+      "type": "Medium monstrous humanoid (reptilian)"
+    },
+    {
+      "name": "Yeti (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/monstrous-humanoids/yeti-tohc/",
+      "cr": "4",
+      "init": 1,
+      "hp": 30,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Large monstrous humanoid (cold)"
+    },
+    {
+      "name": "Mold, Slime (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/mold-slime-tohc/",
+      "cr": "3",
+      "init": -1,
+      "hp": 38,
+      "ac": 8,
+      "alignment": "N",
+      "type": "Large ooze (fungus)"
+    },
+    {
+      "name": "Ooze, Crystal (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/ooze-crystal-tohc/",
+      "cr": "4",
+      "init": -5,
+      "hp": 65,
+      "ac": 5,
+      "alignment": "N",
+      "type": "Medium ooze (aquatic)"
+    },
+    {
+      "name": "Ooze, Magma (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/ooze-magma-tohc/",
+      "cr": "7",
+      "init": -5,
+      "hp": 120,
+      "ac": 4,
+      "alignment": "N",
+      "type": "Large ooze (fire)"
+    },
+    {
+      "name": "Shoggoth (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/shoggoth-3pp/",
+      "cr": "20",
+      "init": 12,
+      "hp": 377,
+      "ac": 36,
+      "alignment": "CE",
+      "type": "Huge ooze (aquatic)"
+    },
+    {
+      "name": "Slithering Tracker (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/oozes/slithering-tracker-tohc/",
+      "cr": "4) Parasite (Ex)",
+      "init": 4,
+      "hp": 47,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Small ooze"
+    },
+    {
+      "name": "Abyssal Larva (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/abyssal-larva-tohc/",
+      "cr": "1",
+      "init": 0,
+      "hp": 8,
+      "ac": 14,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , evil , extraplanar)"
+    },
+    {
+      "name": "Achaierai (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/achaierai-ff/",
+      "cr": "5",
+      "init": 1,
+      "hp": 51,
+      "ac": 21,
+      "alignment": "LE",
+      "type": "Large outsider (evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Aerial Servant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/aerial-servant-3pp/",
+      "cr": "11",
+      "init": 9,
+      "hp": 152,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Medium outsider (air , extraplanar , elemental)"
+    },
+    {
+      "name": "Aerial Servant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/aerial-servant-tohc/",
+      "cr": "11",
+      "init": 10,
+      "hp": 138,
+      "ac": 24,
+      "alignment": "N",
+      "type": "Medium outsider (air , elemental , extraplanar)"
+    },
+    {
+      "name": "Agathion, Aequoreal (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/agathion/agathion-aequoreal/",
+      "cr": "2",
+      "init": 2,
+      "hp": 11,
+      "ac": 14,
+      "alignment": "NG",
+      "type": "Tiny outsider (agathion , aquatic , extraplanar , good)"
+    },
+    {
+      "name": "Agathion, Chiropteal (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/agathion/agathion-chiropteal/",
+      "cr": "5",
+      "init": 4,
+      "hp": 39,
+      "ac": 19,
+      "alignment": "NG",
+      "type": "Small outsider (agathion , extraplanar , good)"
+    },
+    {
+      "name": "Andrenjinyi (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/andrenjinyi-od/",
+      "cr": "14",
+      "init": 3,
+      "hp": 200,
+      "ac": 29,
+      "alignment": "N",
+      "type": "Gargantuan outsider (aquatic , native)"
+    },
+    {
+      "name": "Angel, Chalkydri (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/angel/angel-chalkydri-tohc/",
+      "cr": "14",
+      "init": 7,
+      "hp": 126,
+      "ac": 30,
+      "alignment": "NG",
+      "type": "Medium outsider (angel , extraplanar , good)"
+    },
+    {
+      "name": "Angel, Dark (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/angel/angel-dark/",
+      "cr": "23",
+      "init": 9,
+      "hp": 363,
+      "ac": 44,
+      "alignment": "NE",
+      "type": "Large outsider (dark angel, extraplanar , evil)"
+    },
+    {
+      "name": "Angel, Empyreal (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/angel/angel-empyreal-tohc/",
+      "cr": "15",
+      "init": 8,
+      "hp": 136,
+      "ac": 27,
+      "alignment": "LG",
+      "type": "Large outsider (angel , extraplanar , good , lawful)"
+    },
+    {
+      "name": "Angel, Monadic Deva (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/angel/angel-monadic-deva-tohc/",
+      "cr": "12",
+      "init": 7,
+      "hp": 95,
+      "ac": 26,
+      "alignment": "NG",
+      "type": "Medium outsider (angel , extraplanar , good)"
+    },
+    {
+      "name": "Angel, Movanic Deva (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/angel/angel-movanic-deva-tohc/",
+      "cr": "10",
+      "init": 8,
+      "hp": 76,
+      "ac": 26,
+      "alignment": "NG",
+      "type": "Medium outsider (angel , extraplanar , good)"
+    },
+    {
+      "name": "Animal Lord, Cat Lord (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/animal-lords-tohc/animal-lord-cat-lord-tohc/",
+      "cr": "15",
+      "init": 11,
+      "hp": 199,
+      "ac": 32,
+      "alignment": "N",
+      "type": "Medium outsider (native , shapechanger)"
+    },
+    {
+      "name": "Animal Lord, Mouse Lord (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/animal-lords-tohc/animal-lord-mouse-lord-tohc/",
+      "cr": "13",
+      "init": 11,
+      "hp": 142,
+      "ac": 29,
+      "alignment": "N",
+      "type": "Medium outsider (native , shapechanger)"
+    },
+    {
+      "name": "Arrowhawk (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/arrowhawk/",
+      "cr": "5",
+      "init": 5,
+      "hp": 44,
+      "ac": 2,
+      "alignment": "N",
+      "type": "Medium outsider (air , extraplanar)"
+    },
+    {
+      "name": "Asakku (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/asakku-cr7/",
+      "cr": "7",
+      "init": 8,
+      "hp": 60,
+      "ac": 19,
+      "alignment": "Always",
+      "type": "CE Medium outsider (native)"
+    },
+    {
+      "name": "Astral Shark (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/astral-shark/",
+      "cr": "6",
+      "init": 2,
+      "hp": 68,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Large outsider"
+    },
+    {
+      "name": "Basilisk, Abyssal (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/basilisk-abyssal/",
+      "cr": "12",
+      "init": 3,
+      "hp": 189,
+      "ac": 22,
+      "alignment": "CE",
+      "type": "Large outsider (augmented magical beast , extraplanar)"
+    },
+    {
+      "name": "Daemon, Cacodaemon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-cacodaemon-tohc/",
+      "cr": "12",
+      "init": 4,
+      "hp": 138,
+      "ac": 28,
+      "alignment": "NE",
+      "type": "Medium outsider (daemon , evil , extraplanar)"
+    },
+    {
+      "name": "Daemon, Charon (Boatman of the Lower Planes; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-charon-boatman-of-the-lower-planes/",
+      "cr": "23",
+      "init": 9,
+      "hp": 464,
+      "ac": 40,
+      "alignment": "NE",
+      "type": "Medium outsider (daemon , evil , extraplanar)"
+    },
+    {
+      "name": "Daemon, Charonodaemon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-charonodaemon/",
+      "cr": "9",
+      "init": 7,
+      "hp": 105,
+      "ac": 24,
+      "alignment": "NE",
+      "type": "Medium outsider (daemon , evil , extraplanar)"
+    },
+    {
+      "name": "Daemon, Derghodaemon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-derghodaemon-tohc/",
+      "cr": "10",
+      "init": 7,
+      "hp": 125,
+      "ac": 24,
+      "alignment": "NE",
+      "type": "Large outsider (daemon , evil , extraplanar)"
+    },
+    {
+      "name": "Daemon, Guardian (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-guardian/",
+      "cr": "6",
+      "init": 1,
+      "hp": 68,
+      "ac": 21,
+      "alignment": "N(E)Large",
+      "type": "outsider (extraplanar)"
+    },
+    {
+      "name": "Daemon, Hydrodaemon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-hydrodaemon-tohc/",
+      "cr": "7",
+      "init": 2,
+      "hp": 66,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Large outsider (aquatic , daemon , evil , extraplanar)"
+    },
+    {
+      "name": "Daemon, Piscodaemon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-piscodaemon-tohc/",
+      "cr": "10",
+      "init": 8,
+      "hp": 137,
+      "ac": 24,
+      "alignment": "NE",
+      "type": "Medium outsider (aquatic , daemon , evil , extraplanar)"
+    },
+    {
+      "name": "Daemon, The Oinodaemon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/daemons/daemon-the-oinodaemon/",
+      "cr": "37",
+      "init": 16,
+      "hp": 857,
+      "ac": 60,
+      "alignment": "NE",
+      "type": "Large outsider (daemon , evil , extraplanar)"
+    },
+    {
+      "name": "Defender Globe (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/defender-globe-fgg/",
+      "cr": "3",
+      "init": 3,
+      "hp": 26,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Small outsider (elemental , native)"
+    },
+    {
+      "name": "Demodand, Shaggy (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demodand-tohc/demodand-shaggy-tohc/",
+      "cr": "15",
+      "init": 7,
+      "hp": 157,
+      "ac": 29,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demodand , evil , extraplanar)"
+    },
+    {
+      "name": "Demodand, Slime (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demodand-tohc/demodand-slime-tohc/",
+      "cr": "13",
+      "init": 4,
+      "hp": 136,
+      "ac": 28,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demodand , evil , extraplanar)"
+    },
+    {
+      "name": "Demodand, Tarry (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demodand-tohc/demodand-tarry-tohc/",
+      "cr": "10",
+      "init": 5,
+      "hp": 104,
+      "ac": 27,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demodand , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Baphomet (3pp; Demon Lord of Beasts)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-baphomet-tohc/",
+      "cr": "25",
+      "init": 12,
+      "hp": 555,
+      "ac": 47,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Beluiri (3pp; The Temptress)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-beluiri-the-temptress-tohc/",
+      "cr": "15",
+      "init": 7,
+      "hp": 184,
+      "ac": 40,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Caizel (3pp; Deposed Queen of Succubi)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-caizel-deposed-queen-of-succubi-tohc/",
+      "cr": "16",
+      "init": 6,
+      "hp": 207,
+      "ac": 36,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Dagon (3pp; Demon Prince of the Sea)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-dagon-tohc/",
+      "cr": "27",
+      "init": 12,
+      "hp": 594,
+      "ac": 50,
+      "alignment": "CE",
+      "type": "Large outsider (aquatic , chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Fraz-Urb’luu (3pp; Demon Prince of Deception)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-fraz-urb-luu-demon-prince-of-deception-tohc/",
+      "cr": "29",
+      "init": 8,
+      "hp": 900,
+      "ac": 49,
+      "alignment": "CE",
+      "type": "Huge outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Jubilex (3pp; The Faceless Lord)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-jubilex-the-faceless-lord-tohc/",
+      "cr": "23",
+      "init": 9,
+      "hp": 553,
+      "ac": 43,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Kostchtchie (3pp; Demon Prince of Wrath)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-kostchtchie-demon-prince-of-wrath-tohc/",
+      "cr": "23",
+      "init": 10,
+      "hp": 536,
+      "ac": 43,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , cold , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Maphistal (3pp; Second of Orcus)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-maphistal-tohc/",
+      "cr": "21",
+      "init": 11,
+      "hp": 330,
+      "ac": 39,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Orcus (3pp; Demon Prince of the Undead)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-orcus-tohc/",
+      "cr": "35",
+      "init": 10,
+      "hp": 742,
+      "ac": 55,
+      "alignment": "CE",
+      "type": "Huge outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Pazuzu (3pp; Demon Prince of Air)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-pazuzu-demon-prince-of-air-tohc/",
+      "cr": "28",
+      "init": 14,
+      "hp": 604,
+      "ac": 49,
+      "alignment": "CE",
+      "type": "Large outsider (air , chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Sonechard (3pp; General of Orcus)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-sonechard-general-of-orcus-tohc/",
+      "cr": "21",
+      "init": 10,
+      "hp": 385,
+      "ac": 46,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Tsathogga (3pp; The Frog God)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-tsathogga-the-frog-god-tohc/",
+      "cr": "30",
+      "init": 8,
+      "hp": 861,
+      "ac": 52,
+      "alignment": "CE",
+      "type": "Colossal outsider (aquatic , chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon Lord, Vepar (3pp; Duke of Dagon)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-lords/demon-lord-vepar-duke-of-dagon-tohc/",
+      "cr": "21",
+      "init": 12,
+      "hp": 363,
+      "ac": 37,
+      "alignment": "CE",
+      "type": "Large outsider (aquatic , chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Aeshma (Rage Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-aeshma-rage-tohc/",
+      "cr": "11",
+      "init": 4,
+      "hp": 189,
+      "ac": 25,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Alu-demon (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-alu/",
+      "cr": "5",
+      "init": 2,
+      "hp": 45,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Azizou (Pain Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demons-of-corruption/demon-of-corruption-azizou-tohc/",
+      "cr": "4",
+      "init": 2,
+      "hp": 22,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Small outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Balban (Brute Demon, 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-balban-brute-demon-tohc/",
+      "cr": "8",
+      "init": 2,
+      "hp": 103,
+      "ac": 23,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Barizou (Assassin Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demons-of-corruption/demon-of-corruption-barizou-tohc/",
+      "cr": "3",
+      "init": 2,
+      "hp": 16,
+      "ac": 17,
+      "alignment": "CE",
+      "type": "Small outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Cambion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/cambion/",
+      "cr": "6",
+      "init": 2,
+      "hp": 68,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Chaaor (Beast Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-chaaor-beast-demon-tohc/",
+      "cr": "11",
+      "init": 3,
+      "hp": 126,
+      "ac": 24,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Choronzon (Chaos Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-choronzon-chaos-demon-tohc/",
+      "cr": "18",
+      "init": 6,
+      "hp": 290,
+      "ac": 32,
+      "alignment": "CE",
+      "type": "Huge outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Daraka (Swarm Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-daraka-swarm-demon-tohc/",
+      "cr": "12",
+      "init": 0,
+      "hp": 162,
+      "ac": 27,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Felius (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-felius/",
+      "cr": "15",
+      "init": 6,
+      "hp": 232,
+      "ac": 30,
+      "alignment": "CE",
+      "type": "Huge outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Gallu- (Faceless Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-gallu-faceless-demon-tohc/",
+      "cr": "6",
+      "init": 4,
+      "hp": 66,
+      "ac": 20,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Geruzou (Slime Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demons-of-corruption/demon-of-corruption-geruzou-tohc/",
+      "cr": "5",
+      "init": 2,
+      "hp": 39,
+      "ac": 23,
+      "alignment": "CE",
+      "type": "Small outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Gharros (Scorpion Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-gharros-scorpion-demon-tohc/",
+      "cr": "14",
+      "init": 8,
+      "hp": 248,
+      "ac": 28,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Greater Ooze (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-ooze-tohc/demon-greater-ooze-tohc/",
+      "cr": "11",
+      "init": 4,
+      "hp": 135,
+      "ac": 23,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Greruor (Frog Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-greruor-frog-demon-tohc/",
+      "cr": "10",
+      "init": 7,
+      "hp": 115,
+      "ac": 27,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Hatethrall (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-hatethrall/",
+      "cr": "6",
+      "init": 9,
+      "hp": 74,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Tiny outsider (chaotic , demon , evil extraplanar)"
+    },
+    {
+      "name": "Demon, Herensugue (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-herensugue/",
+      "cr": "11",
+      "init": 8,
+      "hp": 162,
+      "ac": 24,
+      "alignment": "CE",
+      "type": "Huge outsider (air , chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Lesser Ooze (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-ooze-tohc/demon-lesser-ooze-tohc/",
+      "cr": "3",
+      "init": 0,
+      "hp": 25,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Mallor (Serpent Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-mallor-serpent-demon-tohc/",
+      "cr": "13",
+      "init": 6,
+      "hp": 217,
+      "ac": 29,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Mehrim (Goat Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-mehrim-goat-demon-tohc/",
+      "cr": "4",
+      "init": 2,
+      "hp": 33,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Mezzalorn (Wasp Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-mezzalorn-wasp-demon-tohc/",
+      "cr": "11",
+      "init": 5,
+      "hp": 138,
+      "ac": 27,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil, extraplanar)"
+    },
+    {
+      "name": "Demon, Nabasu (Demonling; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-nabasu-death-stealer-demon/demon-nabasu-demonling-tohc/",
+      "cr": "7",
+      "init": 5,
+      "hp": 73,
+      "ac": 23,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Nabasu (Mature; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-nabasu-death-stealer-demon/demon-nabasu-mature-tohc/",
+      "cr": "10",
+      "init": 5,
+      "hp": 175,
+      "ac": 30,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Nerizo (Hound Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-nerizo-hound-demon-tohc/",
+      "cr": "9",
+      "init": 2,
+      "hp": 125,
+      "ac": 22,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Nysrock (Cobra Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-nysrock-cobra-demon-tohc/",
+      "cr": "13",
+      "init": 2,
+      "hp": 202,
+      "ac": 25,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Paigoel (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-paigoel/",
+      "cr": "12",
+      "init": 1,
+      "hp": 161,
+      "ac": 26,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Pengizu (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/pengizu/",
+      "cr": "11",
+      "init": -1,
+      "hp": 155,
+      "ac": 26,
+      "alignment": "CE",
+      "type": "Large outsider (aquatic , chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Pestilenzi (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-pestilenzi-fgg/",
+      "cr": "3",
+      "init": 8,
+      "hp": 30,
+      "ac": 17,
+      "alignment": "CE",
+      "type": "Small outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Shadow (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-shadow-tohc/",
+      "cr": "7",
+      "init": 8,
+      "hp": 59,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , demon , evil , extraplanar , incorporeal)"
+    },
+    {
+      "name": "Demon, Shrroth (Squid Demon; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-shrroth-squid-demon-tohc/",
+      "cr": "12",
+      "init": 4,
+      "hp": 162,
+      "ac": 23,
+      "alignment": "CE",
+      "type": "Huge outsider (aquatic , chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Skitterdark (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-skitterdark-tohc/",
+      "cr": "3",
+      "init": 3,
+      "hp": 34,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Tiny outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Stirge (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-stirge-tohc/",
+      "cr": "10",
+      "init": 3,
+      "hp": 92,
+      "ac": 23,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Demon, Venom (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/demon/demon-venom/",
+      "cr": "13",
+      "init": 9,
+      "hp": 161,
+      "ac": 32,
+      "alignment": "CE",
+      "type": "Large outsider (chaotic , demon , evil , extraplanar)"
+    },
+    {
+      "name": "Devil, Alastor (Executioner of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-alastor-executioner-of-hell-tohc/",
+      "cr": "23",
+      "init": 12,
+      "hp": 660,
+      "ac": 48,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Amaimon (Interrogator Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-amaimon-tohc/",
+      "cr": "8",
+      "init": 8,
+      "hp": 94,
+      "ac": 23,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Amon (Duke of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-amon-duke-of-hell-tohc/",
+      "cr": "25",
+      "init": 12,
+      "hp": 434,
+      "ac": 44,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Arusities (Doll Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-doll/",
+      "cr": "1",
+      "init": 2,
+      "hp": 13,
+      "ac": 15,
+      "alignment": "LE",
+      "type": "Small outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Ashmede (Judgement Devil-3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-judgement/",
+      "cr": "13",
+      "init": 3,
+      "hp": 162,
+      "ac": 28,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Atropocustra (Addiction Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/atropocustra-addiction-devil/",
+      "cr": "5",
+      "init": 4,
+      "hp": 45,
+      "ac": 19,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Baal (Duke of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-baal-duke-of-hell-tohc/",
+      "cr": "22",
+      "init": 11,
+      "hp": 333,
+      "ac": 38,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Baaphel (Duke of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-baaphel-duke-of-hell-tohc/",
+      "cr": "21",
+      "init": 11,
+      "hp": 270,
+      "ac": 38,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Caasimolar (Former President of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-caasimolar-former-president-of-hell-tohc/",
+      "cr": "23",
+      "init": 12,
+      "hp": 391,
+      "ac": 46,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Castigas (Automata; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-castigas-automata-kp/",
+      "cr": "11",
+      "init": 7,
+      "hp": 136,
+      "ac": 23,
+      "alignment": "LE",
+      "type": "Large outsider (evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Chort (Pig-Faced Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-chort-kp/",
+      "cr": "15",
+      "init": 11,
+      "hp": 229,
+      "ac": 29,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar)"
+    },
+    {
+      "name": "Devil, Deathleech Horned (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/deathleech-horned-devil-tohc/",
+      "cr": "19",
+      "init": 9,
+      "hp": 232,
+      "ac": 36,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Demoriel (Twice-Exiled Seductress; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-demoriel-twice-exiled-seductress-tohc/",
+      "cr": "19",
+      "init": 9,
+      "hp": 210,
+      "ac": 40,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Faceless (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-faceless/",
+      "cr": "9",
+      "init": 4,
+      "hp": 85,
+      "ac": 23,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Garugin (Blood Reaver; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-garugin-blood-reaver-tohc/",
+      "cr": "8",
+      "init": 2,
+      "hp": 94,
+      "ac": 24,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Geryon (Arch-Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-geryon-arch-devil-tohc/",
+      "cr": "29",
+      "init": 9,
+      "hp": 612,
+      "ac": 46,
+      "alignment": "LE",
+      "type": "Huge outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Ghaddar (Devourer Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-ghaddar-tohc/",
+      "cr": "16",
+      "init": 9,
+      "hp": 200,
+      "ac": 33,
+      "alignment": "LE",
+      "type": "Huge outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Gilded (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-gilded-kp/",
+      "cr": "8",
+      "init": 2,
+      "hp": 95,
+      "ac": 24,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Gladiatrix (Domination Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-domination/",
+      "cr": "7",
+      "init": 10,
+      "hp": 84,
+      "ac": 21,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Gorson (The Blood Duke; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-gorson-the-blood-duke-tohc/",
+      "cr": "22",
+      "init": 13,
+      "hp": 372,
+      "ac": 44,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Hutijin (Duke of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-hutijin-duke-of-hell-tohc/",
+      "cr": "22",
+      "init": 11,
+      "hp": 297,
+      "ac": 43,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Ink (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-ink-kp/",
+      "cr": "3",
+      "init": 5,
+      "hp": 26,
+      "ac": 18,
+      "alignment": "LE",
+      "type": "Small outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Lilin (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-lilin-tohc/",
+      "cr": "6",
+      "init": 3,
+      "hp": 73,
+      "ac": 20,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Lilith (Former Queen of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-lilith-former-queen-of-hell-tohc/",
+      "cr": "16",
+      "init": 7,
+      "hp": 178,
+      "ac": 33,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Lucifer (Prince of Darkness; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-lucifer-prince-of-darkness-tohc/",
+      "cr": "39",
+      "init": 12,
+      "hp": 943,
+      "ac": 74,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Marnasoth (Hellstoker; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-marnasoth-hellstoker-tohc/",
+      "cr": "5",
+      "init": 1,
+      "hp": 37,
+      "ac": 19,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Marzach (Flayer; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-marzach-flayer-tohc/",
+      "cr": "11",
+      "init": 2,
+      "hp": 174,
+      "ac": 27,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Moloch (Arch-Devil; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-moloch-arch-devil-tohc/",
+      "cr": "26",
+      "init": 11,
+      "hp": 561,
+      "ac": 46,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Nupperibo (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-nupperibo-tohc/",
+      "cr": "1",
+      "init": 0,
+      "hp": 5,
+      "ac": 12,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Pretender (Dissimulare; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-pretender/",
+      "cr": "4",
+      "init": 6,
+      "hp": 42,
+      "ac": 15,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Shadow Angel (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-shadow-angel/",
+      "cr": "16",
+      "init": 5,
+      "hp": 203,
+      "ac": 24,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , incorporeal , lawful)"
+    },
+    {
+      "name": "Devil, The Desire (Unique; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-the-desire/",
+      "cr": "9",
+      "init": 3,
+      "hp": 56,
+      "ac": 18,
+      "alignment": "NE",
+      "type": "medium outsider (devil , evil , native)"
+    },
+    {
+      "name": "Devil, Titivilus (Duke of Hell; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-titivilus-duke-of-hell-tohc/",
+      "cr": "20",
+      "init": 11,
+      "hp": 275,
+      "ac": 41,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Tormentor (Tormentor of Souls; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-tormentor-tormentor-of-souls-tohc/",
+      "cr": "7",
+      "init": 8,
+      "hp": 76,
+      "ac": 24,
+      "alignment": "LE",
+      "type": "Medium outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Whiptail (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devil-whiptail/",
+      "cr": "1",
+      "init": 2,
+      "hp": 20,
+      "ac": 14,
+      "alignment": "LE",
+      "type": "Small outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Devil, Xaphan (Duke of Infernus; 3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/devil/devils-unique/devil-xaphan-duke-of-infernus-tohc/",
+      "cr": "26",
+      "init": 12,
+      "hp": 717,
+      "ac": 46,
+      "alignment": "LE",
+      "type": "Large outsider (devil , evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Djinni, Cheitan (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/djinni/cheitan-djinni-tohc/",
+      "cr": "7",
+      "init": 10,
+      "hp": 59,
+      "ac": 24,
+      "alignment": "CE",
+      "type": "Large outsider (air , extraplanar)"
+    },
+    {
+      "name": "Dream Eater (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/dream-eater-od/",
+      "cr": "6",
+      "init": 4,
+      "hp": 68,
+      "ac": 19,
+      "alignment": "LE",
+      "type": "Medium outsider (evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Dream Spectre (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/dream-spectre-nightmare-creature-tohc/",
+      "cr": "9",
+      "init": 8,
+      "hp": 67,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Medium outsider (evil , extraplanar , incorporeal)"
+    },
+    {
+      "name": "Ei’risai, Ancestor (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/ei-risai-1/ancestor/",
+      "cr": "13",
+      "init": 8,
+      "hp": 172,
+      "ac": 26,
+      "alignment": "CN",
+      "type": "Large outsider (chaotic , extraplanar)"
+    },
+    {
+      "name": "Ei’risai, Lesser (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/ei-risai-1/lesser/",
+      "cr": "7",
+      "init": 3,
+      "hp": 59,
+      "ac": 18,
+      "alignment": "CN",
+      "type": "Large outsider (chaotic , extraplanar)"
+    },
+    {
+      "name": "Ei’risai, Master (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/ei-risai-1/master/",
+      "cr": "10",
+      "init": 3,
+      "hp": 105,
+      "ac": 23,
+      "alignment": "CN",
+      "type": "Large outsider (chaotic , extraplanar)"
+    },
+    {
+      "name": "Ei’risai, Medial (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/ei-risai-1/medial/",
+      "cr": "8",
+      "init": 3,
+      "hp": 76,
+      "ac": 19,
+      "alignment": "CN",
+      "type": "Large outsider (chaotic , extraplanar)"
+    },
+    {
+      "name": "Elemental Beetle, Earth (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-earth/earth-elemental-beetle/",
+      "cr": "5",
+      "init": 0,
+      "hp": 68,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large outsider (earth , elemental , extraplanar)"
+    },
+    {
+      "name": "Elemental Dragon, Air(3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-dragon/elemental-dragon-air-tohc/",
+      "cr": "18",
+      "init": 8,
+      "hp": 252,
+      "ac": 32,
+      "alignment": "(N)E",
+      "type": "Huge outsider (air , elemental , extraplanar)"
+    },
+    {
+      "name": "Elemental Dragon, Earth(3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-dragon/elemental-dragon-earth-tohc/",
+      "cr": "20",
+      "init": 0,
+      "hp": 252,
+      "ac": 26,
+      "alignment": "(N)E",
+      "type": "Huge outsider (earth , elemental , extraplanar)"
+    },
+    {
+      "name": "Elemental Dragon, Fire(3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-dragon/elemental-dragon-fire-tohc/",
+      "cr": "22",
+      "init": 6,
+      "hp": 252,
+      "ac": 30,
+      "alignment": "(N)E",
+      "type": "Huge outsider (elemental , extraplanar , fire)"
+    },
+    {
+      "name": "Elemental Dragon, Water(3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-dragon/elemental-dragon-water-tohc/",
+      "cr": "18",
+      "init": 3,
+      "hp": 252,
+      "ac": 27,
+      "alignment": "(N)E",
+      "type": "Huge outsider (elemental , extraplanar , water)"
+    },
+    {
+      "name": "Elemental Fiend, Airfiend (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-fiend/elemental-fiend-airfiend-tohc/",
+      "cr": "5",
+      "init": 1,
+      "hp": 68,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium outsider (air , chaotic , elemental , evil , extraplanar)"
+    },
+    {
+      "name": "Elemental Fiend, Earthfiend (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-fiend/elemental-fiend-earthfiend-tohc/",
+      "cr": "5",
+      "init": 1,
+      "hp": 68,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , earth , elemental , evil , extraplanar)"
+    },
+    {
+      "name": "Elemental Fiend, Firefiend (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-fiend/elemental-fiend-firefiend-tohc/",
+      "cr": "5",
+      "init": 1,
+      "hp": 68,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , elemental , evil , extraplanar , fire)"
+    },
+    {
+      "name": "Elemental Fiend, Waterfiend (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-fiend/elemental-fiend-waterfiend-tohc/",
+      "cr": "5",
+      "init": 1,
+      "hp": 68,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium outsider (chaotic , elemental , evil , extraplanar , water)"
+    },
+    {
+      "name": "Elemental Spider, Earth (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-earth/earth-elemental-spider/",
+      "cr": "9",
+      "init": 6,
+      "hp": 125,
+      "ac": 23,
+      "alignment": "N",
+      "type": "Huge outsider (earth , elemental , extraplanar)"
+    },
+    {
+      "name": "Fire Nymph (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/fire-nymph/",
+      "cr": "4",
+      "init": 1,
+      "hp": 13,
+      "ac": 15,
+      "alignment": "CN(G)Medium",
+      "type": "outsider (extraplanar , fire)"
+    },
+    {
+      "name": "Fire Snake (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/fire-snake-tohc/",
+      "cr": "1",
+      "init": 3,
+      "hp": 13,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Small outsider (extraplanar , fire)"
+    },
+    {
+      "name": "Foo Dog (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/foo-dog/foo-dog-tohc/",
+      "cr": "5",
+      "init": 6,
+      "hp": 59,
+      "ac": 18,
+      "alignment": "CG",
+      "type": "Medium magical beast (extraplanar)"
+    },
+    {
+      "name": "Genie, Abasheen (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/genie-abasheen-tohc/",
+      "cr": "8",
+      "init": 7,
+      "hp": 85,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Large outsider (air , extraplanar)"
+    },
+    {
+      "name": "Genie, Hawanar (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/genie-hawanar-tohc/",
+      "cr": "10",
+      "init": 8,
+      "hp": 97,
+      "ac": 21,
+      "alignment": "LN",
+      "type": "Large outsider (air , extraplanar , fire)"
+    },
+    {
+      "name": "Genie, Marid (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/genie-marid-tohc/",
+      "cr": "9",
+      "init": 8,
+      "hp": 114,
+      "ac": 23,
+      "alignment": "CN",
+      "type": "Large outsider (extraplanar , water)"
+    },
+    {
+      "name": "Gloomwing (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/gloomwing-tohc/",
+      "cr": "4",
+      "init": 3,
+      "hp": 32,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Large outsider (extraplanar)"
+    },
+    {
+      "name": "Gravity Elemental, Elder(3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-gravity-tohc/gravity-elemental-elder-tohc/",
+      "cr": "11",
+      "init": 14,
+      "hp": 168,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Huge outsider (elemental , extraplanar , gravity)"
+    },
+    {
+      "name": "Janni, Cheitan (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/genie/janni/cheitan-janni-tohc/",
+      "cr": "6",
+      "init": 8,
+      "hp": 45,
+      "ac": 23,
+      "alignment": "NE",
+      "type": "Medium outsider (native)"
+    },
+    {
+      "name": "Kirin (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/kirin/",
+      "cr": "13",
+      "init": 7,
+      "hp": 172,
+      "ac": 29,
+      "alignment": "LG",
+      "type": "Large outsider (air , extraplanar , good , lawful)"
+    },
+    {
+      "name": "Lejnth (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/lejnth/",
+      "cr": "9",
+      "init": 9,
+      "hp": 114,
+      "ac": 26,
+      "alignment": "LE",
+      "type": "Medium outsider (evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Magma Elemental Ram (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-magma/magma-elemental-ram/",
+      "cr": "14",
+      "init": 3,
+      "hp": 190,
+      "ac": 29,
+      "alignment": "N",
+      "type": "Huge outsider (earth , elemental , extraplanar , fire)"
+    },
+    {
+      "name": "Mihstu (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/mihstu-tohc/",
+      "cr": "6",
+      "init": 10,
+      "hp": 60,
+      "ac": 23,
+      "alignment": "NE",
+      "type": "Medium outsider (air , elemental , extraplanar)"
+    },
+    {
+      "name": "Moon Dog (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/moon-dog-3pp/",
+      "cr": "9",
+      "init": 6,
+      "hp": 65,
+      "ac": 22,
+      "alignment": "NG",
+      "type": "Medium outsider (extraplanar , good)"
+    },
+    {
+      "name": "Mudman (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/mudman-tohc/",
+      "cr": "2",
+      "init": 0,
+      "hp": 15,
+      "ac": 12,
+      "alignment": "N",
+      "type": "Medium outsider (earth , elemental , extraplanar)"
+    },
+    {
+      "name": "Negative Energy Elemental, Elder (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/elemental-negative-energy-tohc/negative-energy-elemental-elder-tohc/",
+      "cr": "12",
+      "init": 14,
+      "hp": 152,
+      "ac": 27,
+      "alignment": "N",
+      "type": "Huge outsider (elemental , extraplanar)"
+    },
+    {
+      "name": "Protector (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/protector/",
+      "cr": "7",
+      "init": 2,
+      "hp": 55,
+      "ac": 18,
+      "alignment": "LN",
+      "type": "Medium outsider (extraplanar , lawful)"
+    },
+    {
+      "name": "Red Sun (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/red-sun-kp/",
+      "cr": "14",
+      "init": 5,
+      "hp": 161,
+      "ac": 28,
+      "alignment": "LN",
+      "type": "Medium outsider (native)"
+    },
+    {
+      "name": "Sabrewing (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/sabrewing/",
+      "cr": "6",
+      "init": 6,
+      "hp": 63,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Medium outsider (evil , extraplanar)"
+    },
+    {
+      "name": "Salamander, Flamebrother (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/salamander/salamander-flamebrother/",
+      "cr": "3",
+      "init": 2,
+      "hp": 25,
+      "ac": 20,
+      "alignment": "CE",
+      "type": "Small outsider (extraplanar , fire)"
+    },
+    {
+      "name": "Sandman (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/sandman-tohc/",
+      "cr": "3",
+      "init": 5,
+      "hp": 30,
+      "ac": 16,
+      "alignment": "N(E)Medium",
+      "type": "outsider (elemental , extraplanar , earth)"
+    },
+    {
+      "name": "Shadow Mastiff, Unseelie (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/shadow-mastiff/shadow-mastiff-unseelie/",
+      "cr": "6",
+      "init": 8,
+      "hp": 51,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Medium outsider (evil, extraplanar, feyblood)"
+    },
+    {
+      "name": "Soul Eater (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/soul-eater-tohc/",
+      "cr": "7",
+      "init": 6,
+      "hp": 75,
+      "ac": 25,
+      "alignment": "N",
+      "type": "Medium outsider (extraplanar)"
+    },
+    {
+      "name": "Time Flayer (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/time-flayer/",
+      "cr": "12",
+      "init": 6,
+      "hp": 110,
+      "ac": 28,
+      "alignment": "NE",
+      "type": "Medium outsider (extraplanar , time)"
+    },
+    {
+      "name": "Tojanida (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/tojanida-f-foes/",
+      "cr": "5",
+      "init": 1,
+      "hp": 52,
+      "ac": 22,
+      "alignment": "N",
+      "type": "Medium outsider (extraplanar , water)"
+    },
+    {
+      "name": "True Gorgon, Euryale (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/true-gorgon-euryale-tohc/",
+      "cr": "22",
+      "init": 7,
+      "hp": 270,
+      "ac": 41,
+      "alignment": "LE",
+      "type": "Large outsider (evil , extraplanar , lawful)"
+    },
+    {
+      "name": "True Gorgon, Sthenno (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/true-gorgon-sthenno-tohc/",
+      "cr": "20",
+      "init": 7,
+      "hp": 225,
+      "ac": 38,
+      "alignment": "LE",
+      "type": "Large outsider (evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Wang Liang (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/wang-liang-tohc/",
+      "cr": "3",
+      "init": 6,
+      "hp": 26,
+      "ac": 15,
+      "alignment": "LE",
+      "type": "Medium outsider (evil , extraplanar , lawful)"
+    },
+    {
+      "name": "Water Weird (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/water-weird-fgg/",
+      "cr": "4",
+      "init": 6,
+      "hp": 26,
+      "ac": 16,
+      "alignment": "CE",
+      "type": "Large outsider (elemental , water)"
+    },
+    {
+      "name": "Wind Walker (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/elemental/wind-walker-tohc/",
+      "cr": "5",
+      "init": 8,
+      "hp": 59,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Large outsider (air , elemental , extraplanar)"
+    },
+    {
+      "name": "Ascomoid (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/ascomoid-tohc/",
+      "cr": "5",
+      "init": 1,
+      "hp": 52,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Large plant (fungus)"
+    },
+    {
+      "name": "Basidirond (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/basidirond-tohc/",
+      "cr": "4",
+      "init": 1,
+      "hp": 37,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Medium plant (fungus)"
+    },
+    {
+      "name": "Dragonleaf Tree (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/dragonleaf-tree-od/",
+      "cr": "9",
+      "init": 4,
+      "hp": 133,
+      "ac": 21,
+      "alignment": "N",
+      "type": "Large plant"
+    },
+    {
+      "name": "Flytrap, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/flytrap-giant-jbe/",
+      "cr": "2",
+      "init": 4,
+      "hp": 19,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Large plant"
+    },
+    {
+      "name": "Fungiant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fungiant/",
+      "cr": "13",
+      "init": 0,
+      "hp": 241,
+      "ac": 20,
+      "alignment": "N",
+      "type": "Gargantuan plant"
+    },
+    {
+      "name": "Fungoid (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fungoid/",
+      "cr": "3",
+      "init": 5,
+      "hp": 37,
+      "ac": 18,
+      "alignment": "NE",
+      "type": "Medium plant (fungus)"
+    },
+    {
+      "name": "Fungus Man (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fungus-man-fgg/",
+      "cr": "2",
+      "init": 2,
+      "hp": 16,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Small plant"
+    },
+    {
+      "name": "Fungus, Phantom (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/fungus-phantom-ff/",
+      "cr": "4",
+      "init": 4,
+      "hp": 30,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Medium plant"
+    },
+    {
+      "name": "Hangman Tree (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/hangman-tree-tohc/",
+      "cr": "7",
+      "init": 3,
+      "hp": 76,
+      "ac": 20,
+      "alignment": "N(E)Huge",
+      "type": "plant"
+    },
+    {
+      "name": "Jack-o’-Lantern (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/jack-o-lantern-tohc/",
+      "cr": "3",
+      "init": 3,
+      "hp": 33,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Medium plant"
+    },
+    {
+      "name": "Malboro (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/malboro/",
+      "cr": "13",
+      "init": 4,
+      "hp": 189,
+      "ac": 26,
+      "alignment": "CE",
+      "type": "Huge plant"
+    },
+    {
+      "name": "Mandragora (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/mandragora-tohc/",
+      "cr": "1",
+      "init": 1,
+      "hp": 5,
+      "ac": 16,
+      "alignment": "NE",
+      "type": "Small plant (fungus)"
+    },
+    {
+      "name": "Phycomid (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/phycomid-tohc/",
+      "cr": "4",
+      "init": 0,
+      "hp": 25,
+      "ac": 15,
+      "alignment": "N(E)Small",
+      "type": "plant (fungus)"
+    },
+    {
+      "name": "Quickwood (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/quickwood-tohc/",
+      "cr": "8",
+      "init": 3,
+      "hp": 104,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Huge plant"
+    },
+    {
+      "name": "Scythe Tree (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/scythe-tree-tohc/",
+      "cr": "6",
+      "init": -1,
+      "hp": 67,
+      "ac": 19,
+      "alignment": "CE",
+      "type": "Huge plant"
+    },
+    {
+      "name": "Shrieker (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/shrieker/",
+      "cr": "1",
+      "init": 0,
+      "hp": 11,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small plant"
+    },
+    {
+      "name": "Shrieker, Singing (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/shrieker/shrieker-singing/",
+      "cr": "5",
+      "init": 0,
+      "hp": 11,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Small plant"
+    },
+    {
+      "name": "Thorny (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/thorny-fgg/",
+      "cr": "3",
+      "init": 2,
+      "hp": 26,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Medium plant"
+    },
+    {
+      "name": "Treant, Advanced Lightning [3pp]",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/treant/lightning-treant-advanced/",
+      "cr": "11",
+      "init": 5,
+      "hp": 162,
+      "ac": 24,
+      "alignment": "NE",
+      "type": "Huge plant"
+    },
+    {
+      "name": "Treant, Lightning [3pp]",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/treant/treant-lightning-tohc/",
+      "cr": "8",
+      "init": 3,
+      "hp": 138,
+      "ac": 22,
+      "alignment": "NE",
+      "type": "Huge plant"
+    },
+    {
+      "name": "Yellow Musk Creeper (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/plants/yellow-musk-creeper-tohc/",
+      "cr": "2",
+      "init": 2,
+      "hp": 22,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Large plant"
+    },
+    {
+      "name": "Wishtouched (CR +1)[3pp]",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/templates/wishtouched-cr-1/",
+      "cr": "+1)[3pp] – d20PFSRD",
+      "init": 4,
+      "hp": 38,
+      "ac": 20,
+      "alignment": "LG",
+      "type": "Medium humanoid (human)"
+    },
+    {
+      "name": "Bhuta (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/bhuta-tohc/",
+      "cr": "6",
+      "init": 6,
+      "hp": 67,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Bloody Bones (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/bloody-bones-3pp/",
+      "cr": "4",
+      "init": 1,
+      "hp": 42,
+      "ac": 17,
+      "alignment": "CE",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Bogeyman (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/bogeyman/",
+      "cr": "6",
+      "init": 7,
+      "hp": 60,
+      "ac": 16,
+      "alignment": "CN",
+      "type": "Medium undead (incorporeal)"
+    },
+    {
+      "name": "Cadaver (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/cadaver/",
+      "cr": "2",
+      "init": 5,
+      "hp": 16,
+      "ac": 13,
+      "alignment": "CE",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Crypt Thing (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/crypt-thing-tohc/",
+      "cr": "5",
+      "init": 6,
+      "hp": 5,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Danse Macabre (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/danse-macabre-3pp/",
+      "cr": "1",
+      "init": 7,
+      "hp": 15,
+      "ac": 15,
+      "alignment": "NE",
+      "type": "Medium undead (evil , extraplanar)"
+    },
+    {
+      "name": "Darakhul Ogre (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/darakhul-ogre-kp/",
+      "cr": "5",
+      "init": 0,
+      "hp": 22,
+      "ac": 23,
+      "alignment": "LE",
+      "type": "Large undead (augmented giant)"
+    },
+    {
+      "name": "Demi-Lich (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/demi-lich-tohc/",
+      "cr": "14",
+      "init": 4,
+      "hp": 133,
+      "ac": 24,
+      "alignment": "NE",
+      "type": "Tiny undead"
+    },
+    {
+      "name": "Exoskeleton Giant Cockroach (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/exoskeleton/exoskeleton-giant-cockroach-3pp/",
+      "cr": "1/2",
+      "init": 1,
+      "hp": 12,
+      "ac": 13,
+      "alignment": "NE",
+      "type": "Small undead"
+    },
+    {
+      "name": "Ghoul Hound Companion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/festrog/ghoul-hound-companion/",
+      "cr": "1",
+      "init": 1,
+      "hp": 13,
+      "ac": 15,
+      "alignment": "NE",
+      "type": "Small undead"
+    },
+    {
+      "name": "Ghoul Hound Hero (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/festrog/ghoul-hound-hero/",
+      "cr": "6",
+      "init": 2,
+      "hp": 49,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Ghoul, Wolf (Dire) (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/ghoul/ghoul-wolf-dire-tohc/",
+      "cr": "6",
+      "init": 6,
+      "hp": 90,
+      "ac": 19,
+      "alignment": "NE",
+      "type": "Large undead"
+    },
+    {
+      "name": "Huecuva (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/huecuva-tohc/",
+      "cr": "2",
+      "init": 6,
+      "hp": 16,
+      "ac": 17,
+      "alignment": "CE",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Icegaunt (3PP)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/icegaunt/",
+      "cr": "6",
+      "init": 6,
+      "hp": 75,
+      "ac": 21,
+      "alignment": "NE",
+      "type": "Medium undead (cold)"
+    },
+    {
+      "name": "Meat Puppet, Human (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/meat-puppet-human-fgg/",
+      "cr": "4",
+      "init": 6,
+      "hp": 21,
+      "ac": 13,
+      "alignment": "NE",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Meat Puppet, Otyugh (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/meat-puppet-otyugh-fgg/",
+      "cr": "8",
+      "init": 5,
+      "hp": 90,
+      "ac": 10,
+      "alignment": "NE",
+      "type": "Large undead"
+    },
+    {
+      "name": "Mordnaissant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mordnaissant-fgg/",
+      "cr": "7",
+      "init": 6,
+      "hp": 94,
+      "ac": 20,
+      "alignment": "NE",
+      "type": "Tiny undead"
+    },
+    {
+      "name": "Mummy, Bog (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/mummy/bog-mummy-tohc/",
+      "cr": "6",
+      "init": 4,
+      "hp": 60,
+      "ac": 18,
+      "alignment": "CE",
+      "type": "Medium undead"
+    },
+    {
+      "name": "Poltergeist (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/poltergeist-tohc/",
+      "cr": "2",
+      "init": 1,
+      "hp": 19,
+      "ac": 13,
+      "alignment": "LE",
+      "type": "Medium undead (incorporeal)"
+    },
+    {
+      "name": "Revenant, Hellion (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/revenant-hellion/",
+      "cr": "2",
+      "init": 7,
+      "hp": 18,
+      "ac": 13,
+      "alignment": "CE",
+      "type": "Medium undead (incorporeal)"
+    },
+    {
+      "name": "Shadow, Rat (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/shadow/shadow-rat/",
+      "cr": "1/2",
+      "init": 2,
+      "hp": 5,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Tiny undead"
+    },
+    {
+      "name": "Shadow, Rat (Swarm) (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/shadow/shadow-rat/swarm-shadow-rat/",
+      "cr": "4",
+      "init": 6,
+      "hp": 39,
+      "ac": 15,
+      "alignment": "NE",
+      "type": "Tiny undead (swarm)"
+    },
+    {
+      "name": "Swarm, Raven, Undead (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/undead/swarm-raven-undead-tohc/",
+      "cr": "9",
+      "init": 6,
+      "hp": 105,
+      "ac": 16,
+      "alignment": "NE",
+      "type": "Tiny undead (swarm)"
+    },
+    {
+      "name": "Anghenfil (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/anghenfil/",
+      "cr": "6",
+      "init": 2,
+      "hp": 76,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Gargantuan vermin"
+    },
+    {
+      "name": "Ant Lion, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/ant-lion-giant-tohc/",
+      "cr": "6",
+      "init": 0,
+      "hp": 67,
+      "ac": 19,
+      "alignment": "N",
+      "type": "Large vermin"
+    },
+    {
+      "name": "Assassin Bug, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/assassin-bug-giant-3pp/",
+      "cr": "5",
+      "init": 3,
+      "hp": 67,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Medium vermin"
+    },
+    {
+      "name": "Beetle, Chag (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/beetle-chag/",
+      "cr": "4",
+      "init": 0,
+      "hp": 45,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Large vermin"
+    },
+    {
+      "name": "Beetle, Giant Slicer (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/beetle/beetle-giant-slicer-tohc/",
+      "cr": "4",
+      "init": 0,
+      "hp": 37,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Large vermin"
+    },
+    {
+      "name": "Beetle, Wrath (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/beetle-wrath/",
+      "cr": "8",
+      "init": 3,
+      "hp": 126,
+      "ac": 23,
+      "alignment": "N",
+      "type": "Huge vermin"
+    },
+    {
+      "name": "Cave Fisher (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/cave-fisher-tohc/",
+      "cr": "2",
+      "init": 1,
+      "hp": 22,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Medium vermin"
+    },
+    {
+      "name": "Dragonfly, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/dragonfly-giant-tohc/",
+      "cr": "4 XP 1,200",
+      "init": 5,
+      "hp": 45,
+      "ac": 18,
+      "alignment": "N",
+      "type": "Medium vermin"
+    },
+    {
+      "name": "Fly, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/fly-giant-tohc/",
+      "cr": "1",
+      "init": 2,
+      "hp": 16,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Medium vermin"
+    },
+    {
+      "name": "Leech, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/leech/leech-giant-tohc/",
+      "cr": "2",
+      "init": 1,
+      "hp": 19,
+      "ac": 11,
+      "alignment": "N",
+      "type": "Medium vermin (aquatic)"
+    },
+    {
+      "name": "Mosquito, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/mosquito-giant-tohc/",
+      "cr": "1/2",
+      "init": 2,
+      "hp": 4,
+      "ac": 15,
+      "alignment": "N",
+      "type": "Small vermin"
+    },
+    {
+      "name": "Slug, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/slug-giant-tohc/",
+      "cr": "8",
+      "init": 0,
+      "hp": 102,
+      "ac": 16,
+      "alignment": "N",
+      "type": "Huge vermin"
+    },
+    {
+      "name": "Tick, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/tick-giant-tohc/",
+      "cr": "1",
+      "init": 0,
+      "hp": 9,
+      "ac": 17,
+      "alignment": "N",
+      "type": "Small vermin"
+    },
+    {
+      "name": "Yellowjacket, Giant (3pp)",
+      "url": "https://www.d20pfsrd.com/bestiary/monster-listings/vermin/bees-and-wasps/yellowjacket-giant-tohc/",
+      "cr": "4",
+      "init": 1,
+      "hp": 39,
+      "ac": 14,
+      "alignment": "N",
+      "type": "Large vermin"
+    }
+  ]
+}

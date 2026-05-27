@@ -9,6 +9,7 @@ struct CampaignPersistenceState {
     let encounterState: EncounterState
     let claimTimeoutMinutes: Int
     let isInviteOnly: Bool
+    let userdataFiles: [String]
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
@@ -199,6 +200,9 @@ final class CampaignRow: Model, @unchecked Sendable {
     @Field(key: "is_invite_only")
     var isInviteOnly: Bool
 
+    @OptionalField(key: "userdata_files_json")
+    var userdataFilesJSON: String?
+
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -213,7 +217,8 @@ final class CampaignRow: Model, @unchecked Sendable {
         rulesetId: String,
         isArchived: Bool = false,
         claimTimeoutMinutes: Int? = nil,
-        isInviteOnly: Bool = false
+        isInviteOnly: Bool = false,
+        userdataFilesJSON: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -221,6 +226,7 @@ final class CampaignRow: Model, @unchecked Sendable {
         self.isArchived = isArchived
         self.claimTimeoutMinutes = claimTimeoutMinutes
         self.isInviteOnly = isInviteOnly
+        self.userdataFilesJSON = userdataFilesJSON
     }
 }
 
@@ -589,6 +595,48 @@ enum DatabasePersistence {
         }
         let data = try JSONEncoder().encode(unique)
         return String(decoding: data, as: UTF8.self)
+    }
+
+    private static func decodeUserDataFiles(_ json: String?) -> [String] {
+        guard let json,
+              let data = json.data(using: .utf8),
+              let files = try? JSONDecoder().decode([String].self, from: data) else {
+            return []
+        }
+        return normalizeUserDataFiles(files)
+    }
+
+    private static func encodeUserDataFiles(_ files: [String]) throws -> String? {
+        let normalized = normalizeUserDataFiles(files)
+        guard !normalized.isEmpty else { return nil }
+        let data = try JSONEncoder().encode(normalized)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private static func normalizeUserDataFiles(_ files: [String]) -> [String] {
+        let normalized = files
+            .compactMap { file -> String? in
+                let trimmed = file.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return nil }
+                return URL(fileURLWithPath: trimmed).lastPathComponent
+            }
+        return Array(Set(normalized)).sorted { lhs, rhs in
+            lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+        }
+    }
+
+    static func updateCampaignUserDataFiles(
+        campaignID: UUID,
+        files: [String],
+        on database: any Database
+    ) async throws {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        campaign.userdataFilesJSON = try encodeUserDataFiles(files)
+        try await campaign.save(on: database)
     }
 
     static func loadUser(
@@ -1190,6 +1238,7 @@ enum DatabasePersistence {
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
+        let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
         let roundIndex = encounter?.roundIndex ?? 1
         let turnIndex = encounter?.turnIndex ?? 0
         let currentTurnID = encounter?.currentCharacterID
@@ -1200,6 +1249,7 @@ enum DatabasePersistence {
             encounterState: encounterState,
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
+            userdataFiles: userdataFiles,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -1223,6 +1273,7 @@ enum DatabasePersistence {
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
+        let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
         let roundIndex = encounter?.roundIndex ?? 1
         let turnIndex = encounter?.turnIndex ?? 0
         let currentTurnID = encounter?.currentCharacterID
@@ -1233,6 +1284,7 @@ enum DatabasePersistence {
             encounterState: encounterState,
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
+            userdataFiles: userdataFiles,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -1249,6 +1301,7 @@ enum DatabasePersistence {
             let encounter = encountersByCampaign[campaignID]?.first
             let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
             let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
+            let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
             let roundIndex = encounter?.roundIndex ?? 1
             let turnIndex = encounter?.turnIndex ?? 0
             let currentTurnID = encounter?.currentCharacterID
@@ -1259,6 +1312,7 @@ enum DatabasePersistence {
                 encounterState: encounterState,
                 claimTimeoutMinutes: claimTimeoutMinutes,
                 isInviteOnly: campaign.isInviteOnly,
+                userdataFiles: userdataFiles,
                 roundIndex: roundIndex,
                 turnIndex: turnIndex,
                 currentTurnID: currentTurnID
@@ -1298,7 +1352,8 @@ enum DatabasePersistence {
             rulesetId: rulesetId,
             isArchived: isArchived,
             claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes),
-            isInviteOnly: isInviteOnly
+            isInviteOnly: isInviteOnly,
+            userdataFilesJSON: nil
         )
         try await campaign.create(on: database)
         guard let id = campaign.id else {

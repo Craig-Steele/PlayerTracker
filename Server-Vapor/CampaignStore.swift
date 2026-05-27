@@ -9,6 +9,7 @@ actor CampaignStore {
     private var currentEncounterState: EncounterState
     private var currentClaimTimeoutMinutes: Int
     private var currentIsInviteOnly: Bool
+    private var currentUserdataFiles: [String]
     private var currentCampaignID: UUID?
     private var database: (any Database)?
     private let restorePersistedState: Bool
@@ -28,6 +29,7 @@ actor CampaignStore {
         self.currentEncounterState = .new
         self.currentClaimTimeoutMinutes = 5
         self.currentIsInviteOnly = false
+        self.currentUserdataFiles = []
         self.currentCampaignID = nil
     }
 
@@ -41,6 +43,7 @@ actor CampaignStore {
             currentEncounterState = loaded.encounterState
             currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
             currentIsInviteOnly = loaded.isInviteOnly
+            currentUserdataFiles = loaded.userdataFiles
             currentCampaignID = nil
         }
     }
@@ -56,7 +59,8 @@ actor CampaignStore {
             rulesetLabel: currentLibrary.label,
             encounterState: currentEncounterState,
             claimTimeoutMinutes: currentClaimTimeoutMinutes,
-            isInviteOnly: currentIsInviteOnly
+            isInviteOnly: currentIsInviteOnly,
+            userdataFiles: currentUserdataFiles
         )
     }
 
@@ -155,6 +159,7 @@ actor CampaignStore {
             currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
             currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
             currentIsInviteOnly = updated.isInviteOnly
+            currentUserdataFiles = updated.userdataFiles
         }
         return CampaignSummary(
             id: updated.id,
@@ -188,6 +193,7 @@ actor CampaignStore {
         currentEncounterState = loaded.encounterState
         currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
         currentIsInviteOnly = loaded.isInviteOnly
+        currentUserdataFiles = loaded.userdataFiles
         return state()!
     }
 
@@ -228,6 +234,7 @@ actor CampaignStore {
         currentEncounterState = .new
         currentClaimTimeoutMinutes = max(-1, claimTimeoutMinutes ?? 5)
         currentIsInviteOnly = isInviteOnly ?? false
+        currentUserdataFiles = []
         await savePersistedStateIfNeeded()
         return state()!
     }
@@ -242,8 +249,43 @@ actor CampaignStore {
                 isInviteOnly: currentIsInviteOnly,
                 on: database
             )
+            if let currentCampaignID {
+                try await DatabasePersistence.updateCampaignUserDataFiles(
+                    campaignID: currentCampaignID,
+                    files: currentUserdataFiles,
+                    on: database
+                )
+            }
         } catch {
             print("Failed to persist campaign metadata:", error)
+        }
+    }
+
+    func updateUserdataFiles(_ files: [String]) async throws -> CampaignState {
+        guard let database, let currentCampaignID else {
+            throw Abort(.internalServerError, reason: "Database is not configured.")
+        }
+        currentUserdataFiles = normalizeUserdataFiles(files)
+        try await DatabasePersistence.updateCampaignUserDataFiles(
+            campaignID: currentCampaignID,
+            files: currentUserdataFiles,
+            on: database
+        )
+        return state()!
+    }
+
+    func availableUserdataFiles() -> [String] {
+        currentUserdataFiles
+    }
+
+    private func normalizeUserdataFiles(_ files: [String]) -> [String] {
+        let normalized = files.compactMap { file -> String? in
+            let trimmed = file.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty else { return nil }
+            return URL(fileURLWithPath: trimmed).lastPathComponent
+        }
+        return Array(Set(normalized)).sorted { lhs, rhs in
+            lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
         }
     }
 }

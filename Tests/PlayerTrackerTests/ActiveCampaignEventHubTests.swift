@@ -12,7 +12,8 @@ final class ActiveCampaignEventHubTests: XCTestCase {
             rulesetLabel: "Traveller (SRD)",
             encounterState: .active,
             claimTimeoutMinutes: 5,
-            isInviteOnly: false
+            isInviteOnly: false,
+            userdataFiles: []
         )
         let stream = await hub.subscribe()
         var iterator = stream.makeAsyncIterator()

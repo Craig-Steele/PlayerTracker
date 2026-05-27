@@ -947,27 +947,28 @@ Goal: add referee workflow tools once the core web migration is in place, and le
 Current status:
 
 - slice 1 is complete: read-only creature library lookup is wired into the referee add flow
-- the library is ruleset-driven through the ruleset manifest, with Pathfinder seeded from `Client-Web/rulesets/pathfinder-bestiary.json`
+- the library is ruleset-driven through the ruleset manifest, with Pathfinder seeded from the `Client-Web/rulesets/pathfinder-bestiary/` source set
 - referee-specific stat-block variants are now wired through the ruleset manifest and referee add flow
 - the creature reference action now lives on the added creature card overflow menu
-- remaining M7A work is now focused on reusable templates and ruleset-provided imports
+- Pathfinder creature import is already covered
+- Traveller has no SRD creature list to import
+- D&D5 creature import from the creature database is now wired through the ruleset manifest
+- remaining M7A work is now focused on other referee workflow tools
 
 Work:
 
-- add reusable encounter templates, ruleset-scoped where that makes sense
-- add creature libraries for referee workflows, including ruleset-provided imports where available
-- import creature templates from each ruleset's system reference documents where available
 - leave room for future referee-only tools without forcing them into the core auth/membership milestones
 
 Acceptance:
 
 - designated referees can browse and use creature libraries in campaign workflows
-- ruleset-provided creature templates can be imported into campaign workflows
+- D&D5 creature data can be imported into campaign workflows
 - referee-created enemy characters can use the stat structure required by the active ruleset
 - additional referee-only workflows can be added here later without reopening M5/M6
 
 Future possibilities:
 
+- reusable encounter templates
 - encounter cloning for referee workflows
 - manual encounter snapshots and restore operations if a future workflow needs them
 
@@ -1196,7 +1197,7 @@ The launch ruleset decision is already made:
 - ruleset updates create new versions rather than mutating old ones in place
 - new versions must preserve structural compatibility, with stable dice/stats and changeable condition lists
 
-The launch encounter-template decision is already made:
+The later encounter-template decision is already made:
 
 - encounter templates are ruleset-scoped
 - any campaign using the same ruleset can use those templates

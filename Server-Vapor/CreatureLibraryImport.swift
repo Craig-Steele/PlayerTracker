@@ -30,9 +30,10 @@ enum CreatureLibraryImportService {
                 continue
             }
 
-            guard let normalized = normalizeCreatureRecord(
-                from: rawDict,
+            guard let normalized = normalizeImportedCreaturePayload(
+                rawDict,
                 baseCreatures: baseCreatures,
+                rulesetId: rulesetId,
                 initiativeRule: ruleset.initiative,
                 statAliases: ruleset.statAliases
             ) else {
@@ -76,8 +77,33 @@ enum CreatureLibraryImportService {
 
         let directory = AppPaths.webClientDirectory().appendingPathComponent("rulesets", isDirectory: true)
         let url = directory.appendingPathComponent(reference, isDirectory: false)
-        guard FileManager.default.fileExists(atPath: url.path) else {
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else {
             return []
+        }
+
+        if isDirectory.boolValue {
+            let files = (try? FileManager.default.contentsOfDirectory(
+                at: url,
+                includingPropertiesForKeys: nil
+            )) ?? []
+
+            return try files
+                .filter { $0.pathExtension.lowercased() == "json" }
+                .sorted { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }
+                .flatMap { fileURL -> [CreatureLibraryCreature] in
+                    let data = try Data(contentsOf: fileURL)
+                    let file = try JSONDecoder().decode(BuiltinCreatureLibraryFile.self, from: data)
+                    return file.creatures.enumerated().map { index, record in
+                        normalizeBuiltinCreature(
+                            record,
+                            rulesetId: rulesetId,
+                            fallbackIDSeed: "\(file.id)-\(index)",
+                            initiativeRule: ruleset.initiative,
+                            statAliases: ruleset.statAliases
+                        )
+                    }
+                }
         }
 
         let data = try Data(contentsOf: url)
@@ -92,6 +118,60 @@ enum CreatureLibraryImportService {
             )
         }
     }
+}
+
+private func normalizeImportedCreaturePayload(
+    _ raw: [String: Any],
+    baseCreatures: [CreatureLibraryCreature],
+    rulesetId: String,
+    initiativeRule: InitiativeRule?,
+    statAliases: [String: String]?
+) -> [String: Any]? {
+    if let rawCreatures = raw["creatures"] as? [[String: Any]] {
+        var normalized = raw
+        normalized["rulesetId"] = rulesetId
+
+        let normalizedCreatures = rawCreatures.compactMap { creatureRaw -> [String: Any]? in
+            guard let record = normalizeCreatureRecord(
+                from: creatureRaw,
+                baseCreatures: baseCreatures,
+                initiativeRule: initiativeRule,
+                statAliases: statAliases
+            ) else {
+                return nil
+            }
+            return normalizeCreatureRecordForBuiltinBundle(record)
+        }
+
+        guard !normalizedCreatures.isEmpty else {
+            return nil
+        }
+
+        normalized["creatures"] = normalizedCreatures
+        return normalized
+    }
+
+    return normalizeCreatureRecord(
+        from: raw,
+        baseCreatures: baseCreatures,
+        initiativeRule: initiativeRule,
+        statAliases: statAliases
+    )
+}
+
+private func normalizeCreatureRecordForBuiltinBundle(_ raw: [String: Any]) -> [String: Any] {
+    var normalized = raw
+
+    if let initiativeBonus = intValue(normalized["initiativeBonus"]) {
+        normalized["init"] = initiativeBonus
+        normalized.removeValue(forKey: "initiativeBonus")
+    }
+    if let referenceUrl = stringValue(normalized["referenceUrl"]) {
+        normalized["url"] = referenceUrl
+        normalized.removeValue(forKey: "referenceUrl")
+    }
+
+    return normalized
 }
 
 private func normalizeCreatureRecord(
