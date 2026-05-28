@@ -11,3 +11,9 @@
 - Keep the creature-library feature split into a read-only lookup slice first, with local saving as a later slice.
 - Use `Server-Vapor/ServerPlatform.swift` as the source of truth for OS-specific app-data and log paths.
 - Keep startup behavior centralized in `Server-Vapor/ServerBootstrap.swift`.
+- When cleaning Pathfinder bestiary data, only normalize `cr` values that are clearly safe from the source text:
+  - strip obvious scrape noise like `MR`, `XP`, and literal fraction glyphs when the record is still unambiguous
+  - keep real fractional CRs as fractions, not decimals
+  - split true variant creatures into separate records with `baseCreatureName` instead of collapsing them into the base creature
+  - move third-party variants into `Tests/PlayerTrackerTests/Fixtures/pathfinder/third-party-products.json` rather than leaving them in the main bestiary
+- Verify Pathfinder creature-data sweeps with both the route tests and a full `swift test` run before landing the changes.
