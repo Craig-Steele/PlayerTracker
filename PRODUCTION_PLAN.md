@@ -942,9 +942,9 @@ Status: complete
 
 ### M7A: Referee Tools
 
-Goal: add referee workflow tools once the core web migration is in place, and leave room for future referee-only capabilities.
+Goal: add referee workflow tools once the core web migration is in place.
 
-Current status:
+Work completed:
 
 - slice 1 is complete: read-only creature library lookup is wired into the referee add flow
 - the library is ruleset-driven through the ruleset manifest, with Pathfinder seeded from the `Client-Web/rulesets/pathfinder-bestiary/` source set
@@ -953,11 +953,6 @@ Current status:
 - Pathfinder creature import is already covered
 - Traveller has no SRD creature list to import
 - D&D5 creature import from the creature database is now wired through the ruleset manifest
-- remaining M7A work is now focused on other referee workflow tools
-
-Work:
-
-- leave room for future referee-only tools without forcing them into the core auth/membership milestones
 
 Acceptance:
 
@@ -966,11 +961,7 @@ Acceptance:
 - referee-created enemy characters can use the stat structure required by the active ruleset
 - additional referee-only workflows can be added here later without reopening M5/M6
 
-Future possibilities:
-
-- reusable encounter templates
-- encounter cloning for referee workflows
-- manual encounter snapshots and restore operations if a future workflow needs them
+Status: complete
 
 ### M8: iOS Migration
 
