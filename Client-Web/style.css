@@ -585,21 +585,46 @@ body.referee-page .referee-panel {
 }
 
 .character-overflow-toggle {
-  width: auto;
-  min-width: 2.5rem;
-  padding: 0.35rem 0.6rem;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1rem;
+  min-height: 1rem;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.character-item .character-overflow-toggle {
+  min-width: 1rem;
+  padding: 0;
+}
+
+.character-overflow-toggle:hover,
+.character-overflow-toggle:focus-visible {
+  color: var(--text-primary);
+  outline: none;
 }
 
 .character-overflow-menu {
   position: absolute;
   top: calc(100% + 0.35rem);
-  right: 0;
+  left: 0;
+  right: auto;
   z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.45rem;
   min-width: 11rem;
+  max-width: min(18rem, calc(100vw - 1rem));
   border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: var(--bg-panel);
@@ -1380,7 +1405,7 @@ body.referee-page .referee-panel {
   border-radius: 4px;
   border: 1px solid transparent;
   background: var(--bg-panel);
-  cursor: pointer;
+  cursor: default;
   min-width: 0;
 }
 
@@ -1395,6 +1420,31 @@ body.referee-page .referee-panel {
 
 .character-item .character-name {
   font-weight: 600;
+}
+
+.character-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.character-name-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.character-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1 1 auto;
+  cursor: pointer;
 }
 
 .character-item .character-meta {
@@ -1436,6 +1486,10 @@ body.referee-page .referee-panel {
   border-radius: 12px;
   padding: 1rem;
   box-shadow: var(--shadow-modal);
+}
+
+.inventory-dialog {
+  width: min(58rem, 100%);
 }
 
 .conditions-dialog-header {
@@ -1489,6 +1543,96 @@ body.referee-page .referee-panel {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.inventory-summary {
+  margin: 0.75rem 0 0;
+  color: var(--text-body-soft);
+  font-size: 0.95rem;
+}
+
+.inventory-section {
+  margin-top: 0.85rem;
+}
+
+.inventory-container-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.85rem;
+}
+
+.inventory-table-wrap {
+  margin-top: 0.75rem;
+  max-height: 55vh;
+  overflow: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--bg-panel);
+}
+
+.inventory-table {
+  margin-top: 0;
+  table-layout: fixed;
+  min-width: 42rem;
+}
+
+.inventory-table th,
+.inventory-table td {
+  vertical-align: top;
+}
+
+.inventory-table th:nth-child(1),
+.inventory-table td:nth-child(1) {
+  width: 32%;
+}
+
+.inventory-table th:nth-child(2),
+.inventory-table td:nth-child(2) {
+  width: 10%;
+}
+
+.inventory-table th:nth-child(3),
+.inventory-table td:nth-child(3) {
+  width: 14%;
+}
+
+.inventory-table th:nth-child(4),
+.inventory-table td:nth-child(4) {
+  width: 14%;
+}
+
+.inventory-table th:nth-child(5),
+.inventory-table td:nth-child(5) {
+  width: 30%;
+}
+
+.inventory-entry {
+  background: var(--bg-panel);
+}
+
+.inventory-entry.selected {
+  background: var(--bg-selected);
+}
+
+.inventory-container-row {
+  font-weight: 600;
+}
+
+.inventory-entry:hover {
+  background: var(--bg-panel-subtle);
+}
+
+.inventory-entry.selected:hover {
+  background: var(--bg-selected-strong);
+}
+
+.inventory-entry input {
+  min-width: 0;
+}
+
+.inventory-entry input[type="url"] {
+  font-size: 0.95rem;
 }
 
 .condition-row {
@@ -1737,6 +1881,18 @@ body.referee-page .referee-panel {
     padding: 0.45rem 0.55rem;
   }
 
+  .player-row-overflow {
+    margin-left: 0;
+    margin-top: 0;
+  }
+
+  .player-row-overflow .character-overflow-toggle {
+    width: auto !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    justify-content: flex-start;
+  }
+
   .character-overflow-menu {
     min-width: 10rem;
   }
@@ -1836,6 +1992,11 @@ body.referee-page .referee-panel {
   .conditions-dialog {
     max-height: 88vh;
     padding: 0.85rem;
+  }
+
+  .inventory-table {
+    min-width: 34rem;
+    font-size: 0.95rem;
   }
 
   .conditions-library {
@@ -1971,6 +2132,31 @@ body.referee-page .referee-panel {
   font-weight: 700;
 }
 
+.player-row-name-wrap {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.player-row-overflow {
+  flex: 0 0 auto;
+}
+
+.player-row-overflow .character-overflow-toggle {
+  justify-content: flex-start;
+  min-width: 0;
+}
+
+.player-row-name-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 /* Make the first column narrow, second column wide */
 .player-list table {
   table-layout: auto;
@@ -2043,6 +2229,10 @@ body.referee-page .referee-panel {
   .player-list table {
     table-layout: fixed;
     width: 100%;
+  }
+
+  .player-row-name-wrap {
+    gap: 0.2rem;
   }
 
   .player-list table th:nth-child(2),

@@ -1,0 +1,20 @@
+{
+  "id": "traveller-equipment",
+  "label": "Traveller Equipment",
+  "source": "https://www.traveller-srd.com/core-rules/equipment/",
+  "generatedAt": "2026-06-01T00:00:00Z",
+  "items": [
+    { "id": "body-pistol", "name": "Body Pistol", "value": 250, "weight": 0.5 },
+    { "id": "vacc-suit", "name": "Vacc Suit", "value": 5000, "weight": 10 },
+    { "id": "armoured-vacc-suit", "name": "Armoured Vacc Suit", "value": 10000, "weight": 15 },
+    { "id": "hand-computer", "name": "Hand Computer", "value": 1000, "weight": 0.5 },
+    { "id": "medikit", "name": "Medikit", "value": 1000, "weight": 1 },
+    { "id": "translator", "name": "Translator", "value": 2500, "weight": 0.5 },
+    { "id": "toolkit", "name": "Toolkit", "value": 500, "weight": 2 },
+    { "id": "electromagnetic-probe", "name": "Electromagnetic Probe", "value": 1500, "weight": 0.5 },
+    { "id": "laser-rifle", "name": "Laser Rifle", "value": 9000, "weight": 4 },
+    { "id": "cloth-clothing", "name": "Cloth Clothing", "value": 20, "weight": 1 },
+    { "id": "backpack", "name": "Backpack", "value": 50, "weight": 1 },
+    { "id": "ration-pack", "name": "Ration Pack", "value": 10, "weight": 0.5 }
+  ]
+}

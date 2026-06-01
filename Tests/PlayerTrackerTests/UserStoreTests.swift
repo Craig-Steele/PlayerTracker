@@ -199,6 +199,44 @@ final class UserStoreTests: XCTestCase {
         XCTAssertEqual(view.currency.first(where: { $0.unitId == "sp" })?.amount, 7)
     }
 
+    func testCharacterInventoryIsIncludedInPlayerView() async throws {
+        let store = UserStore()
+        let campaignName = "Inventory"
+        let inventory = [
+            InventoryEntry(name: "Backpack", quantity: 1, value: 2, weight: 5, url: nil),
+            InventoryEntry(name: "Rations", quantity: 3, value: 0.5, weight: 1.5, url: "https://example.com/rations")
+        ]
+
+        let character = await store.upsertCharacter(
+            id: nil,
+            campaignName: campaignName,
+            ownerId: UUID(),
+            ownerName: "Player",
+            characterName: "Pack Mule",
+            initiative: nil,
+            stats: [],
+            currency: [],
+            inventory: inventory,
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        let state = await store.state(
+            campaignName: campaignName,
+            includeHidden: true,
+            encounterState: .new
+        )
+        let view = try XCTUnwrap(state.players.first { $0.id == character.id })
+        XCTAssertEqual(view.inventory.count, 2)
+        XCTAssertEqual(view.inventory.first(where: { $0.name == "Backpack" })?.quantity, 1)
+        XCTAssertEqual(view.inventory.first(where: { $0.name == "Rations" })?.url, "https://example.com/rations")
+    }
+
     func testStaleClaimExpiresAfterClaimTimeout() async throws {
         let store = UserStore()
         let campaignName = "Timeout"

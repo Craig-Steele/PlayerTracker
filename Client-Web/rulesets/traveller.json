@@ -43,6 +43,9 @@
   "creatureLibrary": {
     "file": "traveller-bestiary.json"
   },
+  "equipmentLibrary": {
+    "file": "traveller-equipment.json"
+  },
   "statBlocks": [
     {
       "id": "standard",

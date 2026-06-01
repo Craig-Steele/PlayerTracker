@@ -390,6 +390,9 @@ final class CharacterRow: Model, @unchecked Sendable {
     @OptionalField(key: "currency_json")
     var currencyJSON: String?
 
+    @OptionalField(key: "inventory_json")
+    var inventoryJSON: String?
+
     @OptionalField(key: "last_played_by_name")
     var lastPlayedByName: String?
 
@@ -443,6 +446,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         isClaimable: Bool = false,
         statBlockId: String? = nil,
         currencyJSON: String? = nil,
+        inventoryJSON: String? = nil,
         lastPlayedByName: String? = nil,
         claimedSessionID: UUID? = nil,
         claimedDisplayName: String? = nil,
@@ -464,6 +468,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.isClaimable = isClaimable
         self.statBlockId = statBlockId
         self.currencyJSON = currencyJSON
+        self.inventoryJSON = inventoryJSON
         self.lastPlayedByName = lastPlayedByName
         self.claimedSessionID = claimedSessionID
         self.claimedDisplayName = claimedDisplayName
@@ -627,6 +632,15 @@ enum DatabasePersistence {
         return amounts.filter { !$0.unitId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     }
 
+    private static func decodeInventoryEntries(_ json: String?) -> [InventoryEntry] {
+        guard let json,
+              let data = json.data(using: .utf8),
+              let entries = try? JSONDecoder().decode([InventoryEntry].self, from: data) else {
+            return []
+        }
+        return entries.filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
     private static func encodeCurrencyAmounts(_ amounts: [CurrencyAmount]) throws -> String? {
         var normalized: [CurrencyAmount] = []
         var seenUnitIDs = Set<String>()
@@ -636,6 +650,35 @@ enum DatabasePersistence {
                 continue
             }
             normalized.append(CurrencyAmount(unitId: unitId, amount: amount.amount))
+        }
+        guard !normalized.isEmpty else { return nil }
+        let data = try JSONEncoder().encode(normalized)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private static func encodeInventoryEntries(_ entries: [InventoryEntry]) throws -> String? {
+        var normalized: [InventoryEntry] = []
+        for entry in entries {
+            let name = entry.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { continue }
+            let quantity = max(1, entry.quantity)
+            normalized.append(
+                InventoryEntry(
+                    id: entry.id,
+                    name: name,
+                    quantity: quantity,
+                    value: entry.value,
+                    weight: entry.weight,
+                    url: {
+                        guard let raw = entry.url?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                            return nil
+                        }
+                        return raw.isEmpty ? nil : raw
+                    }(),
+                    containerId: entry.containerId,
+                    isContainer: entry.isContainer
+                )
+            )
         }
         guard !normalized.isEmpty else { return nil }
         let data = try JSONEncoder().encode(normalized)
@@ -1600,6 +1643,7 @@ enum DatabasePersistence {
                     initiative: row.initiative,
                     stats: characterStats,
                     currency: decodeCurrencyAmounts(row.currencyJSON),
+                    inventory: decodeInventoryEntries(row.inventoryJSON),
                     revealStats: row.revealStats,
                     autoSkipTurn: row.autoSkipTurn,
                     useAppInitiativeRoll: row.useAppInitiativeRoll,
@@ -1631,6 +1675,7 @@ enum DatabasePersistence {
                 row.isClaimable = state.isClaimable
                 row.statBlockId = state.statBlockId
                 row.currencyJSON = try encodeCurrencyAmounts(state.currency)
+                row.inventoryJSON = try encodeInventoryEntries(state.inventory)
                 row.lastPlayedByName = state.lastPlayedByName
                 row.claimedSessionID = state.claimedSessionId
                 row.claimedDisplayName = state.claimedDisplayName
@@ -1658,6 +1703,7 @@ enum DatabasePersistence {
                     isClaimable: state.isClaimable,
                     statBlockId: state.statBlockId,
                     currencyJSON: try encodeCurrencyAmounts(state.currency),
+                    inventoryJSON: try encodeInventoryEntries(state.inventory),
                     lastPlayedByName: state.lastPlayedByName,
                     claimedSessionID: state.claimedSessionId,
                     claimedDisplayName: state.claimedDisplayName,

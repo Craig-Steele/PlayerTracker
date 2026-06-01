@@ -94,6 +94,7 @@ const {
 };
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
+const LOCAL_TEMP_HP_VISIBILITY_PREFIX = 'characterTempHpVisibility:';
 
 const EMPTY_CONDITION_SET = {
   id: 'none',
@@ -106,7 +107,7 @@ const campaignHeaderNameTargets = [];
 const campaignHeaderIconTargets = [];
 const campaignHeaderLinkTargets = [];
   const campaignHeaderLicenseTargets = [];
-  const APP_JS_VERSION = '12';
+  const APP_JS_VERSION = '40';
   let statBlockDefinitions = [];
   let statBlockLookup = new Map();
 
@@ -304,6 +305,17 @@ window.addEventListener('DOMContentLoaded', () => {
   const currencyFields = document.getElementById('currency-fields');
   const currencySaveBtn = document.getElementById('currency-save');
   const currencyCancelBtn = document.getElementById('currency-cancel');
+  const inventoryPanel = document.getElementById('inventory-panel');
+  const inventoryFields = document.getElementById('inventory-fields');
+  const inventorySaveBtn = document.getElementById('inventory-save');
+  const inventoryCancelBtn = document.getElementById('inventory-cancel');
+  const inventoryAddBtn = document.getElementById('inventory-add');
+  const inventoryAddContainerBtn = document.getElementById('inventory-add-container');
+  const inventoryRemoveBtn = document.getElementById('inventory-remove');
+  const inventoryDialogTitle = document.getElementById('inventory-dialog-title');
+  const inventoryTotalWeight = document.getElementById('inventory-total-weight');
+  const inventoryItemOptions = document.getElementById('inventory-item-options');
+  const inventoryContainerSections = document.getElementById('inventory-container-sections');
   const conditionsSaveBtn = document.getElementById('conditions-save');
   const conditionsCancelBtn = document.getElementById('conditions-cancel');
   const detailsSaveBtn = document.getElementById('details-save');
@@ -311,6 +323,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerListSection = document.querySelector('.player-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
   const characterListActions = document.querySelector('.character-list-actions');
+  const inventoryCharacterBtn = document.getElementById('character-inventory');
   const moneyCharacterBtn = document.getElementById('character-money');
   const releaseCharacterBtn = document.getElementById('character-release');
   const characterOverflowToggle = document.getElementById('character-overflow-toggle');
@@ -336,6 +349,10 @@ window.addEventListener('DOMContentLoaded', () => {
   let statKeys = ['HP'];
   let statAliases = new Map();
   let currencySystem = null;
+  let equipmentLibraryReference = null;
+  let equipmentLibraryItems = [];
+  let equipmentLibraryLoaded = false;
+  let equipmentLibraryLoading = false;
   let playerNameRequired = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
@@ -349,6 +366,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let initiativeEditorCharacterId = null;
   let currencyEditorCharacterId = null;
   let currencyEditorDirty = false;
+  let inventoryEditorCharacterId = null;
+  let inventoryEditorDirty = false;
+  let inventorySelectedRow = null;
   let currentCampaignId = '';
   let claimableCharacters = [];
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
@@ -408,18 +428,50 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   }
 
   function setConditionsPanelOpen(open) {
-    if (!conditionsToggle || !conditionsPanel) return;
+    if (!conditionsPanel) return;
     conditionsPanelOpen = open;
-    if (open && detailsToggle && detailsPanel) {
-      detailsPanel.classList.remove('details-panel-open');
-      detailsPanel.classList.add('details-panel-collapsed');
-      detailsToggle.setAttribute('aria-expanded', 'false');
-      detailsPanel.setAttribute('aria-hidden', 'true');
+    if (open && detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
+      setDetailsPanelOpen(false);
     }
     conditionsPanel.classList.toggle('hidden', !open);
     conditionsPanel.classList.toggle('conditions-panel-open', open);
-    conditionsToggle.setAttribute('aria-expanded', open.toString());
     conditionsPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function setDetailsPanelOpen(open) {
+    if (!detailsPanel) return;
+    detailsPanel.classList.toggle('hidden', !open);
+    detailsPanel.classList.toggle('details-panel-open', open);
+    detailsPanel.classList.toggle('details-panel-collapsed', !open);
+    detailsPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function openDetailsEditorForCharacter(character) {
+    if (!character || !detailsPanel) return;
+    if (conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open')) {
+      if (!confirmDiscardConditionChanges()) return;
+      setConditionsPanelOpen(false);
+    }
+    if (selectedCharacterId && selectedCharacterId !== character.id && formDirty) {
+      if (!confirmDiscardDetailsChanges()) return;
+    }
+    closeCharacterOverflowMenu();
+    selectCharacter(character.id);
+    setDetailsPanelOpen(true);
+  }
+
+  function openConditionsEditorForCharacter(character) {
+    if (!character || !conditionsPanel) return;
+    if (detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
+      if (!confirmDiscardDetailsChanges()) return;
+      setDetailsPanelOpen(false);
+    }
+    if (selectedCharacterId && selectedCharacterId !== character.id && conditionsDirty) {
+      if (!confirmDiscardConditionChanges()) return;
+    }
+    closeCharacterOverflowMenu();
+    selectCharacter(character.id);
+    setConditionsPanelOpen(true);
   }
 
   function revertSelectedConditions() {
@@ -475,43 +527,37 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
   function updateConditionsAvailability() {
     const hasCharacter = Boolean(selectedCharacterId);
-    if (detailsToggles) {
-      detailsToggles.classList.toggle('conditions-hidden', !hasCharacter);
-    }
     if (!hasCharacter) {
       conditionsPanelOpen = false;
-      if (detailsPanel && detailsToggle) {
-        detailsPanel.classList.remove('details-panel-open');
-        detailsPanel.classList.add('details-panel-collapsed');
-        detailsToggle.setAttribute('aria-expanded', 'false');
-        detailsPanel.setAttribute('aria-hidden', 'true');
-      }
-      if (conditionsPanel && conditionsToggle) {
-        conditionsPanel.classList.remove('conditions-panel-open');
-        conditionsPanel.classList.add('hidden');
-        conditionsToggle.setAttribute('aria-expanded', 'false');
-        conditionsPanel.setAttribute('aria-hidden', 'true');
-      }
+      setDetailsPanelOpen(false);
+      setConditionsPanelOpen(false);
       return;
     }
     setConditionsPanelOpen(conditionsPanelOpen);
   }
 
   function updateReleaseButtonState() {
-    if (!releaseCharacterBtn) return;
     const selected = selectedCharacterId
       ? myCharacters.find((character) => character.id === selectedCharacterId)
       : null;
+    const canEditInventory = Boolean(selected);
     const canEditMoney = Boolean(selected && currencySystem && currencySystem.units.length > 0);
+    if (inventoryCharacterBtn) {
+      inventoryCharacterBtn.classList.toggle('hidden', !canEditInventory);
+      inventoryCharacterBtn.disabled = !canEditInventory;
+      inventoryCharacterBtn.setAttribute('aria-disabled', (!canEditInventory).toString());
+    }
     if (moneyCharacterBtn) {
       moneyCharacterBtn.classList.toggle('hidden', !canEditMoney);
       moneyCharacterBtn.disabled = !canEditMoney;
       moneyCharacterBtn.setAttribute('aria-disabled', (!canEditMoney).toString());
     }
     const canRelease = Boolean(selected && selected.claimedSessionId === currentPlayerSessionId);
-    releaseCharacterBtn.classList.toggle('hidden', !canRelease);
-    releaseCharacterBtn.disabled = !canRelease;
-    releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
+    if (releaseCharacterBtn) {
+      releaseCharacterBtn.classList.toggle('hidden', !canRelease);
+      releaseCharacterBtn.disabled = !canRelease;
+      releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
+    }
     if (removeCharacterBtn) {
       const canRemove = Boolean(selected);
       removeCharacterBtn.disabled = !canRemove;
@@ -527,6 +573,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (!selected) {
       closeCharacterOverflowMenu();
       closeCurrencyEditor();
+      closeInventoryEditor();
     }
   }
 
@@ -582,6 +629,8 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   function openCurrencyEditor(character) {
     if (!character || !currencySystem || !currencyFields) return;
     closeCharacterOverflowMenu();
+    if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
+    closeInventoryEditor();
     currencyEditorCharacterId = character.id;
     currencyEditorDirty = false;
     if (currencyPanel) {
@@ -656,29 +705,607 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     closeCurrencyEditor();
   }
 
-  function closeCharacterOverflowMenu() {
-    if (!characterOverflowMenu || !characterOverflowToggle) return;
-    characterOverflowMenu.classList.add('hidden');
-    characterOverflowMenu.setAttribute('aria-hidden', 'true');
-    characterOverflowToggle.setAttribute('aria-expanded', 'false');
+  function setInventoryPanelOpen(open) {
+    if (!inventoryPanel) return;
+    inventoryPanel.classList.toggle('hidden', !open);
+    inventoryPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
-  function openCharacterOverflowMenu() {
-    if (!characterOverflowMenu || !characterOverflowToggle) return;
-    characterOverflowMenu.classList.remove('hidden');
-    characterOverflowMenu.setAttribute('aria-hidden', 'false');
-    characterOverflowToggle.setAttribute('aria-expanded', 'true');
+  function updateInventoryItemOptions() {
+    if (!inventoryItemOptions) return;
+    inventoryItemOptions.innerHTML = '';
+    equipmentLibraryItems.forEach((item) => {
+      const option = document.createElement('option');
+      option.value = item.name;
+      option.label = item.source ? `${item.name} - ${item.source}` : item.name;
+      inventoryItemOptions.appendChild(option);
+    });
   }
 
-  function toggleCharacterOverflowMenu() {
-    if (!characterOverflowMenu || !characterOverflowToggle) return;
-    const isOpen = !characterOverflowMenu.classList.contains('hidden');
-    if (isOpen) {
-      closeCharacterOverflowMenu();
-    } else {
-      openCharacterOverflowMenu();
+  async function loadEquipmentLibrary() {
+    if (equipmentLibraryLoading) {
+      return equipmentLibraryItems;
+    }
+    if (equipmentLibraryLoaded) {
+      return equipmentLibraryItems;
+    }
+    if (!equipmentLibraryReference?.file) {
+      equipmentLibraryLoaded = true;
+      equipmentLibraryItems = [];
+      updateInventoryItemOptions();
+      return equipmentLibraryItems;
+    }
+    equipmentLibraryLoading = true;
+    try {
+      const response = await fetch('/equipment-library?limit=500');
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      const json = await response.json();
+      equipmentLibraryItems = normalizeEquipmentItems(json?.items);
+      equipmentLibraryLoaded = true;
+      updateInventoryItemOptions();
+      return equipmentLibraryItems;
+    } catch (err) {
+      console.error('Failed to load equipment library:', err);
+      equipmentLibraryItems = [];
+      equipmentLibraryLoaded = true;
+      updateInventoryItemOptions();
+      return equipmentLibraryItems;
+    } finally {
+      equipmentLibraryLoading = false;
     }
   }
+
+  function setSelectedInventoryRow(row) {
+    inventorySelectedRow = row;
+    if (!inventoryFields) return;
+    getInventoryPanelRows().forEach((entryRow) => {
+      entryRow.classList.toggle('selected', entryRow === row);
+      entryRow.setAttribute('aria-selected', (entryRow === row).toString());
+    });
+    if (inventoryRemoveBtn) {
+      const canRemove = Boolean(inventorySelectedRow);
+      inventoryRemoveBtn.disabled = !canRemove;
+      inventoryRemoveBtn.setAttribute('aria-disabled', (!canRemove).toString());
+    }
+  }
+
+  function focusInventoryRow(row) {
+    if (!row) return;
+    window.requestAnimationFrame(() => {
+      const firstInput = row.querySelector('input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select?.();
+      }
+    });
+  }
+
+  function createInventoryEntryId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `inventory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function normalizeInventoryEntry(entry = {}, containerId = null, isContainer = false) {
+    const normalizedContainerId =
+      typeof entry.containerId === 'string' && entry.containerId.trim()
+        ? entry.containerId.trim()
+        : containerId;
+    return {
+      id: typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : createInventoryEntryId(),
+      name: typeof entry.name === 'string' ? entry.name : '',
+      quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
+      value: Number.isFinite(entry.value) ? entry.value : 0,
+      weight: Number.isFinite(entry.weight) ? entry.weight : 0,
+      url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      containerId: normalizedContainerId,
+      isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
+    };
+  }
+
+  function getInventoryPanelRows() {
+    return Array.from(document.querySelectorAll('#inventory-panel tr.inventory-entry'));
+  }
+
+  function getInventoryContainerSection(containerId) {
+    if (!inventoryContainerSections || !containerId) return null;
+    return inventoryContainerSections.querySelector(`section[data-container-id="${containerId}"]`);
+  }
+
+  function getInventoryContainerBody(containerId) {
+    const section = getInventoryContainerSection(containerId);
+    return section ? section.querySelector('tbody') : null;
+  }
+
+  function getInventoryRowData(row) {
+    if (!row) return null;
+    return {
+      id: typeof row.dataset.inventoryEntryId === 'string' ? row.dataset.inventoryEntryId : '',
+      containerId: typeof row.dataset.inventoryContainerId === 'string' && row.dataset.inventoryContainerId.trim()
+        ? row.dataset.inventoryContainerId.trim()
+        : null,
+      isContainer: row.dataset.inventoryIsContainer === 'true'
+    };
+  }
+
+  function applyInventoryPresetToRow(row, itemName) {
+    if (!row || !itemName) return;
+    const preset = equipmentLibraryItems.find(
+      (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
+    );
+    if (!preset) return;
+    const valueInput = row.querySelector('input[data-inventory-field="value"]');
+    const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+    if (valueInput && Number.isFinite(preset.value)) {
+      valueInput.value = String(preset.value);
+    }
+    if (weightInput && Number.isFinite(preset.weight)) {
+      weightInput.value = String(preset.weight);
+    }
+    const urlInput = row.querySelector('input[data-inventory-field="url"]');
+    if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
+      urlInput.value = preset.url.trim();
+    }
+  }
+
+  function updateInventoryTotalWeight() {
+    if (!inventoryTotalWeight) return;
+    const rows = Array.from(inventoryFields?.querySelectorAll('tr.inventory-entry') || []);
+    const totalWeight = rows.reduce((sum, row) => {
+      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
+      const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+      const quantity = Number(quantityInput?.value ?? '0');
+      const weight = Number(weightInput?.value ?? '0');
+      if (!Number.isFinite(quantity) || !Number.isFinite(weight)) {
+        return sum;
+      }
+      return sum + (quantity * weight);
+    }, 0);
+    const formattedTotal = Number.isInteger(totalWeight)
+      ? String(totalWeight)
+      : String(Math.round(totalWeight * 1000) / 1000);
+    inventoryTotalWeight.textContent = `Total weight carried: ${formattedTotal}`;
+  }
+
+  function createInventoryRow(entry = {}, options = {}) {
+    const normalized = normalizeInventoryEntry(entry, options.containerId ?? null, options.isContainer ?? false);
+    const row = document.createElement('tr');
+    row.className = 'inventory-entry';
+    row.dataset.inventoryEntryId = normalized.id;
+    row.dataset.inventoryContainerId = normalized.containerId || '';
+    row.dataset.inventoryIsContainer = normalized.isContainer ? 'true' : 'false';
+    if (normalized.isContainer) {
+      row.classList.add('inventory-container-row');
+    }
+    row.addEventListener('click', () => {
+      setSelectedInventoryRow(row);
+    });
+
+    const fields = [
+      {
+        key: 'name',
+        type: 'text',
+        value: normalized.name,
+        placeholder: 'Item name',
+        list: 'inventory-item-options'
+      },
+      {
+        key: 'quantity',
+        type: 'number',
+        value: String(normalized.quantity),
+        step: '1'
+      },
+      {
+        key: 'value',
+        type: 'number',
+        value: String(normalized.value),
+        step: 'any'
+      },
+      {
+        key: 'weight',
+        type: 'number',
+        value: String(normalized.weight),
+        step: 'any'
+      },
+      {
+        key: 'url',
+        type: 'url',
+        value: normalized.url || ''
+      }
+    ];
+
+    fields.forEach((field) => {
+      const cell = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = field.type;
+      input.value = field.value;
+      if (field.placeholder) {
+        input.placeholder = field.placeholder;
+      }
+      if (field.list) {
+        input.setAttribute('list', field.list);
+      }
+      if (field.step) {
+        input.step = field.step;
+      }
+      input.dataset.inventoryField = field.key;
+      input.addEventListener('input', () => {
+        inventoryEditorDirty = true;
+        if (field.key === 'name') {
+          applyInventoryPresetToRow(row, input.value);
+        }
+        updateInventoryTotalWeight();
+      });
+      input.addEventListener('change', () => {
+        if (field.key === 'name') {
+          applyInventoryPresetToRow(row, input.value);
+        }
+        updateInventoryTotalWeight();
+      });
+      input.addEventListener('focus', () => {
+        setSelectedInventoryRow(row);
+      });
+      cell.appendChild(input);
+      row.appendChild(cell);
+    });
+
+    return row;
+  }
+
+  function createInventorySectionTable(firstColumnLabel = 'Carried') {
+    const wrap = document.createElement('div');
+    wrap.className = 'inventory-table-wrap';
+    const table = document.createElement('table');
+    table.className = 'inventory-table';
+    const thead = document.createElement('thead');
+    const tr = document.createElement('tr');
+    [firstColumnLabel, 'Qty', 'Value', 'Weight (per)', 'Link'].forEach((label) => {
+      const th = document.createElement('th');
+      th.textContent = label;
+      tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+    table.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return { wrap, tbody };
+  }
+
+  function appendInventoryRow(entry = {}, options = {}) {
+    const normalized = normalizeInventoryEntry(entry, options.containerId ?? null, options.isContainer ?? false);
+    const targetBody =
+      options.targetBody ||
+      (options.containerId ? getInventoryContainerBody(options.containerId) : inventoryFields);
+    if (!targetBody) return null;
+    const row = createInventoryRow(normalized, options);
+    targetBody.appendChild(row);
+    inventoryEditorDirty = true;
+    setSelectedInventoryRow(row);
+    if (!normalized.isContainer && !normalized.containerId) {
+      updateInventoryTotalWeight();
+    }
+    return row;
+  }
+
+  function buildInventoryContainerSection(containerEntry, allEntries) {
+    if (!inventoryContainerSections) return null;
+    const section = document.createElement('section');
+    section.className = 'inventory-section inventory-container-section';
+    section.dataset.containerId = containerEntry.id;
+
+    const { wrap, tbody } = createInventorySectionTable(containerEntry.name || 'Container');
+
+    appendInventoryRow(containerEntry, { containerId: null, isContainer: true, targetBody: tbody });
+    allEntries
+      .filter((entry) => entry.containerId === containerEntry.id && !entry.isContainer)
+      .forEach((entry) => {
+        appendInventoryRow(entry, { containerId: containerEntry.id, targetBody: tbody });
+      });
+
+    const containerNameInput = tbody.querySelector('input[data-inventory-field="name"]');
+    const firstHeader = wrap.querySelector('th');
+    if (containerNameInput && firstHeader) {
+      containerNameInput.addEventListener('input', () => {
+        firstHeader.textContent = containerNameInput.value.trim() || 'Container';
+      });
+    }
+
+    section.appendChild(wrap);
+    inventoryContainerSections.appendChild(section);
+    return section;
+  }
+
+  function buildInventoryFields(character) {
+    if (!inventoryFields) return;
+    inventoryFields.innerHTML = '';
+    if (inventoryContainerSections) {
+      inventoryContainerSections.innerHTML = '';
+    }
+    const entries = Array.isArray(character?.inventory) ? character.inventory : [];
+    const normalizedEntries = entries.map((entry) => normalizeInventoryEntry(entry));
+    const rootEntries = normalizedEntries.filter((entry) => !entry.isContainer && !entry.containerId);
+    const containerEntries = normalizedEntries.filter((entry) => entry.isContainer && !entry.containerId);
+    if (rootEntries.length === 0) {
+      rootEntries.push(normalizeInventoryEntry({}, null, false));
+    }
+    rootEntries.forEach((entry) => {
+      appendInventoryRow(entry, { targetBody: inventoryFields });
+    });
+    containerEntries.forEach((entry) => {
+      buildInventoryContainerSection(entry, normalizedEntries);
+    });
+    setSelectedInventoryRow(inventoryFields.querySelector('tr'));
+    updateInventoryTotalWeight();
+  }
+
+  function appendInventoryContainerSection(entry = {}) {
+    try {
+      const normalized = normalizeInventoryEntry(
+        {
+          ...entry,
+          name: typeof entry.name === 'string' && entry.name.trim() ? entry.name : 'Container'
+        },
+        null,
+        true
+      );
+      const sectionsContainer =
+        inventoryContainerSections ||
+        inventoryFields?.parentElement ||
+        inventoryPanel?.querySelector('.inventory-dialog');
+      if (!sectionsContainer) {
+        console.warn('[inventory] container sections unavailable', {
+          hasInventoryContainerSections: Boolean(inventoryContainerSections),
+          hasInventoryFields: Boolean(inventoryFields),
+          hasInventoryPanel: Boolean(inventoryPanel)
+        });
+        return null;
+      }
+      console.info('[inventory] creating container section', normalized.id);
+      const section = document.createElement('section');
+      section.className = 'inventory-section inventory-container-section';
+      section.dataset.containerId = normalized.id;
+      const { wrap, tbody } = createInventorySectionTable(normalized.name || 'Container');
+      const containerRow = appendInventoryRow(normalized, {
+        targetBody: tbody,
+        isContainer: true,
+        containerId: null
+      });
+      section.appendChild(wrap);
+      const insertionPoint = inventoryContainerSections ? inventoryContainerSections.firstChild : null;
+      sectionsContainer.insertBefore(section, insertionPoint);
+      if (containerRow) {
+        const nameInput = containerRow.querySelector('input[data-inventory-field="name"]');
+        const firstHeader = wrap.querySelector('th');
+        if (nameInput) {
+          nameInput.addEventListener('input', () => {
+            if (firstHeader) {
+              firstHeader.textContent = nameInput.value.trim() || 'Container';
+            }
+          });
+        }
+      }
+      window.requestAnimationFrame(() => {
+        const dialog = inventoryPanel?.querySelector('.inventory-dialog');
+        if (dialog) {
+          const sectionTop = section.offsetTop - dialog.offsetTop;
+          dialog.scrollTop = Math.max(0, sectionTop - 12);
+        } else {
+          section.scrollIntoView({ block: 'start' });
+        }
+        if (containerRow) {
+          setSelectedInventoryRow(containerRow);
+          focusInventoryRow(containerRow);
+        }
+      });
+      if (statusDiv) {
+        statusDiv.textContent = `Added container: ${normalized.name || 'Container'}`;
+      }
+      return containerRow;
+    } catch (err) {
+      console.error('[inventory] failed to add container', err);
+      if (statusDiv) {
+        statusDiv.textContent = `Add container failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+      return null;
+    }
+  }
+
+  function getSelectedInventoryContainerId() {
+    if (!inventorySelectedRow) return null;
+    const section = inventorySelectedRow.closest('section.inventory-container-section');
+    return section ? section.dataset.containerId || null : null;
+  }
+
+  function addInventoryItemToSelectedSection() {
+    const containerId = getSelectedInventoryContainerId();
+    const row = appendInventoryRow({}, { containerId: containerId || null });
+    focusInventoryRow(row);
+  }
+
+  function removeSelectedInventoryEntry() {
+    if (!inventorySelectedRow) return;
+    const rowData = getInventoryRowData(inventorySelectedRow) || {};
+    const containerSection = inventorySelectedRow.closest('section.inventory-container-section');
+    if (rowData.isContainer && containerSection) {
+      const containerName =
+        (inventorySelectedRow.querySelector('input[data-inventory-field="name"]')?.value || 'Container').trim();
+      if (!confirm(`Remove ${containerName} and everything inside it?`)) {
+        return;
+      }
+      containerSection.remove();
+      inventorySelectedRow = null;
+      inventoryEditorDirty = true;
+      if (!inventoryFields.querySelector('tr.inventory-entry')) {
+        appendInventoryRow({}, { targetBody: inventoryFields });
+      }
+      setSelectedInventoryRow(inventoryFields.querySelector('tr.inventory-entry'));
+      updateInventoryTotalWeight();
+      return;
+    }
+    const parentRow = inventorySelectedRow.parentElement;
+    inventorySelectedRow.remove();
+    inventoryEditorDirty = true;
+    const remainingRows = getInventoryPanelRows();
+    if (remainingRows.length === 0) {
+      appendInventoryRow({}, { targetBody: inventoryFields });
+      setSelectedInventoryRow(inventoryFields.querySelector('tr.inventory-entry'));
+      updateInventoryTotalWeight();
+      return;
+    }
+    const fallbackRow = remainingRows.find((row) => row.parentElement === parentRow) || remainingRows[0];
+    setSelectedInventoryRow(fallbackRow);
+    focusInventoryRow(fallbackRow);
+    updateInventoryTotalWeight();
+  }
+
+  async function openInventoryEditor(character) {
+    if (!character || !inventoryFields) return;
+    closeCharacterOverflowMenu();
+    if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+    closeCurrencyEditor();
+    inventoryEditorCharacterId = character.id;
+    inventoryEditorDirty = false;
+    if (inventoryDialogTitle) {
+      inventoryDialogTitle.textContent = `Inventory - ${character.name || 'Character'}`;
+    }
+    await loadEquipmentLibrary();
+    buildInventoryFields(character);
+    inventoryEditorDirty = false;
+    setInventoryPanelOpen(true);
+    focusInventoryRow(inventoryFields.querySelector('tr'));
+  }
+
+  function closeInventoryEditor() {
+    inventoryEditorCharacterId = null;
+    inventoryEditorDirty = false;
+    inventorySelectedRow = null;
+    if (inventoryDialogTitle) {
+      inventoryDialogTitle.textContent = 'Inventory';
+    }
+    if (inventoryFields) {
+      inventoryFields.innerHTML = '';
+    }
+    if (inventoryContainerSections) {
+      inventoryContainerSections.innerHTML = '';
+    }
+    if (inventoryTotalWeight) {
+      inventoryTotalWeight.textContent = 'Total weight carried: 0';
+    }
+    if (inventoryRemoveBtn) {
+      inventoryRemoveBtn.disabled = true;
+      inventoryRemoveBtn.setAttribute('aria-disabled', 'true');
+    }
+    setInventoryPanelOpen(false);
+  }
+
+  function collectInventoryPayloadFromEditor() {
+    if (!inventoryFields) return null;
+    const payload = [];
+    const pushRow = (row) => {
+      const nameInput = row.querySelector('input[data-inventory-field="name"]');
+      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
+      const valueInput = row.querySelector('input[data-inventory-field="value"]');
+      const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+      const urlInput = row.querySelector('input[data-inventory-field="url"]');
+      const rowData = getInventoryRowData(row) || {};
+      const rawName = nameInput ? nameInput.value.trim() : '';
+      const rawQuantity = quantityInput ? quantityInput.value.trim() : '';
+      const rawValue = valueInput ? valueInput.value.trim() : '';
+      const rawWeight = weightInput ? weightInput.value.trim() : '';
+      const rawUrl = urlInput ? urlInput.value.trim() : '';
+      const isUntouchedDefaultRow =
+        !rawName &&
+        (rawQuantity === '' || rawQuantity === '1') &&
+        (rawValue === '' || rawValue === '0') &&
+        (rawWeight === '' || rawWeight === '0') &&
+        !rawUrl;
+      if (isUntouchedDefaultRow) {
+        return;
+      }
+      if (!rawName) {
+        throw new Error('Each inventory row needs an item name.');
+      }
+      const quantity = rawQuantity === '' ? 1 : Number(rawQuantity);
+      const value = rawValue === '' ? 0 : Number(rawValue);
+      const weight = rawWeight === '' ? 0 : Number(rawWeight);
+      if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
+        throw new Error(`Quantity for ${rawName} must be a whole number of at least 1.`);
+      }
+      if (!Number.isFinite(value)) {
+        throw new Error(`Value for ${rawName} must be a valid number.`);
+      }
+      if (!Number.isFinite(weight)) {
+        throw new Error(`Weight for ${rawName} must be a valid number.`);
+      }
+      payload.push({
+        id: rowData.id || createInventoryEntryId(),
+        name: rawName,
+        quantity,
+        value,
+        weight,
+        url: rawUrl || null,
+        containerId: rowData.containerId || null,
+        isContainer: Boolean(rowData.isContainer)
+      });
+    };
+
+    Array.from(inventoryFields.querySelectorAll('tr.inventory-entry')).forEach(pushRow);
+    if (inventoryContainerSections) {
+      inventoryContainerSections.querySelectorAll('section.inventory-container-section').forEach((section) => {
+        section.querySelectorAll('tr.inventory-entry').forEach(pushRow);
+      });
+    }
+    return payload.length > 0 ? payload : null;
+  }
+
+  async function saveInventoryFromEditor() {
+    if (!inventoryEditorCharacterId) return;
+    const character = myCharacters.find((entry) => entry.id === inventoryEditorCharacterId);
+    if (!character) {
+      closeInventoryEditor();
+      return;
+    }
+    let inventory;
+    try {
+      inventory = collectInventoryPayloadFromEditor();
+    } catch (err) {
+      statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      return;
+    }
+    character.inventory = inventory || [];
+    const savedCharacter = await saveCharacterEntry(character);
+    if (!savedCharacter) {
+      return;
+    }
+    inventoryEditorDirty = false;
+    closeInventoryEditor();
+  }
+
+  function closeCharacterOverflowMenu(exceptMenu = null) {
+    document.querySelectorAll('.character-overflow-menu').forEach((menu) => {
+      if (menu === exceptMenu) return;
+      menu.classList.add('hidden');
+      menu.setAttribute('aria-hidden', 'true');
+      const toggle = menu.parentElement?.querySelector('.character-overflow-toggle');
+      if (toggle) {
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  document.addEventListener('click', (event) => {
+    if (
+      event.target instanceof Element &&
+      (event.target.closest('.character-overflow') || event.target.closest('.character-name-block'))
+    ) {
+      return;
+    }
+    closeCharacterOverflowMenu();
+  });
 
   function updatePlayerEntryGate() {
     const ownerName = getOwnerName();
@@ -858,6 +1485,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       detailsPanel.classList.toggle('details-panel-collapsed', isOpen);
       detailsToggle.setAttribute('aria-expanded', (!isOpen).toString());
       detailsPanel.setAttribute('aria-hidden', isOpen.toString());
+      closeCharacterOverflowMenu();
     });
   }
 
@@ -877,6 +1505,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         detailsPanel.setAttribute('aria-hidden', 'true');
       }
       setConditionsPanelOpen(!isOpen);
+      closeCharacterOverflowMenu();
     });
   }
 
@@ -1096,6 +1725,35 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     return { commonCurrencyId, units };
   }
 
+  function normalizeEquipmentItem(entry) {
+    if (!entry || typeof entry !== 'object') {
+      return null;
+    }
+    const id = typeof entry.id === 'string' ? entry.id.trim() : '';
+    const name = typeof entry.name === 'string' ? entry.name.trim() : '';
+    if (!name) {
+      return null;
+    }
+    const value = entry.value == null || entry.value === '' ? 0 : Number(entry.value);
+    const weight = entry.weight == null || entry.weight === '' ? 0 : Number(entry.weight);
+    if (!Number.isFinite(value) || !Number.isFinite(weight)) {
+      return null;
+    }
+    return {
+      id: id || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      name,
+      value,
+      weight,
+      url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      source: typeof entry.source === 'string' && entry.source.trim() ? entry.source.trim() : null,
+      notes: typeof entry.notes === 'string' && entry.notes.trim() ? entry.notes.trim() : null
+    };
+  }
+
+  function normalizeEquipmentItems(items) {
+    return Array.isArray(items) ? items.map((item) => normalizeEquipmentItem(item)).filter(Boolean) : [];
+  }
+
   function normalizeStatToken(value) {
     if (typeof value !== 'string') {
       return '';
@@ -1184,6 +1842,64 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
           .filter((key) => typeof key === 'string' && key === 'TempHP' && !baseKeys.includes(key))
       : [];
     return baseKeys.concat(extras);
+  }
+
+  function tempHpVisibilityStorageKey(ownerName) {
+    const normalizedOwner = normalizePlayerName(ownerName);
+    const campaignKey = currentCampaignName ? currentCampaignName : 'default';
+    return `${LOCAL_TEMP_HP_VISIBILITY_PREFIX}${normalizedOwner}:${campaignKey}`;
+  }
+
+  function loadTempHpVisibility(ownerName) {
+    if (!ownerName) return {};
+    try {
+      const raw = localStorage.getItem(tempHpVisibilityStorageKey(ownerName));
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (err) {
+      console.warn('Failed to load Temp HP visibility state:', err);
+      return {};
+    }
+  }
+
+  function saveTempHpVisibility(ownerName, visibilityState) {
+    if (!ownerName) return;
+    try {
+      localStorage.setItem(tempHpVisibilityStorageKey(ownerName), JSON.stringify(visibilityState || {}));
+    } catch (err) {
+      console.warn('Failed to save Temp HP visibility state:', err);
+    }
+  }
+
+  function getTempHpCurrentValue(character) {
+    const tempStat = Array.isArray(character?.stats)
+      ? character.stats.find((stat) => stat?.key === 'TempHP')
+      : null;
+    return Number.isFinite(tempStat?.current) ? tempStat.current : 0;
+  }
+
+  function shouldShowTempHpForCharacter(character) {
+    if (!supportsTempHp || !character) return false;
+    if (getTempHpCurrentValue(character) !== 0) return true;
+    const ownerName = getOwnerName();
+    if (!ownerName || !character.id) return false;
+    const visibilityState = loadTempHpVisibility(ownerName);
+    return Boolean(visibilityState[character.id]);
+  }
+
+  function setTempHpVisibilityForCharacter(character, visible) {
+    if (!character?.id || !supportsTempHp) return;
+    const ownerName = getOwnerName();
+    if (!ownerName) return;
+    const visibilityState = loadTempHpVisibility(ownerName);
+    if (visible) {
+      visibilityState[character.id] = true;
+    } else {
+      delete visibilityState[character.id];
+    }
+    saveTempHpVisibility(ownerName, visibilityState);
+    renderCharacterList();
   }
 
   function draftKeyForOwner(ownerName) {
@@ -1391,6 +2107,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         initiative: character.initiative,
         stats: Array.isArray(character.stats) ? character.stats : [],
         currency: Array.isArray(character.currency) ? character.currency : null,
+        inventory: Array.isArray(character.inventory) ? character.inventory : null,
         revealStats: character.revealStats,
         autoSkipTurn: character.autoSkipTurn,
         useAppInitiativeRoll: character.useAppInitiativeRoll,
@@ -1462,6 +2179,16 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         throw new Error('Server returned ' + res.status);
       }
       myCharacters = myCharacters.filter((entry) => entry.id !== character.id);
+      if (character.id) {
+        const ownerName = getOwnerName();
+        if (ownerName) {
+          const visibilityState = loadTempHpVisibility(ownerName);
+          if (visibilityState[character.id]) {
+            delete visibilityState[character.id];
+            saveTempHpVisibility(ownerName, visibilityState);
+          }
+        }
+      }
       if (selectedCharacterId === character.id) {
         clearCharacterSelection();
       }
@@ -1511,6 +2238,16 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       ? conditionSet.statBlocks.map((entry) => normalizeStatBlockDefinition(entry)).filter(Boolean)
       : [];
     statBlockLookup = new Map(statBlockDefinitions.map((block) => [block.id, block]));
+    equipmentLibraryReference =
+      conditionSet && conditionSet.equipmentLibrary && typeof conditionSet.equipmentLibrary.file === 'string'
+        ? { file: conditionSet.equipmentLibrary.file.trim() }
+        : null;
+    equipmentLibraryLoaded = false;
+    equipmentLibraryItems = [];
+    updateInventoryItemOptions();
+    if (equipmentLibraryReference) {
+      void loadEquipmentLibrary();
+    }
     currencySystem = normalizeCurrencySystem(conditionSet?.currency);
     if (!currencySystem) {
       closeCurrencyEditor();
@@ -1681,12 +2418,127 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     return '';
   }
 
+  function buildCharacterOverflowControls(character, options = {}) {
+    const plainTrigger = Boolean(options.plainTrigger);
+    const overflow = document.createElement('div');
+    overflow.className = 'character-overflow';
+    const overflowToggle = plainTrigger ? document.createElement('span') : document.createElement('button');
+    if (!plainTrigger) {
+      overflowToggle.type = 'button';
+    } else {
+      overflowToggle.setAttribute('role', 'button');
+      overflowToggle.tabIndex = 0;
+    }
+    overflowToggle.className = 'character-overflow-toggle';
+    overflowToggle.setAttribute('aria-label', `Manage ${character.name || 'character'}`);
+    overflowToggle.setAttribute('aria-haspopup', 'menu');
+    overflowToggle.setAttribute('aria-expanded', 'false');
+    overflowToggle.textContent = plainTrigger ? `⋮ ${character.name || 'character'}` : '⋮';
+    const overflowMenu = document.createElement('div');
+    overflowMenu.className = 'character-overflow-menu hidden';
+    overflowMenu.setAttribute('role', 'menu');
+    overflowMenu.setAttribute('aria-hidden', 'true');
+
+    const openOverflowMenu = () => {
+      closeCharacterOverflowMenu(overflowMenu);
+      overflowMenu.classList.remove('hidden');
+      overflowMenu.setAttribute('aria-hidden', 'false');
+      overflowMenu.style.left = '0';
+      overflowMenu.style.right = 'auto';
+      overflowToggle.setAttribute('aria-expanded', 'true');
+      window.requestAnimationFrame(() => {
+        const menuRect = overflowMenu.getBoundingClientRect();
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+        const overflowRight = menuRect.right > viewportWidth - 8;
+        const overflowLeft = menuRect.left < 8;
+        if (overflowRight && !overflowLeft) {
+          overflowMenu.style.left = 'auto';
+          overflowMenu.style.right = '0';
+        }
+      });
+    };
+
+    const addMenuItem = (label, handler, options = {}) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className || 'secondary';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
+      if (options.hidden) {
+        button.classList.add('hidden');
+      }
+      button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeCharacterOverflowMenu();
+        await handler();
+      });
+      overflowMenu.appendChild(button);
+      return button;
+    };
+
+    addMenuItem('Details', () => openDetailsEditorForCharacter(character));
+    addMenuItem('Conditions', () => openConditionsEditorForCharacter(character));
+    addMenuItem('Change Initiative', () => editCharacterInitiative(character));
+    addMenuItem('Toggle Temp HP', () => {
+      setTempHpVisibilityForCharacter(character, !shouldShowTempHpForCharacter(character));
+    }, {
+      hidden: !supportsTempHp
+    });
+    addMenuItem('Inventory', async () => {
+      await openInventoryEditor(character);
+    });
+    addMenuItem('Money', () => openCurrencyEditor(character), {
+      hidden: !(currencySystem && currencySystem.units.length > 0)
+    });
+    addMenuItem('Release Character', async () => {
+      if (character.claimedSessionId !== currentPlayerSessionId) return;
+      await releaseClaimForCharacter(character);
+    }, {
+      hidden: character.claimedSessionId !== currentPlayerSessionId
+    });
+    addMenuItem('Remove Character', async () => {
+      const confirmed = confirm(`Remove ${character.name || 'this character'} from the tracker?`);
+      if (!confirmed) return;
+      await deleteMyCharacter(character);
+    }, {
+      className: 'secondary character-remove'
+    });
+
+    overflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeCharacterOverflowMenu();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    if (plainTrigger) {
+      overflowToggle.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        const isOpen = !overflowMenu.classList.contains('hidden');
+        if (isOpen) {
+          closeCharacterOverflowMenu();
+        } else {
+          openOverflowMenu();
+        }
+      });
+    }
+    overflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    overflow.appendChild(overflowToggle);
+    overflow.appendChild(overflowMenu);
+    return { overflow, openOverflowMenu };
+  }
+
   function renderCharacterList() {
     if (!characterList) return;
     characterList.innerHTML = '';
-    if (selectionToolbarAnchor) {
-      selectionToolbarAnchor.classList.add('hidden');
-    }
 
     if (myCharacters.length === 0) {
       const empty = document.createElement('div');
@@ -1703,9 +2555,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     myCharacters.forEach((character) => {
       const item = document.createElement('div');
       item.className = 'character-item';
-      if (character.id === selectedCharacterId) {
-        item.classList.add('active');
-      }
       if (character.id === currentTurnId) {
         item.classList.add('current-turn');
       }
@@ -1714,21 +2563,26 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       row.className = 'character-row';
 
       const nameWrap = document.createElement('div');
+      nameWrap.className = 'character-name-wrap';
+      const nameHeader = document.createElement('div');
+      nameHeader.className = 'character-name-row';
+      const nameBlock = document.createElement('div');
+      nameBlock.className = 'character-name-block';
       const name = document.createElement('div');
       name.className = 'character-name';
       name.textContent = character.name;
       const meta = document.createElement('div');
       meta.className = 'character-meta';
-      const initiativeButton = document.createElement('button');
-      initiativeButton.type = 'button';
-      initiativeButton.className = 'initiative-inline-button';
-      initiativeButton.textContent = `Init ${formatInitiative(character.initiative)}`;
-      initiativeButton.addEventListener('click', (event) => {
+      nameBlock.appendChild(name);
+      nameBlock.addEventListener('click', (event) => {
+        if (event.target instanceof Element && event.target.closest('button')) return;
         event.stopPropagation();
-        editCharacterInitiative(character);
+        openOverflowMenu();
       });
-      meta.appendChild(initiativeButton);
-      nameWrap.appendChild(name);
+      const { overflow, openOverflowMenu } = buildCharacterOverflowControls(character);
+      nameHeader.appendChild(overflow);
+      nameHeader.appendChild(nameBlock);
+      nameWrap.appendChild(nameHeader);
       nameWrap.appendChild(meta);
       row.appendChild(nameWrap);
 
@@ -1737,7 +2591,12 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       const stats = Array.isArray(character.stats) ? character.stats : [];
       const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
 
-      getCharacterStatKeys(character).forEach((key) => {
+      const displayStatKeys = getCharacterStatKeys(character).filter((key) => key !== 'TempHP');
+      if (supportsTempHp && shouldShowTempHpForCharacter(character)) {
+        displayStatKeys.push('TempHP');
+      }
+
+      displayStatKeys.forEach((key) => {
         const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
         const line = document.createElement('div');
         line.className = 'character-stat-line';
@@ -1819,15 +2678,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         }
         item.appendChild(initiativeActions);
       }
-
-      if (character.id === selectedCharacterId && selectionToolbarAnchor) {
-        selectionToolbarAnchor.classList.remove('hidden');
-        item.appendChild(selectionToolbarAnchor);
-      }
-
-      item.addEventListener('click', () => {
-        selectCharacter(character.id);
-      });
 
       characterList.appendChild(item);
     });
@@ -1952,6 +2802,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         initiative: match.initiative,
         stats: Array.isArray(match.stats) ? match.stats : character.stats,
         currency: Array.isArray(match.currency) ? match.currency : character.currency,
+        inventory: Array.isArray(match.inventory) ? match.inventory : character.inventory,
         statBlockId: match.statBlockId || character.statBlockId || inferCharacterStatBlockIdFromStats(match.stats || character.stats),
         revealStats: match.revealStats,
         autoSkipTurn: match.autoSkipTurn,
@@ -2055,6 +2906,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (currencyEditorCharacterId && currencyEditorCharacterId !== found.id) {
       closeCurrencyEditor();
     }
+    if (inventoryEditorCharacterId && inventoryEditorCharacterId !== found.id) {
+      closeInventoryEditor();
+    }
 
     selectedCharacterId = found.id;
     isCreatingCharacter = false;
@@ -2098,6 +2952,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     selectedCharacterId = null;
     closeCharacterOverflowMenu();
     closeCurrencyEditor();
+    closeInventoryEditor();
+    setDetailsPanelOpen(false);
+    setConditionsPanelOpen(false);
     nameInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.currentInput) entry.currentInput.value = '';
@@ -2111,7 +2968,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     applySelectedConditions([]);
     formDirty = false;
     renderCharacterList();
-    updateConditionsAvailability();
     if (conditionsCharacter) {
       conditionsCharacter.textContent = 'this character';
     }
@@ -2746,6 +3602,16 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
+  if (inventoryCharacterBtn) {
+    inventoryCharacterBtn.addEventListener('click', async () => {
+      const selected = selectedCharacterId
+        ? myCharacters.find((character) => character.id === selectedCharacterId)
+        : null;
+      if (!selected) return;
+      await openInventoryEditor(selected);
+    });
+  }
+
   if (characterOverflowToggle) {
     characterOverflowToggle.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -2778,6 +3644,54 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       if (event.target !== currencyPanel) return;
       if (currencyEditorDirty && !confirm('Discard money changes?')) return;
       closeCurrencyEditor();
+    });
+  }
+
+  if (inventoryAddBtn) {
+    inventoryAddBtn.addEventListener('click', () => {
+      addInventoryItemToSelectedSection();
+    });
+  }
+
+  if (inventoryAddContainerBtn) {
+    inventoryAddContainerBtn.addEventListener('click', () => {
+      console.info('[inventory] Add Container clicked');
+      const row = appendInventoryContainerSection();
+      if (row) {
+        focusInventoryRow(row);
+      } else {
+        console.warn('[inventory] Add Container did not create a row');
+        if (statusDiv) {
+          statusDiv.textContent = 'Add Container did not create a row';
+        }
+      }
+    });
+  }
+
+  if (inventoryRemoveBtn) {
+    inventoryRemoveBtn.addEventListener('click', () => {
+      removeSelectedInventoryEntry();
+    });
+  }
+
+  if (inventorySaveBtn) {
+    inventorySaveBtn.addEventListener('click', async () => {
+      await saveInventoryFromEditor();
+    });
+  }
+
+  if (inventoryCancelBtn) {
+    inventoryCancelBtn.addEventListener('click', () => {
+      if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
+      closeInventoryEditor();
+    });
+  }
+
+  if (inventoryPanel) {
+    inventoryPanel.addEventListener('click', (event) => {
+      if (event.target !== inventoryPanel) return;
+      if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
+      closeInventoryEditor();
     });
   }
 
@@ -3044,18 +3958,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
             if (p.isReferee) {
               initTd.classList.add('init-referee');
             }
-            nameTd.innerHTML = '';
-            const nameLine = document.createElement('div');
-            nameLine.textContent = p.name;
-            nameTd.appendChild(nameLine);
-            const controllerName = getCharacterControllerName(p);
-            if (controllerName) {
-              const ownerLine = document.createElement('div');
-              ownerLine.classList.add('player-owner');
-              ownerLine.textContent = `(${controllerName})`;
-              nameTd.appendChild(ownerLine);
-            }
-
             const isMine =
               !displayOnly &&
               Boolean(currentPlayerSessionId) &&
@@ -3064,6 +3966,28 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
             if (isMine) {
               initTd.classList.add('init-mine');
             }
+
+            const nameWrap = document.createElement('div');
+            nameWrap.className = 'player-row-name-wrap';
+            if (isMine) {
+              const { overflow } = buildCharacterOverflowControls(p, { plainTrigger: true });
+              nameWrap.appendChild(overflow);
+            } else {
+              const nameText = document.createElement('div');
+              nameText.className = 'player-row-name-text';
+              const nameLine = document.createElement('div');
+              nameLine.textContent = p.name;
+              nameText.appendChild(nameLine);
+              const controllerName = getCharacterControllerName(p);
+              if (controllerName) {
+                const ownerLine = document.createElement('div');
+                ownerLine.classList.add('player-owner');
+                ownerLine.textContent = `(${controllerName})`;
+                nameText.appendChild(ownerLine);
+              }
+              nameWrap.appendChild(nameText);
+            }
+            nameTd.appendChild(nameWrap);
 
             const stats = Array.isArray(p.stats) ? p.stats : [];
             const displayStatKeys = getCharacterStatKeys(p);
@@ -3229,6 +4153,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       initiative,
       stats,
       currency: Array.isArray(selectedCharacter?.currency) ? selectedCharacter.currency : null,
+      inventory: Array.isArray(selectedCharacter?.inventory) ? selectedCharacter.inventory : null,
       revealStats: revealStatsInput ? revealStatsInput.checked : null,
       autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
       useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
@@ -3262,6 +4187,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       initiative: selectedCharacter.initiative,
       stats: Array.isArray(selectedCharacter.stats) ? selectedCharacter.stats : [],
       currency: Array.isArray(selectedCharacter.currency) ? selectedCharacter.currency : null,
+      inventory: Array.isArray(selectedCharacter.inventory) ? selectedCharacter.inventory : null,
       revealStats: selectedCharacter.revealStats,
       autoSkipTurn: selectedCharacter.autoSkipTurn,
       useAppInitiativeRoll: selectedCharacter.useAppInitiativeRoll,
@@ -3335,21 +4261,13 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     detailsSaveBtn.addEventListener('click', async () => {
       const saved = await saveCharacterDetails({ showStatus: true });
       if (!saved) return;
-      detailsPanel.classList.remove('details-panel-open');
-      detailsPanel.classList.add('details-panel-collapsed');
-      detailsPanel.classList.add('hidden');
-      detailsToggle?.setAttribute('aria-expanded', 'false');
-      detailsPanel.setAttribute('aria-hidden', 'true');
+      setDetailsPanelOpen(false);
     });
   }
   if (detailsCancelBtn) {
     detailsCancelBtn.addEventListener('click', () => {
       if (!confirmDiscardDetailsChanges()) return;
-      detailsPanel.classList.remove('details-panel-open');
-      detailsPanel.classList.add('details-panel-collapsed');
-      detailsPanel.classList.add('hidden');
-      detailsToggle?.setAttribute('aria-expanded', 'false');
-      detailsPanel.setAttribute('aria-hidden', 'true');
+      setDetailsPanelOpen(false);
     });
   }
   if (conditionsSaveBtn) {

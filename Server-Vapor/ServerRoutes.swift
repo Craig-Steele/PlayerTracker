@@ -941,6 +941,7 @@ func routes(
             initiative: input.initiative,
             stats: input.stats,
             currency: input.currency,
+            inventory: input.inventory,
             revealStats: input.revealStats,
             autoSkipTurn: input.autoSkipTurn,
             useAppInitiativeRoll: input.useAppInitiativeRoll,
@@ -1044,6 +1045,7 @@ func routes(
             initiative: input.initiative,
             stats: input.stats,
             currency: input.currency,
+            inventory: input.inventory,
             revealStats: input.revealStats,
             autoSkipTurn: input.autoSkipTurn,
             useAppInitiativeRoll: input.useAppInitiativeRoll,
@@ -1145,6 +1147,18 @@ func routes(
             query: query,
             limit: limit,
             selectedLocalCreatureFiles: selectedUserDataFiles
+        )
+    }
+
+    app.get("equipment-library") { req async throws -> EquipmentLibraryResponse in
+        let library = await campaignStore.library()
+        let query = req.query[String.self, at: "query"]
+        let limit = req.query[Int.self, at: "limit"] ?? 100
+        return try await EquipmentLibraryStore.shared.library(
+            rulesetId: library.id,
+            rulesetLabel: library.label,
+            query: query,
+            limit: limit
         )
     }
 

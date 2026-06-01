@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="player-page">
   <div id="header-bar">
@@ -91,26 +91,6 @@
             <button type="button" id="character-add">Add Character</button>
           </div>
           <div id="character-list" class="character-list"></div>
-          <div class="character-toolbar">
-            <div id="player-selection-toolbar-anchor" class="hidden character-selection-toolbar">
-              <div class="details-toggles">
-                <button type="button" id="details-toggle" class="details-toggle" aria-expanded="false">
-                  Details
-                </button>
-                <button type="button" id="conditions-toggle" class="details-toggle conditions-toggle" aria-expanded="false">
-                  Conditions
-                </button>
-              </div>
-              <div class="character-overflow">
-              <button type="button" id="character-overflow-toggle" class="icon-button character-overflow-toggle" aria-label="Character actions" aria-haspopup="menu" aria-expanded="false">⋯</button>
-              <div id="character-overflow-menu" class="character-overflow-menu hidden" role="menu" aria-hidden="true">
-                  <button type="button" id="character-money" class="secondary hidden" role="menuitem">Money</button>
-                  <button type="button" id="character-release" class="secondary hidden" role="menuitem">Release Character</button>
-                  <button type="button" id="character-remove" class="secondary character-remove" role="menuitem">Remove Character</button>
-              </div>
-              </div>
-            </div>
-          </div>
           <div id="add-character-form" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
             <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="add-dialog-title">
               <div class="conditions-dialog-header">
@@ -272,6 +252,37 @@
             <div id="currency-fields" class="property-group currency-fields"></div>
           </div>
         </div>
+        <div id="inventory-panel" class="conditions-modal hidden" aria-hidden="true">
+          <div class="conditions-dialog inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="inventory-dialog-title">
+            <div class="conditions-dialog-header">
+              <h2 id="inventory-dialog-title">Inventory</h2>
+              <div class="conditions-dialog-actions">
+                <button type="button" id="inventory-add" class="secondary">Add Item</button>
+                <button type="button" id="inventory-add-container" class="secondary">Add Container</button>
+                <button type="button" id="inventory-remove" class="secondary">Remove Item</button>
+                <button type="button" id="inventory-cancel" class="secondary">Cancel</button>
+                <button type="button" id="inventory-save">Save</button>
+              </div>
+            </div>
+            <p id="inventory-total-weight" class="inventory-summary">Total weight carried: 0</p>
+            <div class="inventory-table-wrap">
+              <table class="inventory-table">
+                <thead>
+                  <tr>
+                    <th>Carried</th>
+                    <th>Qty</th>
+                    <th>Value</th>
+                    <th>Weight (per)</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-fields"></tbody>
+              </table>
+            </div>
+            <div id="inventory-container-sections" class="inventory-container-sections"></div>
+            <datalist id="inventory-item-options"></datalist>
+          </div>
+        </div>
       </form>
       <div id="status"></div>
     </section>
@@ -284,6 +295,6 @@
   <script src="claimable-characters.js?v=1"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=40"></script>
 </body>
 </html>

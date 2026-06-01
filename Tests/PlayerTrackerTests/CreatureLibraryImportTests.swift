@@ -22,12 +22,28 @@ final class CreatureLibraryImportTests: XCTestCase {
         XCTAssertEqual(pathfinder.currency?.commonCurrencyId, "gp")
         XCTAssertEqual(pathfinder.currency?.units.map(\.id), ["cp", "sp", "gp", "pp"])
         XCTAssertEqual(pathfinder.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 1, 10])
+        XCTAssertEqual(pathfinder.equipmentLibrary?.file, "pathfinder-equipment.json")
         XCTAssertEqual(dnd5e.currency?.commonCurrencyId, "gp")
         XCTAssertEqual(dnd5e.currency?.units.map(\.id), ["cp", "sp", "ep", "gp", "pp"])
         XCTAssertEqual(dnd5e.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 0.5, 1, 10])
+        XCTAssertEqual(dnd5e.equipmentLibrary?.file, "dnd5e-equipment.json")
         XCTAssertEqual(traveller.currency?.commonCurrencyId, "Cr")
         XCTAssertEqual(traveller.currency?.units.map(\.id), ["Cr", "KCr", "MCr"])
         XCTAssertEqual(traveller.currency?.units.map(\.valueInCommonCurrency), [1, 1000, 1_000_000])
+        XCTAssertEqual(traveller.equipmentLibrary?.file, "traveller-equipment.json")
+    }
+
+    func testEquipmentLibraryLoadFromRulesetJson() async throws {
+        let library = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
+        let response = try await EquipmentLibraryStore.shared.library(
+            rulesetId: library.id,
+            rulesetLabel: library.label,
+            query: "backpack",
+            limit: 10
+        )
+
+        XCTAssertEqual(response.rulesetId, "pathfinder")
+        XCTAssertTrue(response.items.contains { $0.name == "Backpack" })
     }
 
     func testPathfinderThirdPartyProductsFixtureIncludesBeanSidheVariant() throws {

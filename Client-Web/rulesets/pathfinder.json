@@ -53,6 +53,9 @@
   "creatureLibrary": {
     "file": "pathfinder-bestiary"
   },
+  "equipmentLibrary": {
+    "file": "pathfinder-equipment.json"
+  },
   "conditions": [
     {
       "name": "Bleed",

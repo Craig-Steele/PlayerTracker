@@ -220,6 +220,7 @@ actor UserStore {
         initiative: Double?,
         stats: [StatEntry]?,
         currency: [CurrencyAmount]? = nil,
+        inventory: [InventoryEntry]? = nil,
         revealStats: Bool?,
         autoSkipTurn: Bool?,
         useAppInitiativeRoll: Bool?,
@@ -245,6 +246,7 @@ actor UserStore {
             initiative: initiative,
             stats: stats.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.key, $0) }) } ?? [:],
             currency: currency ?? [],
+            inventory: inventory ?? [],
             revealStats: revealStats ?? false,
             autoSkipTurn: autoSkipTurn ?? false,
             useAppInitiativeRoll: useAppInitiativeRoll ?? true,
@@ -270,6 +272,9 @@ actor UserStore {
         }
         if let currency {
             state.currency = currency
+        }
+        if let inventory {
+            state.inventory = inventory
         }
         if let revealStats {
             state.revealStats = revealStats
@@ -663,6 +668,7 @@ actor UserStore {
                 initiative: nil,
                 stats: [],
                 currency: nil,
+                inventory: nil,
                 revealStats: false,
                 autoSkipTurn: false,
                 useAppInitiativeRoll: true,
@@ -683,6 +689,7 @@ actor UserStore {
             initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
             currency: storage[existingId]?.currency,
+            inventory: storage[existingId]?.inventory,
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
             useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
@@ -704,6 +711,7 @@ actor UserStore {
                 initiative: nil,
                 stats: [],
                 currency: nil,
+                inventory: nil,
                 revealStats: false,
                 autoSkipTurn: false,
                 useAppInitiativeRoll: true,
@@ -726,6 +734,7 @@ actor UserStore {
             initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
             currency: storage[existingId]?.currency,
+            inventory: storage[existingId]?.inventory,
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
             useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
@@ -752,6 +761,7 @@ actor UserStore {
             initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
             currency: storage[existingId]?.currency,
+            inventory: storage[existingId]?.inventory,
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
             useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
@@ -867,6 +877,7 @@ actor UserStore {
             initiative: state.initiative,
             stats: state.stats.values.sorted { $0.key < $1.key },
             currency: state.currency,
+            inventory: state.inventory,
             revealStats: state.revealStats,
             autoSkipTurn: state.autoSkipTurn,
             useAppInitiativeRoll: state.useAppInitiativeRoll,

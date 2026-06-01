@@ -71,6 +71,37 @@ struct CurrencyAmount: Content {
     let amount: Int
 }
 
+struct InventoryEntry: Content {
+    let id: UUID?
+    let name: String
+    let quantity: Int
+    let value: Double
+    let weight: Double
+    let url: String?
+    let containerId: UUID?
+    let isContainer: Bool
+
+    init(
+        id: UUID? = nil,
+        name: String,
+        quantity: Int,
+        value: Double,
+        weight: Double,
+        url: String?,
+        containerId: UUID? = nil,
+        isContainer: Bool = false
+    ) {
+        self.id = id
+        self.name = name
+        self.quantity = quantity
+        self.value = value
+        self.weight = weight
+        self.url = url
+        self.containerId = containerId
+        self.isContainer = isContainer
+    }
+}
+
 struct CreatureLibraryCreature: Content {
     let id: String
     let name: String
@@ -97,6 +128,25 @@ struct CreatureLibraryResponse: Content {
     let totalMatches: Int
     let hasMore: Bool
     let creatures: [CreatureLibraryCreature]
+}
+
+struct EquipmentLibraryItem: Content {
+    let id: String
+    let name: String
+    let value: Double?
+    let weight: Double?
+    let url: String?
+    let source: String?
+    let notes: String?
+}
+
+struct EquipmentLibraryResponse: Content {
+    let rulesetId: String
+    let rulesetLabel: String
+    let query: String?
+    let totalMatches: Int
+    let hasMore: Bool
+    let items: [EquipmentLibraryItem]
 }
 
 struct CreatureLibraryImportFile: Content {
@@ -225,6 +275,7 @@ struct CharacterState {
     var initiative: Double?
     var stats: [String: StatEntry]
     var currency: [CurrencyAmount]
+    var inventory: [InventoryEntry]
     var revealStats: Bool
     var autoSkipTurn: Bool
     var useAppInitiativeRoll: Bool
@@ -248,6 +299,7 @@ struct PlayerView: Content {
     let initiative: Double?
     let stats: [StatEntry]
     let currency: [CurrencyAmount]
+    let inventory: [InventoryEntry]
     let revealStats: Bool
     let autoSkipTurn: Bool
     let useAppInitiativeRoll: Bool
@@ -315,6 +367,7 @@ struct CharacterInput: Content {
     let initiative: Double?
     let stats: [StatEntry]?
     let currency: [CurrencyAmount]?
+    let inventory: [InventoryEntry]?
     let revealStats: Bool?
     let autoSkipTurn: Bool?
     let useAppInitiativeRoll: Bool?
@@ -334,6 +387,7 @@ struct CharacterInput: Content {
         initiative: Double? = nil,
         stats: [StatEntry]? = nil,
         currency: [CurrencyAmount]? = nil,
+        inventory: [InventoryEntry]? = nil,
         revealStats: Bool? = nil,
         autoSkipTurn: Bool? = nil,
         useAppInitiativeRoll: Bool? = nil,
@@ -352,6 +406,7 @@ struct CharacterInput: Content {
         self.initiative = initiative
         self.stats = stats
         self.currency = currency
+        self.inventory = inventory
         self.revealStats = revealStats
         self.autoSkipTurn = autoSkipTurn
         self.useAppInitiativeRoll = useAppInitiativeRoll

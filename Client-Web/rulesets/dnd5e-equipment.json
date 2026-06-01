@@ -1,0 +1,21 @@
+{
+  "id": "dnd5e-equipment",
+  "label": "D&D 5e Equipment",
+  "source": "https://www.5esrd.com/equipment/",
+  "generatedAt": "2026-06-01T00:00:00Z",
+  "items": [
+    { "id": "backpack", "name": "Backpack", "value": 2, "weight": 5 },
+    { "id": "bedroll", "name": "Bedroll", "value": 1, "weight": 7 },
+    { "id": "bell", "name": "Bell", "value": 1, "weight": 0 },
+    { "id": "candle", "name": "Candle", "value": 0.01, "weight": 0 },
+    { "id": "crowbar", "name": "Crowbar", "value": 2, "weight": 5 },
+    { "id": "grappling-hook", "name": "Grappling Hook", "value": 2, "weight": 4 },
+    { "id": "hammer", "name": "Hammer", "value": 1, "weight": 3 },
+    { "id": "hooded-lantern", "name": "Lantern, hooded", "value": 5, "weight": 2 },
+    { "id": "rope-hempen", "name": "Rope, hempen (50 feet)", "value": 1, "weight": 10 },
+    { "id": "rations", "name": "Rations (1 day)", "value": 0.5, "weight": 2 },
+    { "id": "torch", "name": "Torch", "value": 0.01, "weight": 1 },
+    { "id": "waterskin", "name": "Waterskin", "value": 0.2, "weight": 5 },
+    { "id": "tent", "name": "Tent", "value": 2, "weight": 20 }
+  ]
+}

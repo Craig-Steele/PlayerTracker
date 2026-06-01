@@ -28,6 +28,10 @@ struct CurrencySystem: Content {
     let units: [CurrencyUnit]
 }
 
+struct EquipmentLibraryReference: Content {
+    let file: String
+}
+
 struct CurrencyUnit: Content {
     let id: String
     let label: String
@@ -59,6 +63,7 @@ struct RuleSetLibrary: Content {
     let statAliases: [String: String]?
     let statBlocks: [StatBlockDefinition]?
     let currency: CurrencySystem?
+    let equipmentLibrary: EquipmentLibraryReference?
     let initiative: InitiativeRule?
     let supportsTempHp: Bool?
     let allowNegativeHealth: Bool?
@@ -185,6 +190,7 @@ enum RuleSetLibraryLoader {
             statAliases: nil,
             statBlocks: nil,
             currency: nil,
+            equipmentLibrary: nil,
             initiative: nil,
             supportsTempHp: nil,
             allowNegativeHealth: nil,
