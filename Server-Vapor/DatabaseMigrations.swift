@@ -340,6 +340,32 @@ struct AddStatBlockIdToCharacters: AsyncMigration {
     }
 }
 
+struct AddCurrencyToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "currency_json" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE characters ADD COLUMN currency_json TEXT")
+                .run()
+            connection.logger.notice("Patched characters with currency_json.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct AddClaimTimeoutMinutesToCampaigns: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -474,7 +500,8 @@ struct DatabaseShapeVerification {
                 "last_played_by_name",
                 "reference_url",
                 "is_claimable",
-                "stat_block_id"
+                "stat_block_id",
+                "currency_json"
             ]
             let missingCharacterColumns = requiredCharacterColumns.filter { required in
                 characterColumns.contains(where: { $0.name == required }) == false
@@ -622,6 +649,7 @@ struct CreateCharacters: AsyncMigration {
             .field("name", .string, .required)
             .field("initiative", .double)
             .field("stat_block_id", .string)
+            .field("currency_json", .string)
             .field("reveal_stats", .bool, .required)
             .field("auto_skip_turn", .bool, .required)
             .field("use_app_initiative_roll", .bool, .required)
@@ -714,6 +742,7 @@ enum DatabaseMigrations {
         app.migrations.add(AddLastPlayedByNameToCharacters())
         app.migrations.add(AddReferenceUrlToCharacters())
         app.migrations.add(AddStatBlockIdToCharacters())
+        app.migrations.add(AddCurrencyToCharacters())
         app.migrations.add(CreateCharacterStats())
         app.migrations.add(CreateCharacterConditions())
         app.migrations.add(CreateCampaignEncounters())

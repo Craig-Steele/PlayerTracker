@@ -3,6 +3,14 @@
   "label": "Traveller (SRD)",
   "healthLabel": "Hits",
   "stats": ["STR", "DEX", "END"],
+  "currency": {
+    "commonCurrencyId": "Cr",
+    "units": [
+      { "id": "Cr", "label": "Credit", "symbol": "Cr", "valueInCommonCurrency": 1 },
+      { "id": "KCr", "label": "Kilocredit", "symbol": "KCr", "valueInCommonCurrency": 1000 },
+      { "id": "MCr", "label": "Megacredit", "symbol": "MCr", "valueInCommonCurrency": 1000000 }
+    ]
+  },
   "statAliases": {
     "Strength": "STR",
     "Dexterity": "DEX",

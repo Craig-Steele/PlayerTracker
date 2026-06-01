@@ -7,6 +7,19 @@ struct CampaignStateDTO: Codable, Equatable {
     let encounterState: EncounterStateDTO
 }
 
+struct PlayerIdentityDTO: Codable, Equatable {
+    let id: UUID
+    let campaignID: UUID
+    let loginName: String
+    let displayName: String
+    let isReferee: Bool
+}
+
+struct PlayerSessionDTO: Codable, Equatable {
+    let player: PlayerIdentityDTO
+    let campaign: CampaignStateDTO
+}
+
 enum EncounterStateDTO: String, Codable, Equatable {
     case new
     case active
@@ -24,6 +37,19 @@ struct RuleSetLibraryDTO: Codable, Equatable {
     let allowNegativeHealth: Bool?
     let license: String?
     let standardDie: String?
+    let currency: CurrencySystemDTO?
+}
+
+struct CurrencySystemDTO: Codable, Equatable {
+    let commonCurrencyId: String
+    let units: [CurrencyUnitDTO]
+}
+
+struct CurrencyUnitDTO: Codable, Equatable, Identifiable {
+    let id: String
+    let label: String
+    let symbol: String?
+    let valueInCommonCurrency: Double
 }
 
 struct ConditionDefinitionDTO: Codable, Equatable, Identifiable {
@@ -40,6 +66,12 @@ struct StatEntryDTO: Codable, Equatable, Identifiable {
     let max: Int
 }
 
+struct CurrencyAmountDTO: Codable, Equatable, Identifiable {
+    var id: String { unitId }
+    let unitId: String
+    let amount: Int
+}
+
 struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let id: UUID
     let ownerId: UUID
@@ -47,6 +79,7 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let name: String
     let initiative: Double?
     let stats: [StatEntryDTO]
+    let currency: [CurrencyAmountDTO]?
     let revealStats: Bool
     let autoSkipTurn: Bool
     let useAppInitiativeRoll: Bool
@@ -72,6 +105,7 @@ struct CharacterInputDTO: Codable {
     let name: String
     let initiative: Double?
     let stats: [StatEntryDTO]?
+    let currency: [CurrencyAmountDTO]?
     let revealStats: Bool?
     let autoSkipTurn: Bool?
     let useAppInitiativeRoll: Bool?

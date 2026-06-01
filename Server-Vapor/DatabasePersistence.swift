@@ -387,6 +387,9 @@ final class CharacterRow: Model, @unchecked Sendable {
     @OptionalField(key: "stat_block_id")
     var statBlockId: String?
 
+    @OptionalField(key: "currency_json")
+    var currencyJSON: String?
+
     @OptionalField(key: "last_played_by_name")
     var lastPlayedByName: String?
 
@@ -439,6 +442,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         referenceUrl: String? = nil,
         isClaimable: Bool = false,
         statBlockId: String? = nil,
+        currencyJSON: String? = nil,
         lastPlayedByName: String? = nil,
         claimedSessionID: UUID? = nil,
         claimedDisplayName: String? = nil,
@@ -459,6 +463,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.referenceUrl = referenceUrl
         self.isClaimable = isClaimable
         self.statBlockId = statBlockId
+        self.currencyJSON = currencyJSON
         self.lastPlayedByName = lastPlayedByName
         self.claimedSessionID = claimedSessionID
         self.claimedDisplayName = claimedDisplayName
@@ -608,6 +613,30 @@ enum DatabasePersistence {
 
     private static func encodeUserDataFiles(_ files: [String]) throws -> String? {
         let normalized = normalizeUserDataFiles(files)
+        guard !normalized.isEmpty else { return nil }
+        let data = try JSONEncoder().encode(normalized)
+        return String(decoding: data, as: UTF8.self)
+    }
+
+    private static func decodeCurrencyAmounts(_ json: String?) -> [CurrencyAmount] {
+        guard let json,
+              let data = json.data(using: .utf8),
+              let amounts = try? JSONDecoder().decode([CurrencyAmount].self, from: data) else {
+            return []
+        }
+        return amounts.filter { !$0.unitId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    }
+
+    private static func encodeCurrencyAmounts(_ amounts: [CurrencyAmount]) throws -> String? {
+        var normalized: [CurrencyAmount] = []
+        var seenUnitIDs = Set<String>()
+        for amount in amounts {
+            let unitId = amount.unitId.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !unitId.isEmpty, seenUnitIDs.insert(unitId).inserted else {
+                continue
+            }
+            normalized.append(CurrencyAmount(unitId: unitId, amount: amount.amount))
+        }
         guard !normalized.isEmpty else { return nil }
         let data = try JSONEncoder().encode(normalized)
         return String(decoding: data, as: UTF8.self)
@@ -1570,6 +1599,7 @@ enum DatabasePersistence {
                     characterName: row.name,
                     initiative: row.initiative,
                     stats: characterStats,
+                    currency: decodeCurrencyAmounts(row.currencyJSON),
                     revealStats: row.revealStats,
                     autoSkipTurn: row.autoSkipTurn,
                     useAppInitiativeRoll: row.useAppInitiativeRoll,
@@ -1600,6 +1630,7 @@ enum DatabasePersistence {
                 row.referenceUrl = state.referenceUrl
                 row.isClaimable = state.isClaimable
                 row.statBlockId = state.statBlockId
+                row.currencyJSON = try encodeCurrencyAmounts(state.currency)
                 row.lastPlayedByName = state.lastPlayedByName
                 row.claimedSessionID = state.claimedSessionId
                 row.claimedDisplayName = state.claimedDisplayName
@@ -1626,6 +1657,7 @@ enum DatabasePersistence {
                     referenceUrl: state.referenceUrl,
                     isClaimable: state.isClaimable,
                     statBlockId: state.statBlockId,
+                    currencyJSON: try encodeCurrencyAmounts(state.currency),
                     lastPlayedByName: state.lastPlayedByName,
                     claimedSessionID: state.claimedSessionId,
                     claimedDisplayName: state.claimedDisplayName,

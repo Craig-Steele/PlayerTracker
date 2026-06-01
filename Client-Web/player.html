@@ -104,6 +104,7 @@
               <div class="character-overflow">
               <button type="button" id="character-overflow-toggle" class="icon-button character-overflow-toggle" aria-label="Character actions" aria-haspopup="menu" aria-expanded="false">⋯</button>
               <div id="character-overflow-menu" class="character-overflow-menu hidden" role="menu" aria-hidden="true">
+                  <button type="button" id="character-money" class="secondary hidden" role="menuitem">Money</button>
                   <button type="button" id="character-release" class="secondary hidden" role="menuitem">Release Character</button>
                   <button type="button" id="character-remove" class="secondary character-remove" role="menuitem">Remove Character</button>
               </div>
@@ -259,6 +260,18 @@
             <p id="initiative-help">Leave blank to clear the current initiative.</p>
           </div>
         </div>
+        <div id="currency-panel" class="conditions-modal hidden" aria-hidden="true">
+          <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="currency-dialog-title">
+            <div class="conditions-dialog-header">
+              <h2 id="currency-dialog-title">Money</h2>
+              <div class="conditions-dialog-actions">
+                <button type="button" id="currency-cancel" class="secondary">Cancel</button>
+                <button type="button" id="currency-save">Save</button>
+              </div>
+            </div>
+            <div id="currency-fields" class="property-group currency-fields"></div>
+          </div>
+        </div>
       </form>
       <div id="status"></div>
     </section>
@@ -271,6 +284,6 @@
   <script src="claimable-characters.js?v=1"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

@@ -219,6 +219,7 @@ actor UserStore {
         statBlockId: String? = nil,
         initiative: Double?,
         stats: [StatEntry]?,
+        currency: [CurrencyAmount]? = nil,
         revealStats: Bool?,
         autoSkipTurn: Bool?,
         useAppInitiativeRoll: Bool?,
@@ -243,6 +244,7 @@ actor UserStore {
             characterName: characterName,
             initiative: initiative,
             stats: stats.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.key, $0) }) } ?? [:],
+            currency: currency ?? [],
             revealStats: revealStats ?? false,
             autoSkipTurn: autoSkipTurn ?? false,
             useAppInitiativeRoll: useAppInitiativeRoll ?? true,
@@ -265,6 +267,9 @@ actor UserStore {
         state.initiative = initiative
         if let stats {
             state.stats = Dictionary(uniqueKeysWithValues: stats.map { ($0.key, $0) })
+        }
+        if let currency {
+            state.currency = currency
         }
         if let revealStats {
             state.revealStats = revealStats
@@ -657,6 +662,7 @@ actor UserStore {
                 characterName: name,
                 initiative: nil,
                 stats: [],
+                currency: nil,
                 revealStats: false,
                 autoSkipTurn: false,
                 useAppInitiativeRoll: true,
@@ -676,6 +682,7 @@ actor UserStore {
             characterName: name,
             initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
+            currency: storage[existingId]?.currency,
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
             useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
@@ -696,6 +703,7 @@ actor UserStore {
                 characterName: name,
                 initiative: nil,
                 stats: [],
+                currency: nil,
                 revealStats: false,
                 autoSkipTurn: false,
                 useAppInitiativeRoll: true,
@@ -717,6 +725,7 @@ actor UserStore {
             characterName: name,
             initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
+            currency: storage[existingId]?.currency,
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
             useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
@@ -742,6 +751,7 @@ actor UserStore {
             characterName: name,
             initiative: storage[existingId]?.initiative,
             stats: storage[existingId]?.stats.map { $0.value },
+            currency: storage[existingId]?.currency,
             revealStats: storage[existingId]?.revealStats,
             autoSkipTurn: storage[existingId]?.autoSkipTurn,
             useAppInitiativeRoll: storage[existingId]?.useAppInitiativeRoll,
@@ -856,6 +866,7 @@ actor UserStore {
             name: state.characterName,
             initiative: state.initiative,
             stats: state.stats.values.sorted { $0.key < $1.key },
+            currency: state.currency,
             revealStats: state.revealStats,
             autoSkipTurn: state.autoSkipTurn,
             useAppInitiativeRoll: state.useAppInitiativeRoll,

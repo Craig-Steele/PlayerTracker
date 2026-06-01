@@ -106,7 +106,7 @@ const campaignHeaderNameTargets = [];
 const campaignHeaderIconTargets = [];
 const campaignHeaderLinkTargets = [];
   const campaignHeaderLicenseTargets = [];
-  const APP_JS_VERSION = '11';
+  const APP_JS_VERSION = '12';
   let statBlockDefinitions = [];
   let statBlockLookup = new Map();
 
@@ -300,6 +300,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const initiativeCancelBtn = document.getElementById('initiative-cancel');
   const initiativeClearBtn = document.getElementById('initiative-clear');
   const initiativeDialogTitle = document.getElementById('initiative-dialog-title');
+  const currencyPanel = document.getElementById('currency-panel');
+  const currencyFields = document.getElementById('currency-fields');
+  const currencySaveBtn = document.getElementById('currency-save');
+  const currencyCancelBtn = document.getElementById('currency-cancel');
   const conditionsSaveBtn = document.getElementById('conditions-save');
   const conditionsCancelBtn = document.getElementById('conditions-cancel');
   const detailsSaveBtn = document.getElementById('details-save');
@@ -307,6 +311,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerListSection = document.querySelector('.player-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
   const characterListActions = document.querySelector('.character-list-actions');
+  const moneyCharacterBtn = document.getElementById('character-money');
   const releaseCharacterBtn = document.getElementById('character-release');
   const characterOverflowToggle = document.getElementById('character-overflow-toggle');
   const characterOverflowMenu = document.getElementById('character-overflow-menu');
@@ -330,6 +335,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentHealthLabel = 'HP';
   let statKeys = ['HP'];
   let statAliases = new Map();
+  let currencySystem = null;
   let playerNameRequired = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
@@ -341,6 +347,8 @@ window.addEventListener('DOMContentLoaded', () => {
   let isCreatingCharacter = false;
   let conditionsPanelOpen = false;
   let initiativeEditorCharacterId = null;
+  let currencyEditorCharacterId = null;
+  let currencyEditorDirty = false;
   let currentCampaignId = '';
   let claimableCharacters = [];
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
@@ -494,6 +502,12 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     const selected = selectedCharacterId
       ? myCharacters.find((character) => character.id === selectedCharacterId)
       : null;
+    const canEditMoney = Boolean(selected && currencySystem && currencySystem.units.length > 0);
+    if (moneyCharacterBtn) {
+      moneyCharacterBtn.classList.toggle('hidden', !canEditMoney);
+      moneyCharacterBtn.disabled = !canEditMoney;
+      moneyCharacterBtn.setAttribute('aria-disabled', (!canEditMoney).toString());
+    }
     const canRelease = Boolean(selected && selected.claimedSessionId === currentPlayerSessionId);
     releaseCharacterBtn.classList.toggle('hidden', !canRelease);
     releaseCharacterBtn.disabled = !canRelease;
@@ -512,7 +526,134 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     }
     if (!selected) {
       closeCharacterOverflowMenu();
+      closeCurrencyEditor();
     }
+  }
+
+  function setCurrencyPanelOpen(open) {
+    if (!currencyPanel) return;
+    currencyPanel.classList.toggle('hidden', !open);
+    currencyPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function buildCurrencyFields(character) {
+    if (!currencyFields) return;
+    currencyFields.innerHTML = '';
+    const units = currencySystem?.units || [];
+    const currencyByUnit = new Map(
+      Array.isArray(character?.currency)
+        ? character.currency
+            .filter((entry) => entry && typeof entry.unitId === 'string')
+            .map((entry) => [entry.unitId, entry])
+        : []
+    );
+
+    units.forEach((unit) => {
+      const row = document.createElement('label');
+      row.className = 'property-row';
+      row.setAttribute('for', `currency-${unit.id}`);
+
+      const label = document.createElement('span');
+      label.className = 'property-label';
+      label.textContent = `${unit.label}${unit.symbol ? ` (${unit.symbol})` : ''}`;
+      row.appendChild(label);
+
+      const control = document.createElement('span');
+      control.className = 'property-control';
+
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.step = '1';
+      input.id = `currency-${unit.id}`;
+      input.inputMode = 'numeric';
+      input.value = Number.isFinite(currencyByUnit.get(unit.id)?.amount)
+        ? String(currencyByUnit.get(unit.id).amount)
+        : '0';
+      input.dataset.currencyUnitId = unit.id;
+      input.addEventListener('input', () => {
+        currencyEditorDirty = true;
+      });
+      control.appendChild(input);
+      row.appendChild(control);
+      currencyFields.appendChild(row);
+    });
+  }
+
+  function openCurrencyEditor(character) {
+    if (!character || !currencySystem || !currencyFields) return;
+    closeCharacterOverflowMenu();
+    currencyEditorCharacterId = character.id;
+    currencyEditorDirty = false;
+    if (currencyPanel) {
+      const title = currencyPanel.querySelector('#currency-dialog-title');
+      if (title) {
+        title.textContent = `Money - ${character.name || 'Character'}`;
+      }
+    }
+    buildCurrencyFields(character);
+    setCurrencyPanelOpen(true);
+    window.requestAnimationFrame(() => {
+      const firstInput = currencyFields.querySelector('input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    });
+  }
+
+  function closeCurrencyEditor() {
+    currencyEditorCharacterId = null;
+    currencyEditorDirty = false;
+    if (currencyPanel) {
+      const title = currencyPanel.querySelector('#currency-dialog-title');
+      if (title) {
+        title.textContent = 'Money';
+      }
+    }
+    if (currencyFields) {
+      currencyFields.innerHTML = '';
+    }
+    setCurrencyPanelOpen(false);
+  }
+
+  function collectCurrencyPayloadFromEditor() {
+    if (!currencyFields) return null;
+    const inputs = Array.from(currencyFields.querySelectorAll('input[data-currency-unit-id]'));
+    if (inputs.length === 0) return null;
+    const payload = [];
+    for (const input of inputs) {
+      const unitId = input.dataset.currencyUnitId || '';
+      const raw = (input.value || '').trim();
+      const amount = raw === '' ? 0 : Number(raw);
+      if (!Number.isFinite(amount) || !Number.isInteger(amount)) {
+        throw new Error(`Currency amount for ${unitId} must be a whole number.`);
+      }
+      payload.push({ unitId, amount });
+    }
+    return payload;
+  }
+
+  async function saveCurrencyFromEditor() {
+    if (!currencyEditorCharacterId) return;
+    const character = myCharacters.find((entry) => entry.id === currencyEditorCharacterId);
+    if (!character) {
+      closeCurrencyEditor();
+      return;
+    }
+    let currency;
+    try {
+      currency = collectCurrencyPayloadFromEditor();
+    } catch (err) {
+      statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      return;
+    }
+    character.currency = currency || [];
+    const savedCharacter = await saveCharacterEntry(character);
+    if (!savedCharacter) {
+      return;
+    }
+    currencyEditorDirty = false;
+    closeCurrencyEditor();
   }
 
   function closeCharacterOverflowMenu() {
@@ -919,6 +1060,42 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     };
   }
 
+  function normalizeCurrencySystem(entry) {
+    if (!entry || typeof entry !== 'object') {
+      return null;
+    }
+    const commonCurrencyId =
+      typeof entry.commonCurrencyId === 'string' ? entry.commonCurrencyId.trim() : '';
+    const units = Array.isArray(entry.units)
+      ? entry.units
+          .map((unit) => {
+            if (!unit || typeof unit.id !== 'string' || typeof unit.label !== 'string') {
+              return null;
+            }
+            const id = unit.id.trim();
+            const label = unit.label.trim();
+            if (!id || !label) {
+              return null;
+            }
+            const valueInCommonCurrency = Number(unit.valueInCommonCurrency);
+            if (!Number.isFinite(valueInCommonCurrency)) {
+              return null;
+            }
+            return {
+              id,
+              label,
+              symbol: typeof unit.symbol === 'string' && unit.symbol.trim() ? unit.symbol.trim() : null,
+              valueInCommonCurrency
+            };
+          })
+          .filter(Boolean)
+      : [];
+    if (!commonCurrencyId || units.length === 0) {
+      return null;
+    }
+    return { commonCurrencyId, units };
+  }
+
   function normalizeStatToken(value) {
     if (typeof value !== 'string') {
       return '';
@@ -1213,6 +1390,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         statBlockId: character.statBlockId || inferCharacterStatBlockIdFromStats(character.stats) || null,
         initiative: character.initiative,
         stats: Array.isArray(character.stats) ? character.stats : [],
+        currency: Array.isArray(character.currency) ? character.currency : null,
         revealStats: character.revealStats,
         autoSkipTurn: character.autoSkipTurn,
         useAppInitiativeRoll: character.useAppInitiativeRoll,
@@ -1248,8 +1426,10 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       updateDraftForCharacter(savedCharacter);
       lastStateJson = null;
       await loadState();
+      return savedCharacter;
     } catch (err) {
       console.error('Failed to auto-save character:', err);
+      return null;
     }
   }
 
@@ -1331,6 +1511,15 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       ? conditionSet.statBlocks.map((entry) => normalizeStatBlockDefinition(entry)).filter(Boolean)
       : [];
     statBlockLookup = new Map(statBlockDefinitions.map((block) => [block.id, block]));
+    currencySystem = normalizeCurrencySystem(conditionSet?.currency);
+    if (!currencySystem) {
+      closeCurrencyEditor();
+    }
+    if (moneyCharacterBtn) {
+      moneyCharacterBtn.classList.add('hidden');
+      moneyCharacterBtn.disabled = true;
+      moneyCharacterBtn.setAttribute('aria-disabled', 'true');
+    }
     buildStatsFields();
 
     if (normalizedEntries.length === 0) {
@@ -1378,6 +1567,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
     document.body.classList.remove('no-conditions');
     renderConditionGrid(conditionFilterInput ? conditionFilterInput.value : '');
+    updateReleaseButtonState();
   }
 
   function getOwnerName() {
@@ -1761,6 +1951,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         ...character,
         initiative: match.initiative,
         stats: Array.isArray(match.stats) ? match.stats : character.stats,
+        currency: Array.isArray(match.currency) ? match.currency : character.currency,
         statBlockId: match.statBlockId || character.statBlockId || inferCharacterStatBlockIdFromStats(match.stats || character.stats),
         revealStats: match.revealStats,
         autoSkipTurn: match.autoSkipTurn,
@@ -1861,6 +2052,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   function selectCharacter(id) {
     const found = myCharacters.find((character) => character.id === id);
     if (!found) return;
+    if (currencyEditorCharacterId && currencyEditorCharacterId !== found.id) {
+      closeCurrencyEditor();
+    }
 
     selectedCharacterId = found.id;
     isCreatingCharacter = false;
@@ -1903,6 +2097,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   function clearCharacterSelection() {
     selectedCharacterId = null;
     closeCharacterOverflowMenu();
+    closeCurrencyEditor();
     nameInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.currentInput) entry.currentInput.value = '';
@@ -2541,6 +2736,16 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
+  if (moneyCharacterBtn) {
+    moneyCharacterBtn.addEventListener('click', () => {
+      const selected = selectedCharacterId
+        ? myCharacters.find((character) => character.id === selectedCharacterId)
+        : null;
+      if (!selected || !currencySystem) return;
+      openCurrencyEditor(selected);
+    });
+  }
+
   if (characterOverflowToggle) {
     characterOverflowToggle.addEventListener('click', (event) => {
       event.stopPropagation();
@@ -2552,6 +2757,27 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   if (characterOverflowMenu) {
     characterOverflowMenu.addEventListener('click', (event) => {
       event.stopPropagation();
+    });
+  }
+
+  if (currencySaveBtn) {
+    currencySaveBtn.addEventListener('click', async () => {
+      await saveCurrencyFromEditor();
+    });
+  }
+
+  if (currencyCancelBtn) {
+    currencyCancelBtn.addEventListener('click', () => {
+      if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+      closeCurrencyEditor();
+    });
+  }
+
+  if (currencyPanel) {
+    currencyPanel.addEventListener('click', (event) => {
+      if (event.target !== currencyPanel) return;
+      if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+      closeCurrencyEditor();
     });
   }
 
@@ -3002,6 +3228,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       name,
       initiative,
       stats,
+      currency: Array.isArray(selectedCharacter?.currency) ? selectedCharacter.currency : null,
       revealStats: revealStatsInput ? revealStatsInput.checked : null,
       autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
       useAppInitiativeRoll: useAppInitiativeRollInput ? useAppInitiativeRollInput.checked : true,
@@ -3034,6 +3261,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       name: selectedCharacter.name,
       initiative: selectedCharacter.initiative,
       stats: Array.isArray(selectedCharacter.stats) ? selectedCharacter.stats : [],
+      currency: Array.isArray(selectedCharacter.currency) ? selectedCharacter.currency : null,
       revealStats: selectedCharacter.revealStats,
       autoSkipTurn: selectedCharacter.autoSkipTurn,
       useAppInitiativeRoll: selectedCharacter.useAppInitiativeRoll,

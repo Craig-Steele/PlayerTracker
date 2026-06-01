@@ -66,6 +66,11 @@ struct StatEntry: Content {
     let max: Int
 }
 
+struct CurrencyAmount: Content {
+    let unitId: String
+    let amount: Int
+}
+
 struct CreatureLibraryCreature: Content {
     let id: String
     let name: String
@@ -219,6 +224,7 @@ struct CharacterState {
     var characterName: String
     var initiative: Double?
     var stats: [String: StatEntry]
+    var currency: [CurrencyAmount]
     var revealStats: Bool
     var autoSkipTurn: Bool
     var useAppInitiativeRoll: Bool
@@ -241,6 +247,7 @@ struct PlayerView: Content {
     let name: String
     let initiative: Double?
     let stats: [StatEntry]
+    let currency: [CurrencyAmount]
     let revealStats: Bool
     let autoSkipTurn: Bool
     let useAppInitiativeRoll: Bool
@@ -307,6 +314,7 @@ struct CharacterInput: Content {
     let statBlockId: String?
     let initiative: Double?
     let stats: [StatEntry]?
+    let currency: [CurrencyAmount]?
     let revealStats: Bool?
     let autoSkipTurn: Bool?
     let useAppInitiativeRoll: Bool?
@@ -325,6 +333,7 @@ struct CharacterInput: Content {
         statBlockId: String? = nil,
         initiative: Double? = nil,
         stats: [StatEntry]? = nil,
+        currency: [CurrencyAmount]? = nil,
         revealStats: Bool? = nil,
         autoSkipTurn: Bool? = nil,
         useAppInitiativeRoll: Bool? = nil,
@@ -342,6 +351,7 @@ struct CharacterInput: Content {
         self.statBlockId = statBlockId
         self.initiative = initiative
         self.stats = stats
+        self.currency = currency
         self.revealStats = revealStats
         self.autoSkipTurn = autoSkipTurn
         self.useAppInitiativeRoll = useAppInitiativeRoll

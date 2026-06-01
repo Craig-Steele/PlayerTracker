@@ -162,6 +162,43 @@ final class UserStoreTests: XCTestCase {
         XCTAssertNotNil(stored?.initiative)
     }
 
+    func testCharacterCurrencyIsIncludedInPlayerView() async throws {
+        let store = UserStore()
+        let campaignName = "Currency"
+        let currency = [
+            CurrencyAmount(unitId: "gp", amount: 42),
+            CurrencyAmount(unitId: "sp", amount: 7)
+        ]
+
+        let character = await store.upsertCharacter(
+            id: nil,
+            campaignName: campaignName,
+            ownerId: UUID(),
+            ownerName: "Player",
+            characterName: "Treasure Keeper",
+            initiative: nil,
+            stats: [],
+            currency: currency,
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        let state = await store.state(
+            campaignName: campaignName,
+            includeHidden: true,
+            encounterState: .new
+        )
+        let view = try XCTUnwrap(state.players.first { $0.id == character.id })
+        XCTAssertEqual(view.currency.count, 2)
+        XCTAssertEqual(view.currency.first(where: { $0.unitId == "gp" })?.amount, 42)
+        XCTAssertEqual(view.currency.first(where: { $0.unitId == "sp" })?.amount, 7)
+    }
+
     func testStaleClaimExpiresAfterClaimTimeout() async throws {
         let store = UserStore()
         let campaignName = "Timeout"
@@ -228,7 +265,8 @@ final class UserStoreTests: XCTestCase {
         initiative: Double,
         autoSkipTurn: Bool = false,
         isHidden: Bool = false,
-        revealOnTurn: Bool = false
+        revealOnTurn: Bool = false,
+        currency: [CurrencyAmount]? = nil
     ) async -> PlayerView {
         await store.upsertCharacter(
             id: nil,
@@ -238,6 +276,7 @@ final class UserStoreTests: XCTestCase {
             characterName: characterName,
             initiative: initiative,
             stats: [],
+            currency: currency,
             revealStats: false,
             autoSkipTurn: autoSkipTurn,
             useAppInitiativeRoll: true,

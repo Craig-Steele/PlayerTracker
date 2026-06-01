@@ -19,6 +19,15 @@ final class CreatureLibraryImportTests: XCTestCase {
         XCTAssertEqual(pathfinder.healthLabel, "HP")
         XCTAssertEqual(dnd5e.statAliases?["Dexterity"], "DEX")
         XCTAssertEqual(dnd5e.healthLabel, "HP")
+        XCTAssertEqual(pathfinder.currency?.commonCurrencyId, "gp")
+        XCTAssertEqual(pathfinder.currency?.units.map(\.id), ["cp", "sp", "gp", "pp"])
+        XCTAssertEqual(pathfinder.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 1, 10])
+        XCTAssertEqual(dnd5e.currency?.commonCurrencyId, "gp")
+        XCTAssertEqual(dnd5e.currency?.units.map(\.id), ["cp", "sp", "ep", "gp", "pp"])
+        XCTAssertEqual(dnd5e.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 0.5, 1, 10])
+        XCTAssertEqual(traveller.currency?.commonCurrencyId, "Cr")
+        XCTAssertEqual(traveller.currency?.units.map(\.id), ["Cr", "KCr", "MCr"])
+        XCTAssertEqual(traveller.currency?.units.map(\.valueInCommonCurrency), [1, 1000, 1_000_000])
     }
 
     func testPathfinderThirdPartyProductsFixtureIncludesBeanSidheVariant() throws {

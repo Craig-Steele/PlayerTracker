@@ -3,6 +3,15 @@
   "label": "Pathfinder (1st)",
   "healthLabel": "HP",
   "stats": ["HP"],
+  "currency": {
+    "commonCurrencyId": "gp",
+    "units": [
+      { "id": "cp", "label": "Copper", "symbol": "cp", "valueInCommonCurrency": 0.01 },
+      { "id": "sp", "label": "Silver", "symbol": "sp", "valueInCommonCurrency": 0.1 },
+      { "id": "gp", "label": "Gold", "symbol": "gp", "valueInCommonCurrency": 1 },
+      { "id": "pp", "label": "Platinum", "symbol": "pp", "valueInCommonCurrency": 10 }
+    ]
+  },
   "statAliases": {
     "Strength": "STR",
     "Dexterity": "DEX",
