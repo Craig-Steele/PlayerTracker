@@ -13,7 +13,8 @@ final class ActiveCampaignEventHubTests: XCTestCase {
             encounterState: .active,
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
-            userdataFiles: []
+            userdataFiles: [],
+            partyTreasure: []
         )
         let stream = await hub.subscribe()
         var iterator = stream.makeAsyncIterator()

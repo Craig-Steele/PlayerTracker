@@ -8,7 +8,6 @@
 - Treat `Client-Web/rulesets/*.json` manifests as the source of truth for ruleset assets.
 - Do not infer ruleset identity from filenames.
 - Reference creature libraries explicitly from the ruleset manifest with `creatureLibrary.file`.
-- Keep the creature-library feature split into a read-only lookup slice first, with local saving as a later slice.
 - Use `Server-Vapor/ServerPlatform.swift` as the source of truth for OS-specific app-data and log paths.
 - Keep startup behavior centralized in `Server-Vapor/ServerBootstrap.swift`.
 - When cleaning Pathfinder bestiary data, only normalize `cr` values that are clearly safe from the source text:

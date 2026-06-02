@@ -13,7 +13,8 @@ final class CampaignEventHubTests: XCTestCase {
             encounterState: .active,
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
-            userdataFiles: []
+            userdataFiles: [],
+            partyTreasure: []
         )
         let snapshot = CampaignStreamSnapshot(
             campaign: campaign,
@@ -49,7 +50,8 @@ final class CampaignEventHubTests: XCTestCase {
             encounterState: .active,
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
-            userdataFiles: []
+            userdataFiles: [],
+            partyTreasure: []
         )
         let snapshot = CampaignStreamSnapshot(
             campaign: campaign,
@@ -86,7 +88,8 @@ final class CampaignEventHubTests: XCTestCase {
             encounterState: .active,
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
-            userdataFiles: []
+            userdataFiles: [],
+            partyTreasure: []
         )
         let stream = await hub.subscribe(campaignID: campaign.id)
         var iterator = stream.makeAsyncIterator()

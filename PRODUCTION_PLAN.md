@@ -963,9 +963,39 @@ Acceptance:
 
 Status: complete
 
+### M7B: User Feedback
+
+Goal: address user-test feedback after the core web migration and referee tooling work, before moving on to M8.
+
+Work:
+
+- fold in post-M7A usability feedback
+- keep the fixes scoped to the web experience and other pre-M8 polish
+- move the player character cards above the order tracker in `Client-Web/player.html`
+- let the iOS portrait details column size to its contents instead of behaving like a fixed-height pane
+- let the iOS portrait order column follow the same intrinsic-height behavior
+- define currency tables in the rulesets
+- add per-character currency storage
+- add per-character inventory tracking with quantity, value, weight, and optional web links
+- capture SRD equipment catalogs in the ruleset folders so inventory can suggest ruleset items
+- add campaign-scoped party treasure tracking
+
+Acceptance:
+
+- the most important user-test issues from the M7/M7A flow are resolved
+- the plan has a clear slot for feedback-driven fixes before iOS migration work resumes
+
 ### M8: iOS Migration
 
 Goal: convert iOS from device identity to account identity.
+
+Scope notes:
+
+- support iPhone and iPad as first-class iOS form factors
+- do not add an AppleTV target in M8, but avoid UI and architecture choices that would obviously block a future tvOS port
+- assume a clean launch slate, so no legacy-install migration path is required for existing `ownerId` data
+- target feature parity with the web client for player and referee workflows
+- display-only remains web-only for now
 
 Touchpoints:
 
@@ -981,13 +1011,41 @@ Work:
 - add campaign selection
 - add SSE client handling for selected campaign updates
 - store session securely in Keychain-backed storage
+- add referee-mode UI and the referee-only actions required for iOS
+- match the web client feature set for player and referee interactions where practical
+
+Checklist:
+
+- wire the iOS client to the server auth endpoints: `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, and `GET /auth/session`
+- add a startup path that restores auth state from secure storage
+- replace `ownerId` as the source of ownership and character lookup
+- keep `ownerId` only if needed as a transient client-side compatibility field during the refactor
+- add explicit campaign selection and campaign switching UI
+- refresh player data, campaign state, and current characters after campaign changes
+- subscribe to selected-campaign SSE updates and reconnect cleanly after disconnects
+- add iOS referee-mode navigation and any referee-only controls needed for campaign play
+- ensure referee access is gated by campaign-scoped role checks, not by local device state
+- keep player and referee views consistent with the same authenticated session model
+- make the iPhone and iPad layouts work without hidden form-factor assumptions
+- ensure settings and connection flows remain usable on both phone and tablet
+- store tokens, sessions, or equivalent auth secrets in Keychain-backed storage
+- keep the client compatible with the existing HTTP server during the migration
+- avoid introducing tvOS-specific code, while keeping the codebase from assuming touch-only layout behavior where practical
 
 Acceptance:
 
-- user can sign in and recover all campaigns/characters
-- same user can view joined campaigns and join the active campaign on iPhone
-- account identity survives app reinstall if credentials/session are re-entered
-- live state updates arrive via SSE in normal operation
+- user can sign up, sign in, sign out, and restore a prior session on a fresh app launch
+- user can recover all joined campaigns and owned characters after authentication
+- same user can view joined campaigns and join the active campaign on iPhone and iPad
+- designated referees can open the iOS referee workflow for campaigns where they have that role
+- iOS referee actions respect campaign-scoped authorization
+- the iOS client covers the same player and referee workflows as the web client, excluding display-only mode
+- account identity is server-authenticated rather than derived from a device-local `ownerId`
+- secure session material is stored in Keychain-backed storage
+- live state updates for the selected campaign arrive via SSE in normal operation
+- reconnecting after a transient disconnect refreshes the selected campaign cleanly
+- the iOS client works in both compact and regular size classes without requiring a separate code path for iPad
+- the M8 implementation does not introduce assumptions that would obviously block a future AppleTV port
 
 ### M9: Android Migration
 

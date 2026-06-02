@@ -308,6 +308,163 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(putResponse.status, .forbidden)
     }
 
+    func testPartyTreasureClaimDistributesValueAcrossParty() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
+        let playerSession = try await join(displayName: "Player", in: tester)
+        let cookieHeader = HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+
+        let firstCharacter = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Player",
+                name: "Claimant",
+                currency: [
+                    CurrencyAmount(unitId: "gp", amount: 5),
+                    CurrencyAmount(unitId: "sp", amount: 50)
+                ]
+            )
+        )
+        let secondCharacter = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Player",
+                name: "Companion",
+                currency: [
+                    CurrencyAmount(unitId: "gp", amount: 0),
+                    CurrencyAmount(unitId: "sp", amount: 25)
+                ]
+            )
+        )
+
+        let treasureItemID = UUID()
+        let treasurePayload = PartyTreasureUpdateInput(
+            items: [
+                InventoryEntry(
+                    id: treasureItemID,
+                    name: "Ancient Relic",
+                    quantity: 1,
+                    value: 10,
+                    weight: 2,
+                    url: "https://example.com/relic"
+                )
+            ]
+        )
+        let treasureUpdateResponse = try await tester.sendRequest(
+            .PUT,
+            "/campaign/party-treasure",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(treasurePayload))
+        )
+        XCTAssertEqual(treasureUpdateResponse.status, .ok)
+        let updatedCampaign = try treasureUpdateResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(updatedCampaign.partyTreasure.count, 1)
+        XCTAssertEqual(updatedCampaign.partyTreasure.first?.id, treasureItemID)
+
+        let claimResponse = try await tester.sendRequest(
+            .POST,
+            "/campaign/party-treasure/claim",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                PartyTreasureClaimInput(characterId: firstCharacter.id, itemId: treasureItemID)
+            ))
+        )
+        XCTAssertEqual(claimResponse.status, .ok)
+        let claimedCampaign = try claimResponse.content.decode(CampaignState.self)
+        XCTAssertTrue(claimedCampaign.partyTreasure.isEmpty)
+
+        let charactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(campaign.id.uuidString)/me/characters",
+            headers: cookieHeader
+        )
+        XCTAssertEqual(charactersResponse.status, .ok)
+        let characters = try charactersResponse.content.decode([PlayerView].self)
+        let claimant = try XCTUnwrap(characters.first(where: { $0.id == firstCharacter.id }))
+        let companion = try XCTUnwrap(characters.first(where: { $0.id == secondCharacter.id }))
+
+        XCTAssertEqual(claimant.currency.first(where: { $0.unitId == "gp" })?.amount, 0)
+        XCTAssertEqual(claimant.currency.first(where: { $0.unitId == "sp" })?.amount, 50)
+        XCTAssertEqual(companion.currency.first(where: { $0.unitId == "gp" })?.amount, 5)
+        XCTAssertEqual(companion.currency.first(where: { $0.unitId == "sp" })?.amount, 25)
+        XCTAssertTrue(claimant.inventory.contains(where: { $0.name == "Ancient Relic" }))
+    }
+
+    func testPartyTreasureClaimCreatesDebtWhenCharacterCannotAffordIt() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
+        let playerSession = try await join(displayName: "Player", in: tester)
+
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Player",
+                name: "Broke Hero",
+                currency: [CurrencyAmount(unitId: "gp", amount: 0)]
+            )
+        )
+
+        let treasureItemID = UUID()
+        let treasurePayload = PartyTreasureUpdateInput(
+            items: [
+                InventoryEntry(
+                    id: treasureItemID,
+                    name: "Expensive Crown",
+                    quantity: 1,
+                    value: 25,
+                    weight: 1,
+                    url: nil
+                )
+            ]
+        )
+        let treasureUpdateResponse = try await tester.sendRequest(
+            .PUT,
+            "/campaign/party-treasure",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(treasurePayload))
+        )
+        XCTAssertEqual(treasureUpdateResponse.status, .ok)
+
+        let claimResponse = try await tester.sendRequest(
+            .POST,
+            "/campaign/party-treasure/claim",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                PartyTreasureClaimInput(characterId: character.id, itemId: treasureItemID)
+            ))
+        )
+        XCTAssertEqual(claimResponse.status, .ok)
+        let claimedCampaign = try claimResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(claimedCampaign.partyTreasure.count, 1)
+        XCTAssertTrue(claimedCampaign.partyTreasure.first?.name == "Debt from Broke Hero for Expensive Crown")
+
+        let charactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(claimedCampaign.id.uuidString)/me/characters",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+        XCTAssertEqual(charactersResponse.status, .ok)
+        let characters = try charactersResponse.content.decode([PlayerView].self)
+        let updatedCharacter = try XCTUnwrap(characters.first(where: { $0.id == character.id }))
+        XCTAssertEqual(updatedCharacter.currency.first(where: { $0.unitId == "gp" })?.amount, 0)
+        XCTAssertTrue(updatedCharacter.inventory.contains(where: { $0.name == "Expensive Crown" }))
+    }
+
     func testCreatureLibraryImportRoutePersistsImportedFileForReferee() async throws {
         let tempBaseDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-route-\(UUID().uuidString)", isDirectory: true)
