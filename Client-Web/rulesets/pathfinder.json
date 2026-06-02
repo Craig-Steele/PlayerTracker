@@ -54,7 +54,7 @@
     "file": "pathfinder-bestiary"
   },
   "equipmentLibrary": {
-    "file": "pathfinder-equipment.json"
+    "file": "pathfinder-equipment"
   },
   "conditions": [
     {

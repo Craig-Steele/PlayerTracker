@@ -107,7 +107,7 @@ const campaignHeaderNameTargets = [];
 const campaignHeaderIconTargets = [];
 const campaignHeaderLinkTargets = [];
   const campaignHeaderLicenseTargets = [];
-  const APP_JS_VERSION = '40';
+  const APP_JS_VERSION = '49';
   let statBlockDefinitions = [];
   let statBlockLookup = new Map();
 
@@ -305,6 +305,16 @@ window.addEventListener('DOMContentLoaded', () => {
   const currencyFields = document.getElementById('currency-fields');
   const currencySaveBtn = document.getElementById('currency-save');
   const currencyCancelBtn = document.getElementById('currency-cancel');
+  const partyTreasurePanel = document.getElementById('party-treasure-panel');
+  const partyTreasureFields = document.getElementById('party-treasure-fields');
+  const partyTreasureSaveBtn = document.getElementById('party-treasure-save');
+  const partyTreasureCancelBtn = document.getElementById('party-treasure-cancel');
+  const partyTreasureAddBtn = document.getElementById('party-treasure-add');
+  const partyTreasureRemoveBtn = document.getElementById('party-treasure-remove');
+  const partyTreasureClaimBtn = document.getElementById('party-treasure-claim');
+  const partyTreasureDialogTitle = document.getElementById('party-treasure-dialog-title');
+  const partyTreasureContext = document.getElementById('party-treasure-context');
+  const partyTreasureItemOptions = document.getElementById('party-treasure-item-options');
   const inventoryPanel = document.getElementById('inventory-panel');
   const inventoryFields = document.getElementById('inventory-fields');
   const inventorySaveBtn = document.getElementById('inventory-save');
@@ -366,6 +376,12 @@ window.addEventListener('DOMContentLoaded', () => {
   let initiativeEditorCharacterId = null;
   let currencyEditorCharacterId = null;
   let currencyEditorDirty = false;
+  let expandedOrderStatsCharacterId = null;
+  let lastEncounterSnapshot = null;
+  let partyTreasureEditorCharacterId = null;
+  let partyTreasureEditorDirty = false;
+  let partyTreasureSelectedRow = null;
+  let currentPartyTreasure = [];
   let inventoryEditorCharacterId = null;
   let inventoryEditorDirty = false;
   let inventorySelectedRow = null;
@@ -733,6 +749,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       equipmentLibraryLoaded = true;
       equipmentLibraryItems = [];
       updateInventoryItemOptions();
+      updatePartyTreasureItemOptions();
       return equipmentLibraryItems;
     }
     equipmentLibraryLoading = true;
@@ -745,16 +762,358 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       equipmentLibraryItems = normalizeEquipmentItems(json?.items);
       equipmentLibraryLoaded = true;
       updateInventoryItemOptions();
+      updatePartyTreasureItemOptions();
       return equipmentLibraryItems;
     } catch (err) {
       console.error('Failed to load equipment library:', err);
       equipmentLibraryItems = [];
       equipmentLibraryLoaded = true;
       updateInventoryItemOptions();
+      updatePartyTreasureItemOptions();
       return equipmentLibraryItems;
     } finally {
       equipmentLibraryLoading = false;
     }
+  }
+
+  function setPartyTreasurePanelOpen(open) {
+    if (!partyTreasurePanel) return;
+    partyTreasurePanel.classList.toggle('hidden', !open);
+    partyTreasurePanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function updatePartyTreasureItemOptions() {
+    if (!partyTreasureItemOptions) return;
+    partyTreasureItemOptions.innerHTML = '';
+    equipmentLibraryItems.forEach((item) => {
+      const option = document.createElement('option');
+      option.value = item.name;
+      option.label = item.source ? `${item.name} - ${item.source}` : item.name;
+      partyTreasureItemOptions.appendChild(option);
+    });
+  }
+
+  function getPartyTreasureRows() {
+    return Array.from(document.querySelectorAll('#party-treasure-fields tr.inventory-entry'));
+  }
+
+  function setSelectedPartyTreasureRow(row) {
+    partyTreasureSelectedRow = row;
+    if (!partyTreasureFields) return;
+    getPartyTreasureRows().forEach((entryRow) => {
+      entryRow.classList.toggle('selected', entryRow === row);
+      entryRow.setAttribute('aria-selected', (entryRow === row).toString());
+    });
+    if (partyTreasureRemoveBtn) {
+      const canRemove = Boolean(partyTreasureSelectedRow);
+      partyTreasureRemoveBtn.disabled = !canRemove;
+      partyTreasureRemoveBtn.setAttribute('aria-disabled', (!canRemove).toString());
+    }
+    if (partyTreasureClaimBtn) {
+      const canClaim = Boolean(partyTreasureSelectedRow);
+      partyTreasureClaimBtn.disabled = !canClaim;
+      partyTreasureClaimBtn.setAttribute('aria-disabled', (!canClaim).toString());
+    }
+  }
+
+  function focusPartyTreasureRow(row) {
+    if (!row) return;
+    window.requestAnimationFrame(() => {
+      const firstInput = row.querySelector('input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select?.();
+      }
+    });
+  }
+
+  function createPartyTreasureRow(entry = {}) {
+    const normalized = normalizeInventoryEntry(entry, null, false);
+    const row = document.createElement('tr');
+    row.className = 'inventory-entry';
+    row.dataset.inventoryEntryId = normalized.id;
+    row.dataset.inventoryContainerId = '';
+    row.dataset.inventoryIsContainer = 'false';
+    row.addEventListener('click', () => {
+      setSelectedPartyTreasureRow(row);
+    });
+
+    const fields = [
+      {
+        key: 'name',
+        type: 'text',
+        value: normalized.name,
+        placeholder: 'Item name',
+        list: 'party-treasure-item-options'
+      },
+      {
+        key: 'quantity',
+        type: 'number',
+        value: String(normalized.quantity),
+        step: '1'
+      },
+      {
+        key: 'value',
+        type: 'number',
+        value: String(normalized.value),
+        step: 'any'
+      },
+      {
+        key: 'weight',
+        type: 'number',
+        value: String(normalized.weight),
+        step: 'any'
+      },
+      {
+        key: 'url',
+        type: 'url',
+        value: normalized.url || ''
+      }
+    ];
+
+    fields.forEach((field) => {
+      const cell = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = field.type;
+      input.value = field.value;
+      if (field.placeholder) {
+        input.placeholder = field.placeholder;
+      }
+      if (field.list) {
+        input.setAttribute('list', field.list);
+      }
+      if (field.step) {
+        input.step = field.step;
+      }
+      input.dataset.inventoryField = field.key;
+      input.addEventListener('input', () => {
+        partyTreasureEditorDirty = true;
+        if (field.key === 'name') {
+          applyInventoryPresetToRow(row, input.value);
+        }
+      });
+      input.addEventListener('change', () => {
+        if (field.key === 'name') {
+          applyInventoryPresetToRow(row, input.value);
+        }
+      });
+      input.addEventListener('focus', () => {
+        setSelectedPartyTreasureRow(row);
+      });
+      cell.appendChild(input);
+      row.appendChild(cell);
+    });
+
+    return row;
+  }
+
+  function buildPartyTreasureFields(items = []) {
+    if (!partyTreasureFields) return;
+    partyTreasureFields.innerHTML = '';
+    const normalizedEntries = Array.isArray(items)
+      ? items.map((entry) => normalizeInventoryEntry(entry))
+      : [];
+    const rows = normalizedEntries.length > 0 ? normalizedEntries : [normalizeInventoryEntry({}, null, false)];
+    rows.forEach((entry) => {
+      partyTreasureFields.appendChild(createPartyTreasureRow(entry));
+    });
+    setSelectedPartyTreasureRow(partyTreasureFields.querySelector('tr'));
+  }
+
+  function collectPartyTreasurePayloadFromEditor() {
+    if (!partyTreasureFields) return null;
+    const payload = [];
+    const rows = Array.from(partyTreasureFields.querySelectorAll('tr.inventory-entry'));
+    for (const row of rows) {
+      const rowData = getInventoryRowData(row) || {};
+      const nameInput = row.querySelector('input[data-inventory-field="name"]');
+      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
+      const valueInput = row.querySelector('input[data-inventory-field="value"]');
+      const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+      const urlInput = row.querySelector('input[data-inventory-field="url"]');
+      const rawName = nameInput ? nameInput.value.trim() : '';
+      const rawQuantity = quantityInput ? quantityInput.value.trim() : '';
+      const rawValue = valueInput ? valueInput.value.trim() : '';
+      const rawWeight = weightInput ? weightInput.value.trim() : '';
+      const rawUrl = urlInput ? urlInput.value.trim() : '';
+      const isUntouchedDefaultRow =
+        !rawName &&
+        (rawQuantity === '' || rawQuantity === '1') &&
+        (rawValue === '' || rawValue === '0') &&
+        (rawWeight === '' || rawWeight === '0') &&
+        !rawUrl;
+      if (isUntouchedDefaultRow) {
+        continue;
+      }
+      if (!rawName) {
+        throw new Error('Each party treasure row needs an item name.');
+      }
+      const quantity = rawQuantity === '' ? 1 : Number(rawQuantity);
+      const value = rawValue === '' ? 0 : Number(rawValue);
+      const weight = rawWeight === '' ? 0 : Number(rawWeight);
+      if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
+        throw new Error(`Quantity for ${rawName} must be a whole number of at least 1.`);
+      }
+      if (!Number.isFinite(value)) {
+        throw new Error(`Value for ${rawName} must be a valid number.`);
+      }
+      if (!Number.isFinite(weight)) {
+        throw new Error(`Weight for ${rawName} must be a valid number.`);
+      }
+      payload.push({
+        id: rowData.id || createInventoryEntryId(),
+        name: rawName,
+        quantity,
+        value,
+        weight,
+        url: rawUrl || null,
+        containerId: null,
+        isContainer: false
+      });
+    }
+    return payload.length > 0 ? payload : null;
+  }
+
+  function addPartyTreasureItem() {
+    const row = createPartyTreasureRow({});
+    if (partyTreasureFields) {
+      partyTreasureFields.appendChild(row);
+      partyTreasureEditorDirty = true;
+      setSelectedPartyTreasureRow(row);
+      focusPartyTreasureRow(row);
+    }
+  }
+
+  function removeSelectedPartyTreasureItem() {
+    if (!partyTreasureSelectedRow) return;
+    const rowName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
+    if (!confirm(`Remove ${rowName} from party treasure?`)) {
+      return;
+    }
+    const nextRow = partyTreasureSelectedRow.nextElementSibling || partyTreasureSelectedRow.previousElementSibling;
+    partyTreasureSelectedRow.remove();
+    partyTreasureEditorDirty = true;
+    if (!partyTreasureFields.querySelector('tr.inventory-entry')) {
+      partyTreasureFields.appendChild(createPartyTreasureRow({}));
+    }
+    setSelectedPartyTreasureRow(nextRow || partyTreasureFields.querySelector('tr.inventory-entry'));
+  }
+
+  async function savePartyTreasureFromEditor() {
+    if (!currentCampaignId) return null;
+    let items;
+    try {
+      items = collectPartyTreasurePayloadFromEditor();
+    } catch (err) {
+      statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      return null;
+    }
+    if (!items) {
+      items = [];
+    }
+    const res = await fetch('/campaign/party-treasure', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items })
+    });
+    if (!res.ok) {
+      throw new Error(await responseErrorMessage(res));
+    }
+    const updatedCampaign = await res.json();
+    currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+      ? updatedCampaign.partyTreasure
+      : items;
+    partyTreasureEditorDirty = false;
+    return updatedCampaign;
+  }
+
+  async function claimSelectedPartyTreasureItem() {
+    if (!currentCampaignId || !partyTreasureEditorCharacterId || !partyTreasureSelectedRow) return;
+    const rowData = getInventoryRowData(partyTreasureSelectedRow) || {};
+    const itemId = rowData.id || '';
+    const itemName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim();
+    if (!itemId) {
+      statusDiv.textContent = 'Select a treasure row with an item id first.';
+      return;
+    }
+    try {
+      if (partyTreasureEditorDirty) {
+        await savePartyTreasureFromEditor();
+      }
+      const res = await fetch('/campaign/party-treasure/claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          characterId: partyTreasureEditorCharacterId,
+          itemId
+        })
+      });
+      if (!res.ok) {
+        throw new Error(await responseErrorMessage(res));
+      }
+      const updatedCampaign = await res.json();
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : currentPartyTreasure;
+      buildPartyTreasureFields(currentPartyTreasure);
+      await loadState();
+      statusDiv.textContent = `Claimed ${itemName || 'item'}.`;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      statusDiv.textContent = `Claim failed: ${message}`;
+    }
+  }
+
+  async function openPartyTreasureEditor(character) {
+    if (!character || !partyTreasureFields) return;
+    closeCharacterOverflowMenu();
+    if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
+    closeInventoryEditor();
+    if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+    closeCurrencyEditor();
+    partyTreasureEditorCharacterId = character.id;
+    partyTreasureEditorDirty = false;
+    if (partyTreasureDialogTitle) {
+      partyTreasureDialogTitle.textContent = `Party Treasure - ${character.name || 'Character'}`;
+    }
+    if (partyTreasureContext) {
+      partyTreasureContext.textContent = `Claiming as ${character.name || 'this character'}`;
+    }
+    await loadEquipmentLibrary();
+    buildPartyTreasureFields(currentPartyTreasure);
+    partyTreasureEditorDirty = false;
+    setPartyTreasurePanelOpen(true);
+    window.requestAnimationFrame(() => {
+      const firstInput = partyTreasureFields.querySelector('input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    });
+  }
+
+  function closePartyTreasureEditor() {
+    partyTreasureEditorCharacterId = null;
+    partyTreasureEditorDirty = false;
+    partyTreasureSelectedRow = null;
+    if (partyTreasureDialogTitle) {
+      partyTreasureDialogTitle.textContent = 'Party Treasure';
+    }
+    if (partyTreasureContext) {
+      partyTreasureContext.textContent = 'Party treasure for —';
+    }
+    if (partyTreasureFields) {
+      partyTreasureFields.innerHTML = '';
+    }
+    if (partyTreasureRemoveBtn) {
+      partyTreasureRemoveBtn.disabled = true;
+      partyTreasureRemoveBtn.setAttribute('aria-disabled', 'true');
+    }
+    if (partyTreasureClaimBtn) {
+      partyTreasureClaimBtn.disabled = true;
+      partyTreasureClaimBtn.setAttribute('aria-disabled', 'true');
+    }
+    setPartyTreasurePanelOpen(false);
   }
 
   function setSelectedInventoryRow(row) {
@@ -2481,13 +2840,11 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     addMenuItem('Details', () => openDetailsEditorForCharacter(character));
     addMenuItem('Conditions', () => openConditionsEditorForCharacter(character));
     addMenuItem('Change Initiative', () => editCharacterInitiative(character));
-    addMenuItem('Toggle Temp HP', () => {
-      setTempHpVisibilityForCharacter(character, !shouldShowTempHpForCharacter(character));
-    }, {
-      hidden: !supportsTempHp
-    });
     addMenuItem('Inventory', async () => {
       await openInventoryEditor(character);
+    });
+    addMenuItem('Party Treasure', async () => {
+      openPartyTreasureEditor(character);
     });
     addMenuItem('Money', () => openCurrencyEditor(character), {
       hidden: !(currencySystem && currencySystem.units.length > 0)
@@ -2895,9 +3252,252 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       }
     }
     renderCharacterList();
+    if (
+      lastEncounterSnapshot &&
+      Array.isArray(lastEncounterSnapshot.players) &&
+      lastEncounterSnapshot.players.some((player) => player.id === character.id)
+    ) {
+      renderEncounterRows(lastEncounterSnapshot);
+    }
     updateDraftForCharacter(character);
     scheduleCharacterSave(character);
     skipRefresh = true;
+  }
+
+  function closeExpandedOrderStats() {
+    if (!expandedOrderStatsCharacterId) return;
+    expandedOrderStatsCharacterId = null;
+    if (lastEncounterSnapshot) {
+      renderEncounterRows(lastEncounterSnapshot);
+    }
+  }
+
+  function toggleExpandedOrderStats(characterId) {
+    expandedOrderStatsCharacterId =
+      expandedOrderStatsCharacterId === characterId ? null : characterId;
+    if (lastEncounterSnapshot) {
+      renderEncounterRows(lastEncounterSnapshot);
+    }
+  }
+
+  function buildOrderStatsPopover(character, displayStatKeys) {
+    const stats = Array.isArray(character.stats) ? character.stats : [];
+    const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
+    const popover = document.createElement('div');
+    popover.className = 'player-row-stats-popover character-stats';
+    popover.setAttribute('role', 'dialog');
+    popover.setAttribute('aria-label', `${character.name || 'character'} stats controls`);
+    popover.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    const heading = document.createElement('div');
+    heading.className = 'player-row-stats-heading';
+    heading.textContent = character.name || 'Character';
+    popover.appendChild(heading);
+
+    displayStatKeys.forEach((key) => {
+      const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
+      const line = document.createElement('div');
+      line.className = 'character-stat-line';
+      const label = document.createElement('span');
+      label.className = 'character-stat-label';
+      label.textContent = key;
+
+      const minus = document.createElement('button');
+      minus.type = 'button';
+      minus.className = 'hp-adjust';
+      minus.textContent = '−';
+      minus.addEventListener('click', (event) => {
+        event.stopPropagation();
+        adjustCharacterStat(character, key, -1);
+      });
+
+      const value = document.createElement('span');
+      value.className = 'character-hp-value';
+      const currentVal = Number.isFinite(stat.current) ? stat.current : 0;
+      const maxVal = Number.isFinite(stat.max) ? stat.max : 0;
+      value.textContent = key === 'TempHP' ? `${currentVal}` : `${currentVal}/${maxVal}`;
+
+      const plus = document.createElement('button');
+      plus.type = 'button';
+      plus.className = 'hp-adjust';
+      plus.textContent = '+';
+      plus.addEventListener('click', (event) => {
+        event.stopPropagation();
+        adjustCharacterStat(character, key, 1);
+      });
+
+      line.appendChild(label);
+      line.appendChild(minus);
+      line.appendChild(value);
+      line.appendChild(plus);
+      popover.appendChild(line);
+    });
+
+    if (supportsTempHp) {
+      const tempHpCurrent = getTempHpCurrentValue(character);
+      const tempHpVisible = shouldShowTempHpForCharacter(character);
+      const tempToggleLabel = document.createElement('label');
+      tempToggleLabel.className = 'player-row-stats-toggle player-row-stats-toggle-bottom';
+      const tempToggle = document.createElement('input');
+      tempToggle.type = 'checkbox';
+      tempToggle.checked = tempHpVisible;
+      tempToggle.disabled = tempHpCurrent !== 0;
+      tempToggle.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+      tempToggle.addEventListener('change', (event) => {
+        event.stopPropagation();
+        setTempHpVisibilityForCharacter(character, tempToggle.checked);
+        if (lastEncounterSnapshot) {
+          renderEncounterRows(lastEncounterSnapshot);
+        }
+      });
+      const tempToggleText = document.createElement('span');
+      tempToggleText.textContent = 'Show TempHP';
+      tempToggleLabel.appendChild(tempToggle);
+      tempToggleLabel.appendChild(tempToggleText);
+      popover.appendChild(tempToggleLabel);
+    }
+
+    return popover;
+  }
+
+  function renderEncounterRows(snapshot) {
+    if (!playersBody || !snapshot) return;
+    const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
+    playersBody.innerHTML = '';
+
+    if (players.length === 0) {
+      const hasConditions = conditionLibrary.length > 0;
+      playersBody.appendChild(createEmptyEncounterRow(hasConditions ? 4 : 3));
+      return;
+    }
+
+    for (const p of players) {
+      const tr = document.createElement('tr');
+      tr.classList.add('player-row');
+
+      const initTd = document.createElement('td');
+      const nameTd = document.createElement('td');
+      const hpTd = document.createElement('td');
+      const conditionsTd = document.createElement('td');
+      conditionsTd.classList.add('conditions-cell');
+
+      initTd.textContent = formatInitiative(p.initiative);
+      if (p.isReferee) {
+        initTd.classList.add('init-referee');
+      }
+      const isMine =
+        !displayOnly &&
+        Boolean(currentPlayerSessionId) &&
+        ((p.ownerId && p.ownerId === currentPlayerSessionId) ||
+          myCharacters.some((character) => character.id === p.id));
+      if (isMine) {
+        initTd.classList.add('init-mine');
+        tr.classList.add('player-row-owned');
+      }
+
+      const nameWrap = document.createElement('div');
+      nameWrap.className = 'player-row-name-wrap';
+      if (isMine) {
+        const { overflow, openOverflowMenu } = buildCharacterOverflowControls(p);
+        overflow.classList.add('player-row-overflow');
+        nameTd.classList.add('player-row-owned-name-cell');
+        const nameButton = document.createElement('button');
+        nameButton.type = 'button';
+        nameButton.className = 'player-row-name-button';
+        nameButton.setAttribute('aria-label', `Manage ${p.name || 'character'}`);
+        const nameText = document.createElement('div');
+        nameText.className = 'player-row-name-text';
+        const nameLine = document.createElement('div');
+        nameLine.textContent = p.name;
+        nameText.appendChild(nameLine);
+        nameWrap.appendChild(nameText);
+        nameButton.appendChild(nameWrap);
+        nameButton.addEventListener('click', (event) => {
+          event.stopPropagation();
+          closeExpandedOrderStats();
+          openOverflowMenu();
+        });
+        nameTd.appendChild(nameButton);
+        nameTd.appendChild(overflow);
+      } else {
+        const nameText = document.createElement('div');
+        nameText.className = 'player-row-name-text';
+        const nameLine = document.createElement('div');
+        nameLine.textContent = p.name;
+        nameText.appendChild(nameLine);
+        const controllerName = getCharacterControllerName(p);
+        if (controllerName) {
+          const ownerLine = document.createElement('div');
+          ownerLine.classList.add('player-owner');
+          ownerLine.textContent = `(${controllerName})`;
+          nameText.appendChild(ownerLine);
+        }
+        nameWrap.appendChild(nameText);
+        nameTd.appendChild(nameWrap);
+      }
+
+      const stats = Array.isArray(p.stats) ? p.stats : [];
+      const displayStatKeys = getCharacterStatKeys(p).filter((key) => key !== 'TempHP');
+      if (supportsTempHp && shouldShowTempHpForCharacter(p)) {
+        displayStatKeys.push('TempHP');
+      }
+      const orderedStats = orderedEncounterStats(stats, displayStatKeys);
+      const statusInfo = encounterStatusInfo(stats, displayStatKeys);
+
+      if (statusInfo) {
+        applyEncounterHealthClasses(hpTd, statusInfo);
+        hpTd.innerHTML = '';
+        const canReveal = isMine || p.revealStats;
+        if (!canReveal) {
+          const statusLabel = healthStatusLabel(statusInfo.ratio, statusInfo.isDead);
+          const statusLine = document.createElement('div');
+          statusLine.textContent = statusLabel;
+          hpTd.appendChild(statusLine);
+        }
+        if (canReveal) {
+          const valueLine = document.createElement('div');
+          valueLine.textContent = formatEncounterStatsText(orderedStats, displayStatKeys);
+          hpTd.appendChild(valueLine);
+        }
+        if (isMine && p.id === expandedOrderStatsCharacterId) {
+          hpTd.classList.add('player-row-stats-cell');
+          const statsPopover = buildOrderStatsPopover(p, displayStatKeys);
+          hpTd.appendChild(statsPopover);
+        }
+      } else {
+        hpTd.textContent = '—';
+      }
+
+      if (isMine && statusInfo) {
+        hpTd.classList.add('player-row-stats-cell');
+        hpTd.style.cursor = 'pointer';
+        hpTd.addEventListener('click', (event) => {
+          event.stopPropagation();
+          toggleExpandedOrderStats(p.id);
+        });
+      }
+
+      const list = buildEncounterConditionsList(p.conditions, conditionLookup);
+      if (list) {
+        conditionsTd.appendChild(list);
+      } else {
+        conditionsTd.textContent = '—';
+      }
+
+      if (currentTurnId && p.id === currentTurnId) {
+        tr.classList.add('current-turn');
+      }
+
+      tr.appendChild(initTd);
+      tr.appendChild(nameTd);
+      tr.appendChild(hpTd);
+      tr.appendChild(conditionsTd);
+      playersBody.appendChild(tr);
+    }
   }
 
   function selectCharacter(id) {
@@ -2908,6 +3508,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     }
     if (inventoryEditorCharacterId && inventoryEditorCharacterId !== found.id) {
       closeInventoryEditor();
+    }
+    if (partyTreasureEditorCharacterId && partyTreasureEditorCharacterId !== found.id) {
+      closePartyTreasureEditor();
     }
 
     selectedCharacterId = found.id;
@@ -2953,6 +3556,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     closeCharacterOverflowMenu();
     closeCurrencyEditor();
     closeInventoryEditor();
+    closePartyTreasureEditor();
     setDetailsPanelOpen(false);
     setConditionsPanelOpen(false);
     nameInput.value = '';
@@ -3208,6 +3812,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
           currentCampaignName = '';
           currentCampaignId = '';
           currentRulesetId = '';
+          currentPartyTreasure = [];
           updateCampaignHeader(
             {
               nameTargets: campaignHeaderNameTargets,
@@ -3235,6 +3840,10 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       currentCampaignId = campaign.id || '';
       currentCampaignName = campaign.name || '';
       currentRulesetId = campaign.rulesetId || '';
+      currentPartyTreasure = Array.isArray(campaign.partyTreasure) ? campaign.partyTreasure : [];
+      if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden') && !partyTreasureEditorDirty) {
+        buildPartyTreasureFields(currentPartyTreasure);
+      }
       updateCampaignHeader(
         {
           nameTargets: campaignHeaderNameTargets,
@@ -3264,6 +3873,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       console.error('Failed to load campaign:', err);
       currentCampaignId = '';
       currentCampaignName = '';
+      currentPartyTreasure = [];
       updateCampaignHeader(
         {
           nameTargets: campaignHeaderNameTargets,
@@ -3647,6 +4257,48 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
+  if (partyTreasureAddBtn) {
+    partyTreasureAddBtn.addEventListener('click', () => {
+      addPartyTreasureItem();
+    });
+  }
+
+  if (partyTreasureRemoveBtn) {
+    partyTreasureRemoveBtn.addEventListener('click', () => {
+      removeSelectedPartyTreasureItem();
+    });
+  }
+
+  if (partyTreasureClaimBtn) {
+    partyTreasureClaimBtn.addEventListener('click', async () => {
+      await claimSelectedPartyTreasureItem();
+    });
+  }
+
+  if (partyTreasureSaveBtn) {
+    partyTreasureSaveBtn.addEventListener('click', async () => {
+      const updatedCampaign = await savePartyTreasureFromEditor();
+      if (updatedCampaign) {
+        closePartyTreasureEditor();
+      }
+    });
+  }
+
+  if (partyTreasureCancelBtn) {
+    partyTreasureCancelBtn.addEventListener('click', () => {
+      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+      closePartyTreasureEditor();
+    });
+  }
+
+  if (partyTreasurePanel) {
+    partyTreasurePanel.addEventListener('click', (event) => {
+      if (event.target !== partyTreasurePanel) return;
+      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+      closePartyTreasureEditor();
+    });
+  }
+
   if (inventoryAddBtn) {
     inventoryAddBtn.addEventListener('click', () => {
       addInventoryItemToSelectedSection();
@@ -3697,6 +4349,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
   document.addEventListener('click', () => {
     closeCharacterOverflowMenu();
+    closeExpandedOrderStats();
   });
 
   updateSelectedConditionsDisplay();
@@ -3909,6 +4562,17 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         encounterState
       };
       const currentJson = JSON.stringify(normalized);
+      const isMineTurn = Boolean(
+        currentTurnId && myCharacters.some((character) => character.id === currentTurnId)
+      );
+      lastEncounterSnapshot = {
+        players,
+        round,
+        currentTurnId,
+        currentTurnPlayer,
+        encounterState,
+        isMineTurn
+      };
 
       if (currentJson === lastStateJson) {
         // No change → no DOM update → no blinking
@@ -3916,10 +4580,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         // depends on local saved name (but that rarely changes)
       } else {
         lastStateJson = currentJson;
-
-        const isMineTurn = Boolean(
-          currentTurnId && myCharacters.some((character) => character.id === currentTurnId)
-        );
         updateEncounterStateDisplay(round, currentTurnPlayer, isMineTurn);
         if (currentActor) {
           if (hideTurnTable && currentTurnId) {
@@ -3937,100 +4597,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
           }
         }
 
-        // Rebuild table
-        playersBody.innerHTML = '';
-
-        if (players.length === 0) {
-          const hasConditions = conditionLibrary.length > 0;
-          playersBody.appendChild(createEmptyEncounterRow(hasConditions ? 4 : 3));
-        } else {
-          for (const p of players) {
-            const tr = document.createElement('tr');
-            tr.classList.add('player-row');
-
-            const initTd = document.createElement('td');
-            const nameTd = document.createElement('td');
-            const hpTd = document.createElement('td');
-            const conditionsTd = document.createElement('td');
-            conditionsTd.classList.add('conditions-cell');
-
-            initTd.textContent = formatInitiative(p.initiative);
-            if (p.isReferee) {
-              initTd.classList.add('init-referee');
-            }
-            const isMine =
-              !displayOnly &&
-              Boolean(currentPlayerSessionId) &&
-              ((p.ownerId && p.ownerId === currentPlayerSessionId) ||
-                myCharacters.some((character) => character.id === p.id));
-            if (isMine) {
-              initTd.classList.add('init-mine');
-            }
-
-            const nameWrap = document.createElement('div');
-            nameWrap.className = 'player-row-name-wrap';
-            if (isMine) {
-              const { overflow } = buildCharacterOverflowControls(p, { plainTrigger: true });
-              nameWrap.appendChild(overflow);
-            } else {
-              const nameText = document.createElement('div');
-              nameText.className = 'player-row-name-text';
-              const nameLine = document.createElement('div');
-              nameLine.textContent = p.name;
-              nameText.appendChild(nameLine);
-              const controllerName = getCharacterControllerName(p);
-              if (controllerName) {
-                const ownerLine = document.createElement('div');
-                ownerLine.classList.add('player-owner');
-                ownerLine.textContent = `(${controllerName})`;
-                nameText.appendChild(ownerLine);
-              }
-              nameWrap.appendChild(nameText);
-            }
-            nameTd.appendChild(nameWrap);
-
-            const stats = Array.isArray(p.stats) ? p.stats : [];
-            const displayStatKeys = getCharacterStatKeys(p);
-            const orderedStats = orderedEncounterStats(stats, displayStatKeys);
-            const statusInfo = encounterStatusInfo(stats, displayStatKeys);
-
-            if (statusInfo) {
-              applyEncounterHealthClasses(hpTd, statusInfo);
-              hpTd.innerHTML = '';
-              const canReveal = isMine || p.revealStats;
-              if (!canReveal) {
-                const statusLabel = healthStatusLabel(statusInfo.ratio, statusInfo.isDead);
-                const statusLine = document.createElement('div');
-                statusLine.textContent = statusLabel;
-                hpTd.appendChild(statusLine);
-              }
-              if (canReveal) {
-                const valueLine = document.createElement('div');
-                valueLine.textContent = formatEncounterStatsText(orderedStats, displayStatKeys);
-                hpTd.appendChild(valueLine);
-              }
-            } else {
-              hpTd.textContent = '—';
-            }
-
-            const list = buildEncounterConditionsList(p.conditions, conditionLookup);
-            if (list) {
-              conditionsTd.appendChild(list);
-            } else {
-              conditionsTd.textContent = '—';
-            }
-
-            if (currentTurnId && p.id === currentTurnId) {
-              tr.classList.add('current-turn');
-            }
-
-            tr.appendChild(initTd);
-            tr.appendChild(nameTd);
-            tr.appendChild(hpTd);
-            tr.appendChild(conditionsTd);
-            playersBody.appendChild(tr);
-          }
-        }
+        renderEncounterRows(lastEncounterSnapshot);
 
         syncMyCharacterStatsFromState(players);
         syncConditionsFromState(players);

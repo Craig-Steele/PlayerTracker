@@ -296,6 +296,7 @@ th, td {
 
 .container {
   display: flex;
+  flex-direction: row;
   gap: 1rem;
   align-items: flex-start;
   width: 100%;
@@ -310,6 +311,7 @@ body.referee-page .referee-container {
 
 body.player-page .container {
   flex: 1 1 auto;
+  flex-direction: column;
   align-items: stretch;
   min-height: 0;
 }
@@ -492,6 +494,16 @@ body.player-page .detail-panel {
   overscroll-behavior: contain;
 }
 
+body.player-page .detail-panel {
+  flex: 0 0 auto;
+  padding: 0;
+  margin: 0;
+}
+
+body.player-page #player-form {
+  flex: 0 0 auto;
+}
+
 body.referee-page .player-list {
   display: flex;
   flex-direction: column;
@@ -500,6 +512,8 @@ body.referee-page .player-list {
 body.player-page .player-list {
   display: flex;
   flex-direction: column;
+  order: 1;
+  flex: 1 1 auto;
 }
 
 body.referee-page .referee-panel {
@@ -1767,15 +1781,8 @@ body.referee-page .referee-panel {
   }
 
   .detail-panel {
-    padding: 0.1rem;
-  }
-
-  .detail-panel {
-    margin-top: 0.05rem;
-  }
-
-  .detail-panel {
-    margin-top: 0.15rem;
+    padding: 0;
+    margin: 0;
   }
 
   body.referee-page .player-list {
@@ -1787,11 +1794,11 @@ body.referee-page .referee-panel {
   }
 
   body.player-page .player-list {
-    order: 2;
+    order: 1;
   }
 
   body.player-page .detail-panel {
-    order: 1;
+    order: 2;
   }
 
   .character-drawer-header {
@@ -1884,6 +1891,14 @@ body.referee-page .referee-panel {
   .player-row-overflow {
     margin-left: 0;
     margin-top: 0;
+  }
+
+  .player-row-owned-name-cell .player-row-overflow {
+    top: 0.25rem;
+  }
+
+  .player-row-overflow .character-overflow-toggle {
+    display: none;
   }
 
   .player-row-overflow .character-overflow-toggle {
@@ -2140,8 +2155,59 @@ body.referee-page .referee-panel {
   min-width: 0;
 }
 
+.player-row-name-button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.player-row-owned-name-cell {
+  position: relative;
+}
+
+.player-row-name-button:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.player-row-name-button .player-row-name-wrap {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.player-row-name-button .player-row-name-text {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.player-row-name-button .player-row-name-text > div {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .player-row-overflow {
+  position: absolute;
+  top: 0.25rem;
+  left: 0;
   flex: 0 0 auto;
+  z-index: 1;
 }
 
 .player-row-overflow .character-overflow-toggle {
@@ -2155,6 +2221,68 @@ body.referee-page .referee-panel {
   gap: 0.1rem;
   min-width: 0;
   flex: 1 1 auto;
+}
+
+.player-row:not(.player-row-owned) td:nth-child(2) .player-row-name-text,
+.player-row:not(.player-row-owned) td:nth-child(2) .player-owner {
+  color: var(--text-secondary);
+}
+
+.player-row-owned td:nth-child(2) .player-row-name-text {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.player-row-stats-cell {
+  position: relative;
+}
+
+.player-row-stats-popover {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.45rem;
+  min-width: 14rem;
+  max-width: min(18rem, calc(100vw - 1rem));
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  background: var(--bg-panel);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+.player-row-stats-heading {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.player-row-stats-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.player-row-stats-toggle-bottom {
+  margin-top: 0.15rem;
+}
+
+.player-row-stats-toggle input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.player-row-stats-popover .character-stat-line {
+  white-space: nowrap;
 }
 
 /* Make the first column narrow, second column wide */

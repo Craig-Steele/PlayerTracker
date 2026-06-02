@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body class="player-page">
   <div id="header-bar">
@@ -62,6 +62,62 @@
     <!-- LEFT: Player list -->
     <section class="player-list">
       <div id="current-actor" class="subtitle current-actor"></div>
+      <div class="character-list-actions character-list-header">
+        <button type="button" id="character-add">Add Character</button>
+      </div>
+      <div id="add-character-form" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
+        <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="add-dialog-title">
+          <div class="conditions-dialog-header">
+            <h2 id="add-dialog-title">Add Character</h2>
+            <div class="conditions-dialog-actions">
+              <button type="button" id="add-cancel" class="secondary">Cancel</button>
+              <button type="button" id="add-save">Save</button>
+            </div>
+          </div>
+          <div class="form-section-title">New Character Name</div>
+          <label class="property-row">
+            <span class="property-label">Character name</span>
+            <span class="property-control">
+              <input type="text" id="add-name" required autocapitalize="words" autocomplete="off" />
+            </span>
+          </label>
+          <div class="form-section-title">Initiative</div>
+          <div class="initiative-settings form-section-block">
+            <label class="property-toggle-row">
+              <span class="property-label">App Roll</span>
+              <span class="property-toggle-control">
+                <input type="checkbox" id="add-use-app-initiative-roll" checked />
+                <span>Use app to roll initiative</span>
+              </span>
+            </label>
+            <label id="add-initiative-bonus-wrap" class="property-row">
+              <span class="property-label">Initiative Bonus</span>
+              <span class="property-control">
+              <input type="number" id="add-initiative-bonus" value="" />
+              </span>
+            </label>
+            <label class="property-toggle-row">
+              <span class="property-label">Auto Skip</span>
+              <span class="property-toggle-control">
+                <input type="checkbox" id="add-auto-skip-turn" />
+                <span>Automatically skip this character's turn</span>
+              </span>
+            </label>
+          </div>
+          <div class="form-section-title">Stats</div>
+          <div class="form-section-block">
+            <label class="property-toggle-row">
+              <span class="property-label">Visibility</span>
+              <span class="property-toggle-control">
+                <input type="checkbox" id="add-reveal-stats" />
+                <span>Share stats with others</span>
+              </span>
+            </label>
+          </div>
+          <div id="add-stats-fields"></div>
+          <div id="add-current-stats" class="add-current-stats"></div>
+        </div>
+      </div>
       <table>
         <thead>
           <tr>
@@ -73,6 +129,10 @@
         </thead>
         <tbody id="players-body"></tbody>
       </table>
+      <div class="claimable-character-panel property-sheet hidden" id="claimable-character-panel" aria-hidden="true">
+        <div class="form-section-title">Available Characters</div>
+        <div id="claimable-character-list" class="claimable-character-list"></div>
+      </div>
 
       <div class="toolbar" id="list-toolbar"></div>
 
@@ -86,69 +146,6 @@
     <section class="detail-panel">
       <form id="player-form">
         <input type="text" id="owner-name" class="visually-hidden" aria-hidden="true" />
-      <div class="character-drawer">
-          <div class="character-list-actions character-list-header">
-            <button type="button" id="character-add">Add Character</button>
-          </div>
-          <div id="character-list" class="character-list"></div>
-          <div id="add-character-form" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
-            <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="add-dialog-title">
-              <div class="conditions-dialog-header">
-                <h2 id="add-dialog-title">Add Character</h2>
-                <div class="conditions-dialog-actions">
-                  <button type="button" id="add-cancel" class="secondary">Cancel</button>
-                  <button type="button" id="add-save">Save</button>
-                </div>
-              </div>
-              <div class="form-section-title">New Character Name</div>
-              <label class="property-row">
-                <span class="property-label">Character name</span>
-                <span class="property-control">
-                  <input type="text" id="add-name" required autocapitalize="words" autocomplete="off" />
-                </span>
-              </label>
-              <div class="form-section-title">Initiative</div>
-              <div class="initiative-settings form-section-block">
-                <label class="property-toggle-row">
-                  <span class="property-label">App Roll</span>
-                  <span class="property-toggle-control">
-                    <input type="checkbox" id="add-use-app-initiative-roll" checked />
-                    <span>Use app to roll initiative</span>
-                  </span>
-                </label>
-                <label id="add-initiative-bonus-wrap" class="property-row">
-                  <span class="property-label">Initiative Bonus</span>
-                  <span class="property-control">
-                  <input type="number" id="add-initiative-bonus" value="" />
-                  </span>
-                </label>
-                <label class="property-toggle-row">
-                  <span class="property-label">Auto Skip</span>
-                  <span class="property-toggle-control">
-                    <input type="checkbox" id="add-auto-skip-turn" />
-                    <span>Automatically skip this character's turn</span>
-                  </span>
-                </label>
-              </div>
-              <div class="form-section-title">Stats</div>
-              <div class="form-section-block">
-                <label class="property-toggle-row">
-                  <span class="property-label">Visibility</span>
-                  <span class="property-toggle-control">
-                    <input type="checkbox" id="add-reveal-stats" />
-                    <span>Share stats with others</span>
-                  </span>
-                </label>
-              </div>
-              <div id="add-stats-fields"></div>
-              <div id="add-current-stats" class="add-current-stats"></div>
-            </div>
-          </div>
-        </div>
-        <div class="claimable-character-panel property-sheet hidden" id="claimable-character-panel" aria-hidden="true">
-          <div class="form-section-title">Available Characters</div>
-          <div id="claimable-character-list" class="claimable-character-list"></div>
-        </div>
         <div id="current-stats-inputs" class="visually-hidden" aria-hidden="true"></div>
         <div id="details-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
           <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="details-dialog-title">
@@ -252,6 +249,36 @@
             <div id="currency-fields" class="property-group currency-fields"></div>
           </div>
         </div>
+        <div id="party-treasure-panel" class="conditions-modal hidden" aria-hidden="true">
+          <div class="conditions-dialog inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="party-treasure-dialog-title">
+            <div class="conditions-dialog-header">
+              <h2 id="party-treasure-dialog-title">Party Treasure</h2>
+              <div class="conditions-dialog-actions">
+                <button type="button" id="party-treasure-add" class="secondary">Add Item</button>
+                <button type="button" id="party-treasure-remove" class="secondary">Remove Item</button>
+                <button type="button" id="party-treasure-claim" class="secondary">Claim Item</button>
+                <button type="button" id="party-treasure-cancel" class="secondary">Cancel</button>
+                <button type="button" id="party-treasure-save">Save</button>
+              </div>
+            </div>
+            <div id="party-treasure-context" class="inventory-summary">Party treasure for —</div>
+            <div class="inventory-table-wrap">
+              <table class="inventory-table">
+                <thead>
+                  <tr>
+                    <th>Carried</th>
+                    <th>Qty</th>
+                    <th>Value</th>
+                    <th>Weight (per)</th>
+                    <th>Link</th>
+                  </tr>
+                </thead>
+                <tbody id="party-treasure-fields"></tbody>
+              </table>
+            </div>
+            <datalist id="party-treasure-item-options"></datalist>
+          </div>
+        </div>
         <div id="inventory-panel" class="conditions-modal hidden" aria-hidden="true">
           <div class="conditions-dialog inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="inventory-dialog-title">
             <div class="conditions-dialog-header">
@@ -295,6 +322,6 @@
   <script src="claimable-characters.js?v=1"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="app.js?v=40"></script>
+  <script src="app.js?v=49"></script>
 </body>
 </html>
