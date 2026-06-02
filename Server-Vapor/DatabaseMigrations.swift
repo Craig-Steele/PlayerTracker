@@ -473,6 +473,32 @@ struct AddUserDataFilesToCampaigns: AsyncMigration {
     }
 }
 
+struct AddPartyTreasureToCampaigns: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaigns)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "party_treasure_json" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE campaigns ADD COLUMN party_treasure_json TEXT")
+                .run()
+            connection.logger.notice("Patched campaigns with party_treasure_json.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct DatabaseShapeVerification {
     static func verify(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -546,7 +572,8 @@ struct DatabaseShapeVerification {
             let requiredCampaignColumns = [
                 "claim_timeout_minutes",
                 "is_invite_only",
-                "userdata_files_json"
+                "userdata_files_json",
+                "party_treasure_json"
             ]
             let missingCampaignColumns = requiredCampaignColumns.filter { required in
                 campaignColumns.contains(where: { $0.name == required }) == false
@@ -591,6 +618,8 @@ struct CreateCampaigns: AsyncMigration {
             .field("is_archived", .bool, .required)
             .field("claim_timeout_minutes", .int)
             .field("is_invite_only", .bool, .required, .sql(.default(false)))
+            .field("userdata_files_json", .string)
+            .field("party_treasure_json", .string)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
             .create()
@@ -761,6 +790,7 @@ enum DatabaseMigrations {
         app.migrations.add(AddClaimTimeoutMinutesToCampaigns())
         app.migrations.add(AddInviteOnlyToCampaigns())
         app.migrations.add(AddUserDataFilesToCampaigns())
+        app.migrations.add(AddPartyTreasureToCampaigns())
         app.migrations.add(CreateCampaignMemberships())
         app.migrations.add(CreateCampaignInvites())
         app.migrations.add(AddInviteTargetNameToCampaignInvites())

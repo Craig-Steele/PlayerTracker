@@ -467,6 +467,18 @@ actor UserStore {
         storage[id]
     }
 
+    func replaceCharacterState(_ state: CharacterState) async throws -> PlayerView {
+        storage[state.id] = state
+        if state.campaignName == currentCampaignName {
+            do {
+                try await persistConfiguredCampaignCharacters()
+            } catch {
+                print("Failed to persist replaced character state:", error)
+            }
+        }
+        return view(from: state)
+    }
+
     func renameOwner(ownerId: UUID, newName: String, campaignName: String) async {
         for (id, var state) in storage {
             guard state.campaignName == campaignName, state.ownerId == ownerId else { continue }

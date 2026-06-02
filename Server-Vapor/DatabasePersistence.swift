@@ -10,6 +10,7 @@ struct CampaignPersistenceState {
     let claimTimeoutMinutes: Int
     let isInviteOnly: Bool
     let userdataFiles: [String]
+    let partyTreasure: [InventoryEntry]
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
@@ -203,6 +204,9 @@ final class CampaignRow: Model, @unchecked Sendable {
     @OptionalField(key: "userdata_files_json")
     var userdataFilesJSON: String?
 
+    @OptionalField(key: "party_treasure_json")
+    var partyTreasureJSON: String?
+
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -218,7 +222,8 @@ final class CampaignRow: Model, @unchecked Sendable {
         isArchived: Bool = false,
         claimTimeoutMinutes: Int? = nil,
         isInviteOnly: Bool = false,
-        userdataFilesJSON: String? = nil
+        userdataFilesJSON: String? = nil,
+        partyTreasureJSON: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -227,6 +232,7 @@ final class CampaignRow: Model, @unchecked Sendable {
         self.claimTimeoutMinutes = claimTimeoutMinutes
         self.isInviteOnly = isInviteOnly
         self.userdataFilesJSON = userdataFilesJSON
+        self.partyTreasureJSON = partyTreasureJSON
     }
 }
 
@@ -708,6 +714,20 @@ enum DatabasePersistence {
             throw Abort(.notFound, reason: "Campaign not found.")
         }
         campaign.userdataFilesJSON = try encodeUserDataFiles(files)
+        try await campaign.save(on: database)
+    }
+
+    static func updateCampaignPartyTreasure(
+        campaignID: UUID,
+        items: [InventoryEntry],
+        on database: any Database
+    ) async throws {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        campaign.partyTreasureJSON = try encodeInventoryEntries(items)
         try await campaign.save(on: database)
     }
 
@@ -1311,6 +1331,7 @@ enum DatabasePersistence {
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
         let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+        let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
         let roundIndex = encounter?.roundIndex ?? 1
         let turnIndex = encounter?.turnIndex ?? 0
         let currentTurnID = encounter?.currentCharacterID
@@ -1322,6 +1343,7 @@ enum DatabasePersistence {
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
             userdataFiles: userdataFiles,
+            partyTreasure: partyTreasure,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -1346,6 +1368,7 @@ enum DatabasePersistence {
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
         let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+        let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
         let roundIndex = encounter?.roundIndex ?? 1
         let turnIndex = encounter?.turnIndex ?? 0
         let currentTurnID = encounter?.currentCharacterID
@@ -1357,6 +1380,7 @@ enum DatabasePersistence {
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
             userdataFiles: userdataFiles,
+            partyTreasure: partyTreasure,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID
@@ -1374,6 +1398,7 @@ enum DatabasePersistence {
             let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
             let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
             let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+            let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
             let roundIndex = encounter?.roundIndex ?? 1
             let turnIndex = encounter?.turnIndex ?? 0
             let currentTurnID = encounter?.currentCharacterID
@@ -1385,6 +1410,7 @@ enum DatabasePersistence {
                 claimTimeoutMinutes: claimTimeoutMinutes,
                 isInviteOnly: campaign.isInviteOnly,
                 userdataFiles: userdataFiles,
+                partyTreasure: partyTreasure,
                 roundIndex: roundIndex,
                 turnIndex: turnIndex,
                 currentTurnID: currentTurnID
@@ -1425,7 +1451,8 @@ enum DatabasePersistence {
             isArchived: isArchived,
             claimTimeoutMinutes: max(-1, claimTimeoutMinutes ?? defaultClaimTimeoutMinutes),
             isInviteOnly: isInviteOnly,
-            userdataFilesJSON: nil
+            userdataFilesJSON: nil,
+            partyTreasureJSON: nil
         )
         try await campaign.create(on: database)
         guard let id = campaign.id else {

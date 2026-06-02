@@ -10,6 +10,7 @@ actor CampaignStore {
     private var currentClaimTimeoutMinutes: Int
     private var currentIsInviteOnly: Bool
     private var currentUserdataFiles: [String]
+    private var currentPartyTreasure: [InventoryEntry]
     private var currentCampaignID: UUID?
     private var database: (any Database)?
     private let restorePersistedState: Bool
@@ -30,6 +31,7 @@ actor CampaignStore {
         self.currentClaimTimeoutMinutes = 5
         self.currentIsInviteOnly = false
         self.currentUserdataFiles = []
+        self.currentPartyTreasure = []
         self.currentCampaignID = nil
     }
 
@@ -44,6 +46,7 @@ actor CampaignStore {
             currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
             currentIsInviteOnly = loaded.isInviteOnly
             currentUserdataFiles = loaded.userdataFiles
+            currentPartyTreasure = loaded.partyTreasure
             currentCampaignID = nil
         }
     }
@@ -60,7 +63,8 @@ actor CampaignStore {
             encounterState: currentEncounterState,
             claimTimeoutMinutes: currentClaimTimeoutMinutes,
             isInviteOnly: currentIsInviteOnly,
-            userdataFiles: currentUserdataFiles
+            userdataFiles: currentUserdataFiles,
+            partyTreasure: currentPartyTreasure
         )
     }
 
@@ -160,6 +164,7 @@ actor CampaignStore {
             currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
             currentIsInviteOnly = updated.isInviteOnly
             currentUserdataFiles = updated.userdataFiles
+            currentPartyTreasure = updated.partyTreasure
         }
         return CampaignSummary(
             id: updated.id,
@@ -194,6 +199,7 @@ actor CampaignStore {
         currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
         currentIsInviteOnly = loaded.isInviteOnly
         currentUserdataFiles = loaded.userdataFiles
+        currentPartyTreasure = loaded.partyTreasure
         return state()!
     }
 
@@ -235,6 +241,7 @@ actor CampaignStore {
         currentClaimTimeoutMinutes = max(-1, claimTimeoutMinutes ?? 5)
         currentIsInviteOnly = isInviteOnly ?? false
         currentUserdataFiles = []
+        currentPartyTreasure = []
         await savePersistedStateIfNeeded()
         return state()!
     }
@@ -253,6 +260,11 @@ actor CampaignStore {
                 try await DatabasePersistence.updateCampaignUserDataFiles(
                     campaignID: currentCampaignID,
                     files: currentUserdataFiles,
+                    on: database
+                )
+                try await DatabasePersistence.updateCampaignPartyTreasure(
+                    campaignID: currentCampaignID,
+                    items: currentPartyTreasure,
                     on: database
                 )
             }
@@ -278,6 +290,23 @@ actor CampaignStore {
         currentUserdataFiles
     }
 
+    func partyTreasure() -> [InventoryEntry] {
+        currentPartyTreasure
+    }
+
+    func updatePartyTreasure(_ items: [InventoryEntry]) async throws -> CampaignState {
+        guard let database, let currentCampaignID else {
+            throw Abort(.internalServerError, reason: "Database is not configured.")
+        }
+        currentPartyTreasure = normalizePartyTreasure(items)
+        try await DatabasePersistence.updateCampaignPartyTreasure(
+            campaignID: currentCampaignID,
+            items: currentPartyTreasure,
+            on: database
+        )
+        return state()!
+    }
+
     private func normalizeUserdataFiles(_ files: [String]) -> [String] {
         let normalized = files.compactMap { file -> String? in
             let trimmed = file.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -286,6 +315,24 @@ actor CampaignStore {
         }
         return Array(Set(normalized)).sorted { lhs, rhs in
             lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
+        }
+    }
+
+    private func normalizePartyTreasure(_ items: [InventoryEntry]) -> [InventoryEntry] {
+        items.compactMap { item in
+            let name = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { return nil }
+            let url = item.url?.trimmingCharacters(in: .whitespacesAndNewlines)
+            return InventoryEntry(
+                id: item.id,
+                name: name,
+                quantity: max(1, item.quantity),
+                value: item.value,
+                weight: item.weight,
+                url: url?.isEmpty == false ? url : nil,
+                containerId: nil,
+                isContainer: false
+            )
         }
     }
 }

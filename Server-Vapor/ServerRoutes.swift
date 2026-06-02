@@ -166,6 +166,164 @@ private func requireActiveCampaignParticipantSession(
     return (campaign, session)
 }
 
+private func currencyUnitLookup(_ system: CurrencySystem?) -> [String: CurrencyUnit] {
+    guard let system else { return [:] }
+    return Dictionary(uniqueKeysWithValues: system.units.map { ($0.id, $0) })
+}
+
+private func totalCommonCurrencyValue(
+    _ amounts: [CurrencyAmount],
+    system: CurrencySystem?
+) -> Double {
+    let lookup = currencyUnitLookup(system)
+    return amounts.reduce(0) { partialResult, amount in
+        guard let unit = lookup[amount.unitId] else {
+            return partialResult
+        }
+        return partialResult + (Double(amount.amount) * unit.valueInCommonCurrency)
+    }
+}
+
+private func decomposeCommonCurrencyValue(
+    _ total: Double,
+    system: CurrencySystem?
+) -> [CurrencyAmount] {
+    guard let system else { return [] }
+    let lookup = currencyUnitLookup(system)
+    let units = system.units
+        .filter { $0.valueInCommonCurrency > 0 }
+        .sorted { lhs, rhs in
+            if lhs.valueInCommonCurrency == rhs.valueInCommonCurrency {
+                return lhs.id < rhs.id
+            }
+            return lhs.valueInCommonCurrency > rhs.valueInCommonCurrency
+        }
+    var remaining = max(0, total)
+    let epsilon = 1e-9
+    var results: [CurrencyAmount] = []
+
+    for unit in units {
+        guard unit.valueInCommonCurrency > 0 else { continue }
+        let amount = Int(floor((remaining + epsilon) / unit.valueInCommonCurrency))
+        guard amount > 0 else { continue }
+        results.append(CurrencyAmount(unitId: unit.id, amount: amount))
+        remaining -= Double(amount) * unit.valueInCommonCurrency
+    }
+
+    if abs(remaining) > epsilon,
+       let commonUnit = lookup[system.commonCurrencyId],
+       commonUnit.valueInCommonCurrency > 0 {
+        let amount = Int(round(remaining / commonUnit.valueInCommonCurrency))
+        if amount != 0 {
+            if let index = results.firstIndex(where: { $0.unitId == commonUnit.id }) {
+                results[index] = CurrencyAmount(unitId: commonUnit.id, amount: results[index].amount + amount)
+            } else {
+                results.append(CurrencyAmount(unitId: commonUnit.id, amount: amount))
+            }
+        }
+    }
+
+    return results.filter { $0.amount != 0 }
+}
+
+private func adjustCurrencyAmounts(
+    _ amounts: [CurrencyAmount],
+    commonDelta: Double,
+    system: CurrencySystem?
+) -> [CurrencyAmount]? {
+    guard system != nil else {
+        return amounts
+    }
+    let current = totalCommonCurrencyValue(amounts, system: system)
+    let nextTotal = current + commonDelta
+    if nextTotal < -1e-9 {
+        return nil
+    }
+    return decomposeCommonCurrencyValue(nextTotal, system: system)
+}
+
+private func adjustCurrencyAmountsPreferCommonUnit(
+    _ amounts: [CurrencyAmount],
+    commonDelta: Double,
+    system: CurrencySystem?
+) -> [CurrencyAmount]? {
+    guard let system else {
+        return amounts
+    }
+    let lookup = currencyUnitLookup(system)
+    guard let commonUnit = lookup[system.commonCurrencyId] else {
+        return adjustCurrencyAmounts(amounts, commonDelta: commonDelta, system: system)
+    }
+
+    let epsilon = 1e-9
+    let commonUnitValue = commonUnit.valueInCommonCurrency
+    if commonUnitValue > 0 {
+        let deltaInCommonUnits = commonDelta / commonUnitValue
+        let roundedDelta = deltaInCommonUnits.rounded()
+        if abs(deltaInCommonUnits - roundedDelta) <= epsilon {
+            let commonDeltaUnits = Int(roundedDelta)
+            var amountByUnit = Dictionary(uniqueKeysWithValues: amounts.map { ($0.unitId, $0.amount) })
+            let sortedUnits = system.units.sorted {
+                if $0.valueInCommonCurrency == $1.valueInCommonCurrency {
+                    return $0.id < $1.id
+                }
+                return $0.valueInCommonCurrency > $1.valueInCommonCurrency
+            }
+            if commonDeltaUnits >= 0 {
+                amountByUnit[commonUnit.id, default: 0] += commonDeltaUnits
+            } else {
+                var remainingCommonUnits = Double(-commonDeltaUnits)
+                let currentCommonUnits = amountByUnit[commonUnit.id, default: 0]
+                let useFromCommon = min(currentCommonUnits, Int(remainingCommonUnits))
+                amountByUnit[commonUnit.id] = currentCommonUnits - useFromCommon
+                remainingCommonUnits -= Double(useFromCommon)
+
+                if remainingCommonUnits > epsilon {
+                    for unit in sortedUnits where unit.id != commonUnit.id && unit.valueInCommonCurrency > 0 {
+                        guard remainingCommonUnits > epsilon else { break }
+                        let currentAmount = amountByUnit[unit.id, default: 0]
+                        if currentAmount <= 0 { continue }
+                        let requiredAmount = Int(ceil(remainingCommonUnits / unit.valueInCommonCurrency))
+                        let usedAmount = min(currentAmount, requiredAmount)
+                        amountByUnit[unit.id] = currentAmount - usedAmount
+                        remainingCommonUnits -= Double(usedAmount) * unit.valueInCommonCurrency
+                    }
+                }
+
+                if remainingCommonUnits > epsilon {
+                    return nil
+                }
+            }
+
+            return sortedUnits.compactMap { unit in
+                let amount = amountByUnit[unit.id] ?? 0
+                if amount != 0 || unit.id == commonUnit.id {
+                    return CurrencyAmount(unitId: unit.id, amount: amount)
+                }
+                return nil
+            }
+        }
+    }
+
+    return adjustCurrencyAmounts(amounts, commonDelta: commonDelta, system: system)
+}
+
+private func normalizeTreasureEntry(_ entry: InventoryEntry) -> InventoryEntry? {
+    let name = entry.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !name.isEmpty else { return nil }
+    let url = entry.url?.trimmingCharacters(in: .whitespacesAndNewlines)
+    return InventoryEntry(
+        id: entry.id,
+        name: name,
+        quantity: max(1, entry.quantity),
+        value: entry.value,
+        weight: entry.weight,
+        url: url?.isEmpty == false ? url : nil,
+        containerId: nil,
+        isContainer: false
+    )
+}
+
 private func requireRefereeSession(
     _ req: Request,
     campaignStore: CampaignStore
@@ -1184,6 +1342,128 @@ func routes(
         disableResponseCaching(&response)
         try response.content.encode(campaign)
         return response
+    }
+
+    app.put("campaign", "party-treasure") { req async throws -> CampaignState in
+        _ = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(PartyTreasureUpdateInput.self)
+        let normalized = input.items.compactMap { normalizeTreasureEntry($0) }
+        let updated = try await campaignStore.updatePartyTreasure(normalized)
+        await publishCampaignUpdate(
+            campaign: updated,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "campaign-updated"
+        )
+        return updated
+    }
+
+    app.post("campaign", "party-treasure", "claim") { req async throws -> CampaignState in
+        let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(PartyTreasureClaimInput.self)
+        guard let currentCampaign = await campaignStore.activeCampaign(), currentCampaign.id == campaign.id else {
+            throw Abort(.conflict, reason: "Campaign is not active.")
+        }
+        guard var claimant = await userStore.characterState(for: input.characterId),
+              claimant.campaignName == campaign.name else {
+            throw Abort(.notFound, reason: "Character not found.")
+        }
+        guard claimant.ownerId == session.id || claimant.claimedSessionId == session.id else {
+            throw Abort(.forbidden, reason: "Claim access required.")
+        }
+        let library = await campaignStore.library()
+        let treasure = await campaignStore.partyTreasure()
+        guard let itemIndex = treasure.firstIndex(where: { $0.id == input.itemId }) else {
+            throw Abort(.notFound, reason: "Party treasure item not found.")
+        }
+        let claimedItem = treasure[itemIndex]
+        let otherTreasures = treasure.filter { $0.id != input.itemId }
+        let partyMembers = await userStore.all(campaignName: campaign.name).values
+            .filter { !$0.isReferee }
+        let partyCount = max(1, partyMembers.count)
+        let shareValue = floor(claimedItem.value / Double(partyCount))
+        let canAfford = adjustCurrencyAmounts(
+            claimant.currency,
+            commonDelta: -claimedItem.value,
+            system: library.currency
+        ) != nil
+
+        let claimedInventoryItem = InventoryEntry(
+            id: UUID(),
+            name: claimedItem.name,
+            quantity: claimedItem.quantity,
+            value: claimedItem.value,
+            weight: claimedItem.weight,
+            url: claimedItem.url,
+            containerId: nil,
+            isContainer: false
+        )
+
+        claimant.inventory.append(claimedInventoryItem)
+
+        var updatedTreasure = otherTreasures
+
+        if canAfford {
+            if let updatedCurrency = adjustCurrencyAmountsPreferCommonUnit(
+                claimant.currency,
+                commonDelta: -claimedItem.value + shareValue,
+                system: library.currency
+            ) {
+                claimant.currency = updatedCurrency
+            }
+            let debtRemainder = claimedItem.value - shareValue * Double(partyCount)
+            if debtRemainder > 0 {
+                updatedTreasure.append(
+                    InventoryEntry(
+                        id: UUID(),
+                        name: "Remainder from \(claimedItem.name)",
+                        quantity: 1,
+                        value: debtRemainder,
+                        weight: 0,
+                        url: nil,
+                        containerId: nil,
+                        isContainer: false
+                    )
+                )
+            }
+
+            if shareValue > 0 {
+                for var member in partyMembers {
+                    guard member.id != claimant.id else { continue }
+                    if let updatedCurrency = adjustCurrencyAmountsPreferCommonUnit(
+                        member.currency,
+                        commonDelta: shareValue,
+                        system: library.currency
+                    ) {
+                        member.currency = updatedCurrency
+                        _ = try await userStore.replaceCharacterState(member)
+                    }
+                }
+            }
+        } else {
+            updatedTreasure.append(
+                InventoryEntry(
+                    id: UUID(),
+                    name: "Debt from \(claimant.characterName) for \(claimedItem.name)",
+                    quantity: 1,
+                    value: claimedItem.value,
+                    weight: 0,
+                    url: nil,
+                    containerId: nil,
+                    isContainer: false
+                )
+            )
+        }
+
+        _ = try await userStore.replaceCharacterState(claimant)
+        let updatedCampaign = try await campaignStore.updatePartyTreasure(updatedTreasure)
+        await publishCampaignUpdate(
+            campaign: updatedCampaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "campaign-updated"
+        )
+        return updatedCampaign
     }
 
     app.get("campaign", "userdata") { req async throws -> CampaignUserDataResponse in

@@ -181,6 +181,7 @@ struct CampaignState: Content {
     let claimTimeoutMinutes: Int
     let isInviteOnly: Bool
     let userdataFiles: [String]
+    let partyTreasure: [InventoryEntry]
 }
 
 struct CampaignUpdateInput: Content {
@@ -256,6 +257,15 @@ struct PlayerSessionResponse: Content {
 struct UserData: Content {
     let name: String
     let initiative: Double?
+}
+
+struct PartyTreasureUpdateInput: Content {
+    let items: [InventoryEntry]
+}
+
+struct PartyTreasureClaimInput: Content {
+    let characterId: UUID
+    let itemId: UUID
 }
 
 struct CharacterState {
