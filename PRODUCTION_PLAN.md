@@ -972,8 +972,6 @@ Work:
 - fold in post-M7A usability feedback
 - keep the fixes scoped to the web experience and other pre-M8 polish
 - move the player character cards above the order tracker in `Client-Web/player.html`
-- let the iOS portrait details column size to its contents instead of behaving like a fixed-height pane
-- let the iOS portrait order column follow the same intrinsic-height behavior
 - define currency tables in the rulesets
 - add per-character currency storage
 - add per-character inventory tracking with quantity, value, weight, and optional web links
@@ -984,6 +982,8 @@ Acceptance:
 
 - the most important user-test issues from the M7/M7A flow are resolved
 - the plan has a clear slot for feedback-driven fixes before iOS migration work resumes
+
+Status: complete
 
 ### M8: iOS Migration
 
