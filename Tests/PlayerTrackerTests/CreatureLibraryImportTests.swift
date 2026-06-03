@@ -22,7 +22,7 @@ final class CreatureLibraryImportTests: XCTestCase {
         XCTAssertEqual(pathfinder.currency?.commonCurrencyId, "gp")
         XCTAssertEqual(pathfinder.currency?.units.map(\.id), ["cp", "sp", "gp", "pp"])
         XCTAssertEqual(pathfinder.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 1, 10])
-        XCTAssertEqual(pathfinder.equipmentLibrary?.file, "pathfinder-equipment.json")
+        XCTAssertEqual(pathfinder.equipmentLibrary?.file, "pathfinder-equipment")
         XCTAssertEqual(dnd5e.currency?.commonCurrencyId, "gp")
         XCTAssertEqual(dnd5e.currency?.units.map(\.id), ["cp", "sp", "ep", "gp", "pp"])
         XCTAssertEqual(dnd5e.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 0.5, 1, 10])

@@ -30,7 +30,10 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await AddLastPlayedByNameToCharacters().prepare(on: app.db)
         try await AddReferenceUrlToCharacters().prepare(on: app.db)
         try await AddStatBlockIdToCharacters().prepare(on: app.db)
+        try await AddCurrencyToCharacters().prepare(on: app.db)
+        try await AddInventoryToCharacters().prepare(on: app.db)
         try await AddUserDataFilesToCampaigns().prepare(on: app.db)
+        try await AddPartyTreasureToCampaigns().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
@@ -47,7 +50,10 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await AddLastPlayedByNameToCharacters().prepare(on: app.db)
         try await AddReferenceUrlToCharacters().prepare(on: app.db)
         try await AddStatBlockIdToCharacters().prepare(on: app.db)
+        try await AddCurrencyToCharacters().prepare(on: app.db)
+        try await AddInventoryToCharacters().prepare(on: app.db)
         try await AddUserDataFilesToCampaigns().prepare(on: app.db)
+        try await AddPartyTreasureToCampaigns().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
@@ -82,7 +88,10 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await AddInviteOnlyToCampaigns().prepare(on: app.db)
         try await AddReferenceUrlToCharacters().prepare(on: app.db)
         try await AddStatBlockIdToCharacters().prepare(on: app.db)
+        try await AddCurrencyToCharacters().prepare(on: app.db)
+        try await AddInventoryToCharacters().prepare(on: app.db)
         try await AddUserDataFilesToCampaigns().prepare(on: app.db)
+        try await AddPartyTreasureToCampaigns().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
