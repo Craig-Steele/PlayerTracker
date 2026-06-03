@@ -743,6 +743,7 @@ func routes(
             campaignName: campaign.name
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return released
     }
 
@@ -976,7 +977,12 @@ func routes(
             includeHidden: true,
             encounterState: .active
         )
-        await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: eventHub)
+        await publishCampaignUpdate(
+            campaign: updatedCampaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "encounter-start"
+        )
         return state
     }
 
@@ -1144,6 +1150,7 @@ func routes(
             campaignName: campaign.name
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
+        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
         return claimed
     }
 
