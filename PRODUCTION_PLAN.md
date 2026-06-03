@@ -1009,9 +1009,11 @@ Remaining:
 
 - let referees roll initiative for groups of creatures of the same type as a single action
 
-### M7D: Confirmation Dialogs
+### M7D: Confirmation Dialogs/Code cleanup
 
-Goal: replace native browser confirmation dialogs with custom in-app confirmation modals for clearer, more consistent web UX.
+Goals: 
+- replace native browser confirmation dialogs with custom in-app confirmation modals for clearer, more consistent web UX.
+- remove dead code and consolidate code where it makes sense.
 
 Work:
 

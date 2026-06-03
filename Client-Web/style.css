@@ -269,14 +269,18 @@ th, td {
 
 .initiative-inline-button {
   margin-top: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border-default);
+  background: var(--bg-panel-muted);
+  color: var(--text-primary);
   font: inherit;
-  text-decoration: underline;
-  text-underline-offset: 0.1em;
-  white-space: nowrap;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .character-item .character-meta {
@@ -647,6 +651,32 @@ body.referee-page .referee-panel {
   border-radius: 10px;
   background: var(--bg-panel);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+.character-overflow-menu.popup-centered,
+.player-row-stats-popover.popup-centered {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 10000;
+  width: min(18rem, calc(100vw - 1rem));
+  max-width: min(18rem, calc(100vw - 1rem));
+}
+
+.character-overflow-title {
+  width: 100%;
+  margin: 0 0 0.15rem;
+  padding: 0.1rem 0.25rem 0.45rem;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-primary);
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .character-overflow-separator {
@@ -2589,6 +2619,11 @@ body.referee-page .referee-panel {
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
 }
 
+.conditions-modal.popup-centered {
+  align-items: center;
+  justify-content: center;
+}
+
 .player-row-stats-heading {
   font-size: 0.95rem;
   font-weight: 700;
@@ -2616,6 +2651,22 @@ body.referee-page .referee-panel {
 
 .player-row-stats-popover .character-stat-line {
   white-space: nowrap;
+}
+
+.player-row-initiative-action {
+  margin-top: 0.35rem;
+  width: 100%;
+}
+
+.player-row-initiative-action .initiative-inline-button {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  white-space: normal;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 /* Make the first column narrow, second column wide */

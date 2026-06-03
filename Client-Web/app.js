@@ -107,7 +107,7 @@ const campaignHeaderNameTargets = [];
 const campaignHeaderIconTargets = [];
 const campaignHeaderLinkTargets = [];
   const campaignHeaderLicenseTargets = [];
-  const APP_JS_VERSION = '52';
+  const APP_JS_VERSION = '54';
   let statBlockDefinitions = [];
   let statBlockLookup = new Map();
 
@@ -143,6 +143,14 @@ function isDisplayPath() {
 function isJoinPage() {
   const path = window.location.pathname || '';
   return path === '/index.html' || path === '/' || path.endsWith('/index.html');
+}
+
+const narrowPopupQuery = typeof window.matchMedia === 'function'
+  ? window.matchMedia('(max-width: 760px)')
+  : null;
+
+function isNarrowPopupViewport() {
+  return Boolean(narrowPopupQuery && narrowPopupQuery.matches);
 }
 
 const shouldRedirectToDisplay =
@@ -3053,23 +3061,35 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     overflowMenu.setAttribute('role', 'menu');
     overflowMenu.setAttribute('aria-hidden', 'true');
 
+    const overflowTitle = document.createElement('div');
+    overflowTitle.className = 'character-overflow-title';
+    overflowTitle.textContent = character.name || 'Character';
+    overflowMenu.appendChild(overflowTitle);
+
     const openOverflowMenu = () => {
       closeCharacterOverflowMenu(overflowMenu);
       overflowMenu.classList.remove('hidden');
       overflowMenu.setAttribute('aria-hidden', 'false');
-      overflowMenu.style.left = '0';
-      overflowMenu.style.right = 'auto';
+      const centered = isNarrowPopupViewport();
+      overflowMenu.classList.toggle('popup-centered', centered);
+      overflowMenu.style.left = centered ? '' : '0';
+      overflowMenu.style.right = centered ? '' : 'auto';
+      overflowMenu.style.top = centered ? '' : 'calc(100% + 0.35rem)';
+      overflowMenu.style.bottom = '';
+      overflowMenu.style.transform = '';
       overflowToggle.setAttribute('aria-expanded', 'true');
-      window.requestAnimationFrame(() => {
-        const menuRect = overflowMenu.getBoundingClientRect();
-        const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-        const overflowRight = menuRect.right > viewportWidth - 8;
-        const overflowLeft = menuRect.left < 8;
-        if (overflowRight && !overflowLeft) {
-          overflowMenu.style.left = 'auto';
-          overflowMenu.style.right = '0';
-        }
-      });
+      if (!centered) {
+        window.requestAnimationFrame(() => {
+          const menuRect = overflowMenu.getBoundingClientRect();
+          const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+          const overflowRight = menuRect.right > viewportWidth - 8;
+          const overflowLeft = menuRect.left < 8;
+          if (overflowRight && !overflowLeft) {
+            overflowMenu.style.left = 'auto';
+            overflowMenu.style.right = '0';
+          }
+        });
+      }
     };
 
     const addMenuItem = (label, handler, options = {}) => {
@@ -3274,30 +3294,18 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         character.id === currentTurnId &&
         myCharacters.some((entry) => entry.id === currentTurnId);
 
-      if (needsInitiativeAction(character) || showTurnCompleteAction) {
+      if (showTurnCompleteAction) {
         const initiativeActions = document.createElement('div');
         initiativeActions.className = 'character-actions';
-        if (needsInitiativeAction(character)) {
-          const rollButton = document.createElement('button');
-          rollButton.type = 'button';
-          rollButton.textContent = 'Roll for Initiative!';
-          rollButton.addEventListener('click', (event) => {
-            event.stopPropagation();
-            handleInitiativeAction(character);
-          });
-          initiativeActions.appendChild(rollButton);
-        }
-        if (showTurnCompleteAction) {
-          const turnButton = document.createElement('button');
-          turnButton.type = 'button';
-          turnButton.textContent = 'Turn Complete';
-          turnButton.className = 'character-turn-complete';
-          turnButton.addEventListener('click', async (event) => {
-            event.stopPropagation();
-            await handleTurnComplete();
-          });
-          initiativeActions.appendChild(turnButton);
-        }
+        const turnButton = document.createElement('button');
+        turnButton.type = 'button';
+        turnButton.textContent = 'Turn Complete';
+        turnButton.className = 'character-turn-complete';
+        turnButton.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          await handleTurnComplete();
+        });
+        initiativeActions.appendChild(turnButton);
         item.appendChild(initiativeActions);
       }
 
@@ -3550,6 +3558,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
     const popover = document.createElement('div');
     popover.className = 'player-row-stats-popover character-stats';
+    if (isNarrowPopupViewport()) {
+      popover.classList.add('popup-centered');
+    }
     popover.setAttribute('role', 'dialog');
     popover.setAttribute('aria-label', `${character.name || 'character'} stats controls`);
     popover.addEventListener('click', (event) => {
@@ -3757,6 +3768,24 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         conditionsTd.appendChild(list);
       } else {
         conditionsTd.textContent = '—';
+      }
+
+      if (isMine && needsInitiativeAction(p)) {
+        if (!list) {
+          conditionsTd.textContent = '';
+        }
+        const initiativeAction = document.createElement('div');
+        initiativeAction.className = 'player-row-initiative-action';
+        const rollButton = document.createElement('button');
+        rollButton.type = 'button';
+        rollButton.className = 'initiative-inline-button';
+        rollButton.textContent = 'Roll for Initiative';
+        rollButton.addEventListener('click', async (event) => {
+          event.stopPropagation();
+          await handleInitiativeAction(p);
+        });
+        initiativeAction.appendChild(rollButton);
+        conditionsTd.appendChild(initiativeAction);
       }
 
       if (currentTurnId && p.id === currentTurnId) {
@@ -5204,6 +5233,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   function setInitiativePanelOpen(open) {
     if (!initiativePanel) return;
     initiativePanel.classList.toggle('hidden', !open);
+    initiativePanel.classList.toggle('popup-centered', open && isNarrowPopupViewport());
     initiativePanel.setAttribute('aria-hidden', (!open).toString());
   }
 
