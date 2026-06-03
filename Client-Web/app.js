@@ -1926,6 +1926,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
   function updatePlayerEntryGate() {
     const ownerName = getOwnerName();
+    if (!ownerName) return;
     playerNameRequired = !ownerName;
     if (playerNameNudge) {
       playerNameNudge.classList.toggle('hidden', Boolean(ownerName));
@@ -1958,10 +1959,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       conditionsToggle.setAttribute('aria-disabled', (!ownerName).toString());
     }
     updateReleaseButtonState();
-    if (!ownerName && playerNameInput) {
-      playerNameInput.focus();
-      playerNameInput.select();
-    }
   }
 
   function updatePlayerNameDisplay() {
