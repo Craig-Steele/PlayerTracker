@@ -212,6 +212,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let equipmentLibraryItems = [];
   let equipmentLibraryLoaded = false;
   let equipmentLibraryLoading = false;
+  const narrowPopupQuery = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(max-width: 760px)')
+    : null;
   const partyTreasureHelpers = window.PlayerTrackerPartyTreasure || {
     createInventoryEntryId: () => {
       if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -2591,6 +2594,10 @@ window.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
+  function isNarrowPopupViewport() {
+    return Boolean(narrowPopupQuery && narrowPopupQuery.matches);
+  }
+
   function closeRefereeRowOverflowMenus(exceptMenu = null) {
     document.querySelectorAll('.referee-row-menu').forEach((menu) => {
       if (menu === exceptMenu) return;
@@ -2616,6 +2623,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (initiativeModal) {
       initiativeModal.classList.add('hidden');
       initiativeModal.setAttribute('aria-hidden', 'true');
+      initiativeModal.classList.remove('popup-centered');
     }
   }
 
@@ -2631,6 +2639,7 @@ window.addEventListener('DOMContentLoaded', () => {
       initiativeModalCharacter.textContent = player.name || 'Character';
     }
     initiativeModalInput.value = Number.isFinite(player.initiative) ? String(player.initiative) : '';
+    initiativeModal.classList.toggle('popup-centered', isNarrowPopupViewport());
     initiativeModal.classList.remove('hidden');
     initiativeModal.setAttribute('aria-hidden', 'false');
     window.requestAnimationFrame(() => {
@@ -2674,6 +2683,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
     const popover = document.createElement('div');
     popover.className = 'player-row-stats-popover character-stats';
+    if (isNarrowPopupViewport()) {
+      popover.classList.add('popup-centered');
+    }
     popover.setAttribute('role', 'dialog');
     popover.setAttribute('aria-label', `${character.name || 'character'} stats controls`);
     popover.addEventListener('click', (event) => {
@@ -2749,25 +2761,42 @@ window.addEventListener('DOMContentLoaded', () => {
     overflowMenu._overflowToggle = overflowToggle;
     document.body.appendChild(overflowMenu);
 
+    const overflowTitle = document.createElement('div');
+    overflowTitle.className = 'character-overflow-title';
+    overflowTitle.textContent = player.name || 'Character';
+    overflowMenu.appendChild(overflowTitle);
+
     const openOverflowMenu = () => {
       closeExpandedOrderStats();
       closeRefereeRowOverflowMenus(overflowMenu);
       overflowMenu.classList.remove('hidden');
       overflowMenu.setAttribute('aria-hidden', 'false');
       overflowToggle.setAttribute('aria-expanded', 'true');
+      const centered = isNarrowPopupViewport();
+      overflowMenu.classList.toggle('popup-centered', centered);
       const toggleRect = anchorEl?.getBoundingClientRect() || overflowToggle.getBoundingClientRect();
-      overflowMenu.style.top = `${toggleRect.bottom + 6}px`;
-      overflowMenu.style.left = `${toggleRect.left}px`;
-      overflowMenu.style.right = 'auto';
-      window.requestAnimationFrame(() => {
-        const menuRect = overflowMenu.getBoundingClientRect();
-        const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-        const overflowRight = menuRect.right > viewportWidth - 8;
-        const overflowLeft = menuRect.left < 8;
-        if (overflowRight && !overflowLeft) {
-          overflowMenu.style.left = `${Math.max(8, viewportWidth - menuRect.width - 8)}px`;
-        }
-      });
+      if (centered) {
+        overflowMenu.style.top = '';
+        overflowMenu.style.left = '';
+        overflowMenu.style.right = '';
+        overflowMenu.style.bottom = '';
+        overflowMenu.style.transform = '';
+      } else {
+        overflowMenu.style.top = `${toggleRect.bottom + 6}px`;
+        overflowMenu.style.left = `${toggleRect.left}px`;
+        overflowMenu.style.right = 'auto';
+        overflowMenu.style.bottom = '';
+        overflowMenu.style.transform = '';
+        window.requestAnimationFrame(() => {
+          const menuRect = overflowMenu.getBoundingClientRect();
+          const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+          const overflowRight = menuRect.right > viewportWidth - 8;
+          const overflowLeft = menuRect.left < 8;
+          if (overflowRight && !overflowLeft) {
+            overflowMenu.style.left = `${Math.max(8, viewportWidth - menuRect.width - 8)}px`;
+          }
+        });
+      }
     };
 
     const addMenuItem = (label, handler, options = {}) => {

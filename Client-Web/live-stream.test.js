@@ -44,8 +44,12 @@ test('opens a campaign event stream and refreshes on stream events', async () =>
 
   try {
     let refreshCount = 0;
+    let encounterStartCount = 0;
     const liveStream = createCampaignLiveStream({
       getCampaignId: () => 'campaign-a',
+      onEncounterStart: () => {
+        encounterStartCount += 1;
+      },
       refresh: async () => {
         refreshCount += 1;
       }
@@ -59,9 +63,10 @@ test('opens a campaign event stream and refreshes on stream events', async () =>
     await flushMicrotasks();
     assert.equal(refreshCount, 1);
 
-    instances[0].emit('campaign-updated');
+    instances[0].emit('encounter-start');
     await flushMicrotasks();
     assert.equal(refreshCount, 2);
+    assert.equal(encounterStartCount, 1);
 
     instances[0].emit('turn-changed');
     await flushMicrotasks();

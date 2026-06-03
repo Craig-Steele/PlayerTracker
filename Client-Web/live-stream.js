@@ -10,6 +10,7 @@
   function createCampaignLiveStream({
     getCampaignId,
     refresh,
+    onEncounterStart = () => {},
     shouldSkipRefresh = () => false,
     consumeSkipRefresh = () => {}
   }) {
@@ -46,6 +47,10 @@
       };
 
       source.addEventListener('snapshot', requestRefresh);
+      source.addEventListener('encounter-start', (event) => {
+        onEncounterStart(event);
+        requestRefresh();
+      });
       source.addEventListener('campaign-updated', requestRefresh);
       source.addEventListener('turn-changed', requestRefresh);
       source.addEventListener('update', requestRefresh);
