@@ -2595,7 +2595,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function isNarrowPopupViewport() {
-    return Boolean(narrowPopupQuery && narrowPopupQuery.matches);
+    return true;
   }
 
   function closeRefereeRowOverflowMenus(exceptMenu = null) {
@@ -2609,6 +2609,30 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    let handled = false;
+    const hasOpenOverflow = document.querySelector('.referee-row-menu:not(.hidden)');
+    const hasOpenStats = Boolean(expandedOrderStatsCharacterId);
+    const hasOpenInitiative = Boolean(initiativeEditorCharacterId);
+    if (hasOpenOverflow) {
+      closeRefereeRowOverflowMenus();
+      handled = true;
+    }
+    if (hasOpenStats) {
+      closeExpandedOrderStats();
+      handled = true;
+    }
+    if (hasOpenInitiative) {
+      closeInitiativeEditor();
+      handled = true;
+    }
+    if (handled) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
 
   function closeExpandedOrderStats() {
     if (!expandedOrderStatsCharacterId) return;

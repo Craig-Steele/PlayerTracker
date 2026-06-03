@@ -150,7 +150,7 @@ const narrowPopupQuery = typeof window.matchMedia === 'function'
   : null;
 
 function isNarrowPopupViewport() {
-  return Boolean(narrowPopupQuery && narrowPopupQuery.matches);
+  return true;
 }
 
 const shouldRedirectToDisplay =
@@ -307,7 +307,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const initiativeEditorInput = document.getElementById('initiative-editor-input');
   const initiativeSaveBtn = document.getElementById('initiative-save');
   const initiativeCancelBtn = document.getElementById('initiative-cancel');
-  const initiativeClearBtn = document.getElementById('initiative-clear');
   const initiativeDialogTitle = document.getElementById('initiative-dialog-title');
   const currencyPanel = document.getElementById('currency-panel');
   const currencyFields = document.getElementById('currency-fields');
@@ -1921,6 +1920,30 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       }
     });
   }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    let handled = false;
+    const hasOpenOverflow = document.querySelector('.character-overflow-menu:not(.hidden)');
+    const hasOpenStats = Boolean(expandedOrderStatsCharacterId);
+    const hasOpenInitiative = Boolean(initiativeEditorCharacterId);
+    if (hasOpenOverflow) {
+      closeCharacterOverflowMenu();
+      handled = true;
+    }
+    if (hasOpenStats) {
+      closeExpandedOrderStats();
+      handled = true;
+    }
+    if (hasOpenInitiative) {
+      closeInitiativeEditor();
+      handled = true;
+    }
+    if (handled) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
 
   document.addEventListener('click', (event) => {
     if (
@@ -5169,12 +5192,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   if (initiativeSaveBtn) {
     initiativeSaveBtn.addEventListener('click', async () => {
       await saveInitiativeFromEditor(false);
-    });
-  }
-
-  if (initiativeClearBtn) {
-    initiativeClearBtn.addEventListener('click', async () => {
-      await saveInitiativeFromEditor(true);
     });
   }
 
