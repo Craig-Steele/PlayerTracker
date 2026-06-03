@@ -312,11 +312,12 @@ private func normalizeTreasureEntry(_ entry: InventoryEntry) -> InventoryEntry? 
     let name = entry.name.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !name.isEmpty else { return nil }
     let url = entry.url?.trimmingCharacters(in: .whitespacesAndNewlines)
+    let cappedValue = (entry.value * 100).rounded() / 100
     return InventoryEntry(
-        id: entry.id,
+        id: entry.id ?? UUID(),
         name: name,
         quantity: max(1, entry.quantity),
-        value: entry.value,
+        value: cappedValue,
         weight: entry.weight,
         url: url?.isEmpty == false ? url : nil,
         containerId: nil,
@@ -1377,7 +1378,22 @@ func routes(
             throw Abort(.notFound, reason: "Party treasure item not found.")
         }
         let claimedItem = treasure[itemIndex]
-        let otherTreasures = treasure.filter { $0.id != input.itemId }
+        let claimedQuantity = max(1, claimedItem.quantity)
+        var updatedTreasure = treasure
+        if claimedQuantity > 1 {
+            updatedTreasure[itemIndex] = InventoryEntry(
+                id: claimedItem.id,
+                name: claimedItem.name,
+                quantity: claimedQuantity - 1,
+                value: claimedItem.value,
+                weight: claimedItem.weight,
+                url: claimedItem.url,
+                containerId: claimedItem.containerId,
+                isContainer: claimedItem.isContainer
+            )
+        } else {
+            updatedTreasure.remove(at: itemIndex)
+        }
         let partyMembers = await userStore.all(campaignName: campaign.name).values
             .filter { !$0.isReferee }
         let partyCount = max(1, partyMembers.count)
@@ -1391,7 +1407,7 @@ func routes(
         let claimedInventoryItem = InventoryEntry(
             id: UUID(),
             name: claimedItem.name,
-            quantity: claimedItem.quantity,
+            quantity: 1,
             value: claimedItem.value,
             weight: claimedItem.weight,
             url: claimedItem.url,
@@ -1400,8 +1416,6 @@ func routes(
         )
 
         claimant.inventory.append(claimedInventoryItem)
-
-        var updatedTreasure = otherTreasures
 
         if canAfford {
             if let updatedCurrency = adjustCurrencyAmountsPreferCommonUnit(

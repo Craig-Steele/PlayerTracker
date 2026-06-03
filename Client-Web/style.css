@@ -507,6 +507,8 @@ body.player-page #player-form {
 body.referee-page .player-list {
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
 }
 
 body.player-page .player-list {
@@ -519,6 +521,8 @@ body.player-page .player-list {
 body.referee-page .referee-panel {
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 2;
 }
 
 #player-form {
@@ -643,6 +647,13 @@ body.referee-page .referee-panel {
   border-radius: 10px;
   background: var(--bg-panel);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
+}
+
+.character-overflow-separator {
+  width: 100%;
+  height: 1px;
+  margin: 0.1rem 0;
+  background: var(--border-soft);
 }
 
 .character-overflow-menu button {
@@ -1565,6 +1576,80 @@ body.referee-page .referee-panel {
   font-size: 0.95rem;
 }
 
+.inventory-inline-form {
+  margin-top: 0.85rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.8rem;
+  background: var(--bg-panel);
+}
+
+.inventory-inline-form-grid {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.party-treasure-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.7rem;
+}
+
+.party-treasure-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.party-treasure-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.party-treasure-actions-row-top {
+  justify-content: flex-start;
+}
+
+.party-treasure-actions-row-bottom {
+  justify-content: flex-end;
+}
+
+.inventory-entry-display .inventory-display-value {
+  display: block;
+  width: 100%;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.inventory-entry-display .inventory-display-name {
+  white-space: normal;
+}
+
+.inventory-entry-display .inventory-display-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.inventory-entry-display .inventory-display-link {
+  display: block;
+  width: 100%;
+  font-size: 0.85rem;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.inventory-entry-display .inventory-display-link a {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
+.inventory-entry-display input[type="hidden"] {
+  display: none;
+}
+
 .inventory-section {
   margin-top: 0.85rem;
 }
@@ -1626,7 +1711,8 @@ body.referee-page .referee-panel {
 }
 
 .inventory-entry.selected {
-  background: var(--bg-selected);
+  background: var(--bg-selected-strong);
+  box-shadow: inset 0 0 0 2px var(--border-selected-strong);
 }
 
 .inventory-container-row {
@@ -1641,12 +1727,229 @@ body.referee-page .referee-panel {
   background: var(--bg-selected-strong);
 }
 
+.inventory-entry.selected td {
+  background: rgba(91, 141, 239, 0.14);
+}
+
 .inventory-entry input {
   min-width: 0;
 }
 
+.inventory-entry.selected input {
+  background: rgba(243, 248, 255, 0.95);
+  border-color: var(--border-selected-strong);
+  color: var(--text-selected);
+}
+
+.inventory-entry.selected input::placeholder {
+  color: color-mix(in srgb, var(--text-selected) 68%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .inventory-entry.selected input {
+    background: rgba(31, 46, 68, 0.95);
+  }
+}
+
+.inventory-entry.selected .inventory-display-value,
+.inventory-entry.selected .inventory-display-name {
+  color: var(--text-selected);
+}
+
+.inventory-entry.selected .inventory-display-value a {
+  color: var(--text-selected);
+}
+
+.inventory-entry.selected .inventory-display-link a {
+  color: var(--text-selected);
+}
+
+.inventory-entry.selected .inventory-display-value,
+.inventory-entry.selected .inventory-display-name,
+.inventory-entry.selected .inventory-display-value a {
+  background: transparent;
+}
+
+#party-treasure-panel .inventory-entry.selected,
+#ref-party-treasure-panel .inventory-entry.selected,
+.party-treasure-compact .inventory-entry.selected {
+  background: var(--bg-selected-strong);
+  box-shadow: inset 0 0 0 2px var(--border-selected-strong);
+}
+
+#party-treasure-panel .inventory-entry.selected td,
+#ref-party-treasure-panel .inventory-entry.selected td,
+.party-treasure-compact .inventory-entry.selected td {
+  background: rgba(91, 141, 239, 0.14);
+}
+
+#party-treasure-panel .inventory-entry.selected input,
+#ref-party-treasure-panel .inventory-entry.selected input,
+.party-treasure-compact .inventory-entry.selected input {
+  color: var(--text-selected);
+  border-color: var(--border-selected-strong);
+  background: rgba(243, 248, 255, 0.95);
+}
+
+@media (prefers-color-scheme: dark) {
+  #party-treasure-panel .inventory-entry.selected input,
+  #ref-party-treasure-panel .inventory-entry.selected input,
+  .party-treasure-compact .inventory-entry.selected input {
+    background: rgba(31, 46, 68, 0.95);
+  }
+}
+
 .inventory-entry input[type="url"] {
   font-size: 0.95rem;
+}
+
+@media (max-width: 760px) {
+  .party-treasure-compact .conditions-dialog-header,
+  #party-treasure-panel .conditions-dialog-header,
+  #ref-party-treasure-panel .conditions-dialog-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .party-treasure-compact .conditions-dialog-actions,
+  #party-treasure-panel .conditions-dialog-actions,
+  #ref-party-treasure-panel .conditions-dialog-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .party-treasure-compact .conditions-dialog-actions button,
+  #party-treasure-panel .conditions-dialog-actions button,
+  #ref-party-treasure-panel .conditions-dialog-actions button {
+    width: auto;
+    flex: 0 0 auto;
+    display: inline-flex;
+  }
+
+  .party-treasure-compact .party-treasure-actions-row,
+  #party-treasure-panel .party-treasure-actions-row,
+  #ref-party-treasure-panel .party-treasure-actions-row {
+    width: 100%;
+  }
+
+  .party-treasure-compact .party-treasure-actions-row-top,
+  #party-treasure-panel .party-treasure-actions-row-top,
+  #ref-party-treasure-panel .party-treasure-actions-row-top {
+    justify-content: flex-start;
+  }
+
+  .party-treasure-compact .party-treasure-actions-row-bottom,
+  #party-treasure-panel .party-treasure-actions-row-bottom,
+  #ref-party-treasure-panel .party-treasure-actions-row-bottom {
+    justify-content: flex-end;
+  }
+
+  .party-treasure-compact .inventory-table,
+  #party-treasure-panel .inventory-table,
+  #ref-party-treasure-panel .inventory-table {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .party-treasure-compact .inventory-table th,
+  .party-treasure-compact .inventory-table td,
+  #party-treasure-panel .inventory-table th,
+  #party-treasure-panel .inventory-table td,
+  #ref-party-treasure-panel .inventory-table th,
+  #ref-party-treasure-panel .inventory-table td {
+    padding: 0.45rem 0.55rem;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(1),
+  .party-treasure-compact .inventory-table td:nth-child(1),
+  #party-treasure-panel .inventory-table th:nth-child(1),
+  #party-treasure-panel .inventory-table td:nth-child(1),
+  #ref-party-treasure-panel .inventory-table th:nth-child(1),
+  #ref-party-treasure-panel .inventory-table td:nth-child(1) {
+    width: 54%;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(2),
+  .party-treasure-compact .inventory-table td:nth-child(2),
+  #party-treasure-panel .inventory-table th:nth-child(2),
+  #party-treasure-panel .inventory-table td:nth-child(2),
+  #ref-party-treasure-panel .inventory-table th:nth-child(2),
+  #ref-party-treasure-panel .inventory-table td:nth-child(2) {
+    width: 12%;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(3),
+  .party-treasure-compact .inventory-table td:nth-child(3),
+  #party-treasure-panel .inventory-table th:nth-child(3),
+  #party-treasure-panel .inventory-table td:nth-child(3),
+  #ref-party-treasure-panel .inventory-table th:nth-child(3),
+  #ref-party-treasure-panel .inventory-table td:nth-child(3) {
+    width: 15%;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(4),
+  .party-treasure-compact .inventory-table td:nth-child(4),
+  #party-treasure-panel .inventory-table th:nth-child(4),
+  #party-treasure-panel .inventory-table td:nth-child(4),
+  #ref-party-treasure-panel .inventory-table th:nth-child(4),
+  #ref-party-treasure-panel .inventory-table td:nth-child(4) {
+    display: none !important;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(5),
+  .party-treasure-compact .inventory-table td:nth-child(5),
+  #party-treasure-panel .inventory-table th:nth-child(5),
+  #party-treasure-panel .inventory-table td:nth-child(5),
+  #ref-party-treasure-panel .inventory-table th:nth-child(5),
+  #ref-party-treasure-panel .inventory-table td:nth-child(5) {
+    display: none !important;
+  }
+
+  .party-treasure-compact .inventory-entry-display,
+  #party-treasure-panel .inventory-entry-display,
+  #ref-party-treasure-panel .inventory-entry-display {
+    background: var(--bg-panel);
+  }
+
+  .party-treasure-compact .inventory-table,
+  #party-treasure-panel .inventory-table,
+  #ref-party-treasure-panel .inventory-table {
+    table-layout: auto !important;
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(1),
+  .party-treasure-compact .inventory-table td:nth-child(1),
+  #party-treasure-panel .inventory-table th:nth-child(1),
+  #party-treasure-panel .inventory-table td:nth-child(1),
+  #ref-party-treasure-panel .inventory-table th:nth-child(1),
+  #ref-party-treasure-panel .inventory-table td:nth-child(1) {
+    width: auto;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(2),
+  .party-treasure-compact .inventory-table td:nth-child(2),
+  #party-treasure-panel .inventory-table th:nth-child(2),
+  #party-treasure-panel .inventory-table td:nth-child(2),
+  #ref-party-treasure-panel .inventory-table th:nth-child(2),
+  #ref-party-treasure-panel .inventory-table td:nth-child(2) {
+    width: 3.5rem;
+    white-space: nowrap;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(3),
+  .party-treasure-compact .inventory-table td:nth-child(3),
+  #party-treasure-panel .inventory-table th:nth-child(3),
+  #party-treasure-panel .inventory-table td:nth-child(3),
+  #ref-party-treasure-panel .inventory-table th:nth-child(3),
+  #ref-party-treasure-panel .inventory-table td:nth-child(3) {
+    width: 5.5rem;
+    white-space: nowrap;
+  }
 }
 
 .condition-row {
@@ -1898,10 +2201,7 @@ body.referee-page .referee-panel {
   }
 
   .player-row-overflow .character-overflow-toggle {
-    display: none;
-  }
-
-  .player-row-overflow .character-overflow-toggle {
+    display: none !important;
     width: auto !important;
     min-width: 0 !important;
     padding: 0 !important;
@@ -2141,10 +2441,20 @@ body.referee-page .referee-panel {
   font-weight: 700;
 }
 
+.player-list td.init-referee + td {
+  background-color: var(--bg-referee);
+  color: var(--text-referee);
+}
+
 .player-list td.init-mine {
   background-color: var(--bg-mine);
   color: var(--text-mine);
   font-weight: 700;
+}
+
+.player-list td.init-mine + td {
+  background-color: var(--bg-mine);
+  color: var(--text-mine);
 }
 
 .player-row-name-wrap {
@@ -2211,6 +2521,7 @@ body.referee-page .referee-panel {
 }
 
 .player-row-overflow .character-overflow-toggle {
+  display: none !important;
   justify-content: flex-start;
   min-width: 0;
 }
@@ -2231,6 +2542,28 @@ body.referee-page .referee-panel {
 .player-row-owned td:nth-child(2) .player-row-name-text {
   color: var(--text-primary);
   font-weight: 600;
+}
+
+.player-row-owned td.init-referee + td .player-row-name-text,
+.player-row-owned td.init-referee + td .player-owner {
+  color: var(--text-referee);
+}
+
+.player-row-owned td.init-mine + td .player-row-name-text,
+.player-row-owned td.init-mine + td .player-owner {
+  color: var(--text-mine);
+}
+
+.referee-order-name-cell {
+  position: relative;
+}
+
+.referee-order-name-button {
+  width: 100%;
+  display: block;
+  text-align: left;
+  padding-left: 0.35rem;
+  box-sizing: border-box;
 }
 
 .player-row-stats-cell {
@@ -3262,8 +3595,19 @@ body.display-only {
   width: 110px;
 }
 
+.act-status {
+  margin-bottom: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.05;
+}
+
 .referee-drawer {
   padding: 0;
+}
+
+.referee-top-actions {
+  margin-bottom: 0.35rem;
 }
 
 .ref-filter {

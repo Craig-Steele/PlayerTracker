@@ -71,6 +71,24 @@ window.addEventListener('DOMContentLoaded', () => {
   const campaignClaimTimeoutTimedInput = document.getElementById('ref-campaign-claim-timeout-timed');
   const campaignClaimTimeoutInput = document.getElementById('ref-campaign-claim-timeout-input');
   const campaignInviteOnlyInput = document.getElementById('ref-campaign-invite-only');
+  const partyTreasureButton = document.getElementById('ref-party-treasure-button');
+  const partyTreasurePanel = document.getElementById('ref-party-treasure-panel');
+  const partyTreasureFields = document.getElementById('ref-party-treasure-fields');
+  const partyTreasureSaveBtn = document.getElementById('ref-party-treasure-save');
+  const partyTreasureCancelBtn = document.getElementById('ref-party-treasure-cancel');
+  const partyTreasureAddBtn = document.getElementById('ref-party-treasure-add');
+  const partyTreasureRemoveBtn = document.getElementById('ref-party-treasure-remove');
+  const partyTreasureDialogTitle = document.getElementById('ref-party-treasure-dialog-title');
+  const partyTreasureContext = document.getElementById('ref-party-treasure-context');
+  const partyTreasureAddForm = document.getElementById('ref-party-treasure-add-form');
+  const partyTreasureAddFormName = document.getElementById('ref-party-treasure-add-name');
+  const partyTreasureAddFormQuantity = document.getElementById('ref-party-treasure-add-quantity');
+  const partyTreasureAddFormValue = document.getElementById('ref-party-treasure-add-value');
+  const partyTreasureAddFormWeight = document.getElementById('ref-party-treasure-add-weight');
+  const partyTreasureAddFormUrl = document.getElementById('ref-party-treasure-add-url');
+  const partyTreasureAddFormSaveBtn = document.getElementById('ref-party-treasure-add-form-save');
+  const partyTreasureAddFormCancelBtn = document.getElementById('ref-party-treasure-add-form-cancel');
+  const partyTreasureItemOptions = document.getElementById('ref-party-treasure-item-options');
 
   const form = document.getElementById('ref-add-panel');
   const nameInput = document.getElementById('ref-name');
@@ -123,6 +141,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsSaveBtn = document.getElementById('ref-details-save');
   const conditionsCancelBtn = document.getElementById('ref-conditions-cancel');
   const conditionsSaveBtn = document.getElementById('ref-conditions-save');
+  const initiativeModal = document.getElementById('ref-initiative-modal');
+  const initiativeModalTitle = document.getElementById('ref-initiative-dialog-title');
+  const initiativeModalCharacter = document.getElementById('ref-initiative-character');
+  const initiativeModalInput = document.getElementById('ref-initiative-edit-input');
+  const initiativeModalCancelBtn = document.getElementById('ref-initiative-cancel');
+  const initiativeModalSaveBtn = document.getElementById('ref-initiative-save');
   const revealNowBtn = document.getElementById('ref-reveal-now');
   const revealTurnBtn = document.getElementById('ref-reveal-turn');
   const hideBtn = document.getElementById('ref-hide-character');
@@ -132,12 +156,12 @@ window.addEventListener('DOMContentLoaded', () => {
   const claimCharacterBtn = document.getElementById('ref-claim-character');
   const releaseCharacterBtn = document.getElementById('ref-release-character');
   const deleteCharacterBtn = document.getElementById('ref-delete-character');
-  const hidePcsToggle = document.getElementById('ref-hide-pcs');
 
   let currentCampaignName = '';
   let currentRulesetId = '';
   let currentCampaignClaimTimeoutMinutes = 5;
   let currentCampaignInviteOnly = false;
+  let currentPartyTreasure = [];
   let availableRulesets = [];
   let currentHealthLabel = 'HP';
   let statKeys = ['HP'];
@@ -170,17 +194,286 @@ window.addEventListener('DOMContentLoaded', () => {
   let selectedCharacterId = null;
   let currentPlayers = [];
   let conditionsPanelOpen = false;
+  let expandedOrderStatsCharacterId = null;
+  let initiativeEditorCharacterId = null;
   let currentTurnId = null;
   let encounterState = 'new';
   let skipRefresh = false;
+  let activeCampaignId = null;
   let loadStateInFlight = false;
   let loadStateRefreshQueued = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
   let currentStandardDie = null;
-  let hidePlayers = true;
   let detailsDirty = false;
   let conditionsDirty = false;
+  let partyTreasureEditorDirty = false;
+  let partyTreasureSelectedRow = null;
+  let equipmentLibraryItems = [];
+  let equipmentLibraryLoaded = false;
+  let equipmentLibraryLoading = false;
+  const partyTreasureHelpers = window.PlayerTrackerPartyTreasure || {
+    createInventoryEntryId: () => {
+      if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+      }
+      const bytes = new Uint8Array(16);
+      if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        crypto.getRandomValues(bytes);
+      } else {
+        for (let index = 0; index < bytes.length; index += 1) {
+          bytes[index] = Math.floor(Math.random() * 256);
+        }
+      }
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'));
+      return [
+        hex.slice(0, 4).join(''),
+        hex.slice(4, 6).join(''),
+        hex.slice(6, 8).join(''),
+        hex.slice(8, 10).join(''),
+        hex.slice(10, 16).join('')
+      ].join('-');
+    },
+    normalizeInventoryEntry: (entry = {}, containerId = null, isContainer = false) => ({
+      id: typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : `inventory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`,
+      name: typeof entry.name === 'string' ? entry.name : '',
+      quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
+      value: Number.isFinite(entry.value) ? entry.value : 0,
+      weight: Number.isFinite(entry.weight) ? entry.weight : 0,
+      url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : containerId,
+      isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
+    }),
+    normalizeEquipmentItems: (items) =>
+      Array.isArray(items)
+        ? items.map((item) => ({
+            id: typeof item?.id === 'string' && item.id.trim()
+              ? item.id.trim()
+              : (typeof item?.name === 'string'
+                  ? item.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+                  : ''),
+            name: typeof item?.name === 'string' ? item.name.trim() : '',
+            value: Number.isFinite(item?.value) ? item.value : null,
+            weight: Number.isFinite(item?.weight) ? item.weight : null,
+            url: typeof item?.url === 'string' && item.url.trim() ? item.url.trim() : null,
+            source: typeof item?.source === 'string' && item.source.trim() ? item.source.trim() : null
+          })).filter((item) => Boolean(item.name))
+        : [],
+    getInventoryRowData: (row) => {
+      if (!row) return null;
+      return {
+        id: typeof row.dataset.inventoryEntryId === 'string' ? row.dataset.inventoryEntryId : '',
+        containerId: typeof row.dataset.inventoryContainerId === 'string' && row.dataset.inventoryContainerId.trim()
+          ? row.dataset.inventoryContainerId.trim()
+          : null,
+        isContainer: row.dataset.inventoryIsContainer === 'true'
+      };
+    },
+    focusInventoryRow: (row) => {
+      if (!row) return;
+      window.requestAnimationFrame(() => {
+        const firstInput = row.querySelector('input');
+        if (firstInput) {
+          firstInput.focus();
+          firstInput.select?.();
+        }
+      });
+    },
+    updateEquipmentItemOptions: (datalistEl, equipmentLibraryItems = []) => {
+      if (!datalistEl) return;
+      datalistEl.innerHTML = '';
+      equipmentLibraryItems.forEach((item) => {
+        const option = document.createElement('option');
+        option.value = item.name;
+        option.label = item.source ? `${item.name} - ${item.source}` : item.name;
+        datalistEl.appendChild(option);
+      });
+    },
+    applyPartyTreasurePresetToRow: (row, itemName, equipmentLibraryItems = []) => {
+      if (!row || !itemName) return;
+      const preset = equipmentLibraryItems.find(
+        (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
+      );
+      if (!preset) return;
+      const valueInput = row.querySelector('input[data-inventory-field="value"]');
+      const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+      if (valueInput && Number.isFinite(preset.value)) {
+        valueInput.value = String(preset.value);
+      }
+      if (weightInput && Number.isFinite(preset.weight)) {
+        weightInput.value = String(preset.weight);
+      }
+      const urlInput = row.querySelector('input[data-inventory-field="url"]');
+      if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
+        urlInput.value = preset.url.trim();
+      }
+    },
+    getPartyTreasureRows: (fieldsEl) => (fieldsEl ? Array.from(fieldsEl.querySelectorAll('tr.inventory-entry')) : []),
+    createPartyTreasureRow: (options = {}) => {
+      const {
+        entry = {},
+        itemOptionsId = 'ref-party-treasure-item-options',
+        onDirty = null,
+        onSelect = null,
+        applyPreset = null,
+        displayMode = false
+      } = options;
+      const normalized = (window.PlayerTrackerPartyTreasure?.normalizeInventoryEntry || partyTreasureHelpers.normalizeInventoryEntry)(entry, null, false);
+      const row = document.createElement('tr');
+      row.className = 'inventory-entry';
+      if (displayMode) {
+        row.classList.add('inventory-entry-display');
+      }
+      row.dataset.inventoryEntryId = normalized.id;
+      row.dataset.inventoryContainerId = '';
+      row.dataset.inventoryIsContainer = 'false';
+      row.addEventListener('click', () => {
+        if (typeof onSelect === 'function') onSelect(row);
+      });
+      const fields = [
+        { key: 'name', type: 'text', value: normalized.name, placeholder: 'Item name', list: itemOptionsId },
+        { key: 'quantity', type: 'number', value: String(normalized.quantity), step: '1' },
+        { key: 'value', type: 'number', value: String(normalized.value), step: 'any' },
+        { key: 'weight', type: 'number', value: String(normalized.weight), step: 'any' },
+        { key: 'url', type: 'url', value: normalized.url || '' }
+      ];
+      fields.forEach((field) => {
+        const cell = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = displayMode ? 'hidden' : field.type;
+        input.value = field.value;
+        if (field.placeholder && !displayMode) input.placeholder = field.placeholder;
+        if (field.list && !displayMode) input.setAttribute('list', field.list);
+        if (field.step && !displayMode) input.step = field.step;
+        input.dataset.inventoryField = field.key;
+        if (displayMode) {
+          const display = document.createElement(field.key === 'url' ? 'a' : 'div');
+          display.className = `inventory-display-value inventory-display-${field.key}`;
+          if (field.key === 'url') {
+            if (field.value) {
+              display.href = field.value;
+              display.target = '_blank';
+              display.rel = 'noopener';
+              display.textContent = 'Open';
+            } else {
+              display.textContent = '—';
+            }
+          } else {
+            display.textContent = field.key === 'name'
+              ? (field.value || '—')
+              : (field.value || (field.key === 'quantity' ? '1' : '0'));
+          }
+          cell.appendChild(display);
+          cell.appendChild(input);
+        } else {
+          input.addEventListener('input', () => {
+            if (typeof onDirty === 'function') onDirty();
+            if (field.key === 'name' && typeof applyPreset === 'function') {
+              applyPreset(row, input.value);
+            }
+          });
+          input.addEventListener('change', () => {
+            if (field.key === 'name' && typeof applyPreset === 'function') {
+              applyPreset(row, input.value);
+            }
+          });
+          input.addEventListener('focus', () => {
+            if (typeof onSelect === 'function') onSelect(row);
+          });
+          cell.appendChild(input);
+        }
+        row.appendChild(cell);
+      });
+      return row;
+    },
+    buildPartyTreasureFields: (fieldsEl, items = [], options = {}) => {
+      if (!fieldsEl) return null;
+      const {
+        itemOptionsId = 'ref-party-treasure-item-options',
+        onDirty = null,
+        onSelect = null,
+        applyPreset = null,
+        displayMode = false
+      } = options;
+      fieldsEl.innerHTML = '';
+      const normalizedEntries = Array.isArray(items)
+        ? items.map((entry) => (window.PlayerTrackerPartyTreasure?.normalizeInventoryEntry || partyTreasureHelpers.normalizeInventoryEntry)(entry))
+        : [];
+      const rows = normalizedEntries.length > 0
+        ? normalizedEntries
+        : (displayMode ? [] : [(window.PlayerTrackerPartyTreasure?.normalizeInventoryEntry || partyTreasureHelpers.normalizeInventoryEntry)({}, null, false)]);
+      rows.forEach((entry) => {
+        fieldsEl.appendChild((window.PlayerTrackerPartyTreasure?.createPartyTreasureRow || partyTreasureHelpers.createPartyTreasureRow)({
+          entry,
+          itemOptionsId,
+          onDirty,
+          onSelect,
+          applyPreset,
+          displayMode
+        }));
+      });
+      const firstRow = fieldsEl.querySelector('tr.inventory-entry');
+      if (typeof onSelect === 'function') {
+        onSelect(firstRow);
+      }
+      return firstRow;
+    },
+    collectPartyTreasurePayloadFromEditor: (fieldsEl) => {
+      if (!fieldsEl) return null;
+      const payload = [];
+      const rows = Array.from(fieldsEl.querySelectorAll('tr.inventory-entry'));
+      for (const row of rows) {
+        const rowData = (window.PlayerTrackerPartyTreasure?.getInventoryRowData || partyTreasureHelpers.getInventoryRowData)(row) || {};
+        const nameInput = row.querySelector('input[data-inventory-field="name"]');
+        const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
+        const valueInput = row.querySelector('input[data-inventory-field="value"]');
+        const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+        const urlInput = row.querySelector('input[data-inventory-field="url"]');
+        const rawName = nameInput ? nameInput.value.trim() : '';
+        const rawQuantity = quantityInput ? quantityInput.value.trim() : '';
+        const rawValue = valueInput ? valueInput.value.trim() : '';
+        const rawWeight = weightInput ? weightInput.value.trim() : '';
+        const rawUrl = urlInput ? urlInput.value.trim() : '';
+        const isUntouchedDefaultRow =
+          !rawName &&
+          (rawQuantity === '' || rawQuantity === '1') &&
+          (rawValue === '' || rawValue === '0') &&
+          (rawWeight === '' || rawWeight === '0') &&
+          !rawUrl;
+        if (isUntouchedDefaultRow) {
+          continue;
+        }
+        if (!rawName) {
+          throw new Error('Each party treasure row needs an item name.');
+        }
+        const quantity = rawQuantity === '' ? 1 : Number(rawQuantity);
+        const value = rawValue === '' ? 0 : Number(rawValue);
+        const weight = rawWeight === '' ? 0 : Number(rawWeight);
+        if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
+          throw new Error(`Quantity for ${rawName} must be a whole number of at least 1.`);
+        }
+        if (!Number.isFinite(value)) {
+          throw new Error(`Value for ${rawName} must be a valid number.`);
+        }
+        if (!Number.isFinite(weight)) {
+          throw new Error(`Weight for ${rawName} must be a valid number.`);
+        }
+        payload.push({
+          id: rowData.id || (window.PlayerTrackerPartyTreasure?.createInventoryEntryId || partyTreasureHelpers.createInventoryEntryId)(),
+          name: rawName,
+          quantity,
+          value,
+          weight,
+          url: rawUrl || null,
+          containerId: null,
+          isContainer: false
+        });
+      }
+      return payload.length > 0 ? payload : null;
+    }
+  };
   const refereeHeaderNameTargets = [refereeCampaignName];
   const refereeHeaderIconTargets = [refereeRulesetIcon];
   const refereeHeaderLinkTargets = [refereeRulesetLink];
@@ -197,6 +490,11 @@ window.addEventListener('DOMContentLoaded', () => {
   if (campaignSettingsBtn) {
     campaignSettingsBtn.addEventListener('click', () => {
       openCampaignSettingsModal();
+    });
+  }
+  if (partyTreasureButton) {
+    partyTreasureButton.addEventListener('click', () => {
+      void openPartyTreasureEditor();
     });
   }
   if (campaignSettingsCancelBtn) {
@@ -239,6 +537,54 @@ window.addEventListener('DOMContentLoaded', () => {
   if (campaignInviteOnlyInput) {
     campaignInviteOnlyInput.addEventListener('change', () => validateCampaignSettingsModal());
   }
+  if (partyTreasureAddBtn) {
+    partyTreasureAddBtn.addEventListener('click', () => {
+      addPartyTreasureItem();
+    });
+  }
+
+  if (partyTreasureAddFormSaveBtn) {
+    partyTreasureAddFormSaveBtn.addEventListener('click', () => {
+      commitPartyTreasureAddFormItem();
+    });
+  }
+
+  if (partyTreasureAddFormCancelBtn) {
+    partyTreasureAddFormCancelBtn.addEventListener('click', () => {
+      setPartyTreasureAddFormOpen(false);
+    });
+  }
+  if (partyTreasureRemoveBtn) {
+    partyTreasureRemoveBtn.addEventListener('click', () => {
+      removeSelectedPartyTreasureItem();
+    });
+  }
+  if (partyTreasureSaveBtn) {
+    partyTreasureSaveBtn.addEventListener('click', async () => {
+      try {
+        await savePartyTreasureFromEditor();
+        closePartyTreasureEditor();
+      } catch (err) {
+        if (statusDiv) {
+          statusDiv.textContent = `Party treasure save failed: ${err instanceof Error ? err.message : String(err)}`;
+        }
+      }
+    });
+  }
+  if (partyTreasureCancelBtn) {
+    partyTreasureCancelBtn.addEventListener('click', () => {
+      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+      closePartyTreasureEditor();
+    });
+  }
+  if (partyTreasurePanel) {
+    partyTreasurePanel.addEventListener('click', (event) => {
+      if (event.target !== partyTreasurePanel) return;
+      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+      closePartyTreasureEditor();
+    });
+  }
+  updateInvitePlayerButtonState();
   if (libraryImportButton && libraryImportInput) {
     libraryImportButton.addEventListener('click', () => {
       libraryImportInput.click();
@@ -258,7 +604,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  let activeCampaignId = null;
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
     getCampaignId: () => activeCampaignId,
     refresh: async () => {
@@ -337,6 +682,33 @@ window.addEventListener('DOMContentLoaded', () => {
       availableRulesets = [];
       populateCampaignRulesetSelect();
       console.warn('Unable to load ruleset list:', err);
+    }
+  }
+
+  async function recoverActiveCampaignIfNeeded() {
+    try {
+      const res = await fetch('/campaigns');
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+      const campaigns = await res.json();
+      if (!Array.isArray(campaigns) || campaigns.length === 0) {
+        return false;
+      }
+      const selectedCampaign = campaigns.find((campaign) => Boolean(campaign?.isActive)) || (campaigns.length === 1 ? campaigns[0] : null);
+      if (!selectedCampaign?.id) {
+        return false;
+      }
+      const selectRes = await fetch(`/campaigns/${encodeURIComponent(selectedCampaign.id)}/select`, {
+        method: 'POST'
+      });
+      if (!selectRes.ok) {
+        throw new Error(`Server returned ${selectRes.status}`);
+      }
+      return true;
+    } catch (err) {
+      console.warn('Unable to recover active campaign selection:', err);
+      return false;
     }
   }
 
@@ -1608,6 +1980,7 @@ window.addEventListener('DOMContentLoaded', () => {
         ? campaign.claimTimeoutMinutes
         : 5;
       currentCampaignInviteOnly = Boolean(campaign.isInviteOnly);
+      currentPartyTreasure = Array.isArray(campaign.partyTreasure) ? campaign.partyTreasure : [];
       campaignUserdataSelection = Array.isArray(campaign?.userdataFiles)
         ? campaign.userdataFiles.map((name) => normalizeUserdataFileName(name)).filter(Boolean).sort((lhs, rhs) => lhs.localeCompare(rhs))
         : [];
@@ -1664,6 +2037,277 @@ window.addEventListener('DOMContentLoaded', () => {
       document.title = currentCampaignName ? `${currentCampaignName} - Referee` : APP_NAME;
       return false;
     }
+  }
+
+  function setPartyTreasurePanelOpen(open) {
+    if (!partyTreasurePanel) return;
+    partyTreasurePanel.classList.toggle('hidden', !open);
+    partyTreasurePanel.setAttribute('aria-hidden', (!open).toString());
+    partyTreasurePanel.classList.toggle('party-treasure-compact', open && isCompactPartyTreasureLayout());
+    if (!open) {
+      setPartyTreasureAddFormOpen(false);
+    }
+  }
+
+  function updatePartyTreasureItemOptions() {
+    partyTreasureHelpers.updateEquipmentItemOptions(partyTreasureItemOptions, equipmentLibraryItems);
+  }
+
+  function isCompactPartyTreasureLayout() {
+    return window.matchMedia('(max-width: 760px)').matches;
+  }
+
+  function setPartyTreasureAddFormOpen(open) {
+    if (!partyTreasureAddForm) return;
+    partyTreasureAddForm.classList.toggle('hidden', !open);
+    partyTreasureAddForm.setAttribute('aria-hidden', (!open).toString());
+    if (!open) {
+      if (partyTreasureAddFormName) partyTreasureAddFormName.value = '';
+      if (partyTreasureAddFormQuantity) partyTreasureAddFormQuantity.value = '1';
+      if (partyTreasureAddFormValue) partyTreasureAddFormValue.value = '0';
+      if (partyTreasureAddFormWeight) partyTreasureAddFormWeight.value = '0';
+      if (partyTreasureAddFormUrl) partyTreasureAddFormUrl.value = '';
+    }
+  }
+
+  function collectPartyTreasureDraftFromForm() {
+    const name = (partyTreasureAddFormName?.value || '').trim();
+    const quantityRaw = (partyTreasureAddFormQuantity?.value || '').trim();
+    const valueRaw = (partyTreasureAddFormValue?.value || '').trim();
+    const weightRaw = (partyTreasureAddFormWeight?.value || '').trim();
+    const url = (partyTreasureAddFormUrl?.value || '').trim();
+    if (!name) {
+      throw new Error('Item name is required.');
+    }
+    const quantity = quantityRaw === '' ? 1 : Number(quantityRaw);
+    const value = valueRaw === '' ? 0 : Math.round(Number(valueRaw) * 100) / 100;
+    const weight = weightRaw === '' ? 0 : Number(weightRaw);
+    if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
+      throw new Error(`Quantity for ${name} must be a whole number of at least 1.`);
+    }
+    if (!Number.isFinite(value)) {
+      throw new Error(`Value for ${name} must be a valid number.`);
+    }
+    if (!Number.isFinite(weight)) {
+      throw new Error(`Weight for ${name} must be a valid number.`);
+    }
+    return {
+      id: (window.PlayerTrackerPartyTreasure?.createInventoryEntryId || partyTreasureHelpers.createInventoryEntryId)(),
+      name,
+      quantity,
+      value,
+      weight,
+      url: url || null,
+      containerId: null,
+      isContainer: false
+    };
+  }
+
+  function getPartyTreasureRows() {
+    return partyTreasureHelpers.getPartyTreasureRows(partyTreasureFields);
+  }
+
+  function setSelectedPartyTreasureRow(row) {
+    partyTreasureSelectedRow = row;
+    if (!partyTreasureFields) return;
+    getPartyTreasureRows().forEach((entryRow) => {
+      entryRow.classList.toggle('selected', entryRow === row);
+      entryRow.setAttribute('aria-selected', (entryRow === row).toString());
+    });
+    if (partyTreasureRemoveBtn) {
+      const canRemove = Boolean(partyTreasureSelectedRow);
+      partyTreasureRemoveBtn.disabled = !canRemove;
+      partyTreasureRemoveBtn.setAttribute('aria-disabled', (!canRemove).toString());
+    }
+  }
+
+  function focusPartyTreasureRow(row) {
+    partyTreasureHelpers.focusInventoryRow(row);
+  }
+
+  function buildPartyTreasureFields(items = []) {
+    if (!partyTreasureFields) return;
+    partyTreasureHelpers.buildPartyTreasureFields(partyTreasureFields, items, {
+      itemOptionsId: 'ref-party-treasure-item-options',
+      onDirty: () => {
+        partyTreasureEditorDirty = true;
+      },
+      onSelect: (row) => {
+        setSelectedPartyTreasureRow(row);
+      },
+      applyPreset: (row, itemName) => {
+        partyTreasureHelpers.applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems);
+      },
+      displayMode: isCompactPartyTreasureLayout()
+    });
+  }
+
+  function collectPartyTreasurePayloadFromEditor() {
+    return partyTreasureHelpers.collectPartyTreasurePayloadFromEditor(partyTreasureFields);
+  }
+
+  function addPartyTreasureItem() {
+    if (isCompactPartyTreasureLayout()) {
+      setPartyTreasureAddFormOpen(true);
+      window.requestAnimationFrame(() => {
+        partyTreasureAddFormName?.focus();
+        partyTreasureAddFormName?.select?.();
+      });
+      return;
+    }
+    const row = partyTreasureHelpers.createPartyTreasureRow({
+      itemOptionsId: 'ref-party-treasure-item-options',
+      onDirty: () => {
+        partyTreasureEditorDirty = true;
+      },
+      onSelect: (selectedRow) => {
+        setSelectedPartyTreasureRow(selectedRow);
+      },
+      applyPreset: (selectedRow, itemName) => {
+        partyTreasureHelpers.applyPartyTreasurePresetToRow(selectedRow, itemName, equipmentLibraryItems);
+      }
+    });
+    if (partyTreasureFields) {
+      partyTreasureFields.appendChild(row);
+      partyTreasureEditorDirty = true;
+      setSelectedPartyTreasureRow(row);
+      focusPartyTreasureRow(row);
+    }
+  }
+
+  function removeSelectedPartyTreasureItem() {
+    if (!partyTreasureSelectedRow) return;
+    const rowName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
+    if (!confirm(`Remove ${rowName} from party treasure?`)) {
+      return;
+    }
+    const nextRow = partyTreasureSelectedRow.nextElementSibling || partyTreasureSelectedRow.previousElementSibling;
+    partyTreasureSelectedRow.remove();
+    partyTreasureEditorDirty = true;
+    if (!isCompactPartyTreasureLayout() && !partyTreasureFields.querySelector('tr.inventory-entry')) {
+      partyTreasureFields.appendChild(partyTreasureHelpers.createPartyTreasureRow({
+        itemOptionsId: 'ref-party-treasure-item-options',
+        onDirty: () => {
+          partyTreasureEditorDirty = true;
+        },
+        onSelect: (selectedRow) => {
+          setSelectedPartyTreasureRow(selectedRow);
+        },
+        applyPreset: (selectedRow, itemName) => {
+          partyTreasureHelpers.applyPartyTreasurePresetToRow(selectedRow, itemName, equipmentLibraryItems);
+        }
+      }));
+    }
+    setSelectedPartyTreasureRow(nextRow || partyTreasureFields.querySelector('tr.inventory-entry'));
+  }
+
+  function commitPartyTreasureAddFormItem() {
+    if (!partyTreasureFields) return;
+    let entry;
+    try {
+      entry = collectPartyTreasureDraftFromForm();
+    } catch (err) {
+      if (statusDiv) statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      return;
+    }
+    const row = partyTreasureHelpers.createPartyTreasureRow({
+      entry,
+      itemOptionsId: 'ref-party-treasure-item-options',
+      onDirty: () => {
+        partyTreasureEditorDirty = true;
+      },
+      onSelect: (selectedRow) => {
+        setSelectedPartyTreasureRow(selectedRow);
+      },
+      applyPreset: (selectedRow, itemName) => {
+        partyTreasureHelpers.applyPartyTreasurePresetToRow(selectedRow, itemName, equipmentLibraryItems);
+      },
+      displayMode: isCompactPartyTreasureLayout()
+    });
+    partyTreasureFields.appendChild(row);
+    partyTreasureEditorDirty = true;
+    setSelectedPartyTreasureRow(row);
+    if (!isCompactPartyTreasureLayout()) {
+      focusPartyTreasureRow(row);
+    }
+    setPartyTreasureAddFormOpen(false);
+  }
+
+  async function savePartyTreasureFromEditor() {
+    if (!activeCampaignId) return null;
+    let items;
+    try {
+      items = collectPartyTreasurePayloadFromEditor();
+    } catch (err) {
+      if (statusDiv) statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      return null;
+    }
+    if (!items) {
+      items = [];
+    }
+    const res = await fetch('/campaign/party-treasure', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items })
+    });
+    if (!res.ok) {
+      throw new Error(await responseErrorMessage(res));
+    }
+    const updatedCampaign = await res.json();
+    currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+      ? updatedCampaign.partyTreasure
+      : items;
+    partyTreasureEditorDirty = false;
+    return updatedCampaign;
+  }
+
+  async function openPartyTreasureEditor() {
+    if (!partyTreasureFields) return;
+    if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+    partyTreasureEditorDirty = false;
+    if (partyTreasureDialogTitle) {
+      partyTreasureDialogTitle.textContent = 'Party Treasure';
+    }
+    if (partyTreasureContext) {
+      partyTreasureContext.classList.add('hidden');
+      partyTreasureContext.setAttribute('aria-hidden', 'true');
+    }
+    await loadEquipmentLibrary();
+    setPartyTreasureAddFormOpen(false);
+    buildPartyTreasureFields(currentPartyTreasure);
+    setPartyTreasurePanelOpen(true);
+    window.requestAnimationFrame(() => {
+      if (isCompactPartyTreasureLayout()) {
+        partyTreasureAddBtn?.focus();
+        return;
+      }
+      const firstInput = partyTreasureFields.querySelector('input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    });
+  }
+
+  function closePartyTreasureEditor() {
+    partyTreasureEditorDirty = false;
+    partyTreasureSelectedRow = null;
+    if (partyTreasureDialogTitle) {
+      partyTreasureDialogTitle.textContent = 'Party Treasure';
+    }
+    if (partyTreasureContext) {
+      partyTreasureContext.classList.add('hidden');
+      partyTreasureContext.setAttribute('aria-hidden', 'true');
+    }
+    if (partyTreasureFields) {
+      partyTreasureFields.innerHTML = '';
+    }
+    setPartyTreasureAddFormOpen(false);
+    if (partyTreasureRemoveBtn) {
+      partyTreasureRemoveBtn.disabled = true;
+      partyTreasureRemoveBtn.setAttribute('aria-disabled', 'true');
+    }
+    setPartyTreasurePanelOpen(false);
   }
 
   async function loadConditionLibrary() {
@@ -1792,6 +2436,39 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function normalizeEquipmentItems(items) {
+    return partyTreasureHelpers.normalizeEquipmentItems(items);
+  }
+
+  async function loadEquipmentLibrary() {
+    if (equipmentLibraryLoading) {
+      return equipmentLibraryItems;
+    }
+    if (equipmentLibraryLoaded) {
+      return equipmentLibraryItems;
+    }
+    equipmentLibraryLoading = true;
+    try {
+      const response = await fetch('/equipment-library?limit=500');
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      const json = await response.json();
+      equipmentLibraryItems = partyTreasureHelpers.normalizeEquipmentItems(json?.items);
+      equipmentLibraryLoaded = true;
+      updatePartyTreasureItemOptions();
+      return equipmentLibraryItems;
+    } catch (err) {
+      console.error('Failed to load equipment library:', err);
+      equipmentLibraryItems = [];
+      equipmentLibraryLoaded = true;
+      updatePartyTreasureItemOptions();
+      return equipmentLibraryItems;
+    } finally {
+      equipmentLibraryLoading = false;
+    }
+  }
+
   function applyState(state) {
     const players = state.players || [];
     currentPlayers = players;
@@ -1914,8 +2591,268 @@ window.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
+  function closeRefereeRowOverflowMenus(exceptMenu = null) {
+    document.querySelectorAll('.referee-row-menu').forEach((menu) => {
+      if (menu === exceptMenu) return;
+      menu.classList.add('hidden');
+      menu.setAttribute('aria-hidden', 'true');
+      const toggle = menu._overflowToggle;
+      if (toggle) {
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  function closeExpandedOrderStats() {
+    if (!expandedOrderStatsCharacterId) return;
+    expandedOrderStatsCharacterId = null;
+    if (currentPlayers.length > 0) {
+      renderTurnTable(currentPlayers, currentTurnId);
+    }
+  }
+
+  function closeInitiativeEditor() {
+    initiativeEditorCharacterId = null;
+    if (initiativeModal) {
+      initiativeModal.classList.add('hidden');
+      initiativeModal.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function openInitiativeEditor(player) {
+    if (!player || !initiativeModal || !initiativeModalInput) return;
+    closeRefereeRowOverflowMenus();
+    closeExpandedOrderStats();
+    initiativeEditorCharacterId = player.id;
+    if (initiativeModalTitle) {
+      initiativeModalTitle.textContent = 'Edit Initiative';
+    }
+    if (initiativeModalCharacter) {
+      initiativeModalCharacter.textContent = player.name || 'Character';
+    }
+    initiativeModalInput.value = Number.isFinite(player.initiative) ? String(player.initiative) : '';
+    initiativeModal.classList.remove('hidden');
+    initiativeModal.setAttribute('aria-hidden', 'false');
+    window.requestAnimationFrame(() => {
+      initiativeModalInput.focus();
+      initiativeModalInput.select();
+    });
+  }
+
+  async function saveInitiativeEditor() {
+    const player = initiativeEditorCharacterId
+      ? currentPlayers.find((entry) => entry.id === initiativeEditorCharacterId)
+      : null;
+    if (!player || !initiativeModalInput) return;
+    const entered = initiativeModalInput.value.trim();
+    if (!entered) {
+      player.initiative = null;
+      await saveCharacterEntry(player);
+      closeInitiativeEditor();
+      return;
+    }
+    const initiative = Number(entered);
+    if (!Number.isFinite(initiative)) {
+      if (statusDiv) statusDiv.textContent = 'Initiative must be a valid number.';
+      return;
+    }
+    player.initiative = initiative;
+    await saveCharacterEntry(player);
+    closeInitiativeEditor();
+  }
+
+  function toggleExpandedOrderStats(characterId) {
+    expandedOrderStatsCharacterId =
+      expandedOrderStatsCharacterId === characterId ? null : characterId;
+    if (currentPlayers.length > 0) {
+      renderTurnTable(currentPlayers, currentTurnId);
+    }
+  }
+
+  function buildOrderStatsPopover(character, displayStatKeys) {
+    const stats = Array.isArray(character.stats) ? character.stats : [];
+    const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
+    const popover = document.createElement('div');
+    popover.className = 'player-row-stats-popover character-stats';
+    popover.setAttribute('role', 'dialog');
+    popover.setAttribute('aria-label', `${character.name || 'character'} stats controls`);
+    popover.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    const heading = document.createElement('div');
+    heading.className = 'player-row-stats-heading';
+    heading.textContent = character.name || 'Character';
+    popover.appendChild(heading);
+
+    displayStatKeys.forEach((key) => {
+      const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
+      const line = document.createElement('div');
+      line.className = 'character-stat-line';
+      const label = document.createElement('span');
+      label.className = 'character-stat-label';
+      label.textContent = key;
+
+      const minus = document.createElement('button');
+      minus.type = 'button';
+      minus.className = 'hp-adjust';
+      minus.textContent = '−';
+      minus.addEventListener('click', (event) => {
+        event.stopPropagation();
+        adjustCharacterStat(character, key, -1);
+      });
+
+      const value = document.createElement('span');
+      value.className = 'character-hp-value';
+      const currentVal = Number.isFinite(stat.current) ? stat.current : 0;
+      const maxVal = Number.isFinite(stat.max) ? stat.max : 0;
+      value.textContent = key === 'TempHP' ? `${currentVal}` : `${currentVal}/${maxVal}`;
+
+      const plus = document.createElement('button');
+      plus.type = 'button';
+      plus.className = 'hp-adjust';
+      plus.textContent = '+';
+      plus.addEventListener('click', (event) => {
+        event.stopPropagation();
+        adjustCharacterStat(character, key, 1);
+      });
+
+      line.appendChild(label);
+      line.appendChild(minus);
+      line.appendChild(value);
+      line.appendChild(plus);
+      popover.appendChild(line);
+    });
+
+    return popover;
+  }
+
+  function buildRefereeRowOverflowControls(player, options = {}) {
+    const anchorEl = options.anchorEl || null;
+    const overflow = document.createElement('div');
+    overflow.className = 'character-overflow referee-row-overflow';
+    const overflowToggle = document.createElement('button');
+    overflowToggle.type = 'button';
+    overflowToggle.className = 'character-overflow-toggle';
+    overflowToggle.setAttribute('aria-label', `Manage ${player.name || 'character'}`);
+    overflowToggle.setAttribute('aria-haspopup', 'menu');
+    overflowToggle.setAttribute('aria-expanded', 'false');
+    overflowToggle.classList.add('hidden');
+    overflowToggle.setAttribute('aria-hidden', 'true');
+    overflowToggle.tabIndex = -1;
+    const overflowMenu = document.createElement('div');
+    overflowMenu.className = 'character-overflow-menu referee-row-menu hidden';
+    overflowMenu.setAttribute('role', 'menu');
+    overflowMenu.setAttribute('aria-hidden', 'true');
+    overflowMenu.style.position = 'fixed';
+    overflowMenu.style.zIndex = '10000';
+    overflowMenu._overflowToggle = overflowToggle;
+    document.body.appendChild(overflowMenu);
+
+    const openOverflowMenu = () => {
+      closeExpandedOrderStats();
+      closeRefereeRowOverflowMenus(overflowMenu);
+      overflowMenu.classList.remove('hidden');
+      overflowMenu.setAttribute('aria-hidden', 'false');
+      overflowToggle.setAttribute('aria-expanded', 'true');
+      const toggleRect = anchorEl?.getBoundingClientRect() || overflowToggle.getBoundingClientRect();
+      overflowMenu.style.top = `${toggleRect.bottom + 6}px`;
+      overflowMenu.style.left = `${toggleRect.left}px`;
+      overflowMenu.style.right = 'auto';
+      window.requestAnimationFrame(() => {
+        const menuRect = overflowMenu.getBoundingClientRect();
+        const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+        const overflowRight = menuRect.right > viewportWidth - 8;
+        const overflowLeft = menuRect.left < 8;
+        if (overflowRight && !overflowLeft) {
+          overflowMenu.style.left = `${Math.max(8, viewportWidth - menuRect.width - 8)}px`;
+        }
+      });
+    };
+
+    const addMenuItem = (label, handler, options = {}) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className || 'secondary';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
+      if (options.hidden) {
+        button.classList.add('hidden');
+      }
+      button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeRefereeRowOverflowMenus();
+        await handler();
+      });
+      overflowMenu.appendChild(button);
+      return button;
+    };
+
+    addMenuItem('Details', () => {
+      setSelectedCharacter(player);
+      setDetailsPanelOpen(true);
+    });
+    addMenuItem('Conditions', () => {
+      setSelectedCharacter(player);
+      setConditionsPanelOpen(true);
+    });
+    addMenuItem('Reveal Now', () => updateVisibility(player.id, false, false), {
+      hidden: !player.isReferee || !player.isHidden
+    });
+    addMenuItem('Reveal on Turn', () => updateVisibility(player.id, true, true), {
+      hidden: !player.isReferee || !player.isHidden
+    });
+    addMenuItem('Hide Character', () => updateVisibility(player.id, true, false), {
+      hidden: !player.isReferee || player.isHidden
+    });
+    addMenuItem('Open Reference', () => openCharacterReference(player), {
+      hidden: !player.referenceUrl
+    });
+    addMenuItem('Claim Character', async () => {
+      await claimCharacter(player);
+    }, {
+      hidden: Boolean(player.isReferee) || Boolean(player.claimedSessionId)
+    });
+    addMenuItem(player.isReferee ? 'Release to Pool' : 'Release Character', async () => {
+      if (player.isReferee) {
+        await releaseCharacterToPool(player);
+        return;
+      }
+      await forceReleaseCharacter(player);
+    }, {
+      hidden: !Boolean(player.claimedSessionId) && !player.isReferee
+    });
+    addMenuItem('Delete Character', async () => {
+      const confirmed = confirm(`Remove ${player.name || 'this character'} from the tracker?`);
+      if (!confirmed) return;
+      await deleteCharacter(player.id);
+    }, {
+      className: 'secondary character-remove'
+    });
+
+    overflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeRefereeRowOverflowMenus();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    overflow.appendChild(overflowToggle);
+    overflow.appendChild(overflowMenu);
+    return { overflow, openOverflowMenu };
+  }
+
   function renderTurnTable(players, currentTurnId) {
     if (!playersBody) return;
+    document.querySelectorAll('.referee-row-menu').forEach((menu) => menu.remove());
     playersBody.innerHTML = '';
     if (players.length === 0) {
       playersBody.appendChild(createEmptyEncounterRow(5));
@@ -1925,6 +2862,7 @@ window.addEventListener('DOMContentLoaded', () => {
     players.forEach((p) => {
       const tr = document.createElement('tr');
       tr.classList.add('player-row');
+      tr.classList.add('player-row-owned');
       if (p.isHidden) {
         tr.classList.add('hidden-character');
       }
@@ -1936,16 +2874,39 @@ window.addEventListener('DOMContentLoaded', () => {
       initTd.textContent = formatInitiative(p.initiative);
 
       const nameTd = document.createElement('td');
-      const nameLine = document.createElement('span');
+      nameTd.classList.add('referee-order-name-cell');
+      const nameWrap = document.createElement('div');
+      nameWrap.className = 'player-row-name-wrap';
+      const { overflow, openOverflowMenu } = buildRefereeRowOverflowControls(p, { anchorEl: nameTd });
+      const nameText = document.createElement('div');
+      nameText.className = 'player-row-name-text';
+      const nameLine = document.createElement('div');
       nameLine.textContent = p.name;
-      nameTd.appendChild(nameLine);
+      nameText.appendChild(nameLine);
       const controllerName = getCharacterControllerName(p);
       if (controllerName) {
-        const ownerLine = document.createElement('span');
+        const ownerLine = document.createElement('div');
         ownerLine.classList.add('player-owner');
-        ownerLine.textContent = ` (${controllerName})`;
-        nameTd.appendChild(ownerLine);
+        ownerLine.textContent = `(${controllerName})`;
+        nameText.appendChild(ownerLine);
       }
+      nameWrap.appendChild(nameText);
+      const nameButton = document.createElement('button');
+      nameButton.type = 'button';
+      nameButton.className = 'player-row-name-button referee-order-name-button';
+      nameButton.setAttribute('aria-label', `Manage ${p.name || 'character'}`);
+      nameButton.appendChild(nameWrap);
+      nameButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openOverflowMenu();
+      });
+      nameTd.appendChild(nameButton);
+      nameTd.appendChild(overflow);
+      nameTd.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openOverflowMenu();
+      });
 
       const hpTd = document.createElement('td');
       const stats = Array.isArray(p.stats) ? p.stats : [];
@@ -1953,12 +2914,30 @@ window.addEventListener('DOMContentLoaded', () => {
       const statusInfo = encounterStatusInfo(stats, statKeys);
       if (statusInfo) {
         applyEncounterHealthClasses(hpTd, statusInfo);
+        hpTd.classList.add('player-row-stats-cell');
         const valueLine = document.createElement('div');
         valueLine.textContent = formatEncounterStatsText(orderedStats, statKeys);
         hpTd.appendChild(valueLine);
+        if (p.id === expandedOrderStatsCharacterId) {
+          const statsPopover = buildOrderStatsPopover(p, statKeys);
+          hpTd.appendChild(statsPopover);
+        }
       } else {
         hpTd.textContent = '—';
       }
+      if (statusInfo) {
+        hpTd.style.cursor = 'pointer';
+        hpTd.addEventListener('click', (event) => {
+          event.stopPropagation();
+          closeRefereeRowOverflowMenus();
+          toggleExpandedOrderStats(p.id);
+        });
+      }
+      initTd.style.cursor = 'pointer';
+      initTd.addEventListener('click', (event) => {
+        event.stopPropagation();
+        openInitiativeEditor(p);
+      });
 
       const conditionsTd = document.createElement('td');
       conditionsTd.classList.add('conditions-cell');
@@ -1969,11 +2948,16 @@ window.addEventListener('DOMContentLoaded', () => {
         conditionsTd.textContent = '—';
       }
 
-      tr.appendChild(initTd);
-      tr.appendChild(nameTd);
-      tr.appendChild(hpTd);
-      tr.appendChild(conditionsTd);
       const actTd = document.createElement('td');
+      const actStatus = p.isHidden
+        ? (p.revealOnTurn ? 'Hidden/Reveal on Turn' : 'Hidden')
+        : '';
+      if (actStatus) {
+        const statusLine = document.createElement('div');
+        statusLine.className = 'act-status';
+        statusLine.textContent = actStatus;
+        actTd.appendChild(statusLine);
+      }
       const actButton = document.createElement('button');
       actButton.type = 'button';
       actButton.textContent = 'Act Now';
@@ -1982,6 +2966,11 @@ window.addEventListener('DOMContentLoaded', () => {
         setTurnNow(p.id);
       });
       actTd.appendChild(actButton);
+
+      tr.appendChild(initTd);
+      tr.appendChild(nameTd);
+      tr.appendChild(hpTd);
+      tr.appendChild(conditionsTd);
       tr.appendChild(actTd);
       playersBody.appendChild(tr);
     });
@@ -1993,10 +2982,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (selectionToolbarAnchor) {
       selectionToolbarAnchor.classList.add('hidden');
     }
-    const filteredPlayers = hidePlayers
-      ? players.filter((player) => Boolean(player.isReferee))
-      : players;
-    if (filteredPlayers.length === 0) {
+    if (players.length === 0) {
       const empty = document.createElement('div');
       empty.className = 'subtitle';
       empty.textContent = 'No characters yet.';
@@ -2004,7 +2990,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    filteredPlayers.forEach((player) => {
+    players.forEach((player) => {
       const item = document.createElement('div');
       item.className = 'character-item';
       if (player.id === selectedCharacterId) {
@@ -2241,11 +3227,11 @@ window.addEventListener('DOMContentLoaded', () => {
       editorInitiativeBonusInput.value = Number.isFinite(player.initiativeBonus) ? player.initiativeBonus : '';
     }
     updateEditorInitiativeBonusAvailability();
-      const stats = Array.isArray(player.stats) ? player.stats : [];
-      if (!player.statBlockId) {
-        const inferredStatBlockId = inferStatBlockIdFromStats(stats);
-        if (inferredStatBlockId) {
-          player.statBlockId = inferredStatBlockId;
+    const stats = Array.isArray(player.stats) ? player.stats : [];
+    if (!player.statBlockId) {
+      const inferredStatBlockId = inferStatBlockIdFromStats(stats);
+      if (inferredStatBlockId) {
+        player.statBlockId = inferredStatBlockId;
       }
     }
     editorStatKeys = getCharacterStatKeys(player);
@@ -2407,6 +3393,12 @@ window.addEventListener('DOMContentLoaded', () => {
       ? currentPlayers.find((player) => player.id === selectedCharacterId)
       : null;
     const referenceUrl = selected?.referenceUrl?.trim();
+    if (!referenceUrl) return;
+    window.open(referenceUrl, '_blank', 'noopener');
+  }
+
+  function openCharacterReference(player) {
+    const referenceUrl = player?.referenceUrl?.trim();
     if (!referenceUrl) return;
     window.open(referenceUrl, '_blank', 'noopener');
   }
@@ -2856,12 +3848,12 @@ window.addEventListener('DOMContentLoaded', () => {
         updateVisibility(selectedCharacterId, true, true);
       });
     }
-  if (hideBtn) {
-    hideBtn.addEventListener('click', () => {
-      if (!selectedCharacterId) return;
-      updateVisibility(selectedCharacterId, true, false);
-    });
-  }
+    if (hideBtn) {
+      hideBtn.addEventListener('click', () => {
+        if (!selectedCharacterId) return;
+        updateVisibility(selectedCharacterId, true, false);
+      });
+    }
 
   if (overflowToggle) {
     overflowToggle.addEventListener('click', (event) => {
@@ -2897,26 +3889,29 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (releaseCharacterBtn) {
+    if (releaseCharacterBtn) {
       releaseCharacterBtn.addEventListener('click', async (event) => {
         event.stopPropagation();
         closeOverflowMenu();
-      const selected = selectedCharacterId
-        ? currentPlayers.find((player) => player.id === selectedCharacterId)
-        : null;
-      if (!selected) return;
-      if (selected.isReferee) {
-        await releaseCharacterToPool(selected);
-        return;
-      }
-      if (!selected.claimedSessionId) return;
-      await forceReleaseCharacter(selected);
-    });
-  }
+        const selected = selectedCharacterId
+          ? currentPlayers.find((player) => player.id === selectedCharacterId)
+          : null;
+        if (!selected) return;
+        if (selected.isReferee) {
+          await releaseCharacterToPool(selected);
+          return;
+        }
+        if (!selected.claimedSessionId) return;
+        await forceReleaseCharacter(selected);
+      });
+    }
 
-  document.addEventListener('click', () => {
-    closeOverflowMenu();
-  });
+    document.addEventListener('click', () => {
+      closeOverflowMenu();
+      closeRefereeRowOverflowMenus();
+      closeExpandedOrderStats();
+      closeInitiativeEditor();
+    });
   }
 
   async function forceReleaseCharacter(player) {
@@ -3007,6 +4002,10 @@ window.addEventListener('DOMContentLoaded', () => {
     await loadAvailableRulesets();
     await loadConditionLibrary();
     if (hasActiveCampaign) {
+      await loadCampaignUserData();
+      await loadState();
+    } else if (await recoverActiveCampaignIfNeeded()) {
+      await loadCampaign();
       await loadCampaignUserData();
       await loadState();
     }
@@ -3134,6 +4133,22 @@ window.addEventListener('DOMContentLoaded', () => {
       setConditionsPanelOpen(false);
     });
   }
+  if (initiativeModal) {
+    initiativeModal.addEventListener('click', (event) => {
+      if (event.target !== initiativeModal) return;
+      closeInitiativeEditor();
+    });
+  }
+  if (initiativeModalCancelBtn) {
+    initiativeModalCancelBtn.addEventListener('click', () => {
+      closeInitiativeEditor();
+    });
+  }
+  if (initiativeModalSaveBtn) {
+    initiativeModalSaveBtn.addEventListener('click', async () => {
+      await saveInitiativeEditor();
+    });
+  }
   if (addButton) {
     addButton.addEventListener('click', () => {
       showAddForm();
@@ -3173,12 +4188,6 @@ window.addEventListener('DOMContentLoaded', () => {
   if (addCancelBtn) {
     addCancelBtn.addEventListener('click', () => {
       hideAddForm();
-    });
-  }
-  if (hidePcsToggle) {
-    hidePcsToggle.addEventListener('change', () => {
-      hidePlayers = hidePcsToggle.checked;
-      renderCharacterList(currentPlayers, currentTurnId);
     });
   }
   bindActionButtons();

@@ -100,6 +100,28 @@ struct InventoryEntry: Content {
         self.containerId = containerId
         self.isContainer = isContainer
     }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if let idString = try container.decodeIfPresent(String.self, forKey: .id)?.trimmingCharacters(in: .whitespacesAndNewlines),
+           let parsedID = UUID(uuidString: idString) {
+            id = parsedID
+        } else {
+            id = nil
+        }
+        name = try container.decode(String.self, forKey: .name)
+        quantity = try container.decode(Int.self, forKey: .quantity)
+        value = try container.decode(Double.self, forKey: .value)
+        weight = try container.decode(Double.self, forKey: .weight)
+        url = try container.decodeIfPresent(String.self, forKey: .url)
+        if let containerIDString = try container.decodeIfPresent(String.self, forKey: .containerId)?.trimmingCharacters(in: .whitespacesAndNewlines),
+           let parsedContainerID = UUID(uuidString: containerIDString) {
+            containerId = parsedContainerID
+        } else {
+            containerId = nil
+        }
+        isContainer = try container.decodeIfPresent(Bool.self, forKey: .isContainer) ?? false
+    }
 }
 
 struct CreatureLibraryCreature: Content {

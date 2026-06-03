@@ -985,6 +985,47 @@ Acceptance:
 
 Status: complete
 
+### M7C: Referee Page Functionality
+
+Goal: bring the referee page up to feature parity with the player page where it makes sense for referee workflows.
+
+Work:
+
+- mirror the player-page character and campaign management affordances on the referee page
+- keep referee-specific controls in the referee workflow, not the player workflow
+- ensure referee actions can reach the same underlying character, inventory, currency, and party-treasure features
+- preserve referee-only capabilities while aligning the page structure with the streamlined player page
+- let referees roll initiative for groups of creatures of the same type as a single action
+
+Acceptance:
+
+- referee-page workflows expose the same core character-management capabilities as the player page where applicable
+- referee-specific controls remain available and clearly separated from player-only behavior
+- the referee page no longer feels like a legacy path compared with the player page
+
+Status: in progress
+
+Remaining:
+
+- let referees roll initiative for groups of creatures of the same type as a single action
+
+### M7D: Confirmation Dialogs
+
+Goal: replace native browser confirmation dialogs with custom in-app confirmation modals for clearer, more consistent web UX.
+
+Work:
+
+- define a reusable confirmation modal component for the web client
+- support custom titles, body text, and button labels for each confirmation flow
+- migrate high-friction confirmations like debt claims, destructive deletes, and discard-changes prompts to the custom modal
+- keep the behavior consistent across player and referee pages
+
+Acceptance:
+
+- confirmation flows use a custom modal rather than native browser dialogs
+- the UI can clearly distinguish destructive, discard, and debt-related confirmations
+- the modal styling matches the existing web app instead of browser chrome
+
 ### M8: iOS Migration
 
 Goal: convert iOS from device identity to account identity.

@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -32,6 +32,10 @@
 
   <div class="container referee-container">
     <section class="player-list">
+      <div class="character-list-actions referee-list-actions referee-top-actions">
+        <button type="button" id="ref-add-button" class="icon-button" aria-label="Add character">Add Character</button>
+        <button type="button" id="ref-party-treasure-button" class="icon-button" aria-label="Party treasure">Party Treasure</button>
+      </div>
       <div class="encounter-controls">
         <button type="button" id="encounter-new">New Encounter</button>
         <button type="button" id="encounter-start">Start Encounter</button>
@@ -52,166 +56,216 @@
       </table>
       <div id="status" class="subtitle"></div>
     </section>
+  </div>
 
-    <section class="detail-panel referee-panel">
-      <div class="character-drawer referee-drawer">
-        <div class="character-list-actions referee-list-actions">
-          <button type="button" id="ref-add-button" class="icon-button" aria-label="Add character">Add Character</button>
-          <label class="ref-filter">
-            <input type="checkbox" id="ref-hide-pcs" checked />
-            Show NPCs only
+  <form id="ref-add-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
+    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-add-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="ref-add-dialog-title">Add Character</h2>
+        <div class="conditions-dialog-actions">
+          <button type="submit">Save</button>
+          <button type="button" id="ref-add-cancel" class="secondary">Cancel</button>
+        </div>
+      </div>
+      <div class="form-section-block property-group">
+        <label class="property-row">
+          <span class="property-label">Character name</span>
+          <span class="property-control">
+            <input type="text" id="ref-name" required />
+          </span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Quantity</span>
+          <span class="property-control">
+            <input type="number" id="ref-quantity" min="1" value="1" required />
+          </span>
+        </label>
+        <label class="property-toggle-row">
+          <span class="property-label">Visibility</span>
+          <span class="property-toggle-control">
+            <input type="checkbox" id="ref-visible" />
+            <span>Start revealed</span>
+          </span>
+        </label>
+      </div>
+      <div class="add-form-tabs" role="tablist" aria-label="Add character entry mode">
+        <button type="button" id="ref-add-tab-manual" class="add-form-tab-button" role="tab" aria-selected="true" aria-controls="ref-add-manual-panel">Manual</button>
+        <button type="button" id="ref-add-tab-library" class="add-form-tab-button" role="tab" aria-selected="false" aria-controls="ref-library-panel">Library</button>
+      </div>
+      <div id="ref-add-manual-panel" class="add-form-tabpanel" role="tabpanel" aria-labelledby="ref-add-tab-manual">
+        <div class="form-section-block property-group">
+          <label id="ref-stat-block-wrap" class="property-row hidden">
+            <span class="property-label">Stat block</span>
+            <span class="property-control">
+              <select id="ref-stat-block"></select>
+            </span>
+          </label>
+          <label id="ref-initiative-bonus-wrap" class="property-row">
+            <span class="property-label">Initiative Bonus</span>
+            <span class="property-control">
+              <input type="number" id="ref-initiative-bonus" value="" />
+            </span>
+          </label>
+          <div id="ref-stats-fields"></div>
+          <div id="ref-add-current-stats" class="add-current-stats"></div>
+        </div>
+      </div>
+      <div id="ref-library-panel" class="creature-library-panel add-form-tabpanel hidden" role="tabpanel" aria-labelledby="ref-add-tab-library" aria-hidden="true">
+        <div class="creature-library-header">
+          <div class="creature-library-header-row">
+            <div id="ref-library-summary" class="creature-library-summary"></div>
+          </div>
+          <div id="ref-library-import-status" class="creature-library-summary creature-library-import-status"></div>
+        </div>
+        <label class="creature-library-search">
+          <span class="property-label">Filter</span>
+          <input type="search" id="ref-library-query" placeholder="Search name, type, CR, alignment" />
+        </label>
+        <div class="creature-library-results">
+          <div id="ref-library-list" class="creature-library-list"></div>
+          <div id="ref-library-details" class="creature-library-details"></div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <form id="ref-editor" class="ref-editor hidden" aria-hidden="true">
+    <div id="ref-details-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
+      <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-details-dialog-title">
+        <div class="conditions-dialog-header">
+          <h2 id="ref-details-dialog-title">Details</h2>
+          <div class="conditions-dialog-actions">
+            <button type="button" id="ref-details-cancel" class="secondary">Cancel</button>
+            <button type="button" id="ref-details-save">Save</button>
+          </div>
+        </div>
+        <div class="form-section-block property-group">
+          <label class="property-row">
+            <span class="property-label">Character name</span>
+            <span class="property-control">
+              <input type="text" id="ref-edit-name" required />
+            </span>
           </label>
         </div>
-        <div id="referee-character-list" class="character-list"></div>
-        <div id="ref-selection-toolbar-anchor" class="hidden character-selection-toolbar">
-          <div class="details-toggles referee-toggles">
-            <button type="button" id="ref-details-toggle" class="details-toggle" aria-expanded="false">
-              Details
-            </button>
-            <button type="button" id="ref-conditions-toggle" class="details-toggle conditions-toggle" aria-expanded="false">
-              Conditions
-            </button>
-            <button type="button" id="ref-reveal-now" class="details-toggle" aria-expanded="false">
-              Reveal Immediately
-            </button>
-            <button type="button" id="ref-reveal-turn" class="details-toggle" aria-expanded="false">
-              Reveal On Turn
-            </button>
-            <button type="button" id="ref-hide-character" class="details-toggle" aria-expanded="false">
-              Hide
-            </button>
-          </div>
-          <div class="character-overflow">
-            <button type="button" id="ref-overflow-toggle" class="icon-button character-overflow-toggle" aria-label="Character actions" aria-haspopup="menu" aria-expanded="false">⋯</button>
-            <div id="ref-overflow-menu" class="character-overflow-menu hidden" role="menu" aria-hidden="true">
-              <button type="button" id="ref-open-reference" class="secondary hidden" role="menuitem">Reference</button>
-              <button type="button" id="ref-claim-character" class="secondary hidden" role="menuitem">Claim Character</button>
-              <button type="button" id="ref-release-character" class="secondary hidden" role="menuitem">Release Character</button>
-              <button type="button" id="ref-delete-character" class="secondary" role="menuitem">Delete Character</button>
-            </div>
+        <div class="form-section-block property-group">
+          <label id="ref-edit-initiative-bonus-wrap" class="property-row">
+            <span class="property-label">Initiative Bonus</span>
+            <span class="property-control">
+              <input type="number" id="ref-edit-initiative-bonus" value="" />
+            </span>
+          </label>
+          <div id="ref-edit-stats"></div>
+          <div id="ref-edit-current-stats" class="ref-current-stats"></div>
+        </div>
+      </div>
+    </div>
+    <div id="ref-conditions-panel" class="conditions-panel-collapsed hidden" aria-hidden="true">
+      <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-conditions-dialog-title">
+        <div class="conditions-dialog-header">
+          <h2 id="ref-conditions-dialog-title">Conditions</h2>
+          <div class="conditions-dialog-actions">
+            <button type="button" id="ref-conditions-cancel" class="secondary">Cancel</button>
+            <button type="button" id="ref-conditions-save">Save</button>
           </div>
         </div>
-        <form id="ref-add-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
-          <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-add-dialog-title">
-            <div class="conditions-dialog-header">
-              <h2 id="ref-add-dialog-title">Add Character</h2>
-              <div class="conditions-dialog-actions">
-                <button type="submit">Save</button>
-                <button type="button" id="ref-add-cancel" class="secondary">Cancel</button>
-              </div>
-            </div>
-            <div class="form-section-block property-group">
-              <label class="property-row">
-                <span class="property-label">Character name</span>
-                <span class="property-control">
-                  <input type="text" id="ref-name" required />
-                </span>
-              </label>
-              <label class="property-row">
-                <span class="property-label">Quantity</span>
-                <span class="property-control">
-                  <input type="number" id="ref-quantity" min="1" value="1" required />
-                </span>
-              </label>
-              <label class="property-toggle-row">
-                <span class="property-label">Visibility</span>
-                <span class="property-toggle-control">
-                  <input type="checkbox" id="ref-visible" />
-                  <span>Start revealed</span>
-                </span>
-              </label>
-            </div>
-            <div class="add-form-tabs" role="tablist" aria-label="Add character entry mode">
-              <button type="button" id="ref-add-tab-manual" class="add-form-tab-button" role="tab" aria-selected="true" aria-controls="ref-add-manual-panel">Manual</button>
-              <button type="button" id="ref-add-tab-library" class="add-form-tab-button" role="tab" aria-selected="false" aria-controls="ref-library-panel">Library</button>
-            </div>
-            <div id="ref-add-manual-panel" class="add-form-tabpanel" role="tabpanel" aria-labelledby="ref-add-tab-manual">
-              <div class="form-section-block property-group">
-                <label id="ref-stat-block-wrap" class="property-row hidden">
-                  <span class="property-label">Stat block</span>
-                  <span class="property-control">
-                    <select id="ref-stat-block"></select>
-                  </span>
-                </label>
-                <label id="ref-initiative-bonus-wrap" class="property-row">
-                  <span class="property-label">Initiative Bonus</span>
-                  <span class="property-control">
-                    <input type="number" id="ref-initiative-bonus" value="" />
-                  </span>
-                </label>
-                <div id="ref-stats-fields"></div>
-                <div id="ref-add-current-stats" class="add-current-stats"></div>
-              </div>
-            </div>
-            <div id="ref-library-panel" class="creature-library-panel add-form-tabpanel hidden" role="tabpanel" aria-labelledby="ref-add-tab-library" aria-hidden="true">
-              <div class="creature-library-header">
-                <div class="creature-library-header-row">
-                  <div id="ref-library-summary" class="creature-library-summary"></div>
-                </div>
-                <div id="ref-library-import-status" class="creature-library-summary creature-library-import-status"></div>
-              </div>
-              <label class="creature-library-search">
-                <span class="property-label">Filter</span>
-                <input type="search" id="ref-library-query" placeholder="Search name, type, CR, alignment" />
-              </label>
-              <div class="creature-library-results">
-                <div id="ref-library-list" class="creature-library-list"></div>
-                <div id="ref-library-details" class="creature-library-details"></div>
-              </div>
-            </div>
-          </div>
-        </form>
+        <input type="search" id="ref-condition-filter" placeholder="Filter list…" />
+        <div id="ref-conditions-grid" class="conditions-grid"></div>
+        <div id="ref-selected-conditions" class="selected-conditions"></div>
       </div>
+    </div>
+  </form>
 
-      <div class="referee-block">
-        <div id="ref-editor-empty" class="subtitle">Select a character to edit details.</div>
-        <form id="ref-editor" class="ref-editor hidden">
-          <div id="ref-details-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
-            <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-details-dialog-title">
-              <div class="conditions-dialog-header">
-                <h2 id="ref-details-dialog-title">Details</h2>
-                <div class="conditions-dialog-actions">
-                  <button type="button" id="ref-details-cancel" class="secondary">Cancel</button>
-                  <button type="button" id="ref-details-save">Save</button>
-                </div>
-              </div>
-              <div class="form-section-block property-group">
-                <label class="property-row">
-                  <span class="property-label">Character name</span>
-                  <span class="property-control">
-                    <input type="text" id="ref-edit-name" required />
-                  </span>
-                </label>
-              </div>
-              <div class="form-section-block property-group">
-                <label id="ref-edit-initiative-bonus-wrap" class="property-row">
-                  <span class="property-label">Initiative Bonus</span>
-                  <span class="property-control">
-                    <input type="number" id="ref-edit-initiative-bonus" value="" />
-                  </span>
-                </label>
-                <div id="ref-edit-stats"></div>
-                <div id="ref-edit-current-stats" class="ref-current-stats"></div>
-              </div>
-            </div>
-          </div>
-          <div id="ref-conditions-panel" class="conditions-panel-collapsed hidden" aria-hidden="true">
-            <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-conditions-dialog-title">
-              <div class="conditions-dialog-header">
-                <h2 id="ref-conditions-dialog-title">Conditions</h2>
-                <div class="conditions-dialog-actions">
-                  <button type="button" id="ref-conditions-cancel" class="secondary">Cancel</button>
-                  <button type="button" id="ref-conditions-save">Save</button>
-                </div>
-              </div>
-              <input type="search" id="ref-condition-filter" placeholder="Filter list…" />
-              <div id="ref-conditions-grid" class="conditions-grid"></div>
-              <div id="ref-selected-conditions" class="selected-conditions"></div>
-            </div>
-          </div>
-        </form>
+  <div id="ref-initiative-modal" class="conditions-modal hidden" aria-hidden="true">
+    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-initiative-dialog-title">
+      <div class="conditions-dialog-header">
+        <div>
+          <h2 id="ref-initiative-dialog-title">Edit Initiative</h2>
+          <div id="ref-initiative-character" class="subtitle"></div>
+        </div>
+        <div class="conditions-dialog-actions">
+          <button type="button" id="ref-initiative-cancel" class="secondary">Cancel</button>
+          <button type="button" id="ref-initiative-save">Save</button>
+        </div>
       </div>
-    </section>
+      <label class="property-row">
+        <span class="property-label">Initiative</span>
+        <span class="property-control">
+          <input type="number" id="ref-initiative-edit-input" />
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <div id="ref-party-treasure-panel" class="conditions-modal hidden" aria-hidden="true">
+    <div class="conditions-dialog inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-party-treasure-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="ref-party-treasure-dialog-title">Party Treasure</h2>
+        <div class="conditions-dialog-actions party-treasure-actions">
+          <div class="party-treasure-actions-row party-treasure-actions-row-top">
+          <button type="button" id="ref-party-treasure-add" class="secondary">Add Item</button>
+          <button type="button" id="ref-party-treasure-remove" class="secondary">Remove Item</button>
+          </div>
+          <div class="party-treasure-actions-row party-treasure-actions-row-bottom">
+          <button type="button" id="ref-party-treasure-cancel" class="secondary">Cancel</button>
+          <button type="button" id="ref-party-treasure-save">Save</button>
+          </div>
+        </div>
+      </div>
+      <div id="ref-party-treasure-context" class="inventory-summary">Party treasure for —</div>
+      <div id="ref-party-treasure-add-form" class="inventory-inline-form hidden" aria-hidden="true">
+        <div class="inventory-inline-form-grid">
+          <label class="property-row">
+            <span class="property-label">Item</span>
+            <span class="property-control">
+              <input type="text" id="ref-party-treasure-add-name" list="ref-party-treasure-item-options" placeholder="Item name" />
+            </span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Qty</span>
+            <span class="property-control">
+              <input type="number" id="ref-party-treasure-add-quantity" min="1" value="1" />
+            </span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Value</span>
+            <span class="property-control">
+              <input type="number" id="ref-party-treasure-add-value" step="0.01" value="0" />
+            </span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Weight</span>
+            <span class="property-control">
+              <input type="number" id="ref-party-treasure-add-weight" step="any" value="0" />
+            </span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Link</span>
+            <span class="property-control">
+              <input type="url" id="ref-party-treasure-add-url" placeholder="Optional link" />
+            </span>
+          </label>
+        </div>
+        <div class="party-treasure-inline-actions">
+          <button type="button" id="ref-party-treasure-add-form-cancel" class="secondary">Cancel</button>
+          <button type="button" id="ref-party-treasure-add-form-save">Add</button>
+        </div>
+      </div>
+      <div class="inventory-table-wrap">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Value</th>
+              <th>Weight (per)</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody id="ref-party-treasure-fields"></tbody>
+        </table>
+      </div>
+      <datalist id="ref-party-treasure-item-options"></datalist>
+    </div>
   </div>
 
   <div id="ref-campaign-settings-modal" class="conditions-modal hidden" aria-hidden="true">
@@ -291,8 +345,9 @@
 
   <script src="shared.js?v=2"></script>
   <script src="live-stream.js?v=2"></script>
+  <script src="party-treasure.js?v=9"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=16"></script>
+  <script src="referee.js?v=25"></script>
 </body>
 </html>

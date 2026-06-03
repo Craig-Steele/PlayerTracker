@@ -345,7 +345,7 @@ final class ServerRoutesTests: XCTestCase {
                 InventoryEntry(
                     id: treasureItemID,
                     name: "Ancient Relic",
-                    quantity: 1,
+                    quantity: 2,
                     value: 10,
                     weight: 2,
                     url: "https://example.com/relic"
@@ -365,6 +365,7 @@ final class ServerRoutesTests: XCTestCase {
         let updatedCampaign = try treasureUpdateResponse.content.decode(CampaignState.self)
         XCTAssertEqual(updatedCampaign.partyTreasure.count, 1)
         XCTAssertEqual(updatedCampaign.partyTreasure.first?.id, treasureItemID)
+        XCTAssertEqual(updatedCampaign.partyTreasure.first?.quantity, 2)
 
         let claimResponse = try await tester.sendRequest(
             .POST,
@@ -379,7 +380,9 @@ final class ServerRoutesTests: XCTestCase {
         )
         XCTAssertEqual(claimResponse.status, .ok)
         let claimedCampaign = try claimResponse.content.decode(CampaignState.self)
-        XCTAssertTrue(claimedCampaign.partyTreasure.isEmpty)
+        XCTAssertEqual(claimedCampaign.partyTreasure.count, 1)
+        XCTAssertEqual(claimedCampaign.partyTreasure.first?.id, treasureItemID)
+        XCTAssertEqual(claimedCampaign.partyTreasure.first?.quantity, 1)
 
         let charactersResponse = try await tester.sendRequest(
             .GET,
@@ -395,7 +398,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(claimant.currency.first(where: { $0.unitId == "sp" })?.amount, 50)
         XCTAssertEqual(companion.currency.first(where: { $0.unitId == "gp" })?.amount, 5)
         XCTAssertEqual(companion.currency.first(where: { $0.unitId == "sp" })?.amount, 25)
-        XCTAssertTrue(claimant.inventory.contains(where: { $0.name == "Ancient Relic" }))
+        XCTAssertTrue(claimant.inventory.contains(where: { $0.name == "Ancient Relic" && $0.quantity == 1 }))
     }
 
     func testPartyTreasureClaimCreatesDebtWhenCharacterCannotAffordIt() async throws {
@@ -463,6 +466,42 @@ final class ServerRoutesTests: XCTestCase {
         let updatedCharacter = try XCTUnwrap(characters.first(where: { $0.id == character.id }))
         XCTAssertEqual(updatedCharacter.currency.first(where: { $0.unitId == "gp" })?.amount, 0)
         XCTAssertTrue(updatedCharacter.inventory.contains(where: { $0.name == "Expensive Crown" }))
+    }
+
+    func testPartyTreasureUpdateNormalizesInvalidItemIds() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
+        let playerSession = try await join(displayName: "Player", in: tester)
+
+        let invalidPayload = """
+        {
+          "items": [
+            {
+              "id": "not-a-uuid",
+              "name": "Recovered Chest",
+              "quantity": 1,
+              "value": 3,
+              "weight": 10,
+              "url": null
+            }
+          ]
+        }
+        """
+
+        let updateResponse = try await tester.sendRequest(
+            .PUT,
+            "/campaign/party-treasure",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: Data(invalidPayload.utf8))
+        )
+        XCTAssertEqual(updateResponse.status, .ok)
+        let updatedCampaign = try updateResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(updatedCampaign.partyTreasure.count, 1)
+        XCTAssertEqual(updatedCampaign.partyTreasure.first?.name, "Recovered Chest")
+        XCTAssertNotNil(updatedCampaign.partyTreasure.first?.id)
     }
 
     func testCreatureLibraryImportRoutePersistsImportedFileForReferee() async throws {
