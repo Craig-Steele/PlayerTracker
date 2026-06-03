@@ -3657,8 +3657,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       const isMine =
         !displayOnly &&
         Boolean(currentPlayerSessionId) &&
-        ((p.ownerId && p.ownerId === currentPlayerSessionId) ||
-          myCharacters.some((character) => character.id === p.id));
+        p.claimedSessionId === currentPlayerSessionId;
       if (isMine) {
         initTd.classList.add('init-mine');
         tr.classList.add('player-row-owned');
@@ -4031,6 +4030,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       }
       statusDiv.textContent = '';
       await refreshCharacterState(getOwnerName());
+      await loadState();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       statusDiv.textContent = `Claim failed: ${message}`;
@@ -4058,6 +4058,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       }
       statusDiv.textContent = '';
       await refreshCharacterState(getOwnerName());
+      await loadState();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       statusDiv.textContent = `Release failed: ${message}`;
