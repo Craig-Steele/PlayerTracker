@@ -1473,7 +1473,7 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function setConditionsPanelOpen(open) {
-    if (!conditionsToggle || !conditionsPanel) return;
+    if (!conditionsPanel) return;
     if (open && detailsDirty) {
       const discard = confirm('Discard unsaved detail changes?');
       if (!discard) return;
@@ -1493,7 +1493,9 @@ window.addEventListener('DOMContentLoaded', () => {
     conditionsPanel.classList.toggle('hidden', !open);
     conditionsPanel.classList.toggle('conditions-panel-open', open);
     conditionsPanel.classList.toggle('conditions-panel-collapsed', !open);
-    conditionsToggle.setAttribute('aria-expanded', open.toString());
+    if (conditionsToggle) {
+      conditionsToggle.setAttribute('aria-expanded', open.toString());
+    }
     conditionsPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
