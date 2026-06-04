@@ -1,7 +1,6 @@
 const {
   APP_NAME,
   APP_ICON_URL,
-  QR_CODE_SIZE,
   isAdminHost,
   rollStandardDie,
   formatInitiative,
@@ -9,7 +8,6 @@ const {
 } = window.PlayerTrackerShared || {
   APP_NAME: 'Roll4Initiative',
   APP_ICON_URL: '/favicon-512.png',
-  QR_CODE_SIZE: 96,
   isAdminHost: () => false,
   rollStandardDie: () => null,
   formatInitiative: () => 'X',
@@ -132,7 +130,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const editorConditionFilter = document.getElementById('ref-condition-filter');
   const editorConditionsGrid = document.getElementById('ref-conditions-grid');
   const editorSelectedConditions = document.getElementById('ref-selected-conditions');
-  const selectionToolbarAnchor = document.getElementById('ref-selection-toolbar-anchor');
   const detailsToggle = document.getElementById('ref-details-toggle');
   const detailsPanel = document.getElementById('ref-details-panel');
   const conditionsToggle = document.getElementById('ref-conditions-toggle');
@@ -629,6 +626,11 @@ window.addEventListener('DOMContentLoaded', () => {
     sync() {},
     close() {}
   };
+  /**
+   * Update the campaign summary UI in the referee header and settings modal.
+   * @param {object|null} campaign Campaign payload returned by the server.
+   * @returns {void}
+   */
   function setCampaignSummary(campaign) {
     if (!campaignSettingsModalSummary) return;
     if (!campaign) {
@@ -644,12 +646,22 @@ window.addEventListener('DOMContentLoaded', () => {
     campaignSettingsModalSummary.textContent = `${campaign.name} · ${campaign.rulesetLabel || campaign.rulesetId || 'No Conditions'} · ${claimTimeoutLabel} · ${inviteLabel}`;
   }
 
+  /**
+   * Show or clear the status line inside the campaign settings modal.
+   * @param {string} text Status text to display.
+   * @param {boolean} [isError=false] Whether the status should be styled as an error.
+   * @returns {void}
+   */
   function setCampaignSettingsModalStatus(text = '', isError = false) {
     if (!campaignSettingsModalStatus) return;
     campaignSettingsModalStatus.textContent = text;
     campaignSettingsModalStatus.style.color = isError ? '#b00020' : '';
   }
 
+  /**
+   * Populate the ruleset selector with the loaded ruleset list.
+   * @returns {void}
+   */
   function populateCampaignRulesetSelect() {
     if (!campaignRulesetSelect) return;
     campaignRulesetSelect.innerHTML = '';
@@ -668,6 +680,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Load the list of available rulesets for campaign settings.
+   * @returns {Promise<void>}
+   */
   async function loadAvailableRulesets() {
     if (!campaignRulesetSelect) return;
     try {
@@ -688,6 +704,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Try to recover a previously selected campaign when no active campaign is set.
+   * @returns {Promise<boolean>} True when a campaign was recovered.
+   */
   async function recoverActiveCampaignIfNeeded() {
     try {
       const res = await fetch('/campaigns');
@@ -715,10 +735,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Check whether the campaign settings modal is currently visible.
+   * @returns {boolean}
+   */
   function isCampaignSettingsModalOpen() {
     return Boolean(campaignSettingsModal && !campaignSettingsModal.classList.contains('hidden'));
   }
 
+  /**
+   * Normalize a claim-timeout value into a whole number of minutes or null.
+   * @param {unknown} value Raw input value from the form.
+   * @returns {number|null}
+   */
   function normalizeClaimTimeoutMinutes(value) {
     const parsed = Number.parseInt(String(value || '').trim(), 10);
     if (!Number.isFinite(parsed) || parsed < 0) {
@@ -727,6 +756,10 @@ window.addEventListener('DOMContentLoaded', () => {
     return parsed;
   }
 
+  /**
+   * Read the current claim-timeout mode from the campaign settings form.
+   * @returns {'manual'|'timed'}
+   */
   function getCampaignClaimTimeoutMode() {
     if (campaignClaimTimeoutManualInput?.checked) {
       return 'manual';
@@ -734,12 +767,20 @@ window.addEventListener('DOMContentLoaded', () => {
     return 'timed';
   }
 
+  /**
+   * Read and normalize the timed claim timeout from the campaign settings form.
+   * @returns {number|null}
+   */
   function getCampaignClaimTimeoutMinutes() {
     return getCampaignClaimTimeoutMode() === 'manual'
       ? -1
       : normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value);
   }
 
+  /**
+   * Synchronize the claim-timeout controls and their disabled state.
+   * @returns {void}
+   */
   function syncCampaignClaimTimeoutUi() {
     const manual = getCampaignClaimTimeoutMode() === 'manual';
     if (campaignClaimTimeoutInput) {
@@ -748,6 +789,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Fill the campaign settings form from the currently loaded campaign.
+   * @returns {void}
+   */
   function populateCampaignSettingsForm() {
     populateCampaignRulesetSelect();
     if (campaignNameInput) {
@@ -776,6 +821,10 @@ window.addEventListener('DOMContentLoaded', () => {
     setCampaignSettingsModalStatus('');
   }
 
+  /**
+   * Determine whether the campaign settings form differs from the loaded values.
+   * @returns {boolean}
+   */
   function campaignSettingsHaveChanges() {
     const name = (campaignNameInput?.value || '').trim();
     const rulesetId = campaignRulesetSelect?.value || '';
@@ -789,6 +838,10 @@ window.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  /**
+   * Validate the current campaign settings form values.
+   * @returns {boolean}
+   */
   function campaignSettingsAreValid() {
     const name = (campaignNameInput?.value || '').trim();
     const rulesetId = campaignRulesetSelect?.value || '';
@@ -797,6 +850,10 @@ window.addEventListener('DOMContentLoaded', () => {
     return true;
   }
 
+  /**
+   * Update the campaign settings save button state from current form validity.
+   * @returns {void}
+   */
   function validateCampaignSettingsModal() {
     if (!campaignSettingsSaveBtn) return;
     const valid = campaignSettingsAreValid();
@@ -804,6 +861,10 @@ window.addEventListener('DOMContentLoaded', () => {
     campaignSettingsSaveBtn.disabled = !(valid && changed && Boolean(activeCampaignId));
   }
 
+  /**
+   * Open the campaign settings modal and focus the first editable field.
+   * @returns {void}
+   */
   function openCampaignSettingsModal() {
     if (!campaignSettingsModal || !activeCampaignId) {
       return;
@@ -818,6 +879,10 @@ window.addEventListener('DOMContentLoaded', () => {
     campaignNameInput?.focus();
   }
 
+  /**
+   * Close the campaign settings modal and clear its status message.
+   * @returns {void}
+   */
   function closeCampaignSettingsModal() {
     if (!campaignSettingsModal) return;
     campaignSettingsModal.classList.add('hidden');
@@ -825,6 +890,10 @@ window.addEventListener('DOMContentLoaded', () => {
     setCampaignSettingsModalStatus('');
   }
 
+  /**
+   * Persist the campaign settings modal back to the server.
+   * @returns {Promise<void>}
+   */
   async function saveCampaignSettings() {
     if (!activeCampaignId) {
       setCampaignSettingsModalStatus('No active campaign selected.', true);
@@ -881,12 +950,23 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Update the visible encounter summary in the referee header.
+   * @param {number} round Current encounter round.
+   * @param {object|null} currentTurnPlayer Player who is currently acting.
+   * @param {boolean} isRefTurn Whether the active turn belongs to a referee-owned character.
+   * @returns {void}
+   */
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
     if (!refereeEncounterState) return;
     refereeEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isRefTurn));
     refereeEncounterState.textContent = formatEncounterStateText(encounterState, round, currentTurnPlayer);
   }
 
+  /**
+   * Enable or disable add-form initiative bonus inputs based on the roll mode.
+   * @returns {void}
+   */
   function updateAddInitiativeBonusAvailability() {
     if (!initiativeBonusInput || !initiativeBonusWrap) return;
     const enabled = !useAppInitiativeRollInput || useAppInitiativeRollInput.checked;
@@ -894,12 +974,21 @@ window.addEventListener('DOMContentLoaded', () => {
     initiativeBonusWrap.classList.toggle('disabled', !enabled);
   }
 
+  /**
+   * Enable or disable the editor initiative bonus input based on the selected stat block.
+   * @returns {void}
+   */
   function updateEditorInitiativeBonusAvailability() {
     if (!editorInitiativeBonusInput || !editorInitiativeBonusWrap) return;
     editorInitiativeBonusInput.disabled = false;
     editorInitiativeBonusWrap.classList.remove('disabled');
   }
 
+  /**
+   * Normalize a stat-block definition loaded from JSON.
+   * @param {object} entry Raw stat-block definition.
+   * @returns {object|null}
+   */
   function normalizeStatBlockDefinition(entry) {
     if (!entry || typeof entry.id !== 'string' || typeof entry.label !== 'string') {
       return null;
@@ -928,6 +1017,11 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  /**
+   * Normalize a stat key or alias token for case-insensitive comparisons.
+   * @param {unknown} value Raw stat token.
+   * @returns {string}
+   */
   function normalizeStatToken(value) {
     if (typeof value !== 'string') {
       return '';
@@ -938,6 +1032,11 @@ window.addEventListener('DOMContentLoaded', () => {
       .replace(/[^A-Z0-9]+/g, '');
   }
 
+  /**
+   * Replace the current stat alias lookup map.
+   * @param {Map<string, string>|object} aliases Alias mapping to install.
+   * @returns {void}
+   */
   function setStatAliases(aliases) {
     statAliases = new Map();
     if (!aliases || typeof aliases !== 'object') {
@@ -953,6 +1052,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Normalize a stat key into its canonical display name.
+   * @param {unknown} value Raw stat key from user or JSON input.
+   * @returns {string}
+   */
   function normalizeStatKey(value) {
     const token = normalizeStatToken(value);
     if (!token) {
@@ -964,6 +1068,11 @@ window.addEventListener('DOMContentLoaded', () => {
     return statAliases.get(token) || token;
   }
 
+  /**
+   * Normalize a stat array into the shape the UI expects.
+   * @param {Array<object>} stats Raw stat array.
+   * @returns {Array<object>}
+   */
   function normalizeStatEntries(stats) {
     const normalized = [];
     const seen = new Map();
@@ -980,6 +1089,11 @@ window.addEventListener('DOMContentLoaded', () => {
     return normalized;
   }
 
+  /**
+   * Snapshot the current stat input values so they can be restored after a block switch.
+   * @param {Map<string, {maxInput?: HTMLInputElement, currentInput?: HTMLInputElement}>} map Input map.
+   * @returns {Map<string, {max?: string, current?: string}>}
+   */
   function snapshotStatFieldValues(map) {
     const snapshot = new Map();
     map.forEach((entry, key) => {
@@ -991,6 +1105,12 @@ window.addEventListener('DOMContentLoaded', () => {
     return snapshot;
   }
 
+  /**
+   * Restore stat input values from a previously captured snapshot.
+   * @param {Map<string, {maxInput?: HTMLInputElement, currentInput?: HTMLInputElement}>} map Input map.
+   * @param {Map<string, {max?: string, current?: string}>} snapshot Captured values.
+   * @returns {void}
+   */
   function restoreStatFieldValues(map, snapshot) {
     if (!(snapshot instanceof Map)) return;
     map.forEach((entry, key) => {
@@ -1005,10 +1125,18 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Resolve the currently selected add-form stat block definition.
+   * @returns {object|null}
+   */
   function getSelectedAddStatBlock() {
     return addStatBlockLookup.get(selectedAddStatBlockId) || null;
   }
 
+  /**
+   * Return the stat keys that should be rendered in the add form.
+   * @returns {string[]}
+   */
   function getAddStatKeys() {
     const selected = getSelectedAddStatBlock();
     const keys = Array.isArray(selected?.stats) && selected.stats.length > 0
@@ -1020,12 +1148,21 @@ window.addEventListener('DOMContentLoaded', () => {
     return keys;
   }
 
+  /**
+   * Pick the default stat block id for the add form.
+   * @returns {string}
+   */
   function getDefaultAddStatBlockId() {
     return addStatBlockDefinitions.find((block) => block.defaultBlock)?.id
       || addStatBlockDefinitions[0]?.id
       || null;
   }
 
+  /**
+   * Infer a stat block id from an existing stat array.
+   * @param {Array<object>} stats Character stats.
+   * @returns {string|null}
+   */
   function inferStatBlockIdFromStats(stats) {
     const sourceKeys = normalizeStatEntries(stats)
       .map((stat) => stat.key)
@@ -1047,6 +1184,11 @@ window.addEventListener('DOMContentLoaded', () => {
     return exactMatch?.id || null;
   }
 
+  /**
+   * Resolve the stat keys that should be shown for a character row.
+   * @param {object|null} player Character record.
+   * @returns {string[]}
+   */
   function getCharacterStatKeys(player) {
     const blockId = typeof player?.statBlockId === 'string' ? player.statBlockId : '';
     const block = blockId ? statBlockLookup.get(blockId) : null;
@@ -1061,6 +1203,22 @@ window.addEventListener('DOMContentLoaded', () => {
     return keys.concat(extras);
   }
 
+  /**
+   * Build a set of stat input rows for either the add form or the editor.
+   * @param {object} options Rendering options.
+   * @param {string[]} options.keys Stat keys to render.
+   * @param {Map<string, object>} options.inputsMap Map that receives the generated inputs.
+   * @param {HTMLElement} options.fieldsContainer Container for the field rows.
+   * @param {HTMLElement|null} options.currentStatsContainer Container for live stat summaries.
+   * @param {HTMLElement|null} options.headingEl Optional heading element to update.
+   * @param {string} options.prefix Prefix for generated input ids.
+   * @returns {void}
+   */
+  /**
+   * Build the stat editor fields for a given stat block definition.
+   * @param {object} options Stat block options.
+   * @returns {void}
+   */
   function buildStatFields({
     keys,
     inputsMap,
@@ -1142,6 +1300,10 @@ window.addEventListener('DOMContentLoaded', () => {
     restoreStatFieldValues(inputsMap, preserveValues);
   }
 
+  /**
+   * Synchronize the add-form stat block selector with the loaded definitions.
+   * @returns {void}
+   */
   function syncAddStatBlockSelector() {
     if (!addStatBlockSelect || !addStatBlockWrap) return;
     const hasMultipleBlocks = addStatBlockDefinitions.length > 1;
@@ -1165,6 +1327,13 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Select a stat block for the add form and rebuild its stat inputs.
+   * @param {string} statBlockId Selected stat block id.
+   * @param {object} [options]
+   * @param {boolean} [options.preserveValues=true] Whether to preserve current field values.
+   * @returns {void}
+   */
   function setAddStatBlockId(statBlockId, { preserveValues = true } = {}) {
     const resolved = addStatBlockLookup.has(statBlockId)
       ? statBlockId
@@ -1201,11 +1370,19 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Enable or disable the invite-player button based on campaign/session state.
+   * @returns {void}
+   */
   function updateInvitePlayerButtonState() {
     if (!invitePlayerBtn) return;
     invitePlayerBtn.disabled = !activeCampaignId;
   }
 
+  /**
+   * Send a campaign invite to the email address in the referee header.
+   * @returns {Promise<void>}
+   */
   async function invitePlayer() {
     if (!activeCampaignId) {
       if (statusDiv) statusDiv.textContent = 'No active campaign selected.';
@@ -1240,6 +1417,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Hide the main referee overflow menu.
+   * @returns {void}
+   */
   function closeOverflowMenu() {
     if (!overflowMenu || !overflowToggle) return;
     overflowMenu.classList.add('hidden');
@@ -1247,6 +1428,10 @@ window.addEventListener('DOMContentLoaded', () => {
     overflowToggle.setAttribute('aria-expanded', 'false');
   }
 
+  /**
+   * Show the main referee overflow menu.
+   * @returns {void}
+   */
   function openOverflowMenu() {
     if (!overflowMenu || !overflowToggle) return;
     overflowMenu.classList.remove('hidden');
@@ -1254,6 +1439,10 @@ window.addEventListener('DOMContentLoaded', () => {
     overflowToggle.setAttribute('aria-expanded', 'true');
   }
 
+  /**
+   * Toggle the main referee overflow menu.
+   * @returns {void}
+   */
   function toggleOverflowMenu() {
     if (!overflowMenu || !overflowToggle) return;
     if (overflowMenu.classList.contains('hidden')) {
@@ -1263,6 +1452,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Rebuild the referee add-form stat fields from the active stat block.
+   * @returns {void}
+   */
   function buildStatsFields() {
     buildStatFields({
       keys: addStatKeys,
@@ -1274,6 +1467,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Open or close the referee conditions panel.
+   * @param {boolean} open Whether the panel should be open.
+   * @returns {void}
+   */
   function setConditionsPanelOpen(open) {
     if (!conditionsToggle || !conditionsPanel) return;
     if (open && detailsDirty) {
@@ -1299,6 +1497,11 @@ window.addEventListener('DOMContentLoaded', () => {
     conditionsPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
+  /**
+   * Open or close the referee details panel.
+   * @param {boolean} open Whether the panel should be open.
+   * @returns {void}
+   */
   function setDetailsPanelOpen(open) {
     if (!detailsToggle || !detailsPanel) return;
     if (open && conditionsDirty) {
@@ -1319,6 +1522,10 @@ window.addEventListener('DOMContentLoaded', () => {
     detailsPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
+  /**
+   * Rebuild the selected-character editor stat fields.
+   * @returns {void}
+   */
   function buildEditorStatsFields() {
     buildStatFields({
       keys: editorStatKeys,
@@ -1332,21 +1539,40 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Update the creature library summary line.
+   * @param {string} text Summary text to show.
+   * @returns {void}
+   */
   function setCreatureLibrarySummary(text) {
     if (!librarySummary) return;
     librarySummary.textContent = text || '';
   }
 
+  /**
+   * Update the creature library import status text.
+   * @param {string} text Status text to show.
+   * @returns {void}
+   */
   function setCreatureLibraryImportStatus(text) {
     if (!libraryImportStatus) return;
     libraryImportStatus.textContent = text || '';
   }
 
+  /**
+   * Update the campaign userdata status text.
+   * @param {string} text Status text to show.
+   * @returns {void}
+   */
   function setCampaignUserDataStatus(text) {
     if (!userdataStatus) return;
     userdataStatus.textContent = text || '';
   }
 
+  /**
+   * Reset the userdata picker state back to defaults.
+   * @returns {void}
+   */
   function resetCampaignUserDataState() {
     campaignUserdataFiles = [];
     campaignUserdataSelection = [];
@@ -1359,21 +1585,39 @@ window.addEventListener('DOMContentLoaded', () => {
     updateCampaignUserDataSaveState();
   }
 
+  /**
+   * Refresh the userdata save button state.
+   * @returns {void}
+   */
   function updateCampaignUserDataSaveState() {
     if (!userdataSaveButton) return;
     userdataSaveButton.disabled = !campaignUserdataDirty || campaignUserdataLoading;
     userdataSaveButton.setAttribute('aria-disabled', userdataSaveButton.disabled.toString());
   }
 
+  /**
+   * Normalize a userdata file name for display and selection.
+   * @param {string} name Raw file name.
+   * @returns {string}
+   */
   function normalizeUserdataFileName(name) {
     if (typeof name !== 'string') return '';
     return name.trim();
   }
 
+  /**
+   * Read the current userdata selection into a set.
+   * @returns {Set<string>}
+   */
   function currentUserdataSelectionSet() {
     return new Set(campaignUserdataSelection.map((name) => normalizeUserdataFileName(name)).filter(Boolean));
   }
 
+  /**
+   * Render the list of campaign userdata files.
+   * @param {Array<object>} files Files to render.
+   * @returns {void}
+   */
   function renderCampaignUserDataFiles(files = campaignUserdataFiles) {
     if (!userdataList) return;
     const selected = currentUserdataSelectionSet();
@@ -1437,6 +1681,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Refresh the campaign userdata summary line.
+   * @returns {void}
+   */
   function updateCampaignUserDataSummary() {
     if (!userdataSummary) return;
     const selectedCount = campaignUserdataSelection.length;
@@ -1446,6 +1694,11 @@ window.addEventListener('DOMContentLoaded', () => {
       : 'Userdata: no files available';
   }
 
+  /**
+   * Replace the userdata selection with the provided set.
+   * @param {Iterable<string>} selection Selected file names.
+   * @returns {void}
+   */
   function setCampaignUserDataSelection(selection) {
     const normalized = Array.from(new Set((Array.isArray(selection) ? selection : [])
       .map((name) => normalizeUserdataFileName(name))
@@ -1459,6 +1712,10 @@ window.addEventListener('DOMContentLoaded', () => {
     updateCampaignUserDataSaveState();
   }
 
+  /**
+   * Update the add-dialog tab button state and visible panel.
+   * @returns {void}
+   */
   function updateAddDialogTabs() {
     const libraryOpen = addDialogTab === 'library';
     creatureLibraryOpen = libraryOpen;
@@ -1481,6 +1738,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Switch the add dialog between manual and library modes.
+   * @param {string} tab Tab key to show.
+   * @param {object} [options={}] Optional focus behavior.
+   * @returns {void}
+   */
   function setAddDialogTab(tab, options = {}) {
     const nextTab = tab === 'library' ? 'library' : 'manual';
     const previousTab = addDialogTab;
@@ -1503,6 +1766,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Load the campaign's imported userdata file list.
+   * @returns {Promise<void>}
+   */
   async function loadCampaignUserData() {
     if (!activeCampaignId) {
       resetCampaignUserDataState();
@@ -1548,6 +1815,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Save the selected userdata files for the campaign.
+   * @returns {Promise<void>}
+   */
   async function saveCampaignUserDataSelection() {
     if (!activeCampaignId) {
       setCampaignUserDataStatus('No active campaign selected.');
@@ -1581,11 +1852,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Clear the current creature library selection.
+   * @returns {void}
+   */
   function clearCreatureLibrarySelection() {
     selectedCreatureLibraryId = null;
     selectedCreatureLibrary = null;
   }
 
+  /**
+   * Reset the creature library UI and cached results.
+   * @returns {void}
+   */
   function resetCreatureLibraryState() {
     if (creatureLibraryRequestController) {
       creatureLibraryRequestController.abort();
@@ -1609,10 +1888,20 @@ window.addEventListener('DOMContentLoaded', () => {
     setCreatureLibraryImportStatus('');
   }
 
+  /**
+   * Open or close the creature library section.
+   * @param {boolean} open Whether the library should be open.
+   * @returns {void}
+   */
   function setCreatureLibraryOpen(open) {
     setAddDialogTab(open ? 'library' : 'manual', { focus: open });
   }
 
+  /**
+   * Debounce a creature library search request.
+   * @param {string} query Search text.
+   * @returns {void}
+   */
   function scheduleCreatureLibrarySearch(query) {
     creatureLibraryQuery = query;
     if (creatureLibrarySearchTimer) {
@@ -1627,6 +1916,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 200);
   }
 
+  /**
+   * Extract the relevant stat fields from a creature library record.
+   * @param {object} creature Creature record.
+   * @returns {Array<object>}
+   */
   function creatureLibraryStats(creature) {
     if (!creature) return [];
     if (Array.isArray(creature.stats) && creature.stats.length > 0) {
@@ -1638,14 +1932,28 @@ window.addEventListener('DOMContentLoaded', () => {
     return [];
   }
 
+  /**
+   * Build the form stat list for a creature library record.
+   * @param {object} creature Creature record.
+   * @returns {Array<object>}
+   */
   function creatureLibraryFormStats(creature) {
     return creatureLibraryStats(creature);
   }
 
+  /**
+   * Get the active health label used by the creature library UI.
+   * @returns {string}
+   */
   function creatureLibraryHealthLabel() {
     return currentHealthLabel || 'HP';
   }
 
+  /**
+   * Convert a stat key into a display label for the creature library.
+   * @param {string} key Stat key.
+   * @returns {string}
+   */
   function creatureLibraryStatLabel(key) {
     if (key === 'HP') {
       return creatureLibraryHealthLabel();
@@ -1653,12 +1961,22 @@ window.addEventListener('DOMContentLoaded', () => {
     return key;
   }
 
+  /**
+   * Select the best add-form stat block for a creature.
+   * @param {object} creature Creature record.
+   * @returns {void}
+   */
   function selectAddStatBlockForCreature(creature) {
     const inferredStatBlockId = inferStatBlockIdFromStats(creatureLibraryFormStats(creature));
     const nextStatBlockId = inferredStatBlockId || getDefaultAddStatBlockId();
     setAddStatBlockId(nextStatBlockId, { preserveValues: false });
   }
 
+  /**
+   * Apply a creature library selection to the add form.
+   * @param {object} creature Creature record.
+   * @returns {void}
+   */
   function applyCreatureLibraryCreature(creature) {
     if (!creature) return;
     clearCreatureLibrarySelection();
@@ -1685,6 +2003,10 @@ window.addEventListener('DOMContentLoaded', () => {
     renderCreatureLibraryDetails();
   }
 
+  /**
+   * Render the searchable creature library result list.
+   * @returns {void}
+   */
   function renderCreatureLibraryList() {
     if (!libraryList) return;
     libraryList.innerHTML = '';
@@ -1742,6 +2064,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Render the detail pane for the selected creature library entry.
+   * @returns {void}
+   */
   function renderCreatureLibraryDetails() {
     if (!libraryDetails) return;
     libraryDetails.innerHTML = '';
@@ -1827,6 +2153,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   }
 
+  /**
+   * Load creature library results for the given search query.
+   * @param {string} query Search text.
+   * @returns {Promise<void>}
+   */
   async function loadCreatureLibrary(query = '') {
     const trimmedQuery = query.trim();
     creatureLibraryQuery = trimmedQuery;
@@ -1885,6 +2216,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Import creature library files into the campaign library.
+   * @param {FileList|Array<File>} files Files to import.
+   * @returns {Promise<void>}
+   */
   async function importCreatureLibraryFiles(files) {
     if (!files || files.length === 0) {
       setCreatureLibraryImportStatus('');
@@ -1931,6 +2267,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Load the active campaign and sync header state.
+   * @returns {Promise<boolean>} True when a campaign is active.
+   */
   async function loadCampaign() {
     try {
       const res = await fetch('/campaign');
@@ -2042,6 +2382,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Open or close the party treasure panel.
+   * @param {boolean} open Whether the panel should be open.
+   * @returns {void}
+   */
   function setPartyTreasurePanelOpen(open) {
     if (!partyTreasurePanel) return;
     partyTreasurePanel.classList.toggle('hidden', !open);
@@ -2052,14 +2397,27 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Rebuild the party treasure item suggestions list.
+   * @returns {void}
+   */
   function updatePartyTreasureItemOptions() {
     partyTreasureHelpers.updateEquipmentItemOptions(partyTreasureItemOptions, equipmentLibraryItems);
   }
 
+  /**
+   * Check whether the party treasure editor should use the compact layout.
+   * @returns {boolean}
+   */
   function isCompactPartyTreasureLayout() {
     return window.matchMedia('(max-width: 760px)').matches;
   }
 
+  /**
+   * Open or close the party treasure add-item form.
+   * @param {boolean} open Whether the form should be open.
+   * @returns {void}
+   */
   function setPartyTreasureAddFormOpen(open) {
     if (!partyTreasureAddForm) return;
     partyTreasureAddForm.classList.toggle('hidden', !open);
@@ -2073,6 +2431,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Read the party treasure add form into a draft item.
+   * @returns {object|null}
+   */
   function collectPartyTreasureDraftFromForm() {
     const name = (partyTreasureAddFormName?.value || '').trim();
     const quantityRaw = (partyTreasureAddFormQuantity?.value || '').trim();
@@ -2106,10 +2468,19 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  /**
+   * Get the current editable party treasure rows.
+   * @returns {HTMLTableRowElement[]}
+   */
   function getPartyTreasureRows() {
     return partyTreasureHelpers.getPartyTreasureRows(partyTreasureFields);
   }
 
+  /**
+   * Mark one party treasure row as selected.
+   * @param {HTMLTableRowElement|null} row Row to select.
+   * @returns {void}
+   */
   function setSelectedPartyTreasureRow(row) {
     partyTreasureSelectedRow = row;
     if (!partyTreasureFields) return;
@@ -2124,10 +2495,20 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Focus the first editable input within a party treasure row.
+   * @param {HTMLTableRowElement|null} row Row to focus.
+   * @returns {void}
+   */
   function focusPartyTreasureRow(row) {
     partyTreasureHelpers.focusInventoryRow(row);
   }
 
+  /**
+   * Render the party treasure editor rows from the current item list.
+   * @param {Array<object>} items Items to render.
+   * @returns {void}
+   */
   function buildPartyTreasureFields(items = []) {
     if (!partyTreasureFields) return;
     partyTreasureHelpers.buildPartyTreasureFields(partyTreasureFields, items, {
@@ -2145,6 +2526,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Serialize the party treasure editor into the server payload shape.
+   * @returns {Array<object>}
+   */
   function collectPartyTreasurePayloadFromEditor() {
     return partyTreasureHelpers.collectPartyTreasurePayloadFromEditor(partyTreasureFields);
   }
@@ -2178,6 +2563,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Remove the currently selected party treasure row.
+   * @returns {void}
+   */
   function removeSelectedPartyTreasureItem() {
     if (!partyTreasureSelectedRow) return;
     const rowName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
@@ -2204,6 +2593,10 @@ window.addEventListener('DOMContentLoaded', () => {
     setSelectedPartyTreasureRow(nextRow || partyTreasureFields.querySelector('tr.inventory-entry'));
   }
 
+  /**
+   * Commit the add-form draft item into the party treasure list.
+   * @returns {void}
+   */
   function commitPartyTreasureAddFormItem() {
     if (!partyTreasureFields) return;
     let entry;
@@ -2236,6 +2629,10 @@ window.addEventListener('DOMContentLoaded', () => {
     setPartyTreasureAddFormOpen(false);
   }
 
+  /**
+   * Save the party treasure editor contents back to the server.
+   * @returns {Promise<void>}
+   */
   async function savePartyTreasureFromEditor() {
     if (!activeCampaignId) return null;
     let items;
@@ -2264,6 +2661,10 @@ window.addEventListener('DOMContentLoaded', () => {
     return updatedCampaign;
   }
 
+  /**
+   * Open the party treasure editor modal and refresh its contents.
+   * @returns {Promise<void>}
+   */
   async function openPartyTreasureEditor() {
     if (!partyTreasureFields) return;
     if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
@@ -2292,6 +2693,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Close the party treasure editor modal.
+   * @returns {void}
+   */
   function closePartyTreasureEditor() {
     partyTreasureEditorDirty = false;
     partyTreasureSelectedRow = null;
@@ -2313,6 +2718,10 @@ window.addEventListener('DOMContentLoaded', () => {
     setPartyTreasurePanelOpen(false);
   }
 
+  /**
+   * Load the condition library used by the referee editor.
+   * @returns {Promise<void>}
+   */
   async function loadConditionLibrary() {
     try {
       const res = await fetch('/conditions-library');
@@ -2439,10 +2848,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Normalize equipment library entries into the internal shape.
+   * @param {Array<object>} items Raw equipment items.
+   * @returns {Array<object>}
+   */
   function normalizeEquipmentItems(items) {
     return partyTreasureHelpers.normalizeEquipmentItems(items);
   }
 
+  /**
+   * Load the equipment library used by party treasure and add forms.
+   * @returns {Promise<void>}
+   */
   async function loadEquipmentLibrary() {
     if (equipmentLibraryLoading) {
       return equipmentLibraryItems;
@@ -2472,6 +2890,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Apply a fresh campaign state snapshot to the referee view.
+   * @param {object} state Campaign state payload.
+   * @returns {void}
+   */
   function applyState(state) {
     const players = state.players || [];
     currentPlayers = players;
@@ -2482,22 +2905,15 @@ window.addEventListener('DOMContentLoaded', () => {
     const isRefTurn = Boolean(currentTurnPlayer?.isReferee);
     updateEncounterStateDisplay(round, currentTurnPlayer || null, isRefTurn);
     renderTurnTable(players, state.currentTurnId);
-    renderCharacterList(players, state.currentTurnId);
     if (selectedCharacterId) {
       const updated = currentPlayers.find((p) => p.id === selectedCharacterId);
       if (updated) {
         if (!detailsDirty && !conditionsDirty) {
           setSelectedCharacter(updated);
-        } else {
-          updateActionButtons(updated);
-          updateSelectionControls();
-          renderCharacterList(currentPlayers, currentTurnId);
         }
       } else {
         clearSelectedCharacter();
       }
-    } else {
-      updateSelectionControls();
     }
     if (statusDiv) {
       statusDiv.textContent = '';
@@ -2517,6 +2933,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Load the latest campaign state from the server.
+   * @returns {Promise<void>}
+   */
   async function loadState() {
     if (loadStateInFlight) {
       loadStateRefreshQueued = true;
@@ -2545,6 +2965,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Sync the encounter control buttons with the active state.
+   * @returns {void}
+   */
   function updateTurnControls() {
     if (!turnCompleteBtn) return;
     const enabled = encounterState === 'active';
@@ -2569,6 +2993,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Post an encounter action to the server and refresh state.
+   * @param {string} path Encounter route path.
+   * @returns {Promise<void>}
+   */
   async function handleEncounterAction(path) {
     try {
       const res = await fetch(path, { method: 'POST' });
@@ -2586,6 +3015,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Return the display name for the character controller.
+   * @param {object} character Character record.
+   * @returns {string}
+   */
   function getCharacterControllerName(character) {
     if (!character) return '';
     const claimedDisplayName = typeof character.claimedDisplayName === 'string'
@@ -2596,10 +3030,19 @@ window.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
+  /**
+   * Check whether popup menus should use the compact centered layout.
+   * @returns {boolean}
+   */
   function isNarrowPopupViewport() {
     return true;
   }
 
+  /**
+   * Close every referee row overflow menu except the optional one.
+   * @param {HTMLElement|null} [exceptMenu=null] Menu to keep open.
+   * @returns {void}
+   */
   function closeRefereeRowOverflowMenus(exceptMenu = null) {
     document.querySelectorAll('.referee-row-menu').forEach((menu) => {
       if (menu === exceptMenu) return;
@@ -2611,6 +3054,33 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  /**
+   * Close all transient referee panels and popovers.
+   * @returns {void}
+   */
+  function closeTransientRefereePanels() {
+    closeOverflowMenu();
+    closeRefereeRowOverflowMenus();
+    closeExpandedOrderStats();
+    closeInitiativeEditor();
+    hideAddForm();
+    closeCampaignSettingsModal();
+    closePartyTreasureEditor();
+    clearSelectedCharacter();
+  }
+
+  document.addEventListener('click', (event) => {
+    if (!(event.target instanceof Element)) return;
+    if (
+      event.target.closest(
+        'button, input, select, textarea, a, label, .character-overflow, .referee-row-menu, .conditions-modal, .details-panel-collapsed, .conditions-panel-collapsed'
+      )
+    ) {
+      return;
+    }
+    closeTransientRefereePanels();
+  });
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
@@ -2636,6 +3106,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /**
+   * Collapse any expanded encounter stat popovers.
+   * @returns {void}
+   */
   function closeExpandedOrderStats() {
     if (!expandedOrderStatsCharacterId) return;
     expandedOrderStatsCharacterId = null;
@@ -2644,6 +3118,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Close the initiative editor modal.
+   * @returns {void}
+   */
   function closeInitiativeEditor() {
     initiativeEditorCharacterId = null;
     if (initiativeModal) {
@@ -2653,6 +3131,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Open the initiative editor modal for a character.
+   * @param {object} player Character record.
+   * @returns {void}
+   */
   function openInitiativeEditor(player) {
     if (!player || !initiativeModal || !initiativeModalInput) return;
     closeRefereeRowOverflowMenus();
@@ -2674,6 +3157,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Save the initiative editor value back to the selected character.
+   * @returns {Promise<void>}
+   */
   async function saveInitiativeEditor() {
     const player = initiativeEditorCharacterId
       ? currentPlayers.find((entry) => entry.id === initiativeEditorCharacterId)
@@ -2696,6 +3183,11 @@ window.addEventListener('DOMContentLoaded', () => {
     closeInitiativeEditor();
   }
 
+  /**
+   * Toggle the expanded stat details for a turn-order row.
+   * @param {string} characterId Character id to expand or collapse.
+   * @returns {void}
+   */
   function toggleExpandedOrderStats(characterId) {
     expandedOrderStatsCharacterId =
       expandedOrderStatsCharacterId === characterId ? null : characterId;
@@ -2704,6 +3196,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Build the popover that shows editable encounter stats for a row.
+   * @param {object} character Character record.
+   * @param {string[]} displayStatKeys Stat keys to render.
+   * @returns {HTMLElement}
+   */
   function buildOrderStatsPopover(character, displayStatKeys) {
     const stats = Array.isArray(character.stats) ? character.stats : [];
     const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
@@ -2765,6 +3263,13 @@ window.addEventListener('DOMContentLoaded', () => {
     return popover;
   }
 
+  /**
+   * Build the referee row overflow menu for a character in the encounter table.
+   * @param {object} player Character record.
+   * @param {object} [options]
+   * @param {HTMLElement|null} [options.anchorEl=null] Element used to position the menu.
+   * @returns {{overflow: HTMLElement, openOverflowMenu: Function}}
+   */
   function buildRefereeRowOverflowControls(player, options = {}) {
     const anchorEl = options.anchorEl || null;
     const overflow = document.createElement('div');
@@ -2910,6 +3415,12 @@ window.addEventListener('DOMContentLoaded', () => {
     return { overflow, openOverflowMenu };
   }
 
+  /**
+   * Render the referee encounter turn table.
+   * @param {Array<object>} players Characters to render.
+   * @param {string|null} currentTurnId Active turn id.
+   * @returns {void}
+   */
   function renderTurnTable(players, currentTurnId) {
     if (!playersBody) return;
     document.querySelectorAll('.referee-row-menu').forEach((menu) => menu.remove());
@@ -3016,168 +3527,12 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function renderCharacterList(players, activeTurnId) {
-    if (!characterList) return;
-    characterList.innerHTML = '';
-    if (selectionToolbarAnchor) {
-      selectionToolbarAnchor.classList.add('hidden');
-    }
-    if (players.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'subtitle';
-      empty.textContent = 'No characters yet.';
-      characterList.appendChild(empty);
-      return;
-    }
-
-    players.forEach((player) => {
-      const item = document.createElement('div');
-      item.className = 'character-item';
-      if (player.id === selectedCharacterId) {
-        item.classList.add('active');
-      }
-      if (player.isHidden) {
-        item.classList.add('hidden-character');
-      }
-      if (player.id === activeTurnId) {
-        item.classList.add('current-turn');
-      }
-
-      const row = document.createElement('div');
-      row.className = 'character-row';
-
-      const nameWrap = document.createElement('div');
-      const name = document.createElement('div');
-      name.className = 'character-name';
-      name.textContent = player.name;
-      const meta = document.createElement('div');
-      meta.className = 'character-meta';
-      const initiativeButton = document.createElement('button');
-      initiativeButton.type = 'button';
-      initiativeButton.className = 'initiative-inline-button';
-      initiativeButton.textContent = `Init ${formatInitiative(player.initiative)}`;
-      initiativeButton.addEventListener('click', (event) => {
-        event.stopPropagation();
-        editCharacterInitiative(player);
-      });
-      meta.appendChild(initiativeButton);
-      if (player.isReferee && player.isHidden) {
-        const hiddenState = document.createElement('span');
-        hiddenState.className = 'character-hidden-state';
-        hiddenState.textContent = player.revealOnTurn ? 'Hidden (Reveal on Turn)' : 'Hidden';
-        meta.appendChild(hiddenState);
-      }
-      nameWrap.appendChild(name);
-      nameWrap.appendChild(meta);
-      row.appendChild(nameWrap);
-
-      const statsWrap = document.createElement('div');
-      statsWrap.className = 'character-stats';
-      const stats = Array.isArray(player.stats) ? player.stats : [];
-      const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
-      const displayStatKeys = getCharacterStatKeys(player);
-
-      displayStatKeys.forEach((key) => {
-        const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
-        const line = document.createElement('div');
-        line.className = 'character-stat-line';
-        const label = document.createElement('span');
-        label.className = 'character-stat-label';
-        label.textContent = key;
-
-        const minus = document.createElement('button');
-        minus.type = 'button';
-        minus.className = 'hp-adjust';
-        minus.textContent = '−';
-        minus.addEventListener('click', (event) => {
-          event.stopPropagation();
-          adjustCharacterStat(player, key, -1);
-        });
-
-        const value = document.createElement('span');
-        value.className = 'character-hp-value';
-        const currentVal = Number.isFinite(stat.current) ? stat.current : 0;
-        const maxVal = Number.isFinite(stat.max) ? stat.max : 0;
-        value.textContent = key === 'TempHP' ? `${currentVal}` : `${currentVal}/${maxVal}`;
-
-        const plus = document.createElement('button');
-        plus.type = 'button';
-        plus.className = 'hp-adjust';
-        plus.textContent = '+';
-        plus.addEventListener('click', (event) => {
-          event.stopPropagation();
-          adjustCharacterStat(player, key, 1);
-        });
-
-        line.appendChild(label);
-        line.appendChild(minus);
-        line.appendChild(value);
-        line.appendChild(plus);
-        statsWrap.appendChild(line);
-      });
-
-      row.appendChild(statsWrap);
-      item.appendChild(row);
-
-      const conditionsList = buildEncounterConditionsList(player.conditions, conditionLookup);
-      if (conditionsList) {
-        conditionsList.classList.add('character-card-conditions');
-        item.appendChild(conditionsList);
-      }
-
-      const isReferee = Boolean(player?.isReferee);
-
-      const needsInitiativeAction =
-        encounterState === 'active' &&
-        isReferee &&
-        (player.initiative === null || player.initiative === undefined);
-
-      const showTurnCompleteAction =
-        encounterState === 'active' &&
-        Boolean(activeTurnId) &&
-        player.id === activeTurnId &&
-        isReferee;
-
-      if (needsInitiativeAction || showTurnCompleteAction) {
-        const actions = document.createElement('div');
-        actions.className = 'character-actions';
-        if (needsInitiativeAction) {
-          const rollButton = document.createElement('button');
-          rollButton.type = 'button';
-          rollButton.textContent = 'Roll for Initiative!';
-          rollButton.addEventListener('click', async (event) => {
-            event.stopPropagation();
-            await handleInitiativeAction(player);
-          });
-          actions.appendChild(rollButton);
-        }
-        const turnButton = document.createElement('button');
-        if (showTurnCompleteAction) {
-          turnButton.type = 'button';
-          turnButton.textContent = 'Turn Complete';
-          turnButton.className = 'character-turn-complete';
-          turnButton.addEventListener('click', async (event) => {
-            event.stopPropagation();
-            await handleTurnComplete();
-          });
-          actions.appendChild(turnButton);
-        }
-        item.appendChild(actions);
-      }
-
-      if (player.id === selectedCharacterId && selectionToolbarAnchor) {
-        selectionToolbarAnchor.classList.remove('hidden');
-        item.appendChild(selectionToolbarAnchor);
-      }
-
-      item.addEventListener('click', () => {
-        setSelectedCharacter(player);
-      });
-
-      characterList.appendChild(item);
-    });
-  }
-
+  /**
+   * Clamp a stat's current value to the allowed range.
+   * @param {number} value Proposed current value.
+   * @param {number} maxValue Stat maximum.
+   * @returns {number}
+   */
   function clampCurrentStat(value, maxValue) {
     let clamped = allowNegativeHealth ? value : Math.max(0, value);
     if (Number.isFinite(maxValue)) {
@@ -3186,6 +3541,13 @@ window.addEventListener('DOMContentLoaded', () => {
     return clamped;
   }
 
+  /**
+   * Clamp a stat using TempHP-specific rules when needed.
+   * @param {string} statKey Stat key being updated.
+   * @param {number} value Proposed current value.
+   * @param {number} maxValue Stat maximum.
+   * @returns {number}
+   */
   function clampCurrentForKey(statKey, value, maxValue) {
     if (statKey === 'TempHP') {
       return Math.max(0, value);
@@ -3193,6 +3555,13 @@ window.addEventListener('DOMContentLoaded', () => {
     return clampCurrentStat(value, maxValue);
   }
 
+  /**
+   * Adjust a character stat locally and persist the change.
+   * @param {object} player Character record.
+   * @param {string} statKey Stat key to change.
+   * @param {number} delta Signed amount to add or subtract.
+   * @returns {void}
+   */
   function adjustCharacterStat(player, statKey, delta) {
     if (!player) return;
     const stats = Array.isArray(player.stats) ? player.stats : [];
@@ -3247,10 +3616,14 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     }
     saveCharacterEntry(player);
-    renderCharacterList(currentPlayers, currentTurnId);
     skipRefresh = true;
   }
 
+  /**
+   * Load a character into the referee editor as the active selection.
+   * @param {object} player Character record.
+   * @returns {void}
+   */
   function setSelectedCharacter(player) {
     if (!player) return;
     const selectionChanged = selectedCharacterId !== player.id;
@@ -3289,11 +3662,13 @@ window.addEventListener('DOMContentLoaded', () => {
     selectedConditions = new Set(player.conditions || []);
     renderEditorConditions(editorConditionFilter ? editorConditionFilter.value : '');
     updateSelectedConditionsDisplay();
-    updateActionButtons(player);
-    updateSelectionControls();
-    renderCharacterList(currentPlayers, currentTurnId);
   }
 
+  /**
+   * Prompt for a character's initiative and save the result.
+   * @param {object} player Character record.
+   * @returns {Promise<void>}
+   */
   async function editCharacterInitiative(player) {
     if (!player) return;
     const entered = prompt(
@@ -3316,13 +3691,17 @@ window.addEventListener('DOMContentLoaded', () => {
     await saveCharacterEntry(player);
   }
 
+  /**
+   * Roll or prompt for initiative for a referee-owned character.
+   * @param {object} player Character record.
+   * @returns {Promise<void>}
+   */
   async function handleInitiativeAction(player) {
     if (!player) return;
     if (player.useAppInitiativeRoll !== false) {
       const rolled = rollStandardDie(currentStandardDie, player.initiativeBonus);
       if (Number.isFinite(rolled)) {
         player.initiative = rolled;
-        renderCharacterList(currentPlayers, currentTurnId);
         skipRefresh = true;
         await saveCharacterEntry(player);
         return;
@@ -3339,81 +3718,14 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
     player.initiative = initiative;
-    renderCharacterList(currentPlayers, currentTurnId);
     skipRefresh = true;
     await saveCharacterEntry(player);
   }
 
-  function updateActionButtons(player) {
-    const isReferee = Boolean(player?.isReferee);
-    const isHidden = Boolean(player?.isHidden);
-    const canClaim = Boolean(player && !isReferee && !player.claimedSessionId);
-    const canRelease = Boolean(player && (player.claimedSessionId || isReferee));
-    const canDelete = Boolean(player);
-    const hasReference = Boolean(player?.referenceUrl);
-    if (revealNowBtn) {
-      revealNowBtn.classList.toggle('hidden', !isHidden || !isReferee);
-      revealNowBtn.disabled = !isHidden || !isReferee;
-    }
-    if (revealTurnBtn) {
-      revealTurnBtn.classList.toggle('hidden', !isHidden || !isReferee);
-      revealTurnBtn.disabled = !isHidden || !isReferee;
-    }
-    if (hideBtn) {
-      hideBtn.classList.toggle('hidden', !isReferee || isHidden);
-      hideBtn.disabled = !isReferee || isHidden;
-    }
-    if (claimCharacterBtn) {
-      claimCharacterBtn.classList.toggle('hidden', !canClaim);
-      claimCharacterBtn.disabled = !canClaim;
-      claimCharacterBtn.setAttribute('aria-disabled', (!canClaim).toString());
-    }
-    if (releaseCharacterBtn) {
-      releaseCharacterBtn.classList.toggle('hidden', !canRelease);
-      releaseCharacterBtn.disabled = !canRelease;
-      releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
-      releaseCharacterBtn.textContent = isReferee ? 'Release to Pool' : 'Release Character';
-    }
-    if (deleteCharacterBtn) {
-      deleteCharacterBtn.disabled = !canDelete;
-      deleteCharacterBtn.setAttribute('aria-disabled', (!canDelete).toString());
-    }
-    if (openReferenceBtn) {
-      openReferenceBtn.classList.toggle('hidden', !hasReference);
-      openReferenceBtn.disabled = !hasReference;
-      openReferenceBtn.setAttribute('aria-disabled', (!hasReference).toString());
-    }
-    if (overflowToggle) {
-      const hasAction = canClaim || canRelease || canDelete || hasReference;
-      overflowToggle.classList.toggle('hidden', !hasAction);
-      overflowToggle.disabled = !hasAction;
-      overflowToggle.setAttribute('aria-disabled', (!hasAction).toString());
-      if (!hasAction) {
-        closeOverflowMenu();
-      }
-    }
-  }
-
-  function updateSelectionControls() {
-    const hasSelection = Boolean(selectedCharacterId);
-    const toggleButtons = [detailsToggle, conditionsToggle];
-    toggleButtons.forEach((button) => {
-      if (!button) return;
-      button.disabled = !hasSelection;
-      button.classList.toggle('hidden', !hasSelection);
-    });
-    [revealNowBtn, revealTurnBtn, hideBtn].forEach((button) => {
-      if (!button) return;
-      if (!hasSelection) {
-        button.disabled = true;
-        button.classList.add('hidden');
-      }
-    });
-    if (!hasSelection) {
-      closeOverflowMenu();
-    }
-  }
-
+  /**
+   * Clear the current character selection and hide the editor panels.
+   * @returns {void}
+   */
   function clearSelectedCharacter() {
     selectedCharacterId = null;
     detailsDirty = false;
@@ -3423,11 +3735,12 @@ window.addEventListener('DOMContentLoaded', () => {
     closeOverflowMenu();
     setDetailsPanelOpen(false);
     setConditionsPanelOpen(false);
-    updateSelectionControls();
-    updateActionButtons(null);
-    renderCharacterList(currentPlayers, currentTurnId);
   }
 
+  /**
+   * Open the selected character's reference URL in a new tab.
+   * @returns {void}
+   */
   function openSelectedCharacterReference() {
     const selected = selectedCharacterId
       ? currentPlayers.find((player) => player.id === selectedCharacterId)
@@ -3437,12 +3750,22 @@ window.addEventListener('DOMContentLoaded', () => {
     window.open(referenceUrl, '_blank', 'noopener');
   }
 
+  /**
+   * Open a character's reference URL in a new tab.
+   * @param {object|null} player Character record.
+   * @returns {void}
+   */
   function openCharacterReference(player) {
     const referenceUrl = player?.referenceUrl?.trim();
     if (!referenceUrl) return;
     window.open(referenceUrl, '_blank', 'noopener');
   }
 
+  /**
+   * Render the condition selector grid for the selected character.
+   * @param {string} [filterText=''] Filter string entered by the user.
+   * @returns {void}
+   */
   function renderEditorConditions(filterText = '') {
     if (!editorConditionsGrid) return;
     const normalizedFilter = filterText.trim().toLowerCase();
@@ -3503,6 +3826,10 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /**
+   * Refresh the summary of the selected conditions in the editor.
+   * @returns {void}
+   */
   function updateSelectedConditionsDisplay() {
     if (!editorSelectedConditions) return;
     editorSelectedConditions.innerHTML = '';
@@ -3523,6 +3850,13 @@ window.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  /**
+   * Update a character's hidden and reveal-on-turn flags on the server.
+   * @param {string} id Character id.
+   * @param {boolean} isHidden Whether the character is hidden.
+   * @param {boolean} revealOnTurn Whether the character reveals on its turn.
+   * @returns {Promise<void>}
+   */
   async function updateVisibility(id, isHidden, revealOnTurn) {
     try {
       const res = await fetch(`/characters/${id}/visibility`, {
@@ -3543,6 +3877,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Serialize the selected character editor into the server payload shape.
+   * @returns {object|null}
+   */
   function buildEditorPayload() {
     if (!selectedCharacterId) return null;
     const name = editorNameInput ? editorNameInput.value.trim() : '';
@@ -3619,6 +3957,10 @@ window.addEventListener('DOMContentLoaded', () => {
     return payload;
   }
 
+  /**
+   * Save the active character editor form back to the server.
+   * @returns {Promise<boolean>} True when the save succeeds.
+   */
   async function saveEditorCharacter() {
     const payload = buildEditorPayload();
     if (!payload) return false;
@@ -3652,6 +3994,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Move a character to the active turn on the server.
+   * @param {string} id Character id.
+   * @returns {Promise<void>}
+   */
   async function setTurnNow(id) {
     try {
       const res = await fetch(`/turn-set/${id}`, { method: 'POST' });
@@ -3668,6 +4015,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Submit the add-character form and create one or more characters.
+   * @param {SubmitEvent} event Submit event from the add form.
+   * @returns {Promise<void>}
+   */
   async function handleAddCharacter(event) {
     event.preventDefault();
     const name = nameInput.value.trim();
@@ -3777,6 +4129,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Open the add-character form.
+   * @returns {void}
+   */
   function showAddForm() {
     if (!form) return;
     clearAddForm();
@@ -3787,6 +4143,10 @@ window.addEventListener('DOMContentLoaded', () => {
     form.setAttribute('aria-hidden', 'false');
   }
 
+  /**
+   * Close the add-character form.
+   * @returns {void}
+   */
   function hideAddForm() {
     if (!form) return;
     clearAddForm();
@@ -3796,6 +4156,10 @@ window.addEventListener('DOMContentLoaded', () => {
     form.setAttribute('aria-hidden', 'true');
   }
 
+  /**
+   * Reset the add-character form back to its default values.
+   * @returns {void}
+   */
   function clearAddForm() {
     resetCreatureLibraryState();
     setAddStatBlockId(getDefaultAddStatBlockId(), { preserveValues: false });
@@ -3809,6 +4173,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (visibleToggle) visibleToggle.checked = false;
   }
 
+  /**
+   * Persist a character entry from the referee editor back to the server.
+   * @param {object} player Character record.
+   * @returns {Promise<void>}
+   */
   async function saveCharacterEntry(player) {
     try {
       const payload = {
@@ -3852,6 +4221,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Delete a character from the active campaign roster.
+   * @param {string} id Character id.
+   * @returns {Promise<void>}
+   */
   async function deleteCharacter(id) {
     try {
       if (!activeCampaignId) {
@@ -3875,85 +4249,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function bindActionButtons() {
-    if (revealNowBtn) {
-      revealNowBtn.addEventListener('click', () => {
-        if (!selectedCharacterId) return;
-        updateVisibility(selectedCharacterId, false, false);
-      });
-    }
-    if (revealTurnBtn) {
-      revealTurnBtn.addEventListener('click', () => {
-        if (!selectedCharacterId) return;
-        updateVisibility(selectedCharacterId, true, true);
-      });
-    }
-    if (hideBtn) {
-      hideBtn.addEventListener('click', () => {
-        if (!selectedCharacterId) return;
-        updateVisibility(selectedCharacterId, true, false);
-      });
-    }
-
-  if (overflowToggle) {
-    overflowToggle.addEventListener('click', (event) => {
-      event.stopPropagation();
-      if (!selectedCharacterId) return;
-      toggleOverflowMenu();
-    });
-  }
-
-  if (overflowMenu) {
-    overflowMenu.addEventListener('click', (event) => {
-      event.stopPropagation();
-    });
-  }
-
-  if (openReferenceBtn) {
-    openReferenceBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      closeOverflowMenu();
-      openSelectedCharacterReference();
-    });
-  }
-
-  if (claimCharacterBtn) {
-    claimCharacterBtn.addEventListener('click', async (event) => {
-      event.stopPropagation();
-      closeOverflowMenu();
-      const selected = selectedCharacterId
-        ? currentPlayers.find((player) => player.id === selectedCharacterId)
-        : null;
-      if (!selected || selected.isReferee || selected.claimedSessionId) return;
-      await claimCharacter(selected);
-    });
-  }
-
-    if (releaseCharacterBtn) {
-      releaseCharacterBtn.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        closeOverflowMenu();
-        const selected = selectedCharacterId
-          ? currentPlayers.find((player) => player.id === selectedCharacterId)
-          : null;
-        if (!selected) return;
-        if (selected.isReferee) {
-          await releaseCharacterToPool(selected);
-          return;
-        }
-        if (!selected.claimedSessionId) return;
-        await forceReleaseCharacter(selected);
-      });
-    }
-
-    document.addEventListener('click', () => {
-      closeOverflowMenu();
-      closeRefereeRowOverflowMenus();
-      closeExpandedOrderStats();
-      closeInitiativeEditor();
-    });
-  }
-
+  /**
+   * Force a claimed character back to the available pool.
+   * @param {object} player Character record.
+   * @returns {Promise<void>}
+   */
   async function forceReleaseCharacter(player) {
     if (!player || !activeCampaignId) return;
     try {
@@ -3976,6 +4276,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Release a referee-owned character into the shared pool.
+   * @param {object} player Character record.
+   * @returns {Promise<void>}
+   */
   async function releaseCharacterToPool(player) {
     if (!player || !activeCampaignId) return;
     try {
@@ -3998,6 +4303,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Claim an unassigned character for the current session.
+   * @param {object} player Character record.
+   * @returns {Promise<void>}
+   */
   async function claimCharacter(player) {
     if (!player || !activeCampaignId) return;
     try {
@@ -4020,7 +4330,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-
+  /**
+   * Advance the active encounter to the next turn.
+   * @returns {Promise<void>}
+   */
   async function handleTurnComplete() {
     try {
       const res = await fetch('/turn-complete', { method: 'POST' });
@@ -4037,6 +4350,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /**
+   * Bootstrap the referee page.
+   * @returns {Promise<void>}
+   */
   async function init() {
     const hasActiveCampaign = await loadCampaign();
     await loadAvailableRulesets();
@@ -4230,9 +4547,7 @@ window.addEventListener('DOMContentLoaded', () => {
       hideAddForm();
     });
   }
-  bindActionButtons();
   updateAddDialogTabs();
-  updateSelectionControls();
 
   init();
 });
