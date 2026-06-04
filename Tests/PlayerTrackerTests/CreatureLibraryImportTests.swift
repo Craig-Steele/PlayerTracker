@@ -43,7 +43,7 @@ final class CreatureLibraryImportTests: XCTestCase {
         )
 
         XCTAssertEqual(response.rulesetId, "pathfinder")
-        XCTAssertTrue(response.items.contains { $0.name == "Backpack" })
+        XCTAssertTrue(response.items.contains { $0.name == "Backpack, common" })
     }
 
     func testPathfinderThirdPartyProductsFixtureIncludesBeanSidheVariant() throws {
