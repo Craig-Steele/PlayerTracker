@@ -285,6 +285,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const claimableCharacterPanel = document.getElementById('claimable-character-panel');
   const claimableCharacterList = document.getElementById('claimable-character-list');
   const addCharacterBtn = document.getElementById('character-add');
+  const turnCompleteBtn = document.getElementById('turn-complete');
   const removeCharacterBtn = document.getElementById('character-remove');
   const addForm = document.getElementById('add-character-form');
   const addNameInput = document.getElementById('add-name');
@@ -847,6 +848,19 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       closeCurrencyEditor();
       closeInventoryEditor();
     }
+  }
+
+  function updateTurnCompleteButtonState() {
+    if (!turnCompleteBtn) return;
+    const canCompleteTurn =
+      !displayOnly &&
+      encounterState === 'active' &&
+      Boolean(currentTurnId) &&
+      myCharacters.some((entry) => entry.id === currentTurnId);
+    turnCompleteBtn.classList.toggle('hidden', !canCompleteTurn);
+    turnCompleteBtn.disabled = !canCompleteTurn;
+    turnCompleteBtn.setAttribute('aria-disabled', (!canCompleteTurn).toString());
+    turnCompleteBtn.setAttribute('aria-hidden', (!canCompleteTurn).toString());
   }
 
   function setCurrencyPanelOpen(open) {
@@ -3214,6 +3228,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         removeCharacterBtn.disabled = true;
         removeCharacterBtn.setAttribute('aria-disabled', 'true');
       }
+      updateTurnCompleteButtonState();
       return;
     }
 
@@ -3310,28 +3325,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         item.appendChild(conditionsList);
       }
 
-      const showTurnCompleteAction =
-        !displayOnly &&
-        encounterState === 'active' &&
-        Boolean(currentTurnId) &&
-        character.id === currentTurnId &&
-        myCharacters.some((entry) => entry.id === currentTurnId);
-
-      if (showTurnCompleteAction) {
-        const initiativeActions = document.createElement('div');
-        initiativeActions.className = 'character-actions';
-        const turnButton = document.createElement('button');
-        turnButton.type = 'button';
-        turnButton.textContent = 'Turn Complete';
-        turnButton.className = 'character-turn-complete';
-        turnButton.addEventListener('click', async (event) => {
-          event.stopPropagation();
-          await handleTurnComplete();
-        });
-        initiativeActions.appendChild(turnButton);
-        item.appendChild(initiativeActions);
-      }
-
       characterList.appendChild(item);
     });
 
@@ -3341,6 +3334,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       removeCharacterBtn.setAttribute('aria-disabled', (!canRemove).toString());
     }
     updateReleaseButtonState();
+    updateTurnCompleteButtonState();
 
     renderClaimableCharacterList();
   }
@@ -4875,6 +4869,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
           }
           updateEncounterStateDisplay();
           updateConditionsAvailability();
+          updateTurnCompleteButtonState();
           return;
         }
         throw new Error('Server returned ' + res.status);
@@ -4950,6 +4945,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         renderCharacterList();
         lastTurnId = currentTurnId;
       }
+      updateTurnCompleteButtonState();
 
     } catch (err) {
       statusDiv.textContent = 'Error loading state: ' + err.message;
@@ -5160,6 +5156,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     form.addEventListener('submit', (event) => {
       event.preventDefault();
     });
+  }
+  if (turnCompleteBtn) {
+    turnCompleteBtn.addEventListener('click', handleTurnComplete);
   }
   if (detailsSaveBtn) {
     detailsSaveBtn.addEventListener('click', async () => {

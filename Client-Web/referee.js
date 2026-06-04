@@ -2548,8 +2548,10 @@ window.addEventListener('DOMContentLoaded', () => {
   function updateTurnControls() {
     if (!turnCompleteBtn) return;
     const enabled = encounterState === 'active';
+    turnCompleteBtn.classList.toggle('hidden', !enabled);
     turnCompleteBtn.disabled = !enabled;
     turnCompleteBtn.setAttribute('aria-disabled', (!enabled).toString());
+    turnCompleteBtn.setAttribute('aria-hidden', (!enabled).toString());
     if (encounterNewBtn) {
       const isNew = encounterState === 'new';
       encounterNewBtn.disabled = isNew;
@@ -2847,6 +2849,11 @@ window.addEventListener('DOMContentLoaded', () => {
       setSelectedCharacter(player);
       setDetailsPanelOpen(true);
     });
+    addMenuItem('Act Now', () => {
+      setTurnNow(player.id);
+    }, {
+      disabled: encounterState !== 'active'
+    });
     addMenuItem('Conditions', () => {
       setSelectedCharacter(player);
       setConditionsPanelOpen(true);
@@ -2908,7 +2915,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.referee-row-menu').forEach((menu) => menu.remove());
     playersBody.innerHTML = '';
     if (players.length === 0) {
-      playersBody.appendChild(createEmptyEncounterRow(5));
+      playersBody.appendChild(createEmptyEncounterRow(4));
       return;
     }
 
@@ -3001,30 +3008,10 @@ window.addEventListener('DOMContentLoaded', () => {
         conditionsTd.textContent = '—';
       }
 
-      const actTd = document.createElement('td');
-      const actStatus = p.isHidden
-        ? (p.revealOnTurn ? 'Hidden/Reveal on Turn' : 'Hidden')
-        : '';
-      if (actStatus) {
-        const statusLine = document.createElement('div');
-        statusLine.className = 'act-status';
-        statusLine.textContent = actStatus;
-        actTd.appendChild(statusLine);
-      }
-      const actButton = document.createElement('button');
-      actButton.type = 'button';
-      actButton.textContent = 'Act Now';
-      actButton.disabled = encounterState !== 'active' || currentTurnId === p.id;
-      actButton.addEventListener('click', () => {
-        setTurnNow(p.id);
-      });
-      actTd.appendChild(actButton);
-
       tr.appendChild(initTd);
       tr.appendChild(nameTd);
       tr.appendChild(hpTd);
       tr.appendChild(conditionsTd);
-      tr.appendChild(actTd);
       playersBody.appendChild(tr);
     });
   }

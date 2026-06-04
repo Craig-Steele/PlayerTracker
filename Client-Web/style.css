@@ -1068,8 +1068,30 @@ body.referee-page .referee-panel {
   width: 100%;
 }
 
+.character-list-header {
+  justify-content: flex-start;
+}
+
+.character-list-header > button {
+  margin-top: 0;
+}
+
+.character-list-header #turn-complete {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
 .referee-list-actions {
-  justify-content: space-between;
+  justify-content: flex-start;
+}
+
+.referee-top-actions > button {
+  margin-top: 0;
+}
+
+.referee-top-actions #turn-complete {
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .character-list-actions .icon-button {
@@ -2454,6 +2476,14 @@ body.referee-page .referee-panel {
     flex: 1;
   }
 
+  .character-list-header #turn-complete {
+    flex: 0 0 auto;
+  }
+
+  .referee-top-actions #turn-complete {
+    flex: 0 0 auto;
+  }
+
   #refresh {
     margin-left: auto;
     font-size: 2rem;
@@ -3640,17 +3670,6 @@ body.display-only {
 
 .ref-conditions-section input[type="search"] {
   padding: 0.35rem;
-}
-
-.act-col {
-  width: 110px;
-}
-
-.act-status {
-  margin-bottom: 0.25rem;
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  line-height: 1.05;
 }
 
 .referee-drawer {
