@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=29">
+  <link rel="stylesheet" href="style.css?v=33">
 </head>
 <body class="player-page">
   <div id="header-bar">
@@ -254,19 +254,18 @@
             <div class="conditions-dialog-header">
               <h2 id="party-treasure-dialog-title">Party Treasure</h2>
               <div class="conditions-dialog-actions party-treasure-actions">
-                <div class="party-treasure-actions-row party-treasure-actions-row-top">
-                <button type="button" id="party-treasure-add" class="secondary">Add Item</button>
-                <button type="button" id="party-treasure-remove" class="secondary">Remove Item</button>
-                <button type="button" id="party-treasure-claim" class="secondary">Claim Item</button>
-                </div>
-                <div class="party-treasure-actions-row party-treasure-actions-row-bottom">
-                <button type="button" id="party-treasure-cancel" class="secondary">Cancel</button>
-                <button type="button" id="party-treasure-save">Save</button>
-                </div>
+                <button type="button" id="party-treasure-cancel" class="secondary">Close</button>
               </div>
+            </div>
+            <div class="party-treasure-actions-row party-treasure-actions-row-top">
+              <button type="button" id="party-treasure-add" class="secondary">Add</button>
+              <button type="button" id="party-treasure-edit" class="secondary">Edit</button>
+              <button type="button" id="party-treasure-remove" class="secondary">Remove</button>
+              <button type="button" id="party-treasure-claim" class="secondary party-treasure-claim">Claim</button>
             </div>
             <div id="party-treasure-context" class="inventory-summary">Party treasure for —</div>
             <div id="party-treasure-add-form" class="inventory-inline-form hidden" aria-hidden="true">
+              <div id="party-treasure-add-form-title" class="inventory-inline-form-title">Add Item</div>
               <div class="inventory-inline-form-grid">
                 <label class="property-row">
                   <span class="property-label">Item</span>
@@ -301,7 +300,7 @@
               </div>
               <div class="party-treasure-inline-actions">
                 <button type="button" id="party-treasure-add-form-cancel" class="secondary">Cancel</button>
-                <button type="button" id="party-treasure-add-form-save">Add</button>
+                <button type="button" id="party-treasure-add-form-save">Add Item</button>
               </div>
             </div>
             <div class="inventory-table-wrap">
@@ -311,8 +310,6 @@
                     <th>Item</th>
                     <th>Qty</th>
                     <th>Value</th>
-                    <th>Weight (per)</th>
-                    <th>Link</th>
                   </tr>
                 </thead>
                 <tbody id="party-treasure-fields"></tbody>
@@ -359,12 +356,12 @@
 
   <script src="shared.js?v=3"></script>
   <script src="live-stream.js?v=3"></script>
-  <script src="party-treasure.js?v=9"></script>
+  <script src="party-treasure.js?v=11"></script>
   <script src="stat-inputs.js?v=1"></script>
   <script src="player-name-save.js?v=1"></script>
   <script src="claimable-characters.js?v=1"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="app.js?v=59"></script>
+  <script src="app.js?v=62"></script>
 </body>
 </html>

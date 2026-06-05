@@ -1709,9 +1709,48 @@ body.referee-page .referee-panel {
   background: var(--bg-panel);
 }
 
+.inventory-inline-form-title {
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
 .inventory-inline-form-grid {
   display: grid;
   gap: 0.55rem;
+}
+
+.party-treasure-compact .inventory-table,
+#party-treasure-panel .inventory-table,
+#ref-party-treasure-panel .inventory-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.party-treasure-compact .inventory-table th:nth-child(1),
+.party-treasure-compact .inventory-table td:nth-child(1),
+#party-treasure-panel .inventory-table th:nth-child(1),
+#party-treasure-panel .inventory-table td:nth-child(1),
+#ref-party-treasure-panel .inventory-table th:nth-child(1),
+#ref-party-treasure-panel .inventory-table td:nth-child(1) {
+  width: 68%;
+}
+
+.party-treasure-compact .inventory-table th:nth-child(2),
+.party-treasure-compact .inventory-table td:nth-child(2),
+#party-treasure-panel .inventory-table th:nth-child(2),
+#party-treasure-panel .inventory-table td:nth-child(2),
+#ref-party-treasure-panel .inventory-table th:nth-child(2),
+#ref-party-treasure-panel .inventory-table td:nth-child(2) {
+  width: 16%;
+}
+
+.party-treasure-compact .inventory-table th:nth-child(3),
+.party-treasure-compact .inventory-table td:nth-child(3),
+#party-treasure-panel .inventory-table th:nth-child(3),
+#party-treasure-panel .inventory-table td:nth-child(3),
+#ref-party-treasure-panel .inventory-table th:nth-child(3),
+#ref-party-treasure-panel .inventory-table td:nth-child(3) {
+  width: 16%;
 }
 
 .party-treasure-inline-actions {
@@ -1723,22 +1762,25 @@ body.referee-page .referee-panel {
 }
 
 .party-treasure-actions {
-  flex-direction: column;
-  align-items: stretch;
+  flex-direction: row;
+  align-items: center;
 }
 
 .party-treasure-actions-row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: 0.5rem;
+  margin-top: 0.75rem;
+  overflow-x: auto;
 }
 
 .party-treasure-actions-row-top {
   justify-content: flex-start;
 }
 
-.party-treasure-actions-row-bottom {
-  justify-content: flex-end;
+#party-treasure-claim {
+  margin-left: auto;
 }
 
 .inventory-entry-display .inventory-display-value {
@@ -1749,26 +1791,13 @@ body.referee-page .referee-panel {
 }
 
 .inventory-entry-display .inventory-display-name {
+  display: inline;
+  width: auto;
   white-space: normal;
 }
 
-.inventory-entry-display .inventory-display-name-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.inventory-entry-display .inventory-display-link {
-  display: block;
-  width: 100%;
-  font-size: 0.85rem;
-  line-height: 1.25;
-  word-break: break-word;
-}
-
-.inventory-entry-display .inventory-display-link a {
-  color: var(--text-link);
-  text-decoration: underline;
+.inventory-entry-display .inventory-display-name.inventory-display-link {
+  cursor: pointer;
 }
 
 .inventory-entry-display input[type="hidden"] {
@@ -1885,10 +1914,6 @@ body.referee-page .referee-panel {
   color: var(--text-selected);
 }
 
-.inventory-entry.selected .inventory-display-link a {
-  color: var(--text-selected);
-}
-
 .inventory-entry.selected .inventory-display-value,
 .inventory-entry.selected .inventory-display-name,
 .inventory-entry.selected .inventory-display-value a {
@@ -1952,22 +1977,10 @@ body.referee-page .referee-panel {
     display: inline-flex;
   }
 
-  .party-treasure-compact .party-treasure-actions-row,
-  #party-treasure-panel .party-treasure-actions-row,
-  #ref-party-treasure-panel .party-treasure-actions-row {
-    width: 100%;
-  }
-
   .party-treasure-compact .party-treasure-actions-row-top,
   #party-treasure-panel .party-treasure-actions-row-top,
   #ref-party-treasure-panel .party-treasure-actions-row-top {
     justify-content: flex-start;
-  }
-
-  .party-treasure-compact .party-treasure-actions-row-bottom,
-  #party-treasure-panel .party-treasure-actions-row-bottom,
-  #ref-party-treasure-panel .party-treasure-actions-row-bottom {
-    justify-content: flex-end;
   }
 
   .party-treasure-compact .inventory-table,

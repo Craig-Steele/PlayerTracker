@@ -319,14 +319,15 @@ window.addEventListener('DOMContentLoaded', () => {
   const currencyCancelBtn = document.getElementById('currency-cancel');
   const partyTreasurePanel = document.getElementById('party-treasure-panel');
   const partyTreasureFields = document.getElementById('party-treasure-fields');
-  const partyTreasureSaveBtn = document.getElementById('party-treasure-save');
   const partyTreasureCancelBtn = document.getElementById('party-treasure-cancel');
   const partyTreasureAddBtn = document.getElementById('party-treasure-add');
+  const partyTreasureEditBtn = document.getElementById('party-treasure-edit');
   const partyTreasureRemoveBtn = document.getElementById('party-treasure-remove');
   const partyTreasureClaimBtn = document.getElementById('party-treasure-claim');
   const partyTreasureDialogTitle = document.getElementById('party-treasure-dialog-title');
   const partyTreasureContext = document.getElementById('party-treasure-context');
   const partyTreasureAddForm = document.getElementById('party-treasure-add-form');
+  const partyTreasureAddFormTitle = document.getElementById('party-treasure-add-form-title');
   const partyTreasureAddFormName = document.getElementById('party-treasure-add-name');
   const partyTreasureAddFormQuantity = document.getElementById('party-treasure-add-quantity');
   const partyTreasureAddFormValue = document.getElementById('party-treasure-add-value');
@@ -488,6 +489,25 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     },
     getPartyTreasureRows: (fieldsEl) => (fieldsEl ? Array.from(fieldsEl.querySelectorAll('tr.inventory-entry')) : []),
+    getPartyTreasureRowEntry: (row) => {
+      if (!row) return null;
+      const rowData = (window.PlayerTrackerPartyTreasure?.getInventoryRowData || partyTreasureHelpers.getInventoryRowData)(row) || {};
+      const nameInput = row.querySelector('input[data-inventory-field="name"]');
+      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
+      const valueInput = row.querySelector('input[data-inventory-field="value"]');
+      const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+      const urlInput = row.querySelector('input[data-inventory-field="url"]');
+      return (window.PlayerTrackerPartyTreasure?.normalizeInventoryEntry || partyTreasureHelpers.normalizeInventoryEntry)({
+        id: rowData.id || null,
+        name: nameInput ? nameInput.value.trim() : '',
+        quantity: quantityInput ? Number(quantityInput.value) : 1,
+        value: valueInput ? Number(valueInput.value) : 0,
+        weight: weightInput ? Number(weightInput.value) : 0,
+        url: urlInput ? urlInput.value.trim() : '',
+        containerId: rowData.containerId,
+        isContainer: rowData.isContainer
+      });
+    },
     createPartyTreasureRow: (options = {}) => {
       const {
         entry = {},
@@ -570,59 +590,6 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       return firstRow;
     },
-    collectPartyTreasurePayloadFromEditor: (fieldsEl) => {
-      if (!fieldsEl) return null;
-      const payload = [];
-      const rows = Array.from(fieldsEl.querySelectorAll('tr.inventory-entry'));
-      for (const row of rows) {
-        const rowData = (window.PlayerTrackerPartyTreasure?.getInventoryRowData || partyTreasureHelpers.getInventoryRowData)(row) || {};
-        const nameInput = row.querySelector('input[data-inventory-field="name"]');
-        const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
-        const valueInput = row.querySelector('input[data-inventory-field="value"]');
-        const weightInput = row.querySelector('input[data-inventory-field="weight"]');
-        const urlInput = row.querySelector('input[data-inventory-field="url"]');
-        const rawName = nameInput ? nameInput.value.trim() : '';
-        const rawQuantity = quantityInput ? quantityInput.value.trim() : '';
-        const rawValue = valueInput ? valueInput.value.trim() : '';
-        const rawWeight = weightInput ? weightInput.value.trim() : '';
-        const rawUrl = urlInput ? urlInput.value.trim() : '';
-        const isUntouchedDefaultRow =
-          !rawName &&
-          (rawQuantity === '' || rawQuantity === '1') &&
-          (rawValue === '' || rawValue === '0') &&
-          (rawWeight === '' || rawWeight === '0') &&
-          !rawUrl;
-        if (isUntouchedDefaultRow) {
-          continue;
-        }
-        if (!rawName) {
-          throw new Error('Each party treasure row needs an item name.');
-        }
-        const quantity = rawQuantity === '' ? 1 : Number(rawQuantity);
-        const value = rawValue === '' ? 0 : Number(rawValue);
-        const weight = rawWeight === '' ? 0 : Number(rawWeight);
-        if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
-          throw new Error(`Quantity for ${rawName} must be a whole number of at least 1.`);
-        }
-        if (!Number.isFinite(value)) {
-          throw new Error(`Value for ${rawName} must be a valid number.`);
-        }
-        if (!Number.isFinite(weight)) {
-          throw new Error(`Weight for ${rawName} must be a valid number.`);
-        }
-        payload.push({
-          id: rowData.id || (window.PlayerTrackerPartyTreasure?.createInventoryEntryId || partyTreasureHelpers.createInventoryEntryId)(),
-          name: rawName,
-          quantity,
-          value,
-          weight,
-          url: rawUrl || null,
-          containerId: null,
-          isContainer: false
-        });
-      }
-      return payload.length > 0 ? payload : null;
-    }
   };
   let playerNameRequired = false;
   let allowNegativeHealth = false;
@@ -640,8 +607,8 @@ window.addEventListener('DOMContentLoaded', () => {
   let expandedOrderStatsCharacterId = null;
   let lastEncounterSnapshot = null;
   let partyTreasureEditorCharacterId = null;
-  let partyTreasureEditorDirty = false;
   let partyTreasureSelectedRow = null;
+  let partyTreasureEditingEntryId = null;
   let currentPartyTreasure = [];
   let inventoryEditorCharacterId = null;
   let inventoryEditorDirty = false;
@@ -1084,17 +1051,34 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     return window.matchMedia('(max-width: 760px)').matches;
   }
 
-  function setPartyTreasureAddFormOpen(open) {
+  function populatePartyTreasureAddForm(entry = null) {
+    const normalized = entry
+      ? partyTreasureHelpers.normalizeInventoryEntry(entry)
+      : partyTreasureHelpers.normalizeInventoryEntry({}, null, false);
+    if (partyTreasureAddFormName) partyTreasureAddFormName.value = normalized.name || '';
+    if (partyTreasureAddFormQuantity) partyTreasureAddFormQuantity.value = String(normalized.quantity ?? 1);
+    if (partyTreasureAddFormValue) partyTreasureAddFormValue.value = String(normalized.value ?? 0);
+    if (partyTreasureAddFormWeight) partyTreasureAddFormWeight.value = String(normalized.weight ?? 0);
+    if (partyTreasureAddFormUrl) partyTreasureAddFormUrl.value = normalized.url || '';
+  }
+
+  function setPartyTreasureAddFormOpen(open, entry = null) {
     if (!partyTreasureAddForm) return;
     partyTreasureAddForm.classList.toggle('hidden', !open);
     partyTreasureAddForm.setAttribute('aria-hidden', (!open).toString());
+    partyTreasureEditingEntryId = open && entry ? (entry.id || null) : null;
+    if (partyTreasureAddFormTitle) {
+      partyTreasureAddFormTitle.textContent = open && entry ? 'Edit Item' : 'Add Item';
+    }
+    if (partyTreasureAddFormSaveBtn) {
+      partyTreasureAddFormSaveBtn.textContent = open && entry ? 'Save Changes' : 'Add Item';
+    }
     updatePartyTreasureActionButtons();
-    if (!open) {
-      if (partyTreasureAddFormName) partyTreasureAddFormName.value = '';
-      if (partyTreasureAddFormQuantity) partyTreasureAddFormQuantity.value = '1';
-      if (partyTreasureAddFormValue) partyTreasureAddFormValue.value = '0';
-      if (partyTreasureAddFormWeight) partyTreasureAddFormWeight.value = '0';
-      if (partyTreasureAddFormUrl) partyTreasureAddFormUrl.value = '';
+    if (open) {
+      populatePartyTreasureAddForm(entry);
+    } else {
+      partyTreasureEditingEntryId = null;
+      populatePartyTreasureAddForm(null);
     }
   }
 
@@ -1120,18 +1104,22 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   function updatePartyTreasureActionButtons() {
     const isAddFormOpen = Boolean(partyTreasureAddForm && !partyTreasureAddForm.classList.contains('hidden'));
     const hasSelection = Boolean(partyTreasureSelectedRow);
-    const canSave = Boolean(partyTreasureEditorDirty);
-    const canClaim = hasSelection && !partyTreasureEditorDirty && !isAddFormOpen;
-    if (partyTreasureSaveBtn) {
-      partyTreasureSaveBtn.disabled = !canSave;
-      partyTreasureSaveBtn.setAttribute('aria-disabled', (!canSave).toString());
+    const canClaim = hasSelection && !isAddFormOpen;
+    const canEdit = hasSelection && !isAddFormOpen;
+    const canRemove = hasSelection && !isAddFormOpen;
+    if (partyTreasureAddBtn) {
+      partyTreasureAddBtn.disabled = isAddFormOpen;
+      partyTreasureAddBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
+    }
+    if (partyTreasureEditBtn) {
+      partyTreasureEditBtn.disabled = !canEdit;
+      partyTreasureEditBtn.setAttribute('aria-disabled', (!canEdit).toString());
     }
     if (partyTreasureClaimBtn) {
       partyTreasureClaimBtn.disabled = !canClaim;
       partyTreasureClaimBtn.setAttribute('aria-disabled', (!canClaim).toString());
     }
     if (partyTreasureRemoveBtn) {
-      const canRemove = hasSelection;
       partyTreasureRemoveBtn.disabled = !canRemove;
       partyTreasureRemoveBtn.setAttribute('aria-disabled', (!canRemove).toString());
     }
@@ -1159,7 +1147,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       throw new Error(`Weight for ${name} must be a valid number.`);
     }
     return {
-      id: partyTreasureHelpers.createInventoryEntryId(),
+      id: partyTreasureEditingEntryId || partyTreasureHelpers.createInventoryEntryId(),
       name,
       quantity,
       value,
@@ -1184,25 +1172,16 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     updatePartyTreasureActionButtons();
   }
 
-  function focusPartyTreasureRow(row) {
-    partyTreasureHelpers.focusInventoryRow(row);
-  }
-
   function createPartyTreasureRow(entry = {}) {
     return partyTreasureHelpers.createPartyTreasureRow({
       entry,
       itemOptionsId: 'party-treasure-item-options',
-      onDirty: () => {
-        partyTreasureEditorDirty = true;
-        updatePartyTreasureActionButtons();
-      },
       onSelect: (row) => {
         setSelectedPartyTreasureRow(row);
       },
       applyPreset: (row, itemName) => {
         partyTreasureHelpers.applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems);
-      },
-      displayMode: isCompactPartyTreasureLayout()
+      }
     });
   }
 
@@ -1210,43 +1189,40 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (!partyTreasureFields) return;
     partyTreasureHelpers.buildPartyTreasureFields(partyTreasureFields, items, {
       itemOptionsId: 'party-treasure-item-options',
-      onDirty: () => {
-        partyTreasureEditorDirty = true;
-      },
       onSelect: (row) => {
         setSelectedPartyTreasureRow(row);
       },
       applyPreset: (row, itemName) => {
         partyTreasureHelpers.applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems);
-      },
-      displayMode: isCompactPartyTreasureLayout()
+      }
     });
   }
 
-  function collectPartyTreasurePayloadFromEditor() {
-    return partyTreasureHelpers.collectPartyTreasurePayloadFromEditor(partyTreasureFields);
-  }
-
   function addPartyTreasureItem() {
-    if (isCompactPartyTreasureLayout()) {
-      setPartyTreasureAddFormOpen(true);
-      window.requestAnimationFrame(() => {
-        partyTreasureAddFormName?.focus();
-        partyTreasureAddFormName?.select?.();
-      });
-      return;
-    }
-    const row = createPartyTreasureRow({});
-    if (partyTreasureFields) {
-      partyTreasureFields.appendChild(row);
-      partyTreasureEditorDirty = true;
-      setSelectedPartyTreasureRow(row);
-      updatePartyTreasureActionButtons();
-      focusPartyTreasureRow(row);
-    }
+    setPartyTreasureAddFormOpen(true, null);
+    window.requestAnimationFrame(() => {
+      partyTreasureAddFormName?.focus();
+      partyTreasureAddFormName?.select?.();
+    });
   }
 
-  function commitPartyTreasureAddFormItem() {
+  function findPartyTreasureRowById(entryId) {
+    if (!entryId || !partyTreasureFields) return null;
+    return getPartyTreasureRows().find((row) => row.dataset.inventoryEntryId === entryId) || null;
+  }
+
+  function editSelectedPartyTreasureItem() {
+    if (!partyTreasureSelectedRow) return;
+    const entry = partyTreasureHelpers.getPartyTreasureRowEntry(partyTreasureSelectedRow);
+    if (!entry) return;
+    setPartyTreasureAddFormOpen(true, entry);
+    window.requestAnimationFrame(() => {
+      partyTreasureAddFormName?.focus();
+      partyTreasureAddFormName?.select?.();
+    });
+  }
+
+  async function commitPartyTreasureAddFormItem() {
     if (!partyTreasureFields) return;
     let entry;
     try {
@@ -1255,45 +1231,43 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       statusDiv.textContent = err instanceof Error ? err.message : String(err);
       return;
     }
-    const row = createPartyTreasureRow(entry);
-    partyTreasureFields.appendChild(row);
-    partyTreasureEditorDirty = true;
-    setSelectedPartyTreasureRow(row);
-    updatePartyTreasureActionButtons();
-    if (!isCompactPartyTreasureLayout()) {
-      focusPartyTreasureRow(row);
+    const items = partyTreasureHelpers.upsertPartyTreasureEntry(currentPartyTreasure, entry);
+    try {
+      const updatedCampaign = await savePartyTreasureItems(items);
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : items;
+      buildPartyTreasureFields(currentPartyTreasure);
+      setSelectedPartyTreasureRow(findPartyTreasureRowById(entry.id) || getPartyTreasureRows()[0] || null);
+      setPartyTreasureAddFormOpen(false);
+      statusDiv.textContent = `Saved ${entry.name}.`;
+    } catch (err) {
+      statusDiv.textContent = `Party treasure save failed: ${err instanceof Error ? err.message : String(err)}`;
     }
-    setPartyTreasureAddFormOpen(false);
   }
 
-  function removeSelectedPartyTreasureItem() {
+  async function removeSelectedPartyTreasureItem() {
     if (!partyTreasureSelectedRow) return;
     const rowName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
-    if (!confirm(`Remove ${rowName} from party treasure?`)) {
-      return;
+    const items = partyTreasureHelpers.removePartyTreasureEntry(
+      currentPartyTreasure,
+      partyTreasureSelectedRow.dataset.inventoryEntryId || ''
+    );
+    try {
+      const updatedCampaign = await savePartyTreasureItems(items);
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : items;
+      buildPartyTreasureFields(currentPartyTreasure);
+      setSelectedPartyTreasureRow(getPartyTreasureRows()[0] || null);
+      statusDiv.textContent = `Removed ${rowName}.`;
+    } catch (err) {
+      statusDiv.textContent = `Party treasure remove failed: ${err instanceof Error ? err.message : String(err)}`;
     }
-    const nextRow = partyTreasureSelectedRow.nextElementSibling || partyTreasureSelectedRow.previousElementSibling;
-    partyTreasureSelectedRow.remove();
-    partyTreasureEditorDirty = true;
-    updatePartyTreasureActionButtons();
-    if (!isCompactPartyTreasureLayout() && !partyTreasureFields.querySelector('tr.inventory-entry')) {
-      partyTreasureFields.appendChild(createPartyTreasureRow({}));
-    }
-    setSelectedPartyTreasureRow(nextRow || partyTreasureFields.querySelector('tr.inventory-entry'));
   }
 
-  async function savePartyTreasureFromEditor() {
+  async function savePartyTreasureItems(items) {
     if (!currentCampaignId) return null;
-    let items;
-    try {
-      items = collectPartyTreasurePayloadFromEditor();
-    } catch (err) {
-      statusDiv.textContent = err instanceof Error ? err.message : String(err);
-      return null;
-    }
-    if (!items) {
-      items = [];
-    }
     const res = await fetch('/campaign/party-treasure', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -1306,7 +1280,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
       ? updatedCampaign.partyTreasure
       : items;
-    partyTreasureEditorDirty = false;
     updatePartyTreasureActionButtons();
     return updatedCampaign;
   }
@@ -1321,9 +1294,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       return;
     }
     try {
-      if (partyTreasureEditorDirty) {
-        await savePartyTreasureFromEditor();
-      }
       const claimantCharacter = myCharacters.find((entry) => entry.id === partyTreasureEditorCharacterId) || null;
       const claimValue = Number(partyTreasureSelectedRow.querySelector('input[data-inventory-field="value"]')?.value ?? '0');
       const claimantTotal = getCharacterCurrencyTotal(claimantCharacter);
@@ -1352,6 +1322,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
         ? updatedCampaign.partyTreasure
         : currentPartyTreasure;
+      buildPartyTreasureFields(currentPartyTreasure);
       closePartyTreasureEditor();
       await loadState();
       statusDiv.textContent = `Claimed ${itemName || 'item'}.`;
@@ -1369,7 +1340,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (currencyEditorDirty && !confirm('Discard money changes?')) return;
     closeCurrencyEditor();
     partyTreasureEditorCharacterId = character.id;
-    partyTreasureEditorDirty = false;
     if (partyTreasureDialogTitle) {
       partyTreasureDialogTitle.textContent = `Party Treasure - ${character.name || 'Character'}`;
     }
@@ -1380,25 +1350,15 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     await loadEquipmentLibrary();
     setPartyTreasureAddFormOpen(false);
     buildPartyTreasureFields(currentPartyTreasure);
-    partyTreasureEditorDirty = false;
     updatePartyTreasureActionButtons();
     setPartyTreasurePanelOpen(true);
     window.requestAnimationFrame(() => {
-      if (isCompactPartyTreasureLayout()) {
-        partyTreasureAddBtn?.focus();
-        return;
-      }
-      const firstInput = partyTreasureFields.querySelector('input');
-      if (firstInput) {
-        firstInput.focus();
-        firstInput.select();
-      }
+      partyTreasureAddBtn?.focus();
     });
   }
 
   function closePartyTreasureEditor() {
     partyTreasureEditorCharacterId = null;
-    partyTreasureEditorDirty = false;
     partyTreasureSelectedRow = null;
     if (partyTreasureDialogTitle) {
       partyTreasureDialogTitle.textContent = 'Party Treasure';
@@ -1411,7 +1371,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       partyTreasureFields.innerHTML = '';
     }
     setPartyTreasureAddFormOpen(false);
-    updatePartyTreasureActionButtons();
     setPartyTreasurePanelOpen(false);
   }
 
@@ -4175,7 +4134,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       currentCampaignName = campaign.name || '';
       currentRulesetId = campaign.rulesetId || '';
       currentPartyTreasure = Array.isArray(campaign.partyTreasure) ? campaign.partyTreasure : [];
-      if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden') && !partyTreasureEditorDirty) {
+      if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
         buildPartyTreasureFields(currentPartyTreasure);
       }
       updateCampaignHeader(
@@ -4596,6 +4555,11 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       addPartyTreasureItem();
     });
   }
+  if (partyTreasureEditBtn) {
+    partyTreasureEditBtn.addEventListener('click', () => {
+      editSelectedPartyTreasureItem();
+    });
+  }
 
   if (partyTreasureAddFormSaveBtn) {
     partyTreasureAddFormSaveBtn.addEventListener('click', () => {
@@ -4621,18 +4585,8 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
-  if (partyTreasureSaveBtn) {
-    partyTreasureSaveBtn.addEventListener('click', async () => {
-      const updatedCampaign = await savePartyTreasureFromEditor();
-      if (updatedCampaign) {
-        closePartyTreasureEditor();
-      }
-    });
-  }
-
   if (partyTreasureCancelBtn) {
     partyTreasureCancelBtn.addEventListener('click', () => {
-      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
       closePartyTreasureEditor();
     });
   }
@@ -4640,7 +4594,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   if (partyTreasurePanel) {
     partyTreasurePanel.addEventListener('click', (event) => {
       if (event.target !== partyTreasurePanel) return;
-      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
       closePartyTreasureEditor();
     });
   }
