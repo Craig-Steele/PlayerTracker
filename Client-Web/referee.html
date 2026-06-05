@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=28">
+  <link rel="stylesheet" href="style.css?v=29">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -24,7 +24,6 @@
         <div id="ref-encounter-state" class="player-campaign-meta">Encounter: New</div>
       </div>
       <div class="referee-card-actions">
-        <button type="button" id="ref-invite-player" class="icon-button referee-invite-player-button" aria-label="Add player" title="Add player">🙂</button>
         <button type="button" id="ref-campaign-settings" class="referee-settings-button" aria-label="Campaign settings" title="Campaign settings">⛭</button>
       </div>
     </div>
@@ -282,76 +281,91 @@
         </div>
       </div>
       <div id="ref-campaign-settings-modal-summary" class="subtitle"></div>
-      <div class="form-section-block property-group">
-        <label class="property-row">
-          <span class="property-label">Campaign Name</span>
-          <span class="property-control">
-            <input type="text" id="ref-campaign-name-input" required />
-          </span>
-        </label>
-        <label class="property-row">
-          <span class="property-label">Ruleset</span>
-          <span class="property-control">
-            <select id="ref-ruleset-select" required></select>
-          </span>
-        </label>
-        <div class="property-row ref-campaign-claim-mode-row">
-          <span class="property-label">Claim Timeout</span>
-          <div class="property-control ref-campaign-claim-mode">
-            <label class="radio-row">
-              <input type="radio" name="ref-campaign-claim-timeout-mode" id="ref-campaign-claim-timeout-manual" value="manual" />
-              <span>Explicit Release Only</span>
-            </label>
-            <label class="radio-row">
-              <input type="radio" name="ref-campaign-claim-timeout-mode" id="ref-campaign-claim-timeout-timed" value="timed" checked />
-              <span>Release after</span>
-              <input type="number" id="ref-campaign-claim-timeout-input" min="0" step="1" />
-              <span>minutes</span>
-            </label>
-          </div>
-        </div>
-        <div class="property-row ref-campaign-invite-only-row">
-          <span class="property-label">Access</span>
-          <span class="property-control">
-            <label class="property-toggle-control">
-              <input type="checkbox" id="ref-campaign-invite-only" />
-              <span>Invite only</span>
-            </label>
-          </span>
-        </div>
+      <div class="add-form-tabs campaign-settings-tabs" role="tablist" aria-label="Campaign settings sections">
+        <button type="button" id="ref-campaign-settings-tab-information" class="add-form-tab-button" role="tab" aria-selected="true" aria-controls="ref-campaign-settings-information-panel">Information</button>
+        <button type="button" id="ref-campaign-settings-tab-libraries" class="add-form-tab-button" role="tab" aria-selected="false" aria-controls="ref-campaign-settings-libraries-panel">Creature Libraries</button>
       </div>
-
-      <div class="form-section-block property-group">
-        <div class="form-section-title">Loaded Creature Libraries</div>
-        <div class="creature-library-header">
-          <div class="creature-library-header-row">
-            <div id="ref-campaign-library-summary" class="creature-library-summary"></div>
-            <button type="button" id="ref-campaign-library-import" class="secondary">Import JSON</button>
-          </div>
-          <div id="ref-campaign-library-import-status" class="creature-library-summary creature-library-import-status"></div>
-        </div>
-        <div class="creature-library-userdata">
-          <div class="creature-library-header-row creature-library-userdata-header">
-            <div id="ref-campaign-userdata-summary" class="creature-library-summary"></div>
-            <div class="creature-library-userdata-actions">
-              <button type="button" id="ref-campaign-userdata-refresh" class="secondary">Refresh</button>
-              <button type="button" id="ref-campaign-userdata-save" class="secondary">Save Selection</button>
+      <div id="ref-campaign-settings-information-panel" class="add-form-tabpanel campaign-settings-tabpanel" role="tabpanel" aria-labelledby="ref-campaign-settings-tab-information">
+        <div class="form-section-block property-group">
+          <label class="property-row">
+            <span class="property-label">Campaign Name</span>
+            <span class="property-control">
+              <input type="text" id="ref-campaign-name-input" required />
+            </span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Ruleset</span>
+            <span class="property-control campaign-settings-ruleset-control">
+              <select id="ref-ruleset-select" required disabled></select>
+              <span class="campaign-settings-lock-note">Locked after campaign creation</span>
+            </span>
+          </label>
+          <div class="property-row ref-campaign-claim-mode-row">
+            <span class="property-label">Claim Timeout</span>
+            <div class="property-control ref-campaign-claim-mode">
+              <label class="radio-row">
+                <input type="radio" name="ref-campaign-claim-timeout-mode" id="ref-campaign-claim-timeout-manual" value="manual" />
+                <span>Explicit Release Only</span>
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="ref-campaign-claim-timeout-mode" id="ref-campaign-claim-timeout-timed" value="timed" checked />
+                <span>Release after</span>
+                <input type="number" id="ref-campaign-claim-timeout-input" min="0" step="1" />
+                <span>minutes</span>
+              </label>
             </div>
           </div>
-          <div id="ref-campaign-userdata-status" class="creature-library-summary creature-library-import-status"></div>
-          <div id="ref-campaign-userdata-list" class="creature-library-userdata-list"></div>
+          <div class="property-row ref-campaign-invite-only-row">
+            <span class="property-label">Access</span>
+            <span class="property-control campaign-settings-access-control">
+              <label class="radio-row">
+                <input type="radio" name="ref-campaign-access" id="ref-campaign-invite-only" value="invite-only" />
+                <span>Invite Only</span>
+              </label>
+              <label class="radio-row">
+                <input type="radio" name="ref-campaign-access" id="ref-campaign-open-join" value="open-join" checked />
+                <span>Open Join</span>
+              </label>
+            </span>
+          </div>
+          <div class="campaign-settings-info-actions">
+            <button type="button" id="ref-invite-player" class="secondary">Invite Player</button>
+          </div>
         </div>
-        <input type="file" id="ref-campaign-library-import-input" class="hidden" accept=".json,application/json" multiple />
+      </div>
+      <div id="ref-campaign-settings-libraries-panel" class="add-form-tabpanel campaign-settings-tabpanel hidden" role="tabpanel" aria-labelledby="ref-campaign-settings-tab-libraries" aria-hidden="true">
+        <div class="form-section-block property-group">
+          <div class="form-section-title">Loaded Creature Libraries</div>
+          <div class="creature-library-header">
+            <div class="creature-library-header-row">
+              <div id="ref-campaign-library-summary" class="creature-library-summary"></div>
+              <button type="button" id="ref-campaign-library-import" class="secondary">Import JSON</button>
+            </div>
+            <div id="ref-campaign-library-import-status" class="creature-library-summary creature-library-import-status"></div>
+          </div>
+          <div class="creature-library-userdata">
+            <div class="creature-library-header-row creature-library-userdata-header">
+              <div id="ref-campaign-userdata-summary" class="creature-library-summary"></div>
+              <div class="creature-library-userdata-actions">
+                <button type="button" id="ref-campaign-userdata-refresh" class="secondary">Refresh</button>
+                <button type="button" id="ref-campaign-userdata-save" class="secondary">Save Selection</button>
+              </div>
+            </div>
+            <div id="ref-campaign-userdata-status" class="creature-library-summary creature-library-import-status"></div>
+            <div id="ref-campaign-userdata-list" class="creature-library-userdata-list"></div>
+          </div>
+          <input type="file" id="ref-campaign-library-import-input" class="hidden" accept=".json,application/json" multiple />
+        </div>
       </div>
       <div id="ref-campaign-settings-modal-status"></div>
     </div>
   </div>
 
-  <script src="shared.js?v=2"></script>
+  <script src="shared.js?v=3"></script>
   <script src="live-stream.js?v=3"></script>
   <script src="party-treasure.js?v=9"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=28"></script>
+  <script src="referee.js?v=29"></script>
 </body>
 </html>

@@ -1127,6 +1127,12 @@ body.referee-page .referee-panel {
   width: fit-content;
 }
 
+.campaign-settings-tabs {
+  width: 100%;
+  justify-content: flex-start;
+  margin-top: 0.35rem;
+}
+
 .add-form-tab-button {
   margin-top: 0;
   border-radius: 0.65rem;
@@ -1144,6 +1150,51 @@ body.referee-page .referee-panel {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.campaign-settings-tabpanel {
+  width: 100%;
+}
+
+.campaign-settings-ruleset-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.campaign-settings-lock-note {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.campaign-settings-access-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campaign-settings-access-control .radio-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.ref-campaign-invite-only-row .property-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campaign-settings-info-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.campaign-settings-info-actions button {
+  margin-top: 0;
 }
 
 .creature-library-header {
@@ -1563,6 +1614,28 @@ body.referee-page .referee-panel {
   border-radius: 12px;
   padding: 1rem;
   box-shadow: var(--shadow-modal);
+}
+
+.confirm-dialog {
+  width: min(32rem, 100%);
+}
+
+.confirm-dialog-header {
+  align-items: flex-start;
+}
+
+.confirm-dialog-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.confirm-dialog-message {
+  color: var(--text-body-soft);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
 }
 
 .inventory-dialog {
@@ -3074,11 +3147,6 @@ body.admin-page .admin-owner-card .admin-owner-group {
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-}
-
-.ref-campaign-invite-only-row .property-control {
-  display: flex;
-  align-items: center;
 }
 
 .campaign-list {

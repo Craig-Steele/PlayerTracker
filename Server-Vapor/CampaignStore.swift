@@ -146,10 +146,16 @@ actor CampaignStore {
         guard let database else {
             throw Abort(.internalServerError, reason: "Database is not configured.")
         }
+        guard let loaded = try await DatabasePersistence.loadCampaign(id: campaignID, on: database) else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        guard loaded.rulesetId == rulesetId else {
+            throw Abort(.conflict, reason: "Campaign ruleset cannot be changed after creation.")
+        }
         let updatedID = try await DatabasePersistence.updateCampaignMetadata(
             id: campaignID,
             name: name,
-            rulesetId: rulesetId,
+            rulesetId: loaded.rulesetId,
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: isInviteOnly,
             on: database
@@ -209,7 +215,6 @@ actor CampaignStore {
         claimTimeoutMinutes: Int? = nil,
         isInviteOnly: Bool? = nil
     ) async throws -> CampaignState {
-        currentName = name
         if restorePersistedState,
            let database,
            let loaded = try await DatabasePersistence.loadCampaign(named: name, on: database) {
@@ -235,6 +240,7 @@ actor CampaignStore {
         }
 
         let library = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
+        currentName = name
         currentRulesetId = library.id
         currentLibrary = library
         currentEncounterState = .new

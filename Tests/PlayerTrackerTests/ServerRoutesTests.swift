@@ -32,6 +32,51 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(rulesets.contains { $0.id == "none" })
     }
 
+    func testCampaignPatchRejectsRulesetChangesAfterCreation() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let adminCookie = try await signInOwner(in: tester)
+        let createResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Route Smoke", rulesetId: "dnd5e")
+            ))
+        )
+        XCTAssertEqual(createResponse.status, .ok)
+        let campaign = try createResponse.content.decode(CampaignSummary.self)
+        let selectResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaign.id.uuidString)/select",
+            headers: HTTPHeaders([("Cookie", "roll4_session=\(adminCookie)")])
+        )
+        XCTAssertEqual(selectResponse.status, .ok)
+
+        let campaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let activeCampaign = try campaignResponse.content.decode(CampaignState.self)
+
+        let updatePayload = CampaignUpdateInput(
+            name: "Route Smoke Revised",
+            rulesetId: "pathfinder",
+            claimTimeoutMinutes: activeCampaign.claimTimeoutMinutes,
+            isInviteOnly: activeCampaign.isInviteOnly
+        )
+        let updateResponse = try await tester.sendRequest(
+            .PATCH,
+            "/campaigns/\(activeCampaign.id.uuidString)",
+            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(updatePayload))
+        )
+        XCTAssertEqual(updateResponse.status, .conflict)
+
+        let refreshedCampaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(refreshedCampaignResponse.status, .ok)
+        let refreshedCampaign = try refreshedCampaignResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(refreshedCampaign.name, "Route Smoke")
+        XCTAssertEqual(refreshedCampaign.rulesetId, "dnd5e")
+    }
+
     func testCreatureLibraryRouteReturnsFilteredCreaturesForActiveRuleset() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")

@@ -11,7 +11,9 @@ const {
   isAdminHost,
   rollStandardDie,
   formatInitiative,
-  updateCampaignHeader
+  updateCampaignHeader,
+  appendOverflowMenuSeparator,
+  showConfirmDialog
 } = window.PlayerTrackerShared || {
   APP_NAME: 'Roll4Initiative',
   APP_ICON_URL: '/favicon-512.png',
@@ -19,7 +21,9 @@ const {
   isAdminHost: () => false,
   rollStandardDie: () => null,
   formatInitiative: () => 'X',
-  updateCampaignHeader: () => {}
+  updateCampaignHeader: () => {},
+  appendOverflowMenuSeparator: (menuEl) => menuEl,
+  showConfirmDialog: async () => true
 };
 const {
   normalizeConditionEntry,
@@ -719,28 +723,28 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     detailsPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
-  function openDetailsEditorForCharacter(character) {
+  async function openDetailsEditorForCharacter(character) {
     if (!character || !detailsPanel) return;
     if (conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open')) {
-      if (!confirmDiscardConditionChanges()) return;
+      if (!(await confirmDiscardConditionChanges())) return;
       setConditionsPanelOpen(false);
     }
     if (selectedCharacterId && selectedCharacterId !== character.id && formDirty) {
-      if (!confirmDiscardDetailsChanges()) return;
+      if (!(await confirmDiscardDetailsChanges())) return;
     }
     closeCharacterOverflowMenu();
     selectCharacter(character.id);
     setDetailsPanelOpen(true);
   }
 
-  function openConditionsEditorForCharacter(character) {
+  async function openConditionsEditorForCharacter(character) {
     if (!character || !conditionsPanel) return;
     if (detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
-      if (!confirmDiscardDetailsChanges()) return;
+      if (!(await confirmDiscardDetailsChanges())) return;
       setDetailsPanelOpen(false);
     }
     if (selectedCharacterId && selectedCharacterId !== character.id && conditionsDirty) {
-      if (!confirmDiscardConditionChanges()) return;
+      if (!(await confirmDiscardConditionChanges())) return;
     }
     closeCharacterOverflowMenu();
     selectCharacter(character.id);
@@ -780,18 +784,34 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     statusDiv.textContent = '';
   }
 
-  function confirmDiscardDetailsChanges() {
+  async function confirmDiscardDetailsChanges() {
     if (!formDirty) return true;
-    const confirmed = confirm('Discard unsaved detail changes?');
+    const confirmed = await showConfirmDialog({
+      title: 'Discard Changes?',
+      header: 'You have unsaved detail changes.',
+      message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+      confirmLabel: 'Discard Changes',
+      cancelLabel: 'Keep Editing',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
     if (confirmed) {
       revertSelectedCharacterDetails();
     }
     return confirmed;
   }
 
-  function confirmDiscardConditionChanges() {
+  async function confirmDiscardConditionChanges() {
     if (!conditionsDirty) return true;
-    const confirmed = confirm('Discard unsaved condition changes?');
+    const confirmed = await showConfirmDialog({
+      title: 'Discard Changes?',
+      header: 'You have unsaved condition changes.',
+      message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+      confirmLabel: 'Discard Changes',
+      cancelLabel: 'Return to Conditions',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
     if (confirmed) {
       revertSelectedConditions();
     }
@@ -2129,14 +2149,14 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   }
 
   if (detailsToggle && detailsPanel) {
-    detailsToggle.addEventListener('click', () => {
+    detailsToggle.addEventListener('click', async () => {
       const isOpen =
         detailsPanel.classList.contains('details-panel-open') &&
         !detailsPanel.classList.contains('hidden');
       if (isOpen) {
-        if (!confirmDiscardDetailsChanges()) return;
+        if (!(await confirmDiscardDetailsChanges())) return;
       } else if (conditionsToggle && conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open')) {
-        if (!confirmDiscardConditionChanges()) return;
+        if (!(await confirmDiscardConditionChanges())) return;
         setConditionsPanelOpen(false);
       }
       detailsPanel.classList.toggle('hidden', isOpen);
@@ -2149,14 +2169,14 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   }
 
   if (conditionsToggle && conditionsPanel) {
-    conditionsToggle.addEventListener('click', () => {
+    conditionsToggle.addEventListener('click', async () => {
       const isOpen =
         conditionsPanel.classList.contains('conditions-panel-open') &&
         !conditionsPanel.classList.contains('hidden');
       if (isOpen) {
-        if (!confirmDiscardConditionChanges()) return;
+        if (!(await confirmDiscardConditionChanges())) return;
       } else if (detailsToggle && detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
-        if (!confirmDiscardDetailsChanges()) return;
+        if (!(await confirmDiscardDetailsChanges())) return;
         detailsPanel.classList.remove('details-panel-open');
         detailsPanel.classList.add('details-panel-collapsed');
         detailsPanel.classList.add('hidden');
@@ -2169,9 +2189,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   }
 
   if (conditionsPanel) {
-    conditionsPanel.addEventListener('click', (event) => {
+    conditionsPanel.addEventListener('click', async (event) => {
       if (event.target !== conditionsPanel) return;
-      if (!confirmDiscardConditionChanges()) return;
+      if (!(await confirmDiscardConditionChanges())) return;
       setConditionsPanelOpen(false);
     });
   }
@@ -3149,18 +3169,13 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       return button;
     };
 
-    const addMenuSeparator = () => {
-      const separator = document.createElement('div');
-      separator.className = 'character-overflow-separator';
-      separator.setAttribute('role', 'separator');
-      separator.setAttribute('aria-hidden', 'true');
-      overflowMenu.appendChild(separator);
-      return separator;
-    };
-
-    addMenuItem('Details', () => openDetailsEditorForCharacter(character));
-    addMenuItem('Conditions', () => openConditionsEditorForCharacter(character));
-    addMenuSeparator();
+    addMenuItem('Details', () => {
+      void openDetailsEditorForCharacter(character);
+    });
+    addMenuItem('Conditions', () => {
+      void openConditionsEditorForCharacter(character);
+    });
+    appendOverflowMenuSeparator(overflowMenu);
     addMenuItem('Inventory', async () => {
       await openInventoryEditor(character);
     });
@@ -3170,7 +3185,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     addMenuItem('Party Treasure', async () => {
       openPartyTreasureEditor(character);
     });
-    addMenuSeparator();
+    appendOverflowMenuSeparator(overflowMenu);
     addMenuItem('Release Character', async () => {
       if (character.claimedSessionId !== currentPlayerSessionId) return;
       await releaseClaimForCharacter(character);
@@ -5168,8 +5183,8 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
   if (detailsCancelBtn) {
-    detailsCancelBtn.addEventListener('click', () => {
-      if (!confirmDiscardDetailsChanges()) return;
+    detailsCancelBtn.addEventListener('click', async () => {
+      if (!(await confirmDiscardDetailsChanges())) return;
       setDetailsPanelOpen(false);
     });
   }
@@ -5182,8 +5197,8 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
   if (conditionsCancelBtn) {
-    conditionsCancelBtn.addEventListener('click', () => {
-      if (!confirmDiscardConditionChanges()) return;
+    conditionsCancelBtn.addEventListener('click', async () => {
+      if (!(await confirmDiscardConditionChanges())) return;
       setConditionsPanelOpen(false);
     });
   }

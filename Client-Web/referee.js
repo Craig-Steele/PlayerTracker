@@ -1,17 +1,19 @@
 const {
   APP_NAME,
   APP_ICON_URL,
-  isAdminHost,
   rollStandardDie,
   formatInitiative,
-  updateCampaignHeader
+  updateCampaignHeader,
+  appendOverflowMenuSeparator,
+  showConfirmDialog
 } = window.PlayerTrackerShared || {
   APP_NAME: 'Roll4Initiative',
   APP_ICON_URL: '/favicon-512.png',
-  isAdminHost: () => false,
   rollStandardDie: () => null,
   formatInitiative: () => 'X',
-  updateCampaignHeader: () => {}
+  updateCampaignHeader: () => {},
+  appendOverflowMenuSeparator: (menuEl) => menuEl,
+  showConfirmDialog: async () => true
 };
 const {
   normalizeConditionEntry,
@@ -60,15 +62,19 @@ window.addEventListener('DOMContentLoaded', () => {
   const campaignSettingsModal = document.getElementById('ref-campaign-settings-modal');
   const campaignSettingsModalSummary = document.getElementById('ref-campaign-settings-modal-summary');
   const campaignSettingsModalStatus = document.getElementById('ref-campaign-settings-modal-status');
-  const campaignSettingsTitle = document.getElementById('ref-campaign-settings-dialog-title');
   const campaignSettingsCancelBtn = document.getElementById('ref-campaign-settings-cancel');
   const campaignSettingsSaveBtn = document.getElementById('ref-campaign-settings-save');
+  const campaignSettingsInfoTabBtn = document.getElementById('ref-campaign-settings-tab-information');
+  const campaignSettingsLibrariesTabBtn = document.getElementById('ref-campaign-settings-tab-libraries');
+  const campaignSettingsInfoPanel = document.getElementById('ref-campaign-settings-information-panel');
+  const campaignSettingsLibrariesPanel = document.getElementById('ref-campaign-settings-libraries-panel');
   const campaignNameInput = document.getElementById('ref-campaign-name-input');
   const campaignRulesetSelect = document.getElementById('ref-ruleset-select');
   const campaignClaimTimeoutManualInput = document.getElementById('ref-campaign-claim-timeout-manual');
   const campaignClaimTimeoutTimedInput = document.getElementById('ref-campaign-claim-timeout-timed');
   const campaignClaimTimeoutInput = document.getElementById('ref-campaign-claim-timeout-input');
   const campaignInviteOnlyInput = document.getElementById('ref-campaign-invite-only');
+  const campaignOpenJoinInput = document.getElementById('ref-campaign-open-join');
   const partyTreasureButton = document.getElementById('ref-party-treasure-button');
   const partyTreasurePanel = document.getElementById('ref-party-treasure-panel');
   const partyTreasureFields = document.getElementById('ref-party-treasure-fields');
@@ -132,7 +138,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const editorSelectedConditions = document.getElementById('ref-selected-conditions');
   const detailsToggle = document.getElementById('ref-details-toggle');
   const detailsPanel = document.getElementById('ref-details-panel');
-  const conditionsToggle = document.getElementById('ref-conditions-toggle');
   const conditionsPanel = document.getElementById('ref-conditions-panel');
   const detailsCancelBtn = document.getElementById('ref-details-cancel');
   const detailsSaveBtn = document.getElementById('ref-details-save');
@@ -193,12 +198,14 @@ window.addEventListener('DOMContentLoaded', () => {
   let conditionsPanelOpen = false;
   let expandedOrderStatsCharacterId = null;
   let initiativeEditorCharacterId = null;
+  let initiativeEditorOriginalValue = '';
   let currentTurnId = null;
   let encounterState = 'new';
   let skipRefresh = false;
   let activeCampaignId = null;
   let loadStateInFlight = false;
   let loadStateRefreshQueued = false;
+  let campaignSettingsTab = 'information';
   let allowNegativeHealth = false;
   let supportsTempHp = false;
   let currentStandardDie = null;
@@ -481,9 +488,6 @@ window.addEventListener('DOMContentLoaded', () => {
     { linkEl: refereeRulesetLicense, wrapEl: refereeRulesetLicenseWrap }
   ];
 
-  if (campaignSettingsBtn && !isAdminHost()) {
-    campaignSettingsBtn.style.display = 'none';
-  }
   if (invitePlayerBtn) {
     invitePlayerBtn.addEventListener('click', invitePlayer);
   }
@@ -505,6 +509,16 @@ window.addEventListener('DOMContentLoaded', () => {
   if (campaignSettingsSaveBtn) {
     campaignSettingsSaveBtn.addEventListener('click', () => {
       void saveCampaignSettings();
+    });
+  }
+  if (campaignSettingsInfoTabBtn) {
+    campaignSettingsInfoTabBtn.addEventListener('click', () => {
+      setCampaignSettingsTab('information');
+    });
+  }
+  if (campaignSettingsLibrariesTabBtn) {
+    campaignSettingsLibrariesTabBtn.addEventListener('click', () => {
+      setCampaignSettingsTab('libraries');
     });
   }
   if (campaignSettingsModal) {
@@ -536,6 +550,9 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (campaignInviteOnlyInput) {
     campaignInviteOnlyInput.addEventListener('change', () => validateCampaignSettingsModal());
+  }
+  if (campaignOpenJoinInput) {
+    campaignOpenJoinInput.addEventListener('change', () => validateCampaignSettingsModal());
   }
   if (partyTreasureAddBtn) {
     partyTreasureAddBtn.addEventListener('click', () => {
@@ -572,15 +589,37 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (partyTreasureCancelBtn) {
-    partyTreasureCancelBtn.addEventListener('click', () => {
-      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+    partyTreasureCancelBtn.addEventListener('click', async () => {
+      if (partyTreasureEditorDirty) {
+        const discard = await showConfirmDialog({
+          title: 'Discard Changes?',
+          header: 'You have unsaved party treasure changes.',
+          message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+          confirmLabel: 'Discard Changes',
+          cancelLabel: 'Keep Editing',
+          confirmButtonClass: 'danger',
+          initialFocus: 'cancel'
+        });
+        if (!discard) return;
+      }
       closePartyTreasureEditor();
     });
   }
   if (partyTreasurePanel) {
-    partyTreasurePanel.addEventListener('click', (event) => {
+    partyTreasurePanel.addEventListener('click', async (event) => {
       if (event.target !== partyTreasurePanel) return;
-      if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+      if (partyTreasureEditorDirty) {
+        const discard = await showConfirmDialog({
+          title: 'Discard Changes?',
+          header: 'You have unsaved party treasure changes.',
+          message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+          confirmLabel: 'Discard Changes',
+          cancelLabel: 'Keep Editing',
+          confirmButtonClass: 'danger',
+          initialFocus: 'cancel'
+        });
+        if (!discard) return;
+      }
       closePartyTreasureEditor();
     });
   }
@@ -656,6 +695,30 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!campaignSettingsModalStatus) return;
     campaignSettingsModalStatus.textContent = text;
     campaignSettingsModalStatus.style.color = isError ? '#b00020' : '';
+  }
+
+  /**
+   * Switch the campaign settings modal between Information and Creature Libraries.
+   * @param {'information'|'libraries'} tab Tab to show.
+   * @returns {void}
+   */
+  function setCampaignSettingsTab(tab) {
+    campaignSettingsTab = tab === 'libraries' ? 'libraries' : 'information';
+    const isInfoTab = campaignSettingsTab === 'information';
+    if (campaignSettingsInfoTabBtn) {
+      campaignSettingsInfoTabBtn.setAttribute('aria-selected', isInfoTab.toString());
+    }
+    if (campaignSettingsLibrariesTabBtn) {
+      campaignSettingsLibrariesTabBtn.setAttribute('aria-selected', (!isInfoTab).toString());
+    }
+    if (campaignSettingsInfoPanel) {
+      campaignSettingsInfoPanel.classList.toggle('hidden', !isInfoTab);
+      campaignSettingsInfoPanel.setAttribute('aria-hidden', (!isInfoTab).toString());
+    }
+    if (campaignSettingsLibrariesPanel) {
+      campaignSettingsLibrariesPanel.classList.toggle('hidden', isInfoTab);
+      campaignSettingsLibrariesPanel.setAttribute('aria-hidden', isInfoTab.toString());
+    }
   }
 
   /**
@@ -799,6 +862,7 @@ window.addEventListener('DOMContentLoaded', () => {
       campaignNameInput.value = currentCampaignName;
     }
     if (campaignRulesetSelect) {
+      campaignRulesetSelect.disabled = true;
       campaignRulesetSelect.value = currentRulesetId || campaignRulesetSelect.value || 'none';
     }
     if (campaignClaimTimeoutManualInput) {
@@ -816,6 +880,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (campaignInviteOnlyInput) {
       campaignInviteOnlyInput.checked = currentCampaignInviteOnly;
+    }
+    if (campaignOpenJoinInput) {
+      campaignOpenJoinInput.checked = !currentCampaignInviteOnly;
     }
     syncCampaignClaimTimeoutUi();
     setCampaignSettingsModalStatus('');
@@ -869,6 +936,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!campaignSettingsModal || !activeCampaignId) {
       return;
     }
+    setCampaignSettingsTab('information');
     populateCampaignSettingsForm();
     renderCampaignUserDataFiles();
     updateCampaignUserDataSummary();
@@ -920,7 +988,7 @@ window.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          rulesetId,
+          rulesetId: currentRulesetId,
           claimTimeoutMinutes,
           isInviteOnly: inviteOnly
         })
@@ -1474,14 +1542,6 @@ window.addEventListener('DOMContentLoaded', () => {
    */
   function setConditionsPanelOpen(open) {
     if (!conditionsPanel) return;
-    if (open && detailsDirty) {
-      const discard = confirm('Discard unsaved detail changes?');
-      if (!discard) return;
-      const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-      if (current) {
-        setSelectedCharacter(current);
-      }
-    }
     conditionsPanelOpen = open;
     if (open && detailsToggle && detailsPanel) {
       detailsPanel.classList.remove('details-panel-open');
@@ -1493,10 +1553,53 @@ window.addEventListener('DOMContentLoaded', () => {
     conditionsPanel.classList.toggle('hidden', !open);
     conditionsPanel.classList.toggle('conditions-panel-open', open);
     conditionsPanel.classList.toggle('conditions-panel-collapsed', !open);
-    if (conditionsToggle) {
-      conditionsToggle.setAttribute('aria-expanded', open.toString());
-    }
     conditionsPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  /**
+   * Confirm that unsaved condition edits should be discarded.
+   * @returns {boolean} True if the editor can close, false if the user cancelled.
+   */
+  async function confirmDiscardUnsavedConditions() {
+    if (!conditionsDirty) return true;
+    const discard = await showConfirmDialog({
+      title: 'Discard Changes?',
+      header: 'You have unsaved condition changes.',
+      message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+      confirmLabel: 'Discard Changes',
+      cancelLabel: 'Return to Conditions',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!discard) return false;
+    const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+    if (current) {
+      setSelectedCharacter(current);
+    }
+    return true;
+  }
+
+  /**
+   * Confirm that unsaved detail edits should be discarded.
+   * @returns {Promise<boolean>} True if the editor can close, false if the user cancelled.
+   */
+  async function confirmDiscardUnsavedDetails() {
+    if (!detailsDirty) return true;
+    const discard = await showConfirmDialog({
+      title: 'Discard Changes?',
+      header: 'You have unsaved detail changes.',
+      message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+      confirmLabel: 'Discard Changes',
+      cancelLabel: 'Keep Editing',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!discard) return false;
+    const current = currentPlayers.find((player) => player.id === selectedCharacterId);
+    if (current) {
+      setSelectedCharacter(current);
+    }
+    return true;
   }
 
   /**
@@ -1506,15 +1609,7 @@ window.addEventListener('DOMContentLoaded', () => {
    */
   function setDetailsPanelOpen(open) {
     if (!detailsToggle || !detailsPanel) return;
-    if (open && conditionsDirty) {
-      const discard = confirm('Discard unsaved condition changes?');
-      if (!discard) return;
-      const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-      if (current) {
-        setSelectedCharacter(current);
-      }
-    }
-    if (open && conditionsToggle && conditionsPanel) {
+    if (open && conditionsPanel) {
       setConditionsPanelOpen(false);
     }
     detailsPanel.classList.toggle('hidden', !open);
@@ -2567,12 +2662,21 @@ window.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Remove the currently selected party treasure row.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  function removeSelectedPartyTreasureItem() {
+  async function removeSelectedPartyTreasureItem() {
     if (!partyTreasureSelectedRow) return;
     const rowName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
-    if (!confirm(`Remove ${rowName} from party treasure?`)) {
+    const confirmed = await showConfirmDialog({
+      title: 'Remove Item?',
+      header: rowName,
+      message: 'Remove this item from party treasure?',
+      confirmLabel: 'Remove Item',
+      cancelLabel: 'Keep Item',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!confirmed) {
       return;
     }
     const nextRow = partyTreasureSelectedRow.nextElementSibling || partyTreasureSelectedRow.previousElementSibling;
@@ -2669,7 +2773,18 @@ window.addEventListener('DOMContentLoaded', () => {
    */
   async function openPartyTreasureEditor() {
     if (!partyTreasureFields) return;
-    if (partyTreasureEditorDirty && !confirm('Discard party treasure changes?')) return;
+    if (partyTreasureEditorDirty) {
+      const discard = await showConfirmDialog({
+        title: 'Discard Changes?',
+        header: 'You have unsaved party treasure changes.',
+        message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+        confirmLabel: 'Discard Changes',
+        cancelLabel: 'Keep Editing',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      });
+      if (!discard) return;
+    }
     partyTreasureEditorDirty = false;
     if (partyTreasureDialogTitle) {
       partyTreasureDialogTitle.textContent = 'Party Treasure';
@@ -3099,8 +3214,11 @@ window.addEventListener('DOMContentLoaded', () => {
       handled = true;
     }
     if (hasOpenInitiative) {
-      closeInitiativeEditor();
       handled = true;
+      void (async () => {
+        if (!(await confirmDiscardInitiativeChanges())) return;
+        closeInitiativeEditor();
+      })();
     }
     if (handled) {
       event.preventDefault();
@@ -3126,6 +3244,7 @@ window.addEventListener('DOMContentLoaded', () => {
    */
   function closeInitiativeEditor() {
     initiativeEditorCharacterId = null;
+    initiativeEditorOriginalValue = '';
     if (initiativeModal) {
       initiativeModal.classList.add('hidden');
       initiativeModal.setAttribute('aria-hidden', 'true');
@@ -3149,7 +3268,8 @@ window.addEventListener('DOMContentLoaded', () => {
     if (initiativeModalCharacter) {
       initiativeModalCharacter.textContent = player.name || 'Character';
     }
-    initiativeModalInput.value = Number.isFinite(player.initiative) ? String(player.initiative) : '';
+    initiativeEditorOriginalValue = Number.isFinite(player.initiative) ? String(player.initiative) : '';
+    initiativeModalInput.value = initiativeEditorOriginalValue;
     initiativeModal.classList.toggle('popup-centered', isNarrowPopupViewport());
     initiativeModal.classList.remove('hidden');
     initiativeModal.setAttribute('aria-hidden', 'false');
@@ -3183,6 +3303,26 @@ window.addEventListener('DOMContentLoaded', () => {
     player.initiative = initiative;
     await saveCharacterEntry(player);
     closeInitiativeEditor();
+  }
+
+  /**
+   * Confirm that unsaved initiative edits should be discarded.
+   * @returns {Promise<boolean>} True if the editor can close, false if the user cancelled.
+   */
+  async function confirmDiscardInitiativeChanges() {
+    if (!initiativeModalInput) return true;
+    const currentValue = initiativeModalInput.value.trim();
+    if (currentValue === initiativeEditorOriginalValue) return true;
+    const discard = await showConfirmDialog({
+      title: 'Discard Changes?',
+      header: 'You have unsaved initiative changes.',
+      message: 'Choose Discard Changes to lose them, or Resume Editing to keep working.',
+      confirmLabel: 'Discard Changes',
+      cancelLabel: 'Resume Editing',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    return Boolean(discard);
   }
 
   /**
@@ -3352,19 +3492,38 @@ window.addEventListener('DOMContentLoaded', () => {
       return button;
     };
 
-    addMenuItem('Details', () => {
-      setSelectedCharacter(player);
-      setDetailsPanelOpen(true);
-    });
     addMenuItem('Act Now', () => {
       setTurnNow(player.id);
     }, {
       disabled: encounterState !== 'active'
     });
-    addMenuItem('Conditions', () => {
+    appendOverflowMenuSeparator(overflowMenu);
+    addMenuItem('Details', async () => {
+      if (detailsDirty) {
+        const discard = await confirmDiscardUnsavedDetails();
+        if (!discard) return;
+      }
+      if (conditionsDirty) {
+        const discard = await confirmDiscardUnsavedConditions();
+        if (!discard) return;
+        setConditionsPanelOpen(false);
+      }
+      setSelectedCharacter(player);
+      setDetailsPanelOpen(true);
+    });
+    addMenuItem('Conditions', async () => {
+      if (detailsDirty) {
+        const discard = await confirmDiscardUnsavedDetails();
+        if (!discard) return;
+      }
+      if (conditionsDirty && selectedCharacterId === player.id) {
+        const discard = await confirmDiscardUnsavedConditions();
+        if (!discard) return;
+      }
       setSelectedCharacter(player);
       setConditionsPanelOpen(true);
     });
+    appendOverflowMenuSeparator(overflowMenu);
     addMenuItem('Reveal Now', () => updateVisibility(player.id, false, false), {
       hidden: !player.isReferee || !player.isHidden
     });
@@ -3377,6 +3536,7 @@ window.addEventListener('DOMContentLoaded', () => {
     addMenuItem('Open Reference', () => openCharacterReference(player), {
       hidden: !player.referenceUrl
     });
+    appendOverflowMenuSeparator(overflowMenu);
     addMenuItem('Claim Character', async () => {
       await claimCharacter(player);
     }, {
@@ -3391,8 +3551,16 @@ window.addEventListener('DOMContentLoaded', () => {
     }, {
       hidden: !Boolean(player.claimedSessionId) && !player.isReferee
     });
-    addMenuItem('Delete Character', async () => {
-      const confirmed = confirm(`Remove ${player.name || 'this character'} from the tracker?`);
+    addMenuItem('Remove Character', async () => {
+      const confirmed = await showConfirmDialog({
+        title: 'Remove Character?',
+        header: player.name || 'This character',
+        message: 'Remove this character from the tracker?',
+        confirmLabel: 'Remove Character',
+        cancelLabel: 'Keep Character',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      });
       if (!confirmed) return;
       await deleteCharacter(player.id);
     }, {
@@ -4411,21 +4579,19 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (detailsToggle && detailsPanel) {
-    detailsToggle.addEventListener('click', () => {
+    detailsToggle.addEventListener('click', async () => {
       const isOpen = detailsPanel.classList.contains('details-panel-open');
+      if (!isOpen && conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open') && conditionsDirty) {
+        const discard = await confirmDiscardUnsavedConditions();
+        if (!discard) return;
+        setConditionsPanelOpen(false);
+      }
       setDetailsPanelOpen(!isOpen);
     });
   }
   if (detailsCancelBtn) {
-    detailsCancelBtn.addEventListener('click', () => {
-      if (detailsDirty) {
-        const discard = confirm('Discard unsaved detail changes?');
-        if (!discard) return;
-        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-        if (current) {
-          setSelectedCharacter(current);
-        }
-      }
+    detailsCancelBtn.addEventListener('click', async () => {
+      if (!(await confirmDiscardUnsavedDetails())) return;
       setDetailsPanelOpen(false);
     });
   }
@@ -4438,35 +4604,15 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (detailsPanel) {
-    detailsPanel.addEventListener('click', (event) => {
+    detailsPanel.addEventListener('click', async (event) => {
       if (event.target !== detailsPanel) return;
-      if (detailsDirty) {
-        const discard = confirm('Discard unsaved detail changes?');
-        if (!discard) return;
-        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-        if (current) {
-          setSelectedCharacter(current);
-        }
-      }
+      if (!(await confirmDiscardUnsavedDetails())) return;
       setDetailsPanelOpen(false);
     });
   }
-  if (conditionsToggle && conditionsPanel) {
-    conditionsToggle.addEventListener('click', () => {
-      const isOpen = conditionsPanel.classList.contains('conditions-panel-open');
-      setConditionsPanelOpen(!isOpen);
-    });
-  }
   if (conditionsCancelBtn) {
-    conditionsCancelBtn.addEventListener('click', () => {
-      if (conditionsDirty) {
-        const discard = confirm('Discard unsaved condition changes?');
-        if (!discard) return;
-        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-        if (current) {
-          setSelectedCharacter(current);
-        }
-      }
+    conditionsCancelBtn.addEventListener('click', async () => {
+      if (!(await confirmDiscardUnsavedConditions())) return;
       setConditionsPanelOpen(false);
     });
   }
@@ -4479,27 +4625,23 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (conditionsPanel) {
-    conditionsPanel.addEventListener('click', (event) => {
+    conditionsPanel.addEventListener('click', async (event) => {
       if (event.target !== conditionsPanel) return;
-      if (conditionsDirty) {
-        const discard = confirm('Discard unsaved condition changes?');
-        if (!discard) return;
-        const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-        if (current) {
-          setSelectedCharacter(current);
-        }
-      }
+      event.stopPropagation();
+      if (!(await confirmDiscardUnsavedConditions())) return;
       setConditionsPanelOpen(false);
     });
   }
   if (initiativeModal) {
-    initiativeModal.addEventListener('click', (event) => {
+    initiativeModal.addEventListener('click', async (event) => {
       if (event.target !== initiativeModal) return;
+      if (!(await confirmDiscardInitiativeChanges())) return;
       closeInitiativeEditor();
     });
   }
   if (initiativeModalCancelBtn) {
-    initiativeModalCancelBtn.addEventListener('click', () => {
+    initiativeModalCancelBtn.addEventListener('click', async () => {
+      if (!(await confirmDiscardInitiativeChanges())) return;
       closeInitiativeEditor();
     });
   }
@@ -4534,12 +4676,20 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   if (deleteCharacterBtn) {
-    deleteCharacterBtn.addEventListener('click', () => {
+    deleteCharacterBtn.addEventListener('click', async () => {
       closeOverflowMenu();
       if (!selectedCharacterId) return;
       const current = currentPlayers.find((player) => player.id === selectedCharacterId);
       if (!current) return;
-      const confirmDelete = confirm(`Remove ${current.name} from the tracker?`);
+      const confirmDelete = await showConfirmDialog({
+        title: 'Delete Character?',
+        header: current.name || 'This character',
+        message: 'Remove this character from the tracker?',
+        confirmLabel: 'Delete Character',
+        cancelLabel: 'Keep Character',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      });
       if (!confirmDelete) return;
       deleteCharacter(current.id);
     });

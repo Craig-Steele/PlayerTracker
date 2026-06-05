@@ -2,6 +2,9 @@
   const APP_NAME = 'Roll4Initiative';
   const APP_ICON_URL = '/favicon-512.png';
   const QR_CODE_SIZE = 96;
+  let confirmDialogState = null;
+  let confirmDialogResolve = null;
+  let confirmDialogLastFocus = null;
 
   function toArray(targets) {
     if (!targets) return [];
@@ -87,6 +90,146 @@
     return { hasCampaignName, displayName };
   }
 
+  function appendOverflowMenuSeparator(menuEl) {
+    if (!menuEl) return null;
+    const separator = document.createElement('div');
+    separator.className = 'character-overflow-separator';
+    separator.setAttribute('role', 'separator');
+    separator.setAttribute('aria-hidden', 'true');
+    menuEl.appendChild(separator);
+    return separator;
+  }
+
+  function closeConfirmDialog(result) {
+    if (!confirmDialogState) return;
+    const resolve = confirmDialogResolve;
+    confirmDialogResolve = null;
+    confirmDialogState.modal.classList.add('hidden');
+    confirmDialogState.modal.setAttribute('aria-hidden', 'true');
+    if (resolve) {
+      resolve(result);
+    }
+    if (confirmDialogLastFocus && typeof confirmDialogLastFocus.focus === 'function') {
+      try {
+        confirmDialogLastFocus.focus();
+      } catch (err) {
+        // Ignore focus restoration failures.
+      }
+    }
+    confirmDialogLastFocus = null;
+  }
+
+  function ensureConfirmDialog() {
+    if (confirmDialogState) return confirmDialogState;
+    if (!document.body) return null;
+    const modal = document.createElement('div');
+    modal.id = 'shared-confirm-modal';
+    modal.className = 'conditions-modal hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+      <div class="conditions-dialog confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="shared-confirm-title" aria-describedby="shared-confirm-message">
+        <div class="conditions-dialog-header confirm-dialog-header">
+          <div class="confirm-dialog-copy">
+            <h2 id="shared-confirm-title"></h2>
+            <div id="shared-confirm-header" class="subtitle confirm-dialog-header-text hidden"></div>
+          </div>
+          <div class="conditions-dialog-actions">
+            <button type="button" id="shared-confirm-cancel" class="secondary">Cancel</button>
+            <button type="button" id="shared-confirm-confirm">OK</button>
+          </div>
+        </div>
+        <div id="shared-confirm-message" class="confirm-dialog-message hidden"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const dialog = modal.querySelector('.conditions-dialog');
+    const title = modal.querySelector('#shared-confirm-title');
+    const header = modal.querySelector('#shared-confirm-header');
+    const message = modal.querySelector('#shared-confirm-message');
+    const cancelButton = modal.querySelector('#shared-confirm-cancel');
+    const confirmButton = modal.querySelector('#shared-confirm-confirm');
+
+    const state = {
+      modal,
+      dialog,
+      title,
+      header,
+      message,
+      cancelButton,
+      confirmButton
+    };
+
+    modal.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (event.target === modal) {
+        closeConfirmDialog(false);
+      }
+    });
+    dialog.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeConfirmDialog(false);
+      }
+    });
+    cancelButton.addEventListener('click', () => {
+      closeConfirmDialog(false);
+    });
+    confirmButton.addEventListener('click', () => {
+      closeConfirmDialog(true);
+    });
+
+    confirmDialogState = state;
+    return state;
+  }
+
+  function showConfirmDialog(options = {}) {
+    const state = ensureConfirmDialog();
+    const {
+      title = 'Confirm',
+      header = '',
+      message = '',
+      confirmLabel = 'OK',
+      cancelLabel = 'Cancel',
+      confirmButtonClass = '',
+      initialFocus = 'cancel'
+    } = options;
+
+    if (!state) {
+      const fallbackText = message || header || title;
+      return Promise.resolve(window.confirm(fallbackText));
+    }
+
+    if (confirmDialogResolve) {
+      closeConfirmDialog(false);
+    }
+
+    state.title.textContent = title;
+    state.header.textContent = header;
+    state.header.classList.toggle('hidden', !header);
+    state.message.textContent = message;
+    state.message.classList.toggle('hidden', !message);
+    state.confirmButton.textContent = confirmLabel;
+    state.cancelButton.textContent = cancelLabel;
+    state.confirmButton.classList.toggle('danger', confirmButtonClass === 'danger');
+    state.modal.classList.remove('hidden');
+    state.modal.setAttribute('aria-hidden', 'false');
+
+    return new Promise((resolve) => {
+      confirmDialogResolve = resolve;
+      confirmDialogLastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      window.requestAnimationFrame(() => {
+        const focusTarget = initialFocus === 'confirm' ? state.confirmButton : state.cancelButton;
+        if (focusTarget) {
+          focusTarget.focus();
+        }
+      });
+    });
+  }
+
   window.PlayerTrackerShared = {
     APP_NAME,
     APP_ICON_URL,
@@ -95,6 +238,8 @@
     parseStandardDie,
     rollStandardDie,
     formatInitiative,
-    updateCampaignHeader
+    updateCampaignHeader,
+    appendOverflowMenuSeparator,
+    showConfirmDialog
   };
 })();
