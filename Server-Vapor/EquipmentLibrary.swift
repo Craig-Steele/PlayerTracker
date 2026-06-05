@@ -25,8 +25,13 @@ actor EquipmentLibraryStore {
             }
             return matchesQuery(normalizedQuery, item: item)
         }
-        let safeLimit = max(1, min(limit, 500))
-        let items = Array(filtered.prefix(safeLimit))
+        let items: [EquipmentLibraryItem]
+        if limit <= 0 {
+            items = filtered
+        } else {
+            let safeLimit = max(1, min(limit, 100))
+            items = Array(filtered.prefix(safeLimit))
+        }
         return EquipmentLibraryResponse(
             rulesetId: rulesetId,
             rulesetLabel: rulesetLabel,

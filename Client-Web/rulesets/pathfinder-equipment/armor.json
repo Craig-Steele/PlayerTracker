@@ -1,0 +1,608 @@
+{
+  "id": "pathfinder-equipment-armor",
+  "label": "Pathfinder Equipment - Armor",
+  "source": "https://www.d20pfsrd.com/equipment/",
+  "generatedAt": "2026-06-05T18:42:21Z",
+  "items": [
+    {
+      "id": "armor-spikes",
+      "name": "Armor spikes",
+      "value": 50,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/armor-spikes/",
+      "category": "Armor"
+    },
+    {
+      "id": "armored-coat",
+      "name": "Armored coat",
+      "value": 50,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/armor/armored-coat/",
+      "category": "Armor"
+    },
+    {
+      "id": "armored-kilt",
+      "name": "Armored kilt *",
+      "value": 20,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/armored-kilt/",
+      "category": "Armor"
+    },
+    {
+      "id": "banded-mail",
+      "name": "Banded mail",
+      "value": 250,
+      "weight": 35,
+      "url": "https://www.d20pfsrd.com/equipment/armor/banded-mail/",
+      "category": "Armor"
+    },
+    {
+      "id": "breakaway-boss",
+      "name": "Breakaway boss",
+      "value": 120,
+      "weight": 10,
+      "url": null,
+      "category": "Armor"
+    },
+    {
+      "id": "breastplate",
+      "name": "Breastplate",
+      "value": 200,
+      "weight": 30,
+      "url": "https://www.d20pfsrd.com/equipment/armor/breastplate/",
+      "category": "Armor"
+    },
+    {
+      "id": "breastplate-agile",
+      "name": "Breastplate (agile)",
+      "value": 400,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/armor/agile-breastplate/",
+      "category": "Armor"
+    },
+    {
+      "id": "buckler",
+      "name": "Buckler",
+      "value": 5,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/armor/buckler/",
+      "category": "Armor"
+    },
+    {
+      "id": "chain-coat",
+      "name": "Chain coat",
+      "value": 75,
+      "weight": 40,
+      "url": "https://www.d20pfsrd.com/equipment/armor/coat-chain/",
+      "category": "Armor"
+    },
+    {
+      "id": "chain-shirt",
+      "name": "Chain shirt",
+      "value": 100,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/armor/chain-shirt/",
+      "category": "Armor"
+    },
+    {
+      "id": "chainmail",
+      "name": "Chainmail",
+      "value": 150,
+      "weight": 40,
+      "url": "https://www.d20pfsrd.com/equipment/armor/chainmail/",
+      "category": "Armor"
+    },
+    {
+      "id": "dancing-scarves",
+      "name": "Dancing scarves",
+      "value": 150,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/armor/dancing-scarves/",
+      "category": "Armor"
+    },
+    {
+      "id": "do-maru",
+      "name": "Do-maru",
+      "value": 200,
+      "weight": 30,
+      "url": "https://www.d20pfsrd.com/equipment/armor/do-maru/",
+      "category": "Armor"
+    },
+    {
+      "id": "field-plate",
+      "name": "Field plate",
+      "value": 1200,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/armor/field-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "fortress-plate",
+      "name": "Fortress plate",
+      "value": 2100,
+      "weight": 75,
+      "url": "https://www.d20pfsrd.com/equipment/armor/fortress-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "four-mirror",
+      "name": "Four mirror",
+      "value": 125,
+      "weight": 45,
+      "url": "https://www.d20pfsrd.com/equipment/armor/four-mirror-armor/",
+      "category": "Armor"
+    },
+    {
+      "id": "full-plate",
+      "name": "Full plate",
+      "value": 1500,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/armor/full-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "gauntlet-locked",
+      "name": "Gauntlet, locked",
+      "value": 8,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/armor/gauntlet-locked/",
+      "category": "Armor"
+    },
+    {
+      "id": "gray-maiden-plate",
+      "name": "Gray Maiden plate",
+      "value": 1500,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/armor/gray-maiden-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "half-plate",
+      "name": "Half-plate",
+      "value": 600,
+      "weight": 50,
+      "url": null,
+      "category": "Armor"
+    },
+    {
+      "id": "half-plate-agile",
+      "name": "Half-plate (agile)",
+      "value": 850,
+      "weight": 55,
+      "url": "https://www.d20pfsrd.com/equipment/armor/agile-half-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "haramaki",
+      "name": "Haramaki",
+      "value": 3,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/armor/haramaki/",
+      "category": "Armor"
+    },
+    {
+      "id": "hell-knight-half-plate",
+      "name": "Hell Knight half-plate",
+      "value": 850,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/armor/hellknight-half-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "hell-knight-leather",
+      "name": "Hell Knight leather",
+      "value": 30,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/armor/hellknight-leather/",
+      "category": "Armor"
+    },
+    {
+      "id": "hell-knight-plate",
+      "name": "Hell Knight plate",
+      "value": 2000,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/armor/hellknight-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "hide",
+      "name": "Hide",
+      "value": 15,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/armor/hide/",
+      "category": "Armor"
+    },
+    {
+      "id": "hide-shirt",
+      "name": "Hide shirt",
+      "value": 20,
+      "weight": 18,
+      "url": "https://www.d20pfsrd.com/equipment/armor/hide-shirt/",
+      "category": "Armor"
+    },
+    {
+      "id": "hooked-boss",
+      "name": "Hooked boss",
+      "value": 80,
+      "weight": 10,
+      "url": null,
+      "category": "Armor"
+    },
+    {
+      "id": "ice-coat",
+      "name": "Ice coat",
+      "value": 80,
+      "weight": 24,
+      "url": "https://www.d20pfsrd.com/equipment/armor/coat-ice/",
+      "category": "Armor"
+    },
+    {
+      "id": "illuminating-boss",
+      "name": "Illuminating boss",
+      "value": 35,
+      "weight": 10,
+      "url": null,
+      "category": "Armor"
+    },
+    {
+      "id": "kikko",
+      "name": "Kikko",
+      "value": 250,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/armor/kikko-armor/",
+      "category": "Armor"
+    },
+    {
+      "id": "kusari-gusoku",
+      "name": "Kusari gusoku",
+      "value": 350,
+      "weight": 45,
+      "url": "https://www.d20pfsrd.com/equipment/armor/kusari-gusoku/",
+      "category": "Armor"
+    },
+    {
+      "id": "lamellar-horn",
+      "name": "Lamellar (horn)",
+      "value": 100,
+      "weight": 30,
+      "url": "https://www.d20pfsrd.com/equipment/armor/lamellar-horn/",
+      "category": "Armor"
+    },
+    {
+      "id": "lamellar-iron",
+      "name": "Lamellar (iron)",
+      "value": 200,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/armor/lamellar-iron/",
+      "category": "Armor"
+    },
+    {
+      "id": "lamellar-leather",
+      "name": "Lamellar (leather)",
+      "value": 60,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/armor/lamellar-leather/",
+      "category": "Armor"
+    },
+    {
+      "id": "lamellar-steel",
+      "name": "Lamellar (steel)",
+      "value": 150,
+      "weight": 35,
+      "url": "https://www.d20pfsrd.com/equipment/armor/lamellar-steel/",
+      "category": "Armor"
+    },
+    {
+      "id": "lamellar-stone-coat",
+      "name": "Lamellar (stone coat)",
+      "value": 500,
+      "weight": 45,
+      "url": "https://www.d20pfsrd.com/equipment/armor/lamellar-stone-coat/",
+      "category": "Armor"
+    },
+    {
+      "id": "lamellar-cuirass",
+      "name": "Lamellar cuirass",
+      "value": 15,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/armor/lamellar-cuirass/",
+      "category": "Armor"
+    },
+    {
+      "id": "leaf-armor",
+      "name": "Leaf armor",
+      "value": 500,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/armor/leaf-armor/",
+      "category": "Armor"
+    },
+    {
+      "id": "leather",
+      "name": "Leather",
+      "value": 10,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/armor/leather/",
+      "category": "Armor"
+    },
+    {
+      "id": "madu-leather",
+      "name": "Madu, leather",
+      "value": 30,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/armor/madu/",
+      "category": "Armor"
+    },
+    {
+      "id": "madu-steel",
+      "name": "Madu, steel",
+      "value": 40,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/armor/madu/",
+      "category": "Armor"
+    },
+    {
+      "id": "mountain-pattern",
+      "name": "Mountain pattern",
+      "value": 250,
+      "weight": 40,
+      "url": "https://www.d20pfsrd.com/equipment/armor/mountain-pattern-armor/",
+      "category": "Armor"
+    },
+    {
+      "id": "o-yoroi",
+      "name": "O-yoroi",
+      "value": 1700,
+      "weight": 45,
+      "url": "https://www.d20pfsrd.com/equipment/armor/o-yoroi/",
+      "category": "Armor"
+    },
+    {
+      "id": "padded",
+      "name": "Padded",
+      "value": 5,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/padded/",
+      "category": "Armor"
+    },
+    {
+      "id": "parade-armor",
+      "name": "Parade armor",
+      "value": 25,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/armor/parade-armor/",
+      "category": "Armor"
+    },
+    {
+      "id": "quilted-cloth",
+      "name": "Quilted cloth",
+      "value": 100,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/armor/quilted-cloth/",
+      "category": "Armor"
+    },
+    {
+      "id": "reinforced-tunic",
+      "name": "Reinforced tunic",
+      "value": 1,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/armor/tunic-reinforced/",
+      "category": "Armor"
+    },
+    {
+      "id": "reinforcing-boss",
+      "name": "Reinforcing boss",
+      "value": 30,
+      "weight": 10,
+      "url": null,
+      "category": "Armor"
+    },
+    {
+      "id": "rosewood-armor",
+      "name": "Rosewood armor",
+      "value": 50,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/armor/rosewood-armor/",
+      "category": "Armor"
+    },
+    {
+      "id": "scale-mail",
+      "name": "Scale mail",
+      "value": 50,
+      "weight": 30,
+      "url": "https://www.d20pfsrd.com/equipment/armor/scale-mail/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-boss-breakaway",
+      "name": "Shield boss, breakaway",
+      "value": 120,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-boss/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-boss-hooked",
+      "name": "Shield boss, hooked",
+      "value": 80,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-boss/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-boss-illuminating",
+      "name": "Shield boss, illuminating",
+      "value": 35,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-boss/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-boss-masterwork",
+      "name": "Shield boss, masterwork",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-boss/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-boss-reinforcing",
+      "name": "Shield boss, reinforcing",
+      "value": 30,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-boss/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-spikes",
+      "name": "Shield spikes",
+      "value": 10,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-spikes/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-heavy-steel",
+      "name": "Shield, heavy steel",
+      "value": 20,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-heavy-wooden-or-steel/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-heavy-wooden",
+      "name": "Shield, heavy wooden",
+      "value": 7,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-heavy-wooden-or-steel/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-light-steel",
+      "name": "Shield, light steel",
+      "value": 9,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-light-wooden-or-steel/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-light-steel-quickdraw",
+      "name": "Shield, light steel (quickdraw)",
+      "value": 59,
+      "weight": 7,
+      "url": "https://www.d20pfsrd.com/equipment/armor/quickdraw-shield/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-light-wooden",
+      "name": "Shield, light wooden",
+      "value": 3,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-light-wooden-or-steel/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-light-wooden-quickdraw",
+      "name": "Shield, light wooden (quickdraw)",
+      "value": 53,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/armor/quickdraw-shield/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-throwing",
+      "name": "Shield, throwing",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-throwing/",
+      "category": "Armor"
+    },
+    {
+      "id": "shield-tower",
+      "name": "Shield, tower",
+      "value": 30,
+      "weight": 45,
+      "url": "https://www.d20pfsrd.com/equipment/armor/shield-tower/",
+      "category": "Armor"
+    },
+    {
+      "id": "silken-ceremonial-armor",
+      "name": "Silken ceremonial armor",
+      "value": 30,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/armor/silken-ceremonial-armor/",
+      "category": "Armor"
+    },
+    {
+      "id": "snarlshield-steel",
+      "name": "Snarlshield, steel",
+      "value": 50,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/armor/snarlshield/",
+      "category": "Armor"
+    },
+    {
+      "id": "snarlshield-wooden",
+      "name": "Snarlshield, wooden",
+      "value": 37,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/armor/snarlshield/",
+      "category": "Armor"
+    },
+    {
+      "id": "spider-silk-bodysuit",
+      "name": "Spider-silk bodysuit",
+      "value": 850,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/armor/spider-silk-bodysuit/",
+      "category": "Armor"
+    },
+    {
+      "id": "splint-mail",
+      "name": "Splint mail",
+      "value": 200,
+      "weight": 45,
+      "url": "https://www.d20pfsrd.com/equipment/armor/splint-mail/",
+      "category": "Armor"
+    },
+    {
+      "id": "stoneplate",
+      "name": "Stoneplate",
+      "value": 1800,
+      "weight": 75,
+      "url": "https://www.d20pfsrd.com/equipment/armor/stone-plate/",
+      "category": "Armor"
+    },
+    {
+      "id": "studded-leather",
+      "name": "Studded leather",
+      "value": 25,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/armor/studded-leather/",
+      "category": "Armor"
+    },
+    {
+      "id": "tatami-do",
+      "name": "Tatami-do",
+      "value": 1000,
+      "weight": 45,
+      "url": "https://www.d20pfsrd.com/equipment/armor/tatami-do/",
+      "category": "Armor"
+    },
+    {
+      "id": "war-shield-dwarven",
+      "name": "War-shield, dwarven",
+      "value": 50,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/armor/war-shield-dwarven/",
+      "category": "Armor"
+    },
+    {
+      "id": "wooden",
+      "name": "Wooden",
+      "value": 20,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/armor/wooden/",
+      "category": "Armor"
+    }
+  ]
+}

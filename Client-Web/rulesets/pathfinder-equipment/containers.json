@@ -1,0 +1,376 @@
+{
+  "id": "pathfinder-equipment-containers",
+  "label": "Pathfinder Equipment - Containers",
+  "source": "https://www.d20pfsrd.com/equipment/",
+  "generatedAt": "2026-06-05T18:42:21Z",
+  "items": [
+    {
+      "id": "animal-repellent-sack",
+      "name": "Animal-repellent sack",
+      "value": 1,
+      "weight": 0.5,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "backpack-carrier",
+      "name": "Backpack, carrier",
+      "value": 25,
+      "weight": 5,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "backpack-common",
+      "name": "Backpack, common",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "backpack-hydration",
+      "name": "Backpack, hydration",
+      "value": 40,
+      "weight": 4,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "backpack-masterwork",
+      "name": "Backpack, masterwork",
+      "value": 50,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "backpack-weaponrack",
+      "name": "Backpack, weaponrack",
+      "value": 25,
+      "weight": 5,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "bag-bear",
+      "name": "Bag, Bear",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Containers"
+    },
+    {
+      "id": "bag-waterproof",
+      "name": "Bag, waterproof",
+      "value": 0.5,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "barrel",
+      "name": "Barrel",
+      "value": 2,
+      "weight": 30,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "basket",
+      "name": "Basket",
+      "value": 0.4,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "bottle",
+      "name": "Bottle",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "box-scroll",
+      "name": "Box, scroll",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "bucket",
+      "name": "Bucket",
+      "value": 0.5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "cage-diminutive-or-fine-creature",
+      "name": "Cage, Diminutive or Fine creature",
+      "value": 10,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Containers"
+    },
+    {
+      "id": "cage-huge-creature",
+      "name": "Cage, Huge creature",
+      "value": 60,
+      "weight": 960,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Containers"
+    },
+    {
+      "id": "cage-large-creature",
+      "name": "Cage, Large creature",
+      "value": 30,
+      "weight": 240,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Containers"
+    },
+    {
+      "id": "cage-small-or-medium-creature",
+      "name": "Cage, Small or Medium creature",
+      "value": 15,
+      "weight": 60,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Containers"
+    },
+    {
+      "id": "cage-tiny-creature",
+      "name": "Cage, Tiny creature",
+      "value": 2,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Containers"
+    },
+    {
+      "id": "canteen",
+      "name": "Canteen",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "case-map-or-scroll",
+      "name": "Case, map or scroll",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/books-paper-writing-supplies/",
+      "category": "Containers"
+    },
+    {
+      "id": "case-scroll",
+      "name": "Case, scroll",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "chest-false-bottomed",
+      "name": "Chest, false bottomed",
+      "value": 52,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "chest-huge-huge-treasure-chest",
+      "name": "Chest, Huge / Huge treasure chest",
+      "value": 25,
+      "weight": 250,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "chest-large-large-treasure-chest",
+      "name": "Chest, Large / Large treasure chest",
+      "value": 10,
+      "weight": 100,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "chest-medium-medium-treasure-chest",
+      "name": "Chest, Medium / Medium treasure chest",
+      "value": 5,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "chest-small-small-treasure-chest",
+      "name": "Chest, Small / Small treasure chest",
+      "value": 2,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "cooler-chest",
+      "name": "Cooler chest",
+      "value": 25,
+      "weight": 60,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "flask",
+      "name": "Flask",
+      "value": 0.03,
+      "weight": 1.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "flask-hip",
+      "name": "Flask, hip",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "insulated-flask",
+      "name": "Insulated flask",
+      "value": 0.2,
+      "weight": 1,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "jug",
+      "name": "Jug",
+      "value": 0.03,
+      "weight": 9,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "pouch-belt",
+      "name": "Pouch, belt",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "pouch-spell-components",
+      "name": "Pouch, spell components",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "pouch-waist",
+      "name": "Pouch, waist",
+      "value": 0.5,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "pouch-war-spirit",
+      "name": "Pouch, war spirit",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "rat-cage",
+      "name": "Rat cage",
+      "value": 5,
+      "weight": 15,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "rockshard-canister",
+      "name": "Rockshard canister",
+      "value": 50,
+      "weight": 25,
+      "url": null,
+      "category": "Containers"
+    },
+    {
+      "id": "sack",
+      "name": "Sack",
+      "value": 0.1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "saddlebags",
+      "name": "Saddlebags",
+      "value": 4,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Containers"
+    },
+    {
+      "id": "satchel-familiar",
+      "name": "Satchel, familiar",
+      "value": 25,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "speed-sheath",
+      "name": "Speed sheath",
+      "value": 10,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "trap-trapped-scroll-case",
+      "name": "Trap, trapped scroll case",
+      "value": 40,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/tools-kits/",
+      "category": "Containers"
+    },
+    {
+      "id": "vial-for-ink-or-potions",
+      "name": "Vial (for ink or potions)",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "vial-iron",
+      "name": "Vial, iron",
+      "value": 0.1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "waterskin",
+      "name": "Waterskin",
+      "value": 1,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
+      "category": "Containers"
+    },
+    {
+      "id": "winged-bottle",
+      "name": "Winged Bottle",
+      "value": 1620,
+      "weight": 1,
+      "url": null,
+      "category": "Containers"
+    }
+  ]
+}

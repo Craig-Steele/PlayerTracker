@@ -1,0 +1,3144 @@
+{
+  "id": "pathfinder-equipment-weapons",
+  "label": "Pathfinder Equipment - Weapons",
+  "source": "https://www.d20pfsrd.com/equipment/",
+  "generatedAt": "2026-06-05T18:42:21Z",
+  "items": [
+    {
+      "id": "aasen-mortar",
+      "name": "Aasen mortar",
+      "value": 500,
+      "weight": 50,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "air-repeater",
+      "name": "Air repeater",
+      "value": 600,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/air-repeater/",
+      "category": "Weapons"
+    },
+    {
+      "id": "air-reservoir",
+      "name": "Air Reservoir",
+      "value": 5,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "aklys",
+      "name": "Aklys",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/aklys/",
+      "category": "Weapons"
+    },
+    {
+      "id": "alchemical-cartridge-dragons-breath",
+      "name": "Alchemical cartridge, dragon’s breath",
+      "value": 40,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/alchemical-cartridges/dragon-s-breath-cartridge/",
+      "category": "Weapons"
+    },
+    {
+      "id": "alchemical-cartridge-entangling-shot",
+      "name": "Alchemical cartridge, entangling shot",
+      "value": 40,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/alchemical-cartridges/entangling-shot-cartridge/",
+      "category": "Weapons"
+    },
+    {
+      "id": "alchemical-cartridge-flare",
+      "name": "Alchemical cartridge, flare",
+      "value": 10,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/alchemical-cartridges/flare-cartridge/",
+      "category": "Weapons"
+    },
+    {
+      "id": "alchemical-cartridge-paper-bullet-or-pellet",
+      "name": "Alchemical cartridge, paper (bullet or pellet)",
+      "value": 12,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/alchemical-cartridges/paper-cartridge/",
+      "category": "Weapons"
+    },
+    {
+      "id": "alchemical-cartridge-salt-shot",
+      "name": "Alchemical cartridge, salt shot",
+      "value": 12,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/alchemical-cartridges/salt-shot-cartridge/",
+      "category": "Weapons"
+    },
+    {
+      "id": "ankus",
+      "name": "Ankus",
+      "value": 8,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ankus/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-s-whistling-20",
+      "name": "Arrow(s), whistling (20)",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-whistling/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-bamboo-shaft-10",
+      "name": "Arrow, Bamboo shaft (10)",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bamboo-shaft-arrow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-bleeding-1",
+      "name": "Arrow, bleeding (1)",
+      "value": 360,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-bleeding/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-distance-iron-tipped-20",
+      "name": "Arrow, distance (iron-tipped) (20)",
+      "value": 1,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/iron-tipped-distance-arrow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-durable-1",
+      "name": "Arrow, durable (1)",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-durable/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-dye-1",
+      "name": "Arrow, dye (1)",
+      "value": 1,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-dye/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-iron-tipped-distance-20",
+      "name": "Arrow, iron-tipped distance (20)",
+      "value": 1,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/iron-tipped-distance-arrow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-lodestone-1",
+      "name": "Arrow, lodestone (1)",
+      "value": 10,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-lodestone/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-pheromone-1",
+      "name": "Arrow, pheromone (1)",
+      "value": 15,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrow-pheromone/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-raining-1",
+      "name": "Arrow, raining (1)",
+      "value": 30,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-raining/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-slow-burn-1",
+      "name": "Arrow, slow burn (1)",
+      "value": 150,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-slow-burn/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-smoke-1",
+      "name": "Arrow, smoke (1)",
+      "value": 10,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-smokescreen/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-splintercloud-1",
+      "name": "Arrow, splintercloud (1)",
+      "value": 25,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-splintercloud/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-tanglefoot-1",
+      "name": "Arrow, tanglefoot (1)",
+      "value": 20,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-tanglefoot/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-thistle-1",
+      "name": "Arrow, thistle (1)",
+      "value": 1,
+      "weight": 0.15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-thistle/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-throwing-1",
+      "name": "Arrow, throwing (1)",
+      "value": 0.5,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/arrow-throwing/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-trip-1",
+      "name": "Arrow, trip (1)",
+      "value": 25,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-trip/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrows-blunt-20",
+      "name": "Arrows, blunt (20)",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-blunt/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrows-common-20",
+      "name": "Arrows, common (20)",
+      "value": 1,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrows-flight-20",
+      "name": "Arrows, flight (20)",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-flight/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrows-whistling-20",
+      "name": "Arrows, whistling (20)",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-whistling/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrows-bolts-barbed-20",
+      "name": "Arrows/bolts, barbed (20)",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/arrow-barbed/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrows-bolts-incendiary-20",
+      "name": "Arrows/bolts, incendiary (20)",
+      "value": 10,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/arrow-incendiary/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrows-bolts-pronged-20",
+      "name": "Arrows/bolts, pronged (20)",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/arrow-pronged/",
+      "category": "Weapons"
+    },
+    {
+      "id": "atlatl",
+      "name": "Atlatl",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/atlatl/",
+      "category": "Weapons"
+    },
+    {
+      "id": "atlatl-dart",
+      "name": "Atlatl dart",
+      "value": 1,
+      "weight": 2,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-boarding",
+      "name": "Axe, boarding",
+      "value": 6,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/boarding-axe/",
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-butchering",
+      "name": "Axe, Butchering",
+      "value": 65,
+      "weight": 25,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-butchering/",
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-hooked",
+      "name": "Axe, hooked",
+      "value": 20,
+      "weight": 7,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-hooked/",
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-knuckle",
+      "name": "Axe, knuckle",
+      "value": 9,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-knuckle/",
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-orc-double",
+      "name": "Axe, Orc Double",
+      "value": 60,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-orc-double/",
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-throwing",
+      "name": "Axe, throwing",
+      "value": 8,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-throwing/",
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-gauntlet-dwarven-heavy",
+      "name": "Axe-Gauntlet, Dwarven Heavy",
+      "value": 21,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-gauntlet-dwarven-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "axe-gauntlet-dwarven-light",
+      "name": "Axe-Gauntlet, Dwarven Light",
+      "value": 16,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-gauntlet-dwarven-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "barbazu-beard",
+      "name": "Barbazu beard",
+      "value": 25,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/barbazu-beard/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bardiche",
+      "name": "Bardiche",
+      "value": 13,
+      "weight": 14,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/bardiche/",
+      "category": "Weapons"
+    },
+    {
+      "id": "battle-aspergillum",
+      "name": "Battle aspergillum",
+      "value": 5,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/battle-aspergillum/",
+      "category": "Weapons"
+    },
+    {
+      "id": "battle-ladder-gnome",
+      "name": "Battle Ladder, gnome",
+      "value": 20,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/battle-ladder/",
+      "category": "Weapons"
+    },
+    {
+      "id": "battle-poi",
+      "name": "Battle poi",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/battle-poi/",
+      "category": "Weapons"
+    },
+    {
+      "id": "battleaxe",
+      "name": "Battleaxe",
+      "value": 10,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-battle/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bayonet",
+      "name": "Bayonet",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/bayonet/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bec-de-corbin",
+      "name": "Bec de corbin",
+      "value": 15,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/bec-de-corbin/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bichhwa",
+      "name": "Bich’hwa",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/bich-hwa/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bill",
+      "name": "Bill",
+      "value": 11,
+      "weight": 11,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/bill/",
+      "category": "Weapons"
+    },
+    {
+      "id": "black-powder-dose",
+      "name": "Black powder (dose)",
+      "value": 10,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/black-powder/",
+      "category": "Weapons"
+    },
+    {
+      "id": "black-powder-keg",
+      "name": "Black powder (keg)",
+      "value": 1000,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/black-powder/",
+      "category": "Weapons"
+    },
+    {
+      "id": "blade-boot",
+      "name": "Blade boot",
+      "value": 25,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/blade-boot/",
+      "category": "Weapons"
+    },
+    {
+      "id": "blowgun",
+      "name": "Blowgun",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/blowgun/",
+      "category": "Weapons"
+    },
+    {
+      "id": "blunderbuss",
+      "name": "Blunderbuss",
+      "value": 2000,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/blunderbuss/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bo-staff",
+      "name": "Bo staff",
+      "value": 1,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/staff-bo/",
+      "category": "Weapons"
+    },
+    {
+      "id": "boarding-gaff",
+      "name": "Boarding gaff",
+      "value": 8,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/boarding-gaff/",
+      "category": "Weapons"
+    },
+    {
+      "id": "boarding-pike",
+      "name": "Boarding pike",
+      "value": 8,
+      "weight": 9,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/boarding-pike/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bola",
+      "name": "Bola",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/bolas/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bola-brutal",
+      "name": "Bola, Brutal",
+      "value": 15,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/brutal-bolas/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bolt-s-acid-1",
+      "name": "Bolt(s), acid (1)",
+      "value": 40,
+      "weight": 0.1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolt-acid/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bolt-s-crossbow-10",
+      "name": "Bolt(s), crossbow (10)",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolts-or-quarrels/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bolt-s-drow-poison-1",
+      "name": "Bolt(s), Drow poison (1)",
+      "value": 100,
+      "weight": 0.1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolt-drow-poison/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bolt-s-fire-1",
+      "name": "Bolt(s), fire (1)",
+      "value": 50,
+      "weight": 0.1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolt-fire/",
+      "category": "Weapons"
+    },
+    {
+      "id": "boomerang",
+      "name": "Boomerang",
+      "value": 3,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/boomerang/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bow-thorn",
+      "name": "Bow, thorn",
+      "value": 50,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/thorn-bow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "brass-knife",
+      "name": "Brass knife",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/brass-knife/",
+      "category": "Weapons"
+    },
+    {
+      "id": "brass-knuckles",
+      "name": "Brass knuckles",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/brass-knuckles/",
+      "category": "Weapons"
+    },
+    {
+      "id": "breech-loader",
+      "name": "Breech-loader",
+      "value": 3000,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/breech-loader/",
+      "category": "Weapons"
+    },
+    {
+      "id": "broadsword-nine-ring",
+      "name": "Broadsword, nine ring",
+      "value": 15,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/broadsword-nine-ring/",
+      "category": "Weapons"
+    },
+    {
+      "id": "broken-back-seax",
+      "name": "Broken-back seax",
+      "value": 40,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/broken-back-seax-light-blades-group/",
+      "category": "Weapons"
+    },
+    {
+      "id": "buckler-gun",
+      "name": "Buckler gun",
+      "value": 750,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/buckler-gun/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bullet-s-groaning-10",
+      "name": "Bullet(s), groaning (10)",
+      "value": 2,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-sling-bullets-groaning/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bullet-s-sling-10",
+      "name": "Bullet(s), sling (10)",
+      "value": 0.1,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-sling-bullets/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bullet-s-smoke-10",
+      "name": "Bullet(s), smoke (10)",
+      "value": 100,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-sling-bullet-smoke/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bullet-adamantine",
+      "name": "Bullet, adamantine",
+      "value": 61,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/bullet-adamantine/",
+      "category": "Weapons"
+    },
+    {
+      "id": "butterfly-sword",
+      "name": "Butterfly sword",
+      "value": 20,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/butterfly-sword/",
+      "category": "Weapons"
+    },
+    {
+      "id": "caltrops",
+      "name": "Caltrops",
+      "value": 1,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "caltrops-vicious",
+      "name": "Caltrops, Vicious",
+      "value": 50,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "cat-o-nine-tails",
+      "name": "Cat-o’-nine-tails",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/cat-o--nine-tails/",
+      "category": "Weapons"
+    },
+    {
+      "id": "cestus",
+      "name": "Cestus",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/cestus/",
+      "category": "Weapons"
+    },
+    {
+      "id": "chain-spear",
+      "name": "Chain spear",
+      "value": 15,
+      "weight": 13,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/chain-spear/",
+      "category": "Weapons"
+    },
+    {
+      "id": "chain-spiked",
+      "name": "Chain, spiked",
+      "value": 25,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/chain-spiked/",
+      "category": "Weapons"
+    },
+    {
+      "id": "chain-hammer",
+      "name": "Chain-hammer",
+      "value": 35,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/chain-hammer/",
+      "category": "Weapons"
+    },
+    {
+      "id": "chakram",
+      "name": "Chakram",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/chakram-common/",
+      "category": "Weapons"
+    },
+    {
+      "id": "chakram-crystal",
+      "name": "Chakram, crystal",
+      "value": 20,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/chakram-crystal/",
+      "category": "Weapons"
+    },
+    {
+      "id": "claw-blades",
+      "name": "Claw blades",
+      "value": 305,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/claw-blades/",
+      "category": "Weapons"
+    },
+    {
+      "id": "club-mere",
+      "name": "Club, mere",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/mere-club/",
+      "category": "Weapons"
+    },
+    {
+      "id": "combat-scabbard",
+      "name": "Combat scabbard",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/combat-scabbard-sharpened/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crook",
+      "name": "Crook",
+      "value": 1,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crook/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-bolt-s-heavy-light-hand-10",
+      "name": "Crossbow bolt(s), heavy/light/hand (10)",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolts-or-quarrels/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-bolt-s-repeating-heavy-light-5",
+      "name": "Crossbow bolt(s), repeating, heavy/light (5)",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolts-or-quarrels/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-crank-heavy",
+      "name": "Crossbow, crank (heavy)",
+      "value": 400,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crank-crossbow-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-crank-light",
+      "name": "Crossbow, crank (light)",
+      "value": 250,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crank-crossbow-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-double",
+      "name": "Crossbow, double",
+      "value": 300,
+      "weight": 18,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-double/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-hand",
+      "name": "Crossbow, hand",
+      "value": 100,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-hand/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-heavy",
+      "name": "Crossbow, heavy",
+      "value": 50,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-heavy-underwater",
+      "name": "Crossbow, heavy (underwater)",
+      "value": 100,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-underwater/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-launching",
+      "name": "Crossbow, launching",
+      "value": 75,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-launching/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-light",
+      "name": "Crossbow, light",
+      "value": 35,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-light-underwater",
+      "name": "Crossbow, light (underwater)",
+      "value": 70,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-underwater-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-repeating-heavy",
+      "name": "Crossbow, repeating heavy",
+      "value": 400,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-repeating-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "crossbow-repeating-light",
+      "name": "Crossbow, repeating light",
+      "value": 250,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/crossbow-repeating-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "culverin",
+      "name": "Culverin",
+      "value": 4000,
+      "weight": 40,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/culverin-hand-bombard/",
+      "category": "Weapons"
+    },
+    {
+      "id": "curve-blade-elven",
+      "name": "Curve blade, elven",
+      "value": 80,
+      "weight": 7,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/curve-blade-elven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "cutlass",
+      "name": "Cutlass",
+      "value": 15,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/cutlass/",
+      "category": "Weapons"
+    },
+    {
+      "id": "cylinder-rifle",
+      "name": "Cylinder rifle",
+      "value": 6000,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/cylinder-rifle/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dagger",
+      "name": "Dagger",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dagger/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dagger-dueling",
+      "name": "Dagger, dueling",
+      "value": 12,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dagger-dueling/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dagger-punching",
+      "name": "Dagger, punching",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dagger-punching/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dagger-swordbreaker",
+      "name": "Dagger, swordbreaker",
+      "value": 10,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dagger-swordbreaker/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dan-bong",
+      "name": "Dan bong",
+      "value": 0.1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dan-bong/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dart",
+      "name": "Dart",
+      "value": 0.5,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-thrown-darts/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dart-s-blowgun-10",
+      "name": "Dart(s), blowgun (10)",
+      "value": 0.5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-blowgun-darts/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dart-jolting",
+      "name": "Dart, jolting",
+      "value": 100,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dart-jolting/",
+      "category": "Weapons"
+    },
+    {
+      "id": "darts-featherweight-10",
+      "name": "Darts, featherweight (10)",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/dart-featherweight/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dogslicer",
+      "name": "Dogslicer",
+      "value": 8,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dogslicer/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dorn-dergar-dwarven",
+      "name": "Dorn-Dergar, dwarven",
+      "value": 50,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dorn-dergar-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "double-chicken-saber",
+      "name": "Double chicken saber",
+      "value": 12,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/double-chicken-saber/",
+      "category": "Weapons"
+    },
+    {
+      "id": "double-hackbut",
+      "name": "Double hackbut",
+      "value": 4000,
+      "weight": 18,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/double-hackbut/",
+      "category": "Weapons"
+    },
+    {
+      "id": "double-spear",
+      "name": "Double spear",
+      "value": 25,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/double-spear-spears-group/",
+      "category": "Weapons"
+    },
+    {
+      "id": "dragoon-cartridge",
+      "name": "Dragoon Cartridge",
+      "value": 30,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/alchemical-cartridges/ammunition-firearms-cartridge-dragoon/",
+      "category": "Weapons"
+    },
+    {
+      "id": "earth-breaker",
+      "name": "Earth breaker",
+      "value": 40,
+      "weight": 14,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/earth-breaker/",
+      "category": "Weapons"
+    },
+    {
+      "id": "elven-branched-spear",
+      "name": "Elven branched spear",
+      "value": 20,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spear-elven-branched/",
+      "category": "Weapons"
+    },
+    {
+      "id": "emei-piercer",
+      "name": "Emei piercer",
+      "value": 3,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/emei-piercer/",
+      "category": "Weapons"
+    },
+    {
+      "id": "estoc",
+      "name": "Estoc",
+      "value": 50,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/estoc/",
+      "category": "Weapons"
+    },
+    {
+      "id": "falcata",
+      "name": "Falcata",
+      "value": 18,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/falcata/",
+      "category": "Weapons"
+    },
+    {
+      "id": "falchion",
+      "name": "Falchion",
+      "value": 75,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/falchion/",
+      "category": "Weapons"
+    },
+    {
+      "id": "fauchard",
+      "name": "Fauchard",
+      "value": 14,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/fauchard/",
+      "category": "Weapons"
+    },
+    {
+      "id": "fighting-fan",
+      "name": "Fighting fan",
+      "value": 5,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/fighting-fan/",
+      "category": "Weapons"
+    },
+    {
+      "id": "fire-lance",
+      "name": "Fire lance",
+      "value": 25,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/fire-lance/",
+      "category": "Weapons"
+    },
+    {
+      "id": "firearm-bullet-1",
+      "name": "Firearm bullet (1)",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/",
+      "category": "Weapons"
+    },
+    {
+      "id": "firearm-bullet-30",
+      "name": "Firearm bullet (30)",
+      "value": 30,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/",
+      "category": "Weapons"
+    },
+    {
+      "id": "firearm-bullet-pitted",
+      "name": "Firearm bullet, pitted",
+      "value": 5,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/bullet-pitted/",
+      "category": "Weapons"
+    },
+    {
+      "id": "firearm-bullet-silver",
+      "name": "Firearm bullet, silver",
+      "value": 25,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/bullet-silver/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flail-dire",
+      "name": "Flail, dire",
+      "value": 90,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flail-dire/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flail-heavy",
+      "name": "Flail, heavy",
+      "value": 15,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flail-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flail-light",
+      "name": "Flail, light",
+      "value": 8,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flail-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flailpole",
+      "name": "Flailpole",
+      "value": 15,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flailpole/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flambard",
+      "name": "Flambard",
+      "value": 50,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flambard/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flamethrower-lawrence-1917",
+      "name": "Flamethrower, Lawrence 1917",
+      "value": 800,
+      "weight": 20,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "flask-thrower",
+      "name": "Flask Thrower",
+      "value": 25,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flask-thrower/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flickmace",
+      "name": "Flickmace",
+      "value": 20,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flickmace/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flindbar",
+      "name": "Flindbar",
+      "value": 9,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flindbar/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flying-blade",
+      "name": "Flying blade",
+      "value": 40,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flying-blade/",
+      "category": "Weapons"
+    },
+    {
+      "id": "flying-talon",
+      "name": "Flying Talon",
+      "value": 15,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/flying-talon/",
+      "category": "Weapons"
+    },
+    {
+      "id": "fuel-tank",
+      "name": "Fuel tank",
+      "value": 50,
+      "weight": 40,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "gandasa",
+      "name": "Gandasa",
+      "value": 15,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/gandasa/",
+      "category": "Weapons"
+    },
+    {
+      "id": "garrote",
+      "name": "Garrote",
+      "value": 3,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/garrote/",
+      "category": "Weapons"
+    },
+    {
+      "id": "gas-cylinder",
+      "name": "Gas cylinder",
+      "value": 300,
+      "weight": 50,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "gauntlet",
+      "name": "Gauntlet",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/gauntlet/",
+      "category": "Weapons"
+    },
+    {
+      "id": "gauntlet-spiked",
+      "name": "Gauntlet, spiked",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/gauntlet-spiked/",
+      "category": "Weapons"
+    },
+    {
+      "id": "giant-sticker-dwarven",
+      "name": "Giant-Sticker, Dwarven",
+      "value": 25,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/giant-sticker-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "gladius",
+      "name": "Gladius",
+      "value": 15,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/gladius/",
+      "category": "Weapons"
+    },
+    {
+      "id": "glaive",
+      "name": "Glaive",
+      "value": 8,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/glaive/",
+      "category": "Weapons"
+    },
+    {
+      "id": "glaive-guisarme",
+      "name": "Glaive-guisarme",
+      "value": 12,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/glaive-guisarme/",
+      "category": "Weapons"
+    },
+    {
+      "id": "gnome-pincher",
+      "name": "Gnome pincher",
+      "value": 10,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/gnome-pincher/",
+      "category": "Weapons"
+    },
+    {
+      "id": "grappling-hook",
+      "name": "Grappling hook",
+      "value": 6,
+      "weight": 14,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/tools-kits/",
+      "category": "Weapons"
+    },
+    {
+      "id": "greataxe",
+      "name": "Greataxe",
+      "value": 20,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/axe-great/",
+      "category": "Weapons"
+    },
+    {
+      "id": "greatclub",
+      "name": "Greatclub",
+      "value": 5,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/club-great/",
+      "category": "Weapons"
+    },
+    {
+      "id": "greatsword",
+      "name": "Greatsword",
+      "value": 50,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/greatsword/",
+      "category": "Weapons"
+    },
+    {
+      "id": "guisarme",
+      "name": "Guisarme",
+      "value": 9,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/guisarme/",
+      "category": "Weapons"
+    },
+    {
+      "id": "gunsmiths-kit",
+      "name": "Gunsmith’s kit",
+      "value": 15,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/tools-kits/",
+      "category": "Weapons"
+    },
+    {
+      "id": "halberd",
+      "name": "Halberd",
+      "value": 10,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/halberd/",
+      "category": "Weapons"
+    },
+    {
+      "id": "halfling-rope-shot",
+      "name": "Halfling rope-shot",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/halfling-rope-shot/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hammer-gnome-hooked",
+      "name": "Hammer, Gnome hooked",
+      "value": 20,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hammer-gnome-hooked/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hammer-light",
+      "name": "Hammer, light",
+      "value": 1,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hammer-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hammer-lucerne",
+      "name": "Hammer, lucerne",
+      "value": 15,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hammer-lucerne/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hanbo",
+      "name": "Hanbo",
+      "value": 1,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hanbo/",
+      "category": "Weapons"
+    },
+    {
+      "id": "handaxe",
+      "name": "Handaxe",
+      "value": 6,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/handaxe/",
+      "category": "Weapons"
+    },
+    {
+      "id": "handwraps",
+      "name": "Handwraps",
+      "value": 0.1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/handwraps/",
+      "category": "Weapons"
+    },
+    {
+      "id": "harpoon",
+      "name": "Harpoon",
+      "value": 5,
+      "weight": 16,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/harpoon/",
+      "category": "Weapons"
+    },
+    {
+      "id": "helmet-dwarven-boulder",
+      "name": "Helmet, dwarven boulder",
+      "value": 20,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/helmet-dwarven-boulder/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hook-hand",
+      "name": "Hook hand",
+      "value": 10,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hook-hand/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hooked-lance",
+      "name": "Hooked lance",
+      "value": 3,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/lance-hooked/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hornbow-orc",
+      "name": "Hornbow, orc",
+      "value": 130,
+      "weight": 7,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hornbow-orc/",
+      "category": "Weapons"
+    },
+    {
+      "id": "horsechopper",
+      "name": "Horsechopper",
+      "value": 10,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/horsechopper/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hotchkiss-6-pounder",
+      "name": "Hotchkiss 6 pounder",
+      "value": 2000,
+      "weight": 0,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "hunga-munga",
+      "name": "Hunga munga",
+      "value": 4,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hunga-munga/",
+      "category": "Weapons"
+    },
+    {
+      "id": "hurlbat",
+      "name": "Hurlbat",
+      "value": 8,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/hurlbat/",
+      "category": "Weapons"
+    },
+    {
+      "id": "iron-brush",
+      "name": "Iron brush",
+      "value": 2,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/iron-brush/",
+      "category": "Weapons"
+    },
+    {
+      "id": "javelin",
+      "name": "Javelin",
+      "value": 1,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/javelin/",
+      "category": "Weapons"
+    },
+    {
+      "id": "javelin-stormshaft",
+      "name": "Javelin, stormshaft",
+      "value": 35,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/javelin-stormshaft/",
+      "category": "Weapons"
+    },
+    {
+      "id": "jutte",
+      "name": "Jutte",
+      "value": 8,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/jutte/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kama",
+      "name": "Kama",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kama/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kama-double-chained",
+      "name": "Kama, double-chained",
+      "value": 8,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kama-double-chained/",
+      "category": "Weapons"
+    },
+    {
+      "id": "katana",
+      "name": "Katana",
+      "value": 50,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/katana/",
+      "category": "Weapons"
+    },
+    {
+      "id": "katana-double-walking-stick",
+      "name": "Katana, double walking stick",
+      "value": 50,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/double-walking-stick-katana/",
+      "category": "Weapons"
+    },
+    {
+      "id": "katar-tri-bladed",
+      "name": "Katar, tri-bladed",
+      "value": 6,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/katar-tri-bladed/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kerambit",
+      "name": "Kerambit",
+      "value": 2,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kerambit/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kestros",
+      "name": "Kestros",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kestros/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kestros-dart-10",
+      "name": "Kestros dart (10)",
+      "value": 5,
+      "weight": 5,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "khopesh",
+      "name": "Khopesh",
+      "value": 20,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/khopesh/",
+      "category": "Weapons"
+    },
+    {
+      "id": "klar",
+      "name": "Klar",
+      "value": 12,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/klar/",
+      "category": "Weapons"
+    },
+    {
+      "id": "knife-butterfly",
+      "name": "Knife, butterfly",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/knife-butterfly/",
+      "category": "Weapons"
+    },
+    {
+      "id": "knife-deer-horn",
+      "name": "Knife, deer horn",
+      "value": 10,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/knife-deer-horn/",
+      "category": "Weapons"
+    },
+    {
+      "id": "knife-switchblade",
+      "name": "Knife, switchblade",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/knife-switchblade/",
+      "category": "Weapons"
+    },
+    {
+      "id": "knobkerrie",
+      "name": "Knobkerrie",
+      "value": 5,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/knobkerrie/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kobold-tail-attachment-pounder",
+      "name": "Kobold tail attachment, (pounder)",
+      "value": 1,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kobold-tail-attachments/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kobold-tail-attachment-razored",
+      "name": "Kobold tail attachment, (razored)",
+      "value": 3,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kobold-tail-attachments/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kobold-tail-attachment-spiked",
+      "name": "Kobold tail attachment, (spiked)",
+      "value": 3,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kobold-tail-attachments/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kobold-tail-attachment-sweeper",
+      "name": "Kobold tail attachment, (sweeper)",
+      "value": 7,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kobold-tail-attachments/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kobold-tail-attachment-long-lash",
+      "name": "Kobold tail attachment, long lash",
+      "value": 15,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kobold-tail-attachments/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kukri",
+      "name": "Kukri",
+      "value": 8,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kukri/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kumade",
+      "name": "Kumade",
+      "value": 5,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kumade/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kumade-collapsible",
+      "name": "Kumade, collapsible",
+      "value": 10,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kumade-collapsible/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kunai",
+      "name": "Kunai",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kunai/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kusarigama-sickle-and-chain",
+      "name": "Kusarigama (sickle and chain)",
+      "value": 12,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kusarigama/",
+      "category": "Weapons"
+    },
+    {
+      "id": "kyoketsu-shoge",
+      "name": "Kyoketsu shoge",
+      "value": 6,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/kyoketsu-shoge/",
+      "category": "Weapons"
+    },
+    {
+      "id": "lance",
+      "name": "Lance",
+      "value": 10,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/lance/",
+      "category": "Weapons"
+    },
+    {
+      "id": "lantern-staff",
+      "name": "Lantern staff",
+      "value": 15,
+      "weight": 9,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/staff-lantern/",
+      "category": "Weapons"
+    },
+    {
+      "id": "lasso",
+      "name": "Lasso",
+      "value": 0.1,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/lasso/",
+      "category": "Weapons"
+    },
+    {
+      "id": "light-machine-gun-madsen",
+      "name": "Light machine gun, Madsen",
+      "value": 1000,
+      "weight": 20,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "little-starstones-10",
+      "name": "Little starstones (10)",
+      "value": 0.05,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/little-starstones/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longaxe-dwarven",
+      "name": "Longaxe, dwarven",
+      "value": 50,
+      "weight": 14,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longaxe-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longbow",
+      "name": "Longbow",
+      "value": 75,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longbow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longbow-composite-0",
+      "name": "Longbow, composite (+0)",
+      "value": 100,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longbow-composite/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longbow-composite-1",
+      "name": "Longbow, composite (+1)",
+      "value": 200,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longbow-composite/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longbow-composite-2",
+      "name": "Longbow, composite (+2)",
+      "value": 300,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longbow-composite/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longbow-composite-3",
+      "name": "Longbow, composite (+3)",
+      "value": 400,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longbow-composite/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longbow-composite-4",
+      "name": "Longbow, composite (+4)",
+      "value": 500,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longbow-composite/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longbow-composite-5",
+      "name": "Longbow, composite (+5)",
+      "value": 600,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longbow-composite/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longhammer-dwarven",
+      "name": "Longhammer, dwarven",
+      "value": 70,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longhammer-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longspear",
+      "name": "Longspear",
+      "value": 5,
+      "weight": 9,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longspear/",
+      "category": "Weapons"
+    },
+    {
+      "id": "longsword",
+      "name": "Longsword",
+      "value": 15,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/longsword/",
+      "category": "Weapons"
+    },
+    {
+      "id": "lungchuan-tamo",
+      "name": "Lungchuan tamo",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/lungchuan-tamo-hidden-daggers/",
+      "category": "Weapons"
+    },
+    {
+      "id": "m1914-grenade-concussion",
+      "name": "M1914 grenade (concussion)",
+      "value": 50,
+      "weight": 1,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "m1914-grenade-fragmentation",
+      "name": "M1914 grenade (fragmentation)",
+      "value": 75,
+      "weight": 1,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "m1917-chemical-grenade",
+      "name": "M1917 chemical grenade",
+      "value": 100,
+      "weight": 2,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "mace-heavy",
+      "name": "Mace, heavy",
+      "value": 12,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/mace-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "mace-light",
+      "name": "Mace, light",
+      "value": 5,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/mace-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "machete",
+      "name": "Machete",
+      "value": 10,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/machete/",
+      "category": "Weapons"
+    },
+    {
+      "id": "machine-gun-maxim-m1910",
+      "name": "Machine gun, Maxim M1910",
+      "value": 1500,
+      "weight": 140,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "madu-leather-2",
+      "name": "Madu (leather)",
+      "value": 40,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/madu/",
+      "category": "Weapons"
+    },
+    {
+      "id": "madu-steel-2",
+      "name": "Madu (steel)",
+      "value": 40,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/madu/",
+      "category": "Weapons"
+    },
+    {
+      "id": "mancatcher",
+      "name": "Mancatcher",
+      "value": 15,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/mancatcher/",
+      "category": "Weapons"
+    },
+    {
+      "id": "manople",
+      "name": "Manople",
+      "value": 17,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/manople/",
+      "category": "Weapons"
+    },
+    {
+      "id": "mattock",
+      "name": "Mattock",
+      "value": 12,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/mattock/",
+      "category": "Weapons"
+    },
+    {
+      "id": "maulaxe-dwarven",
+      "name": "Maulaxe, dwarven",
+      "value": 25,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/maulaxe-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "mere-club",
+      "name": "Mere club",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/mere-club/",
+      "category": "Weapons"
+    },
+    {
+      "id": "metal-cartridge",
+      "name": "Metal cartridge",
+      "value": 15,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/alchemical-cartridges/metal-cartridge/",
+      "category": "Weapons"
+    },
+    {
+      "id": "meteor-hammer",
+      "name": "Meteor hammer",
+      "value": 10,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/meteor-hammer/",
+      "category": "Weapons"
+    },
+    {
+      "id": "monks-spade",
+      "name": "Monk’s spade",
+      "value": 20,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/monk-s-spade/",
+      "category": "Weapons"
+    },
+    {
+      "id": "morningstar",
+      "name": "Morningstar",
+      "value": 8,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/morningstar/",
+      "category": "Weapons"
+    },
+    {
+      "id": "musket",
+      "name": "Musket",
+      "value": 1500,
+      "weight": 9,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/musket/",
+      "category": "Weapons"
+    },
+    {
+      "id": "musket-axe",
+      "name": "Musket, axe",
+      "value": 1600,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/musket-axe/",
+      "category": "Weapons"
+    },
+    {
+      "id": "musket-double-barreled",
+      "name": "Musket, double-barreled",
+      "value": 2500,
+      "weight": 11,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/musket-double-barreled/",
+      "category": "Weapons"
+    },
+    {
+      "id": "musket-dragoon",
+      "name": "Musket, dragoon",
+      "value": 2000,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/musket-dragoon/",
+      "category": "Weapons"
+    },
+    {
+      "id": "musket-warhammer",
+      "name": "Musket, warhammer",
+      "value": 1600,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/musket-warhammer/",
+      "category": "Weapons"
+    },
+    {
+      "id": "naginata",
+      "name": "Naginata",
+      "value": 35,
+      "weight": 9,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/naginata/",
+      "category": "Weapons"
+    },
+    {
+      "id": "net",
+      "name": "Net",
+      "value": 20,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/net/",
+      "category": "Weapons"
+    },
+    {
+      "id": "net-snag",
+      "name": "Net, snag",
+      "value": 30,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/net-snag/",
+      "category": "Weapons"
+    },
+    {
+      "id": "nine-section-whip",
+      "name": "Nine-section whip",
+      "value": 8,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/whip-nine-section/",
+      "category": "Weapons"
+    },
+    {
+      "id": "nodachi",
+      "name": "Nodachi",
+      "value": 60,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/nodachi/",
+      "category": "Weapons"
+    },
+    {
+      "id": "nunchaku",
+      "name": "Nunchaku",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/nunchaku/",
+      "category": "Weapons"
+    },
+    {
+      "id": "ogre-hook",
+      "name": "Ogre hook",
+      "value": 24,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ogre-hook/",
+      "category": "Weapons"
+    },
+    {
+      "id": "orc-skull-ram",
+      "name": "Orc skull ram",
+      "value": 15,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/orc-ram/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pata",
+      "name": "Pata",
+      "value": 14,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pata/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pelletbow-dwarven-heavy",
+      "name": "Pelletbow, Dwarven Heavy",
+      "value": 75,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pelletbow-dwarven-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pelletbow-dwarven-light",
+      "name": "Pelletbow, Dwarven Light",
+      "value": 50,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pelletbow-dwarven-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pellets-30-handfuls",
+      "name": "Pellets (30 handfuls)",
+      "value": 30,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/pellets/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pellets-handful",
+      "name": "Pellets (handful)",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/pellets/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pepperbox",
+      "name": "Pepperbox",
+      "value": 3000,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pepperbox/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pick-heavy",
+      "name": "Pick, heavy",
+      "value": 8,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pick-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pick-light",
+      "name": "Pick, light",
+      "value": 4,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pick-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pickaxe",
+      "name": "Pickaxe",
+      "value": 14,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pickaxe/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pilum",
+      "name": "Pilum",
+      "value": 5,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pilum/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol",
+      "name": "Pistol",
+      "value": 1000,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol-coat",
+      "name": "Pistol, coat",
+      "value": 750,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol-coat/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol-dagger",
+      "name": "Pistol, dagger",
+      "value": 740,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol-dagger/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol-double-barreled",
+      "name": "Pistol, double-barreled",
+      "value": 1750,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol-double-barreled/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol-dragon",
+      "name": "Pistol, dragon",
+      "value": 1000,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol-dragon/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol-dragoon",
+      "name": "Pistol, dragoon",
+      "value": 1500,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol-dragoon/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol-paddle-foot",
+      "name": "Pistol, paddle-foot",
+      "value": 2500,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol-paddle-foot/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pistol-sword-cane",
+      "name": "Pistol, sword cane",
+      "value": 775,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/pistol-sword-cane/",
+      "category": "Weapons"
+    },
+    {
+      "id": "piston-maul-gnome",
+      "name": "Piston maul, gnome",
+      "value": 70,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/piston-maul/",
+      "category": "Weapons"
+    },
+    {
+      "id": "planson",
+      "name": "Planson",
+      "value": 10,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/planson/",
+      "category": "Weapons"
+    },
+    {
+      "id": "poisoned-sand-tube",
+      "name": "Poisoned sand tube",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/poisoned-sand-tube/",
+      "category": "Weapons"
+    },
+    {
+      "id": "pommel-hollow",
+      "name": "Pommel, hollow",
+      "value": 5,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "powder-horn",
+      "name": "Powder horn",
+      "value": 3,
+      "weight": 1,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "quadrens",
+      "name": "Quadrens",
+      "value": 8,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/quadrens/",
+      "category": "Weapons"
+    },
+    {
+      "id": "ram-hammer-dwarven",
+      "name": "Ram Hammer, Dwarven",
+      "value": 25,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ram-hammer-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "ranseur",
+      "name": "Ranseur",
+      "value": 10,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ranseur/",
+      "category": "Weapons"
+    },
+    {
+      "id": "rapier",
+      "name": "Rapier",
+      "value": 20,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rapier/",
+      "category": "Weapons"
+    },
+    {
+      "id": "rapier-spiral",
+      "name": "Rapier, spiral",
+      "value": 80,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rapier-spiral/",
+      "category": "Weapons"
+    },
+    {
+      "id": "ratfolk-tailblade",
+      "name": "Ratfolk tailblade",
+      "value": 11,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tailblade/",
+      "category": "Weapons"
+    },
+    {
+      "id": "razor-drow",
+      "name": "Razor, drow",
+      "value": 25,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/razor-drow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "revolver",
+      "name": "Revolver",
+      "value": 4000,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/revolver/",
+      "category": "Weapons"
+    },
+    {
+      "id": "revolver-nagant-m1895",
+      "name": "Revolver, Nagant M1895",
+      "value": 400,
+      "weight": 4,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "rhoka",
+      "name": "Rhoka",
+      "value": 5,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rhoka/",
+      "category": "Weapons"
+    },
+    {
+      "id": "rhomphaia",
+      "name": "Rhomphaia",
+      "value": 15,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rhomphaia/",
+      "category": "Weapons"
+    },
+    {
+      "id": "rifle",
+      "name": "Rifle",
+      "value": 5000,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rifle/",
+      "category": "Weapons"
+    },
+    {
+      "id": "rifle-mosin-nagant-m1891",
+      "name": "Rifle, Mosin-Nagant M1891",
+      "value": 500,
+      "weight": 9,
+      "url": null,
+      "category": "Weapons"
+    },
+    {
+      "id": "rifle-pepperbox",
+      "name": "Rifle, pepperbox",
+      "value": 7000,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rifle-pepperbox/",
+      "category": "Weapons"
+    },
+    {
+      "id": "ripsaw-glaive-gnome",
+      "name": "Ripsaw glaive, gnome",
+      "value": 30,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/glaive-ripsaw/",
+      "category": "Weapons"
+    },
+    {
+      "id": "rope-dart",
+      "name": "Rope dart",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rope-dart/",
+      "category": "Weapons"
+    },
+    {
+      "id": "rope-gauntlet",
+      "name": "Rope gauntlet",
+      "value": 0.2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/rope-gauntlet/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sabre-sawtooth",
+      "name": "Sabre, sawtooth",
+      "value": 35,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sabre-sawtooth/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sai",
+      "name": "Sai",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sai/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sanpkhang",
+      "name": "Sanpkhang",
+      "value": 60,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sanpkhang/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sansetsukon",
+      "name": "Sansetsukon",
+      "value": 8,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sansetsukon-three-section-staff/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sap",
+      "name": "Sap",
+      "value": 1,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sap/",
+      "category": "Weapons"
+    },
+    {
+      "id": "scabbard-combat",
+      "name": "Scabbard, combat",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "scabbard-combat-sharpened",
+      "name": "Scabbard, combat (sharpened)",
+      "value": 10,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/combat-scabbard-sharpened/",
+      "category": "Weapons"
+    },
+    {
+      "id": "scabbard-false-bottomed-2",
+      "name": "Scabbard, false-bottomed",
+      "value": 45,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "scarf-bladed",
+      "name": "Scarf, bladed",
+      "value": 12,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/scarf-bladed/",
+      "category": "Weapons"
+    },
+    {
+      "id": "scimitar",
+      "name": "Scimitar",
+      "value": 15,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/scimitar/",
+      "category": "Weapons"
+    },
+    {
+      "id": "scizore",
+      "name": "Scizore",
+      "value": 20,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/scizore/",
+      "category": "Weapons"
+    },
+    {
+      "id": "scythe",
+      "name": "Scythe",
+      "value": 18,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/scythe/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sea-knife",
+      "name": "Sea-knife",
+      "value": 8,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sea-knife/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shang-gou",
+      "name": "Shang gou",
+      "value": 6,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shang-gou/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sharpstones-10",
+      "name": "Sharpstones (10)",
+      "value": 1,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/sharpstones/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shield-sconce-2",
+      "name": "Shield Sconce",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shield-light",
+      "name": "Shield, light",
+      "value": 3,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shield-heavy-or-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shortbow",
+      "name": "Shortbow",
+      "value": 30,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shortbow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shortbow-composite",
+      "name": "Shortbow, composite",
+      "value": 75,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shortbow-composite/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shortspear",
+      "name": "Shortspear",
+      "value": 1,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shortspear/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shotel",
+      "name": "Shotel",
+      "value": 30,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shotel/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shotgun",
+      "name": "Shotgun",
+      "value": 5000,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shotgun/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shotgun-double-barreled",
+      "name": "Shotgun, double-barreled",
+      "value": 7000,
+      "weight": 15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shotgun-double-barreled/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shrillshaft-javelin",
+      "name": "Shrillshaft javelin",
+      "value": 35,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/javelin-shrillshaft/",
+      "category": "Weapons"
+    },
+    {
+      "id": "shuriken-5",
+      "name": "Shuriken (5)",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-thrown-shuriken/",
+      "category": "Weapons"
+    },
+    {
+      "id": "siangham",
+      "name": "Siangham",
+      "value": 3,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/siangham/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sibat",
+      "name": "Sibat",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sibat/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sica",
+      "name": "Sica",
+      "value": 10,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sica/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sickle",
+      "name": "Sickle",
+      "value": 6,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sickle/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sickle-sword",
+      "name": "Sickle-sword",
+      "value": 20,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sickle-sword/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sling-glove",
+      "name": "Sling glove",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sling-glove/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sling-staff-halfling",
+      "name": "Sling staff, halfling",
+      "value": 20,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sling-staff-halfling/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sling-double",
+      "name": "Sling, double",
+      "value": 10,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sling-double/",
+      "category": "Weapons"
+    },
+    {
+      "id": "softstones-10",
+      "name": "Softstones (10)",
+      "value": 0.1,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/softstones/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spear",
+      "name": "Spear",
+      "value": 2,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spear/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spear-boar",
+      "name": "Spear, boar",
+      "value": 5,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spear-boar/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spear-syringe",
+      "name": "Spear, syringe",
+      "value": 100,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spear-syringe/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spear-totem",
+      "name": "Spear, totem",
+      "value": 25,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spear-totem/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spear-weighted",
+      "name": "Spear, weighted",
+      "value": 10,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spear-weighted/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spear-sling",
+      "name": "Spear-sling",
+      "value": 50,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spear-sling/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sphinx-hammer-dwarven",
+      "name": "Sphinx Hammer, Dwarven",
+      "value": 45,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sphinx-hammer-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spiked-shield-heavy",
+      "name": "Spiked shield, heavy",
+      "value": 17,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spiked-shield-heavy-or-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spiked-shield-light",
+      "name": "Spiked shield, light",
+      "value": 13,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spiked-shield-heavy-or-light/",
+      "category": "Weapons"
+    },
+    {
+      "id": "split-blade-sword",
+      "name": "Split-blade sword",
+      "value": 200,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/split-blade-sword-heavy-blades-group/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spongestones",
+      "name": "Spongestone",
+      "value": 1,
+      "weight": 0.2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/spongestone/",
+      "category": "Weapons"
+    },
+    {
+      "id": "spring-blade",
+      "name": "Spring blade",
+      "value": 70,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/spring-blade/",
+      "category": "Weapons"
+    },
+    {
+      "id": "starknife",
+      "name": "Starknife",
+      "value": 24,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/starknife/",
+      "category": "Weapons"
+    },
+    {
+      "id": "stonebow",
+      "name": "Stonebow",
+      "value": 35,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/stonebow/",
+      "category": "Weapons"
+    },
+    {
+      "id": "switchscythe",
+      "name": "Switchscythe",
+      "value": 18,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/switchscythe-1/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-cane",
+      "name": "Sword cane",
+      "value": 45,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/swordcane/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-bastard",
+      "name": "Sword, bastard",
+      "value": 35,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sword-bastard/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-butterfly-2",
+      "name": "Sword, butterfly (2)",
+      "value": 20,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/butterfly-sword/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-dueling",
+      "name": "Sword, dueling",
+      "value": 20,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sword-dueling/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-seven-branched",
+      "name": "Sword, seven-branched",
+      "value": 50,
+      "weight": 7,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sword-seven-branched/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-short",
+      "name": "Sword, short",
+      "value": 10,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/shortsword/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-temple",
+      "name": "Sword, temple",
+      "value": 30,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sword-temple/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-tri-point-double-edged",
+      "name": "Sword, tri-point double-edged",
+      "value": 12,
+      "weight": 14,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sword-tri-point-double-edged/",
+      "category": "Weapons"
+    },
+    {
+      "id": "sword-two-bladed",
+      "name": "Sword, two-bladed",
+      "value": 100,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/sword-two-bladed/",
+      "category": "Weapons"
+    },
+    {
+      "id": "taiaha",
+      "name": "Taiaha",
+      "value": 10,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/taiaha/",
+      "category": "Weapons"
+    },
+    {
+      "id": "tekko-kagi-iron-claw",
+      "name": "Tekko-kagi (iron claw)",
+      "value": 2,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tekko-kagi/",
+      "category": "Weapons"
+    },
+    {
+      "id": "tepoztopilli",
+      "name": "Tepoztopilli",
+      "value": 8,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tepoztopilli/",
+      "category": "Weapons"
+    },
+    {
+      "id": "terbutje",
+      "name": "Terbutje",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/terbutje/",
+      "category": "Weapons"
+    },
+    {
+      "id": "terbutje-great",
+      "name": "Terbutje, great",
+      "value": 12,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/terbutje-great/",
+      "category": "Weapons"
+    },
+    {
+      "id": "terbutje-steel",
+      "name": "Terbutje, steel",
+      "value": 20,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/terbutje-steel/",
+      "category": "Weapons"
+    },
+    {
+      "id": "tetsubo",
+      "name": "Tetsubo",
+      "value": 20,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tetsubo/",
+      "category": "Weapons"
+    },
+    {
+      "id": "thorn-20",
+      "name": "Thorn (20)",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-thorn/",
+      "category": "Weapons"
+    },
+    {
+      "id": "thorn-bracer",
+      "name": "Thorn bracer",
+      "value": 30,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/thorn-bracer/",
+      "category": "Weapons"
+    },
+    {
+      "id": "tiger-fork",
+      "name": "Tiger fork",
+      "value": 5,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tiger-fork/",
+      "category": "Weapons"
+    },
+    {
+      "id": "tonfa",
+      "name": "Tonfa",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tonfa/",
+      "category": "Weapons"
+    },
+    {
+      "id": "tongi",
+      "name": "Tongi",
+      "value": 18,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tongi/",
+      "category": "Weapons"
+    },
+    {
+      "id": "traveling-kettle",
+      "name": "Traveling kettle",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/traveling-kettle-monk-group/",
+      "category": "Weapons"
+    },
+    {
+      "id": "trident",
+      "name": "Trident",
+      "value": 15,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/trident/",
+      "category": "Weapons"
+    },
+    {
+      "id": "tube-arrow-shooter",
+      "name": "Tube arrow shooter",
+      "value": 3,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/tube-arrow-shooter/",
+      "category": "Weapons"
+    },
+    {
+      "id": "undine-weaponshaft",
+      "name": "Undine Weaponshaft",
+      "value": 300,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "urgrosh-dwarven",
+      "name": "Urgrosh, dwarven",
+      "value": 50,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/urgrosh-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "urumi",
+      "name": "Urumi",
+      "value": 30,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/urumi/",
+      "category": "Weapons"
+    },
+    {
+      "id": "wahaika",
+      "name": "Wahaika",
+      "value": 3,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/wahaika/",
+      "category": "Weapons"
+    },
+    {
+      "id": "wakizashi",
+      "name": "Wakizashi",
+      "value": 35,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/wakizashi/",
+      "category": "Weapons"
+    },
+    {
+      "id": "war-razor",
+      "name": "War razor",
+      "value": 8,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/war-razor/",
+      "category": "Weapons"
+    },
+    {
+      "id": "waraxe-dwarven",
+      "name": "Waraxe, dwarven",
+      "value": 30,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/waraxe-dwarven/",
+      "category": "Weapons"
+    },
+    {
+      "id": "waraxe-dwarven-double",
+      "name": "Waraxe, dwarven double",
+      "value": 60,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/waraxe-dwarven-double/",
+      "category": "Weapons"
+    },
+    {
+      "id": "warhammer",
+      "name": "Warhammer",
+      "value": 12,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/warhammer/",
+      "category": "Weapons"
+    },
+    {
+      "id": "waveblade",
+      "name": "Waveblade",
+      "value": 5,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/waveblade/",
+      "category": "Weapons"
+    },
+    {
+      "id": "weapon-cord",
+      "name": "Weapon Cord",
+      "value": 0.1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "whip",
+      "name": "Whip",
+      "value": 1,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/whip/",
+      "category": "Weapons"
+    },
+    {
+      "id": "whip-scorpion",
+      "name": "Whip, scorpion",
+      "value": 5,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/whip-scorpion/",
+      "category": "Weapons"
+    },
+    {
+      "id": "wrist-launcher",
+      "name": "Wrist launcher",
+      "value": 200,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/wrist-launcher/",
+      "category": "Weapons"
+    },
+    {
+      "id": "wrist-launcher-heavy",
+      "name": "Wrist launcher, heavy",
+      "value": 250,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/wrist-launcher-heavy/",
+      "category": "Weapons"
+    },
+    {
+      "id": "wrist-sheath",
+      "name": "Wrist Sheath",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "wrist-sheath-spring-loaded",
+      "name": "Wrist Sheath, spring-loaded",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-and-armor-accessories/",
+      "category": "Weapons"
+    },
+    {
+      "id": "wushu-dart-5",
+      "name": "Wushu dart (5)",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dart-wushu/",
+      "category": "Weapons"
+    }
+  ]
+}

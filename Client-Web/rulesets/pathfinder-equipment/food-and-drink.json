@@ -1,0 +1,440 @@
+{
+  "id": "pathfinder-equipment-food-and-drink",
+  "label": "Pathfinder Equipment - Food and Drink",
+  "source": "https://www.d20pfsrd.com/equipment/",
+  "generatedAt": "2026-06-05T18:42:21Z",
+  "items": [
+    {
+      "id": "abacus",
+      "name": "Abacus",
+      "value": 2,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/tools-kits/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "ale-dwarven-stout",
+      "name": "Ale, Dwarven Stout",
+      "value": 0.04,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "ale-gallon",
+      "name": "Ale, Gallon",
+      "value": 0.2,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "ale-luglurch",
+      "name": "Ale, Luglurch",
+      "value": 0.4,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "ale-mug",
+      "name": "Ale, Mug",
+      "value": 0.04,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "ambrosia",
+      "name": "Ambrosia",
+      "value": 100,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/herbs-oils-other-substances/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "applejack",
+      "name": "Applejack, Gallon",
+      "value": 0.4,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "applejack-2",
+      "name": "Applejack, Mug",
+      "value": 0.08,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "artistic-ale",
+      "name": "Artistic ale",
+      "value": 300,
+      "weight": 0,
+      "url": null,
+      "category": "Food and Drink"
+    },
+    {
+      "id": "bread",
+      "name": "Bread",
+      "value": 0.02,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "cheese",
+      "name": "Cheese",
+      "value": 0.1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "cheese-2",
+      "name": "Cheese",
+      "value": 0.02,
+      "weight": 0,
+      "url": null,
+      "category": "Food and Drink"
+    },
+    {
+      "id": "chicken-one-pound",
+      "name": "Chicken, one pound",
+      "value": 0.02,
+      "weight": 0,
+      "url": null,
+      "category": "Food and Drink"
+    },
+    {
+      "id": "coffee-beans",
+      "name": "Coffee beans",
+      "value": 0.05,
+      "weight": 0,
+      "url": null,
+      "category": "Food and Drink"
+    },
+    {
+      "id": "coffee-common",
+      "name": "Coffee, common",
+      "value": 0.01,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "coffee-desert",
+      "name": "Coffee, desert",
+      "value": 0.02,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "coffee-dragons-blend",
+      "name": "Coffee, dragon’s blend",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "coffee-exotic",
+      "name": "Coffee, exotic",
+      "value": 0.03,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "coffee-hybrid",
+      "name": "Coffee, hybrid",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "coffee-marching",
+      "name": "Coffee, marching",
+      "value": 1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "honey-2",
+      "name": "Honey",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "leapers-libation",
+      "name": "Leaper’s libation",
+      "value": 200,
+      "weight": 0,
+      "url": null,
+      "category": "Food and Drink"
+    },
+    {
+      "id": "maple-syrup-2",
+      "name": "Maple syrup",
+      "value": 1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "mead-gallon",
+      "name": "Mead (gallon)",
+      "value": 2,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "mead-mug",
+      "name": "Mead (mug)",
+      "value": 0.05,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "mead-linnorm",
+      "name": "Mead, linnorm",
+      "value": 0.05,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "mead-wasp",
+      "name": "Mead, wasp",
+      "value": 400,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "meal-common",
+      "name": "Meal, common",
+      "value": 0.3,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "meal-good",
+      "name": "Meal, good",
+      "value": 0.5,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "meal-poor",
+      "name": "Meal, poor",
+      "value": 0.1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "meal-banquet",
+      "name": "Meal, banquet",
+      "value": 10,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "meat",
+      "name": "Meat",
+      "value": 0.3,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "meat-street",
+      "name": "Meat, street",
+      "value": 0.01,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "milk",
+      "name": "Milk",
+      "value": 0.05,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "milk-powdered",
+      "name": "Milk, powdered",
+      "value": 0.1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rations-dwarven-trail",
+      "name": "Rations, Dwarven trail",
+      "value": 2,
+      "weight": 1.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rations-elven-trail",
+      "name": "Rations, Elven trail",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rations-gnome-trail",
+      "name": "Rations, Gnome trail",
+      "value": 2,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rations-halfling-trail",
+      "name": "Rations, Halfling trail",
+      "value": 2,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rations-orc-trail",
+      "name": "Rations, Orc trail",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rations-trail",
+      "name": "Rations, trail",
+      "value": 0.5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rations-wandermeal-per-serving",
+      "name": "Rations, Wandermeal (per serving)",
+      "value": 0.01,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "rumboozle",
+      "name": "Rumboozle",
+      "value": 0.1,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "spirit-of-wine",
+      "name": "Spirit of Wine [ APC ]",
+      "value": 0.5,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/herbs-oils-other-substances/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "starlight-juice",
+      "name": "Starlight juice",
+      "value": 300,
+      "weight": 0,
+      "url": null,
+      "category": "Food and Drink"
+    },
+    {
+      "id": "tea",
+      "name": "Tea",
+      "value": 0.02,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "tea-ceremonial",
+      "name": "Tea, ceremonial",
+      "value": 0.04,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "tea-meditation",
+      "name": "Tea, meditation",
+      "value": 30,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/herbs-oils-other-substances/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "tea-night",
+      "name": "Tea, night",
+      "value": 0.1,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/herbs-oils-other-substances/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "whiskey-dragon-punch",
+      "name": "Whiskey, Dragon Punch",
+      "value": 10,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "wine-common",
+      "name": "Wine, common",
+      "value": 0.2,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "wine-fine",
+      "name": "Wine, fine",
+      "value": 10,
+      "weight": 1.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "wine-sangwine",
+      "name": "Wine, Sangwine",
+      "value": 200,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    },
+    {
+      "id": "wine-sealord",
+      "name": "Wine, sealord",
+      "value": 15,
+      "weight": 0.5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/hunting-camping-survival-gear/",
+      "category": "Food and Drink"
+    }
+  ]
+}

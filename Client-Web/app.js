@@ -338,13 +338,22 @@ window.addEventListener('DOMContentLoaded', () => {
   const partyTreasureItemOptions = document.getElementById('party-treasure-item-options');
   const inventoryPanel = document.getElementById('inventory-panel');
   const inventoryFields = document.getElementById('inventory-fields');
-  const inventorySaveBtn = document.getElementById('inventory-save');
-  const inventoryCancelBtn = document.getElementById('inventory-cancel');
+  const inventoryCloseBtn = document.getElementById('inventory-close');
   const inventoryAddBtn = document.getElementById('inventory-add');
   const inventoryAddContainerBtn = document.getElementById('inventory-add-container');
+  const inventoryEditBtn = document.getElementById('inventory-edit');
   const inventoryRemoveBtn = document.getElementById('inventory-remove');
   const inventoryDialogTitle = document.getElementById('inventory-dialog-title');
   const inventoryTotalWeight = document.getElementById('inventory-total-weight');
+  const inventoryAddForm = document.getElementById('inventory-add-form');
+  const inventoryAddFormTitle = document.getElementById('inventory-add-form-title');
+  const inventoryAddFormName = document.getElementById('inventory-add-name');
+  const inventoryAddFormQuantity = document.getElementById('inventory-add-quantity');
+  const inventoryAddFormValue = document.getElementById('inventory-add-value');
+  const inventoryAddFormWeight = document.getElementById('inventory-add-weight');
+  const inventoryAddFormUrl = document.getElementById('inventory-add-url');
+  const inventoryAddFormSaveBtn = document.getElementById('inventory-add-form-save');
+  const inventoryAddFormCancelBtn = document.getElementById('inventory-add-form-cancel');
   const inventoryItemOptions = document.getElementById('inventory-item-options');
   const inventoryContainerSections = document.getElementById('inventory-container-sections');
   const conditionsSaveBtn = document.getElementById('conditions-save');
@@ -611,8 +620,12 @@ window.addEventListener('DOMContentLoaded', () => {
   let partyTreasureEditingEntryId = null;
   let currentPartyTreasure = [];
   let inventoryEditorCharacterId = null;
-  let inventoryEditorDirty = false;
   let inventorySelectedRow = null;
+  let inventoryEditingEntryId = null;
+  let inventoryEditingContainerId = null;
+  let inventoryEditingIsContainer = false;
+  let inventoryAddFormOpen = false;
+  let currentInventory = [];
   let currentCampaignId = '';
   let claimableCharacters = [];
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
@@ -902,7 +915,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   function openCurrencyEditor(character) {
     if (!character || !currencySystem || !currencyFields) return;
     closeCharacterOverflowMenu();
-    if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
     closeInventoryEditor();
     currencyEditorCharacterId = character.id;
     currencyEditorDirty = false;
@@ -1011,7 +1023,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     }
     equipmentLibraryLoading = true;
     try {
-      const response = await fetch('/equipment-library?limit=500');
+      const response = await fetch('/equipment-library?limit=0');
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
       }
@@ -1335,7 +1347,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
   async function openPartyTreasureEditor(character) {
     if (!character || !partyTreasureFields) return;
     closeCharacterOverflowMenu();
-    if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
     closeInventoryEditor();
     if (currencyEditorDirty && !confirm('Discard money changes?')) return;
     closeCurrencyEditor();
@@ -1381,11 +1392,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       entryRow.classList.toggle('selected', entryRow === row);
       entryRow.setAttribute('aria-selected', (entryRow === row).toString());
     });
-    if (inventoryRemoveBtn) {
-      const canRemove = Boolean(inventorySelectedRow);
-      inventoryRemoveBtn.disabled = !canRemove;
-      inventoryRemoveBtn.setAttribute('aria-disabled', (!canRemove).toString());
-    }
+    updateInventoryActionButtons();
   }
 
   function focusInventoryRow(row) {
@@ -1468,14 +1475,31 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     }
   }
 
+  function applyInventoryPresetToForm(itemName) {
+    if (!itemName) return;
+    const preset = equipmentLibraryItems.find(
+      (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
+    );
+    if (!preset) return;
+    if (inventoryAddFormValue && Number.isFinite(preset.value)) {
+      inventoryAddFormValue.value = String(preset.value);
+    }
+    if (inventoryAddFormWeight && Number.isFinite(preset.weight)) {
+      inventoryAddFormWeight.value = String(preset.weight);
+    }
+    if (inventoryAddFormUrl && typeof preset.url === 'string' && preset.url.trim()) {
+      inventoryAddFormUrl.value = preset.url.trim();
+    }
+  }
+
   function updateInventoryTotalWeight() {
     if (!inventoryTotalWeight) return;
-    const rows = Array.from(inventoryFields?.querySelectorAll('tr.inventory-entry') || []);
-    const totalWeight = rows.reduce((sum, row) => {
-      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
-      const weightInput = row.querySelector('input[data-inventory-field="weight"]');
-      const quantity = Number(quantityInput?.value ?? '0');
-      const weight = Number(weightInput?.value ?? '0');
+    const totalWeight = currentInventory.reduce((sum, entry) => {
+      if (!entry || entry.containerId) {
+        return sum;
+      }
+      const quantity = Number(entry.quantity);
+      const weight = Number(entry.weight);
       if (!Number.isFinite(quantity) || !Number.isFinite(weight)) {
         return sum;
       }
@@ -1487,99 +1511,14 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     inventoryTotalWeight.textContent = `Total weight carried: ${formattedTotal}`;
   }
 
-  function createInventoryRow(entry = {}, options = {}) {
-    const normalized = normalizeInventoryEntry(entry, options.containerId ?? null, options.isContainer ?? false);
-    const row = document.createElement('tr');
-    row.className = 'inventory-entry';
-    row.dataset.inventoryEntryId = normalized.id;
-    row.dataset.inventoryContainerId = normalized.containerId || '';
-    row.dataset.inventoryIsContainer = normalized.isContainer ? 'true' : 'false';
-    if (normalized.isContainer) {
-      row.classList.add('inventory-container-row');
-    }
-    row.addEventListener('click', () => {
-      setSelectedInventoryRow(row);
-    });
-
-    const fields = [
-      {
-        key: 'name',
-        type: 'text',
-        value: normalized.name,
-        placeholder: 'Item name',
-        list: 'inventory-item-options'
-      },
-      {
-        key: 'quantity',
-        type: 'number',
-        value: String(normalized.quantity),
-        step: '1'
-      },
-      {
-        key: 'value',
-        type: 'number',
-        value: String(normalized.value),
-        step: 'any'
-      },
-      {
-        key: 'weight',
-        type: 'number',
-        value: String(normalized.weight),
-        step: 'any'
-      },
-      {
-        key: 'url',
-        type: 'url',
-        value: normalized.url || ''
-      }
-    ];
-
-    fields.forEach((field) => {
-      const cell = document.createElement('td');
-      const input = document.createElement('input');
-      input.type = field.type;
-      input.value = field.value;
-      if (field.placeholder) {
-        input.placeholder = field.placeholder;
-      }
-      if (field.list) {
-        input.setAttribute('list', field.list);
-      }
-      if (field.step) {
-        input.step = field.step;
-      }
-      input.dataset.inventoryField = field.key;
-      input.addEventListener('input', () => {
-        inventoryEditorDirty = true;
-        if (field.key === 'name') {
-          applyInventoryPresetToRow(row, input.value);
-        }
-        updateInventoryTotalWeight();
-      });
-      input.addEventListener('change', () => {
-        if (field.key === 'name') {
-          applyInventoryPresetToRow(row, input.value);
-        }
-        updateInventoryTotalWeight();
-      });
-      input.addEventListener('focus', () => {
-        setSelectedInventoryRow(row);
-      });
-      cell.appendChild(input);
-      row.appendChild(cell);
-    });
-
-    return row;
-  }
-
-  function createInventorySectionTable(firstColumnLabel = 'Carried') {
+  function createInventorySectionTable(firstColumnLabel = 'Item') {
     const wrap = document.createElement('div');
     wrap.className = 'inventory-table-wrap';
     const table = document.createElement('table');
     table.className = 'inventory-table';
     const thead = document.createElement('thead');
     const tr = document.createElement('tr');
-    [firstColumnLabel, 'Qty', 'Value', 'Weight (per)', 'Link'].forEach((label) => {
+    [firstColumnLabel, 'Qty', 'Value', 'Weight'].forEach((label) => {
       const th = document.createElement('th');
       th.textContent = label;
       tr.appendChild(th);
@@ -1589,22 +1528,74 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     const tbody = document.createElement('tbody');
     table.appendChild(tbody);
     wrap.appendChild(table);
-    return { wrap, tbody };
+    return { wrap, tbody, titleCell: tr.firstChild };
   }
 
-  function appendInventoryRow(entry = {}, options = {}) {
+  function createInventoryDisplayRow(entry = {}, options = {}) {
+    const normalized = normalizeInventoryEntry(entry, options.containerId ?? null, options.isContainer ?? false);
+    const row = document.createElement('tr');
+    row.className = 'inventory-entry';
+    row.classList.add('inventory-entry-display');
+    if (normalized.isContainer) {
+      row.classList.add('inventory-container-row');
+    }
+    row.dataset.inventoryEntryId = normalized.id;
+    row.dataset.inventoryContainerId = normalized.containerId || '';
+    row.dataset.inventoryIsContainer = normalized.isContainer ? 'true' : 'false';
+    row.dataset.inventoryEntry = JSON.stringify(normalized);
+    row.addEventListener('click', () => {
+      setSelectedInventoryRow(row);
+    });
+
+    const fields = [
+      { key: 'name', value: normalized.name || '', isLink: false },
+      { key: 'quantity', value: String(normalized.quantity ?? 1), isLink: false },
+      { key: 'value', value: String(normalized.value ?? 0), isLink: false },
+      { key: 'weight', value: String(normalized.weight ?? 0), isLink: false }
+    ];
+
+    fields.forEach((field) => {
+      const cell = document.createElement('td');
+      cell.dataset.inventoryFieldCell = field.key;
+      if (field.key === 'name') {
+        const url = typeof normalized.url === 'string' ? normalized.url.trim() : '';
+        if (url) {
+          const link = document.createElement('a');
+          link.className = 'inventory-display-value inventory-display-name inventory-display-link';
+          link.href = url;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.textContent = field.value || 'Item';
+          link.addEventListener('click', (event) => {
+            event.stopPropagation();
+          });
+          cell.appendChild(link);
+        } else {
+          const display = document.createElement('span');
+          display.className = 'inventory-display-value inventory-display-name';
+          display.textContent = field.value || 'Item';
+          cell.appendChild(display);
+        }
+      } else {
+        const display = document.createElement('span');
+        display.className = `inventory-display-value inventory-display-${field.key}`;
+        display.textContent = field.value;
+        cell.appendChild(display);
+      }
+      row.appendChild(cell);
+    });
+
+    return row;
+  }
+
+  function appendInventoryDisplayRow(entry = {}, options = {}) {
     const normalized = normalizeInventoryEntry(entry, options.containerId ?? null, options.isContainer ?? false);
     const targetBody =
       options.targetBody ||
       (options.containerId ? getInventoryContainerBody(options.containerId) : inventoryFields);
     if (!targetBody) return null;
-    const row = createInventoryRow(normalized, options);
+    const row = createInventoryDisplayRow(normalized, options);
     targetBody.appendChild(row);
-    inventoryEditorDirty = true;
-    setSelectedInventoryRow(row);
-    if (!normalized.isContainer && !normalized.containerId) {
-      updateInventoryTotalWeight();
-    }
     return row;
   }
 
@@ -1615,168 +1606,319 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     section.dataset.containerId = containerEntry.id;
 
     const { wrap, tbody } = createInventorySectionTable(containerEntry.name || 'Container');
-
-    appendInventoryRow(containerEntry, { containerId: null, isContainer: true, targetBody: tbody });
+    const containerRow = appendInventoryDisplayRow(containerEntry, {
+      containerId: null,
+      isContainer: true,
+      targetBody: tbody
+    });
     allEntries
       .filter((entry) => entry.containerId === containerEntry.id && !entry.isContainer)
       .forEach((entry) => {
-        appendInventoryRow(entry, { containerId: containerEntry.id, targetBody: tbody });
+        appendInventoryDisplayRow(entry, { containerId: containerEntry.id, targetBody: tbody });
       });
-
-    const containerNameInput = tbody.querySelector('input[data-inventory-field="name"]');
-    const firstHeader = wrap.querySelector('th');
-    if (containerNameInput && firstHeader) {
-      containerNameInput.addEventListener('input', () => {
-        firstHeader.textContent = containerNameInput.value.trim() || 'Container';
-      });
-    }
 
     section.appendChild(wrap);
     inventoryContainerSections.appendChild(section);
-    return section;
+    return containerRow;
   }
 
-  function buildInventoryFields(character) {
+  function buildInventoryFields(items = []) {
     if (!inventoryFields) return;
+    currentInventory = Array.isArray(items)
+      ? items.map((entry) => normalizeInventoryEntry(entry)).filter(Boolean)
+      : [];
     inventoryFields.innerHTML = '';
     if (inventoryContainerSections) {
       inventoryContainerSections.innerHTML = '';
     }
-    const entries = Array.isArray(character?.inventory) ? character.inventory : [];
-    const normalizedEntries = entries.map((entry) => normalizeInventoryEntry(entry));
-    const rootEntries = normalizedEntries.filter((entry) => !entry.isContainer && !entry.containerId);
-    const containerEntries = normalizedEntries.filter((entry) => entry.isContainer && !entry.containerId);
-    if (rootEntries.length === 0) {
-      rootEntries.push(normalizeInventoryEntry({}, null, false));
-    }
+    const rootEntries = currentInventory.filter((entry) => !entry.isContainer && !entry.containerId);
+    const containerEntries = currentInventory.filter((entry) => entry.isContainer && !entry.containerId);
     rootEntries.forEach((entry) => {
-      appendInventoryRow(entry, { targetBody: inventoryFields });
+      appendInventoryDisplayRow(entry, { targetBody: inventoryFields });
     });
     containerEntries.forEach((entry) => {
-      buildInventoryContainerSection(entry, normalizedEntries);
+      buildInventoryContainerSection(entry, currentInventory);
     });
-    setSelectedInventoryRow(inventoryFields.querySelector('tr'));
+    setSelectedInventoryRow(getInventoryPanelRows()[0] || null);
     updateInventoryTotalWeight();
+    updateInventoryActionButtons();
   }
 
-  function appendInventoryContainerSection(entry = {}) {
-    try {
-      const normalized = normalizeInventoryEntry(
-        {
-          ...entry,
-          name: typeof entry.name === 'string' && entry.name.trim() ? entry.name : 'Container'
-        },
-        null,
-        true
-      );
-      const sectionsContainer =
-        inventoryContainerSections ||
-        inventoryFields?.parentElement ||
-        inventoryPanel?.querySelector('.inventory-dialog');
-      if (!sectionsContainer) {
-        console.warn('[inventory] container sections unavailable', {
-          hasInventoryContainerSections: Boolean(inventoryContainerSections),
-          hasInventoryFields: Boolean(inventoryFields),
-          hasInventoryPanel: Boolean(inventoryPanel)
-        });
-        return null;
-      }
-      console.info('[inventory] creating container section', normalized.id);
-      const section = document.createElement('section');
-      section.className = 'inventory-section inventory-container-section';
-      section.dataset.containerId = normalized.id;
-      const { wrap, tbody } = createInventorySectionTable(normalized.name || 'Container');
-      const containerRow = appendInventoryRow(normalized, {
-        targetBody: tbody,
-        isContainer: true,
-        containerId: null
-      });
-      section.appendChild(wrap);
-      const insertionPoint = inventoryContainerSections ? inventoryContainerSections.firstChild : null;
-      sectionsContainer.insertBefore(section, insertionPoint);
-      if (containerRow) {
-        const nameInput = containerRow.querySelector('input[data-inventory-field="name"]');
-        const firstHeader = wrap.querySelector('th');
-        if (nameInput) {
-          nameInput.addEventListener('input', () => {
-            if (firstHeader) {
-              firstHeader.textContent = nameInput.value.trim() || 'Container';
-            }
-          });
-        }
-      }
-      window.requestAnimationFrame(() => {
-        const dialog = inventoryPanel?.querySelector('.inventory-dialog');
-        if (dialog) {
-          const sectionTop = section.offsetTop - dialog.offsetTop;
-          dialog.scrollTop = Math.max(0, sectionTop - 12);
-        } else {
-          section.scrollIntoView({ block: 'start' });
-        }
-        if (containerRow) {
-          setSelectedInventoryRow(containerRow);
-          focusInventoryRow(containerRow);
-        }
-      });
-      if (statusDiv) {
-        statusDiv.textContent = `Added container: ${normalized.name || 'Container'}`;
-      }
-      return containerRow;
-    } catch (err) {
-      console.error('[inventory] failed to add container', err);
-      if (statusDiv) {
-        statusDiv.textContent = `Add container failed: ${err instanceof Error ? err.message : String(err)}`;
-      }
-      return null;
+  function updateInventoryActionButtons() {
+    const isAddFormOpen = inventoryAddFormOpen || Boolean(inventoryAddForm && !inventoryAddForm.classList.contains('hidden'));
+    const hasSelection = Boolean(inventorySelectedRow);
+    if (inventoryAddBtn) {
+      inventoryAddBtn.disabled = isAddFormOpen;
+      inventoryAddBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
     }
+    if (inventoryAddContainerBtn) {
+      inventoryAddContainerBtn.disabled = isAddFormOpen;
+      inventoryAddContainerBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
+    }
+    if (inventoryEditBtn) {
+      const canEdit = hasSelection && !isAddFormOpen;
+      inventoryEditBtn.disabled = !canEdit;
+      inventoryEditBtn.setAttribute('aria-disabled', (!canEdit).toString());
+    }
+    if (inventoryRemoveBtn) {
+      const canRemove = hasSelection && !isAddFormOpen;
+      inventoryRemoveBtn.disabled = !canRemove;
+      inventoryRemoveBtn.setAttribute('aria-disabled', (!canRemove).toString());
+    }
+  }
+
+  function populateInventoryAddForm(entry = null) {
+    const normalized = entry
+      ? normalizeInventoryEntry(entry, inventoryEditingContainerId, inventoryEditingIsContainer)
+      : normalizeInventoryEntry({}, inventoryEditingContainerId, inventoryEditingIsContainer);
+    if (inventoryAddFormName) inventoryAddFormName.value = normalized.name || '';
+    if (inventoryAddFormQuantity) inventoryAddFormQuantity.value = String(normalized.quantity ?? 1);
+    if (inventoryAddFormValue) inventoryAddFormValue.value = String(normalized.value ?? 0);
+    if (inventoryAddFormWeight) inventoryAddFormWeight.value = String(normalized.weight ?? 0);
+    if (inventoryAddFormUrl) inventoryAddFormUrl.value = normalized.url || '';
+  }
+
+  function setInventoryAddFormOpen(open, entry = null, options = {}) {
+    if (!inventoryAddForm) return;
+    inventoryAddForm.classList.toggle('hidden', !open);
+    inventoryAddForm.setAttribute('aria-hidden', (!open).toString());
+    inventoryAddFormOpen = open;
+    inventoryEditingEntryId = open && entry ? (entry.id || null) : null;
+    inventoryEditingContainerId = open ? (options.containerId ?? null) : null;
+    inventoryEditingIsContainer = open ? Boolean(options.isContainer) : false;
+    if (inventoryAddFormTitle) {
+      if (open && entry) {
+        inventoryAddFormTitle.textContent = inventoryEditingIsContainer ? 'Edit Container' : 'Edit Item';
+      } else {
+        inventoryAddFormTitle.textContent = inventoryEditingIsContainer ? 'Add Container' : 'Add Item';
+      }
+    }
+    if (inventoryAddFormSaveBtn) {
+      if (open && entry) {
+        inventoryAddFormSaveBtn.textContent = 'Save Changes';
+      } else {
+        inventoryAddFormSaveBtn.textContent = inventoryEditingIsContainer ? 'Add Container' : 'Add Item';
+      }
+    }
+    if (open) {
+      populateInventoryAddForm(entry);
+      applyInventoryPresetToForm(inventoryAddFormName?.value || '');
+    } else {
+      inventoryEditingEntryId = null;
+      inventoryEditingContainerId = null;
+      inventoryEditingIsContainer = false;
+      populateInventoryAddForm(null);
+    }
+    updateInventoryActionButtons();
+  }
+
+  function collectInventoryDraftFromForm() {
+    const name = (inventoryAddFormName?.value || '').trim();
+    const quantityRaw = (inventoryAddFormQuantity?.value || '').trim();
+    const valueRaw = (inventoryAddFormValue?.value || '').trim();
+    const weightRaw = (inventoryAddFormWeight?.value || '').trim();
+    const url = (inventoryAddFormUrl?.value || '').trim();
+    if (!name) {
+      throw new Error('Item name is required.');
+    }
+    const quantity = quantityRaw === '' ? 1 : Number(quantityRaw);
+    const value = valueRaw === '' ? 0 : Math.round(Number(valueRaw) * 100) / 100;
+    const weight = weightRaw === '' ? 0 : Number(weightRaw);
+    if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
+      throw new Error(`Quantity for ${name} must be a whole number of at least 1.`);
+    }
+    if (!Number.isFinite(value)) {
+      throw new Error(`Value for ${name} must be a valid number.`);
+    }
+    if (!Number.isFinite(weight)) {
+      throw new Error(`Weight for ${name} must be a valid number.`);
+    }
+    return {
+      id: inventoryEditingEntryId || createInventoryEntryId(),
+      name,
+      quantity,
+      value,
+      weight,
+      url: url || null,
+      containerId: inventoryEditingIsContainer ? null : (inventoryEditingContainerId || null),
+      isContainer: inventoryEditingIsContainer
+    };
+  }
+
+  function upsertInventoryEntry(items = [], entry = {}) {
+    const normalizedEntry = normalizeInventoryEntry(entry, entry.containerId ?? null, Boolean(entry.isContainer));
+    const normalizedItems = Array.isArray(items)
+      ? items.map((item) => normalizeInventoryEntry(item))
+      : [];
+    const index = normalizedItems.findIndex((item) => item.id === normalizedEntry.id);
+    if (index >= 0) {
+      normalizedItems[index] = normalizedEntry;
+    } else {
+      normalizedItems.push(normalizedEntry);
+    }
+    return normalizedItems;
+  }
+
+  function removeInventoryEntry(items = [], entryId) {
+    const normalizedId = typeof entryId === 'string' ? entryId.trim() : '';
+    if (!normalizedId) {
+      return Array.isArray(items) ? items.map((item) => normalizeInventoryEntry(item)) : [];
+    }
+    let remaining = Array.isArray(items)
+      ? items.map((item) => normalizeInventoryEntry(item))
+      : [];
+    const removedIds = new Set([normalizedId]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      remaining.forEach((item) => {
+        if (item.containerId && removedIds.has(item.containerId) && !removedIds.has(item.id)) {
+          removedIds.add(item.id);
+          changed = true;
+        }
+      });
+    }
+    remaining = remaining.filter((item) => !removedIds.has(item.id));
+    return remaining;
   }
 
   function getSelectedInventoryContainerId() {
     if (!inventorySelectedRow) return null;
-    const section = inventorySelectedRow.closest('section.inventory-container-section');
-    return section ? section.dataset.containerId || null : null;
+    const rowData = getInventoryRowData(inventorySelectedRow) || {};
+    if (rowData.isContainer) {
+      return rowData.id || null;
+    }
+    return rowData.containerId || null;
   }
 
   function addInventoryItemToSelectedSection() {
     const containerId = getSelectedInventoryContainerId();
-    const row = appendInventoryRow({}, { containerId: containerId || null });
-    focusInventoryRow(row);
+    setInventoryAddFormOpen(true, null, {
+      containerId,
+      isContainer: false
+    });
+    window.requestAnimationFrame(() => {
+      inventoryAddFormName?.focus();
+      inventoryAddFormName?.select?.();
+    });
   }
 
-  function removeSelectedInventoryEntry() {
+  function addInventoryContainer() {
+    setInventoryAddFormOpen(true, null, {
+      containerId: null,
+      isContainer: true
+    });
+    window.requestAnimationFrame(() => {
+      inventoryAddFormName?.focus();
+      inventoryAddFormName?.select?.();
+    });
+  }
+
+  function editSelectedInventoryEntry() {
+    if (!inventorySelectedRow) return;
+    const entry = getInventoryRowEntry(inventorySelectedRow);
+    if (!entry) return;
+    setInventoryAddFormOpen(true, entry, {
+      containerId: entry.containerId || null,
+      isContainer: Boolean(entry.isContainer)
+    });
+    window.requestAnimationFrame(() => {
+      inventoryAddFormName?.focus();
+      inventoryAddFormName?.select?.();
+    });
+  }
+
+  function getInventoryRowEntry(row) {
+    if (!row) return null;
+    const rowData = getInventoryRowData(row) || {};
+    const rawEntry = (() => {
+      try {
+        return row.dataset.inventoryEntry ? JSON.parse(row.dataset.inventoryEntry) : {};
+      } catch {
+        return {};
+      }
+    })();
+    return normalizeInventoryEntry({
+      ...rawEntry,
+      id: rowData.id || rawEntry.id || null,
+      containerId: rowData.containerId || rawEntry.containerId || null,
+      isContainer: rowData.isContainer ?? rawEntry.isContainer
+    }, rowData.containerId || rawEntry.containerId || null, rowData.isContainer ?? rawEntry.isContainer);
+  }
+
+  async function saveInventoryItems(items) {
+    if (!inventoryEditorCharacterId) return null;
+    const character = myCharacters.find((entry) => entry.id === inventoryEditorCharacterId);
+    if (!character) {
+      closeInventoryEditor();
+      return null;
+    }
+    character.inventory = Array.isArray(items) ? items : [];
+    const savedCharacter = await saveCharacterEntry(character);
+    if (!savedCharacter) {
+      return null;
+    }
+    currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : character.inventory;
+    return savedCharacter;
+  }
+
+  async function commitInventoryAddFormItem() {
+    if (!inventoryFields) return;
+    let entry;
+    try {
+      entry = collectInventoryDraftFromForm();
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      }
+      return;
+    }
+    const items = upsertInventoryEntry(currentInventory, entry);
+    try {
+      const savedCharacter = await saveInventoryItems(items);
+      if (!savedCharacter) return;
+      currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : items;
+      buildInventoryFields(currentInventory);
+      setSelectedInventoryRow(findInventoryRowById(entry.id) || getInventoryPanelRows()[0] || null);
+      setInventoryAddFormOpen(false);
+      if (statusDiv) {
+        statusDiv.textContent = `Saved ${entry.name}.`;
+      }
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = `Inventory save failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
+  }
+
+  function findInventoryRowById(entryId) {
+    if (!entryId || !inventoryFields) return null;
+    return getInventoryPanelRows().find((row) => row.dataset.inventoryEntryId === entryId) || null;
+  }
+
+  async function removeSelectedInventoryEntry() {
     if (!inventorySelectedRow) return;
     const rowData = getInventoryRowData(inventorySelectedRow) || {};
-    const containerSection = inventorySelectedRow.closest('section.inventory-container-section');
-    if (rowData.isContainer && containerSection) {
-      const containerName =
-        (inventorySelectedRow.querySelector('input[data-inventory-field="name"]')?.value || 'Container').trim();
-      if (!confirm(`Remove ${containerName} and everything inside it?`)) {
-        return;
-      }
-      containerSection.remove();
-      inventorySelectedRow = null;
-      inventoryEditorDirty = true;
-      if (!inventoryFields.querySelector('tr.inventory-entry')) {
-        appendInventoryRow({}, { targetBody: inventoryFields });
-      }
-      setSelectedInventoryRow(inventoryFields.querySelector('tr.inventory-entry'));
-      updateInventoryTotalWeight();
+    const entry = getInventoryRowEntry(inventorySelectedRow);
+    const rowName = (entry?.name || 'Item').trim() || 'Item';
+    if (rowData.isContainer && !confirm(`Remove ${rowName} and everything inside it?`)) {
       return;
     }
-    const parentRow = inventorySelectedRow.parentElement;
-    inventorySelectedRow.remove();
-    inventoryEditorDirty = true;
-    const remainingRows = getInventoryPanelRows();
-    if (remainingRows.length === 0) {
-      appendInventoryRow({}, { targetBody: inventoryFields });
-      setSelectedInventoryRow(inventoryFields.querySelector('tr.inventory-entry'));
-      updateInventoryTotalWeight();
-      return;
+    const items = removeInventoryEntry(currentInventory, rowData.id || '');
+    try {
+      const savedCharacter = await saveInventoryItems(items);
+      if (!savedCharacter) return;
+      currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : items;
+      buildInventoryFields(currentInventory);
+      setSelectedInventoryRow(getInventoryPanelRows()[0] || null);
+      if (statusDiv) {
+        statusDiv.textContent = `Removed ${rowName}.`;
+      }
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = `Inventory remove failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
     }
-    const fallbackRow = remainingRows.find((row) => row.parentElement === parentRow) || remainingRows[0];
-    setSelectedInventoryRow(fallbackRow);
-    focusInventoryRow(fallbackRow);
-    updateInventoryTotalWeight();
   }
 
   async function openInventoryEditor(character) {
@@ -1785,21 +1927,25 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (currencyEditorDirty && !confirm('Discard money changes?')) return;
     closeCurrencyEditor();
     inventoryEditorCharacterId = character.id;
-    inventoryEditorDirty = false;
     if (inventoryDialogTitle) {
       inventoryDialogTitle.textContent = `Inventory - ${character.name || 'Character'}`;
     }
     await loadEquipmentLibrary();
-    buildInventoryFields(character);
-    inventoryEditorDirty = false;
+    setInventoryAddFormOpen(false);
+    currentInventory = Array.isArray(character.inventory)
+      ? character.inventory.map((entry) => normalizeInventoryEntry(entry)).filter(Boolean)
+      : [];
+    buildInventoryFields(currentInventory);
     setInventoryPanelOpen(true);
-    focusInventoryRow(inventoryFields.querySelector('tr'));
+    window.requestAnimationFrame(() => {
+      inventoryAddBtn?.focus();
+    });
   }
 
   function closeInventoryEditor() {
     inventoryEditorCharacterId = null;
-    inventoryEditorDirty = false;
     inventorySelectedRow = null;
+    currentInventory = [];
     if (inventoryDialogTitle) {
       inventoryDialogTitle.textContent = 'Inventory';
     }
@@ -1812,94 +1958,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (inventoryTotalWeight) {
       inventoryTotalWeight.textContent = 'Total weight carried: 0';
     }
-    if (inventoryRemoveBtn) {
-      inventoryRemoveBtn.disabled = true;
-      inventoryRemoveBtn.setAttribute('aria-disabled', 'true');
-    }
+    setInventoryAddFormOpen(false);
     setInventoryPanelOpen(false);
-  }
-
-  function collectInventoryPayloadFromEditor() {
-    if (!inventoryFields) return null;
-    const payload = [];
-    const pushRow = (row) => {
-      const nameInput = row.querySelector('input[data-inventory-field="name"]');
-      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
-      const valueInput = row.querySelector('input[data-inventory-field="value"]');
-      const weightInput = row.querySelector('input[data-inventory-field="weight"]');
-      const urlInput = row.querySelector('input[data-inventory-field="url"]');
-      const rowData = getInventoryRowData(row) || {};
-      const rawName = nameInput ? nameInput.value.trim() : '';
-      const rawQuantity = quantityInput ? quantityInput.value.trim() : '';
-      const rawValue = valueInput ? valueInput.value.trim() : '';
-      const rawWeight = weightInput ? weightInput.value.trim() : '';
-      const rawUrl = urlInput ? urlInput.value.trim() : '';
-      const isUntouchedDefaultRow =
-        !rawName &&
-        (rawQuantity === '' || rawQuantity === '1') &&
-        (rawValue === '' || rawValue === '0') &&
-        (rawWeight === '' || rawWeight === '0') &&
-        !rawUrl;
-      if (isUntouchedDefaultRow) {
-        return;
-      }
-      if (!rawName) {
-        throw new Error('Each inventory row needs an item name.');
-      }
-      const quantity = rawQuantity === '' ? 1 : Number(rawQuantity);
-      const value = rawValue === '' ? 0 : Number(rawValue);
-      const weight = rawWeight === '' ? 0 : Number(rawWeight);
-      if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
-        throw new Error(`Quantity for ${rawName} must be a whole number of at least 1.`);
-      }
-      if (!Number.isFinite(value)) {
-        throw new Error(`Value for ${rawName} must be a valid number.`);
-      }
-      if (!Number.isFinite(weight)) {
-        throw new Error(`Weight for ${rawName} must be a valid number.`);
-      }
-      payload.push({
-        id: rowData.id || createInventoryEntryId(),
-        name: rawName,
-        quantity,
-        value,
-        weight,
-        url: rawUrl || null,
-        containerId: rowData.containerId || null,
-        isContainer: Boolean(rowData.isContainer)
-      });
-    };
-
-    Array.from(inventoryFields.querySelectorAll('tr.inventory-entry')).forEach(pushRow);
-    if (inventoryContainerSections) {
-      inventoryContainerSections.querySelectorAll('section.inventory-container-section').forEach((section) => {
-        section.querySelectorAll('tr.inventory-entry').forEach(pushRow);
-      });
-    }
-    return payload.length > 0 ? payload : null;
-  }
-
-  async function saveInventoryFromEditor() {
-    if (!inventoryEditorCharacterId) return;
-    const character = myCharacters.find((entry) => entry.id === inventoryEditorCharacterId);
-    if (!character) {
-      closeInventoryEditor();
-      return;
-    }
-    let inventory;
-    try {
-      inventory = collectInventoryPayloadFromEditor();
-    } catch (err) {
-      statusDiv.textContent = err instanceof Error ? err.message : String(err);
-      return;
-    }
-    character.inventory = inventory || [];
-    const savedCharacter = await saveCharacterEntry(character);
-    if (!savedCharacter) {
-      return;
-    }
-    inventoryEditorDirty = false;
-    closeInventoryEditor();
+    updateInventoryActionButtons();
   }
 
   function closeCharacterOverflowMenu(exceptMenu = null) {
@@ -4598,6 +4659,12 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
+  if (inventoryCloseBtn) {
+    inventoryCloseBtn.addEventListener('click', () => {
+      closeInventoryEditor();
+    });
+  }
+
   if (inventoryAddBtn) {
     inventoryAddBtn.addEventListener('click', () => {
       addInventoryItemToSelectedSection();
@@ -4606,16 +4673,13 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
   if (inventoryAddContainerBtn) {
     inventoryAddContainerBtn.addEventListener('click', () => {
-      console.info('[inventory] Add Container clicked');
-      const row = appendInventoryContainerSection();
-      if (row) {
-        focusInventoryRow(row);
-      } else {
-        console.warn('[inventory] Add Container did not create a row');
-        if (statusDiv) {
-          statusDiv.textContent = 'Add Container did not create a row';
-        }
-      }
+      addInventoryContainer();
+    });
+  }
+
+  if (inventoryEditBtn) {
+    inventoryEditBtn.addEventListener('click', () => {
+      editSelectedInventoryEntry();
     });
   }
 
@@ -4625,23 +4689,30 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
-  if (inventorySaveBtn) {
-    inventorySaveBtn.addEventListener('click', async () => {
-      await saveInventoryFromEditor();
+  if (inventoryAddFormSaveBtn) {
+    inventoryAddFormSaveBtn.addEventListener('click', async () => {
+      await commitInventoryAddFormItem();
     });
   }
 
-  if (inventoryCancelBtn) {
-    inventoryCancelBtn.addEventListener('click', () => {
-      if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
-      closeInventoryEditor();
+  if (inventoryAddFormCancelBtn) {
+    inventoryAddFormCancelBtn.addEventListener('click', () => {
+      setInventoryAddFormOpen(false);
+    });
+  }
+
+  if (inventoryAddFormName) {
+    inventoryAddFormName.addEventListener('input', () => {
+      applyInventoryPresetToForm(inventoryAddFormName.value);
+    });
+    inventoryAddFormName.addEventListener('change', () => {
+      applyInventoryPresetToForm(inventoryAddFormName.value);
     });
   }
 
   if (inventoryPanel) {
     inventoryPanel.addEventListener('click', (event) => {
       if (event.target !== inventoryPanel) return;
-      if (inventoryEditorDirty && !confirm('Discard inventory changes?')) return;
       closeInventoryEditor();
     });
   }

@@ -2856,7 +2856,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     equipmentLibraryLoading = true;
     try {
-      const response = await fetch('/equipment-library?limit=500');
+      const response = await fetch('/equipment-library?limit=0');
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
       }

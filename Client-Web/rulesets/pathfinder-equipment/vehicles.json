@@ -1,0 +1,264 @@
+{
+  "id": "pathfinder-equipment-vehicles",
+  "label": "Pathfinder Equipment - Vehicles",
+  "source": "https://www.d20pfsrd.com/equipment/",
+  "generatedAt": "2026-06-05T18:42:21Z",
+  "items": [
+    {
+      "id": "airship",
+      "name": "Airship",
+      "value": 50000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/air-vehicles/airship/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "alchemical-dragon",
+      "name": "Alchemical Dragon",
+      "value": 100000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/air-vehicles/alchemical-dragon/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "carriage",
+      "name": "Carriage",
+      "value": 100,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/carriage/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "cart",
+      "name": "Cart",
+      "value": 15,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/cart/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "chariot-heavy-2",
+      "name": "Chariot, Heavy",
+      "value": 200,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/chariot-Heavy/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "chariot-heavy",
+      "name": "Chariot, heavy",
+      "value": 200,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "chariot-light-2",
+      "name": "Chariot, Light",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/chariot-Light/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "chariot-light",
+      "name": "Chariot, light",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "chariot-medium-2",
+      "name": "Chariot, Medium",
+      "value": 100,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/chariot-Medium/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "chariot-medium",
+      "name": "Chariot, medium",
+      "value": 100,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "dog-sled-2",
+      "name": "Dog Sled",
+      "value": 20,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/dog-Sled/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "dog-sled",
+      "name": "Dog sled",
+      "value": 20,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "galley",
+      "name": "Galley",
+      "value": 30000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/water-vehicles/galley/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "glider-2",
+      "name": "Glider",
+      "value": 500,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/air-vehicles/glider/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "keelboat-2",
+      "name": "Keelboat",
+      "value": 13000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/water-vehicles/keelboat/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "keelboat",
+      "name": "Keelboat",
+      "value": 3000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "longship-2",
+      "name": "Longship",
+      "value": 10000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/water-vehicles/longship/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "rowboat",
+      "name": "Rowboat",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/water-vehicles/rowboat/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "sailing-ship-2",
+      "name": "Sailing Ship",
+      "value": 10000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/water-vehicles/sailing-ship/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "sailing-ship",
+      "name": "Sailing ship",
+      "value": 10000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "ships-boat",
+      "name": "Ship’s boat",
+      "value": 500,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "sledge",
+      "name": "Sledge",
+      "value": 1,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/tools-kits/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "sleigh-2",
+      "name": "Sleigh",
+      "value": 100,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/sleigh/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "sleigh",
+      "name": "Sleigh",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "steam-giant-2",
+      "name": "Steam Giant",
+      "value": 80000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/steam-giant/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "wagon-heavy-2",
+      "name": "Wagon, Heavy",
+      "value": 100,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/wagon-heavy/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "wagon-heavy",
+      "name": "Wagon, heavy",
+      "value": 100,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "wagon-light-2",
+      "name": "Wagon, Light",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/wagon-light/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "wagon-light",
+      "name": "Wagon, light",
+      "value": 50,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "wagon-medium-2",
+      "name": "Wagon, Medium",
+      "value": 75,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/land-vehicles/wagon-medium/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "wagon-medium",
+      "name": "Wagon, medium",
+      "value": 75,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/furniture-trade-goods-vehicles/",
+      "category": "Vehicles"
+    },
+    {
+      "id": "warship",
+      "name": "Warship",
+      "value": 25000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/vehicles/water-vehicles/warship/",
+      "category": "Vehicles"
+    }
+  ]
+}

@@ -1800,6 +1800,11 @@ body.referee-page .referee-panel {
   cursor: pointer;
 }
 
+.inventory-entry-display .inventory-display-link {
+  color: var(--text-link);
+  text-decoration: underline;
+}
+
 .inventory-entry-display input[type="hidden"] {
   display: none;
 }
@@ -1837,26 +1842,21 @@ body.referee-page .referee-panel {
 
 .inventory-table th:nth-child(1),
 .inventory-table td:nth-child(1) {
-  width: 32%;
+  width: 40%;
 }
 
 .inventory-table th:nth-child(2),
 .inventory-table td:nth-child(2) {
-  width: 10%;
+  width: 12%;
 }
 
 .inventory-table th:nth-child(3),
 .inventory-table td:nth-child(3) {
-  width: 14%;
+  width: 18%;
 }
 
 .inventory-table th:nth-child(4),
 .inventory-table td:nth-child(4) {
-  width: 14%;
-}
-
-.inventory-table th:nth-child(5),
-.inventory-table td:nth-child(5) {
   width: 30%;
 }
 
@@ -2026,24 +2026,6 @@ body.referee-page .referee-panel {
     width: 15%;
   }
 
-  .party-treasure-compact .inventory-table th:nth-child(4),
-  .party-treasure-compact .inventory-table td:nth-child(4),
-  #party-treasure-panel .inventory-table th:nth-child(4),
-  #party-treasure-panel .inventory-table td:nth-child(4),
-  #ref-party-treasure-panel .inventory-table th:nth-child(4),
-  #ref-party-treasure-panel .inventory-table td:nth-child(4) {
-    display: none !important;
-  }
-
-  .party-treasure-compact .inventory-table th:nth-child(5),
-  .party-treasure-compact .inventory-table td:nth-child(5),
-  #party-treasure-panel .inventory-table th:nth-child(5),
-  #party-treasure-panel .inventory-table td:nth-child(5),
-  #ref-party-treasure-panel .inventory-table th:nth-child(5),
-  #ref-party-treasure-panel .inventory-table td:nth-child(5) {
-    display: none !important;
-  }
-
   .party-treasure-compact .inventory-entry-display,
   #party-treasure-panel .inventory-entry-display,
   #ref-party-treasure-panel .inventory-entry-display {
@@ -2064,7 +2046,7 @@ body.referee-page .referee-panel {
   #party-treasure-panel .inventory-table td:nth-child(1),
   #ref-party-treasure-panel .inventory-table th:nth-child(1),
   #ref-party-treasure-panel .inventory-table td:nth-child(1) {
-    width: auto;
+    width: 44%;
     white-space: normal;
     word-break: break-word;
   }
@@ -2075,7 +2057,7 @@ body.referee-page .referee-panel {
   #party-treasure-panel .inventory-table td:nth-child(2),
   #ref-party-treasure-panel .inventory-table th:nth-child(2),
   #ref-party-treasure-panel .inventory-table td:nth-child(2) {
-    width: 3.5rem;
+    width: 14%;
     white-space: nowrap;
   }
 
@@ -2085,7 +2067,17 @@ body.referee-page .referee-panel {
   #party-treasure-panel .inventory-table td:nth-child(3),
   #ref-party-treasure-panel .inventory-table th:nth-child(3),
   #ref-party-treasure-panel .inventory-table td:nth-child(3) {
-    width: 5.5rem;
+    width: 18%;
+    white-space: nowrap;
+  }
+
+  .party-treasure-compact .inventory-table th:nth-child(4),
+  .party-treasure-compact .inventory-table td:nth-child(4),
+  #party-treasure-panel .inventory-table th:nth-child(4),
+  #party-treasure-panel .inventory-table td:nth-child(4),
+  #ref-party-treasure-panel .inventory-table th:nth-child(4),
+  #ref-party-treasure-panel .inventory-table td:nth-child(4) {
+    width: 24%;
     white-space: nowrap;
   }
 }

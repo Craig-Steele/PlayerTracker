@@ -1,0 +1,856 @@
+{
+  "id": "pathfinder-equipment-livestock",
+  "label": "Pathfinder Equipment - Livestock",
+  "source": "https://www.d20pfsrd.com/equipment/",
+  "generatedAt": "2026-06-05T18:42:21Z",
+  "items": [
+    {
+      "id": "allosaurus",
+      "name": "Allosaurus",
+      "value": 3850,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "ankylosaurus",
+      "name": "Ankylosaurus",
+      "value": 3000,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "antelope",
+      "name": "Antelope",
+      "value": 45,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "aurochs",
+      "name": "Aurochs",
+      "value": 300,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "axe-beak",
+      "name": "Axe beak",
+      "value": 1500,
+      "weight": 500,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "axe-beak-combat-trained",
+      "name": "Axe beak (combat trained)",
+      "value": 1500,
+      "weight": 500,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "baboon",
+      "name": "Baboon",
+      "value": 15,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "badger",
+      "name": "Badger",
+      "value": 15,
+      "weight": 20,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "bat",
+      "name": "Bat",
+      "value": 5,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "bat-dire-riding",
+      "name": "Bat, dire, riding",
+      "value": 300,
+      "weight": 400,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "bat-dire-riding-combat-trained",
+      "name": "Bat, dire, riding (combat trained)",
+      "value": 450,
+      "weight": 450,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "bat-shadow",
+      "name": "Bat, shadow",
+      "value": 50,
+      "weight": 2,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "blue-whale",
+      "name": "Blue whale",
+      "value": 12500,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "boar",
+      "name": "Boar",
+      "value": 100,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "camel",
+      "name": "Camel",
+      "value": 150,
+      "weight": 1000,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "camel-riding",
+      "name": "Camel, riding",
+      "value": 150,
+      "weight": 1500,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "cat",
+      "name": "Cat",
+      "value": 0.03,
+      "weight": 8,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "cat-hunting",
+      "name": "Cat, hunting",
+      "value": 100,
+      "weight": 100,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "chicken",
+      "name": "Chicken",
+      "value": 1,
+      "weight": 6,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "constrictor-snake",
+      "name": "Constrictor snake",
+      "value": 90,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "cow",
+      "name": "Cow",
+      "value": 10,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "crimson-whale",
+      "name": "Crimson whale",
+      "value": 8000,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "crocodile",
+      "name": "Crocodile",
+      "value": 55,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-ape",
+      "name": "Dire ape",
+      "value": 450,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-badger",
+      "name": "Dire badger",
+      "value": 125,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-bat",
+      "name": "Dire bat",
+      "value": 220,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-bear",
+      "name": "Dire bear",
+      "value": 1750,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-boar",
+      "name": "Dire boar",
+      "value": 370,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-crocodile",
+      "name": "Dire crocodile",
+      "value": 2700,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-hyena",
+      "name": "Dire hyena",
+      "value": 250,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-lion",
+      "name": "Dire lion",
+      "value": 1000,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-shark",
+      "name": "Dire shark",
+      "value": 3375,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-tiger",
+      "name": "Dire tiger",
+      "value": 1055,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-wolf",
+      "name": "Dire wolf",
+      "value": 380,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dire-wolverine",
+      "name": "Dire wolverine",
+      "value": 500,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "dog-guard",
+      "name": "Dog, guard",
+      "value": 25,
+      "weight": 90,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "dog-lap",
+      "name": "Dog, lap",
+      "value": 15,
+      "weight": 5,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "dog-riding",
+      "name": "Dog, riding",
+      "value": 150,
+      "weight": 120,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "duck",
+      "name": "Duck",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "elk",
+      "name": "Elk",
+      "value": 100,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "eagle",
+      "name": "Eagle",
+      "value": 40,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "electric-eel",
+      "name": "Electric eel",
+      "value": 125,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "elephant",
+      "name": "Elephant",
+      "value": 1000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "emperor-cobra",
+      "name": "Emperor cobra",
+      "value": 1600,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "exotic-mount",
+      "name": "Exotic Mount",
+      "value": 36,
+      "weight": 59,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "fox",
+      "name": "Fox",
+      "value": 8,
+      "weight": 12,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "gar",
+      "name": "Gar",
+      "value": 90,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "gecko",
+      "name": "Gecko",
+      "value": 12,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "gecko-riding",
+      "name": "Gecko, riding",
+      "value": 300,
+      "weight": 1200,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "gecko-riding-combat-trained",
+      "name": "Gecko, riding (combat trained)",
+      "value": 400,
+      "weight": 1500,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "giant-frilled-lizard",
+      "name": "Giant frilled lizard",
+      "value": 375,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "giant-frog",
+      "name": "Giant frog",
+      "value": 75,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "giant-gecko",
+      "name": "Giant gecko",
+      "value": 100,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "goat",
+      "name": "Goat",
+      "value": 1,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "goblin-dog",
+      "name": "Goblin dog",
+      "value": 35,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "gorilla",
+      "name": "Gorilla",
+      "value": 175,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "great-white-whale",
+      "name": "Great white whale",
+      "value": 12600,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "griffon-combat-trained",
+      "name": "Griffon (combat trained)",
+      "value": 8000,
+      "weight": 500,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "grizzly-bear",
+      "name": "Grizzly bear",
+      "value": 740,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "guinea-pig",
+      "name": "Guinea pig",
+      "value": 0.01,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "heavy-horse-crazy",
+      "name": "Heavy Horse, Crazy",
+      "value": 425,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "heavy-horse-desert",
+      "name": "Heavy Horse, Desert",
+      "value": 350,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "heavy-horse-mammoth",
+      "name": "Heavy Horse, Mammoth",
+      "value": 300,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "heavy-horse-waverunner",
+      "name": "Heavy Horse, Waverunner",
+      "value": 225,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "hippogriff-combat-trained",
+      "name": "Hippogriff (combat trained)",
+      "value": 5000,
+      "weight": 500,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "horse-heavy",
+      "name": "Horse, heavy",
+      "value": 200,
+      "weight": 1000,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "horse-heavy-combat-trained",
+      "name": "Horse, heavy (combat-trained)",
+      "value": 300,
+      "weight": 1200,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "horse-light",
+      "name": "Horse, light",
+      "value": 75,
+      "weight": 600,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "horse-light-combat-trained",
+      "name": "Horse, light (combat-trained)",
+      "value": 110,
+      "weight": 900,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "hyena",
+      "name": "Hyena",
+      "value": 80,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "lion",
+      "name": "Lion",
+      "value": 200,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "lizard",
+      "name": "Lizard",
+      "value": 0.05,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "marine-iguana",
+      "name": "Marine iguana",
+      "value": 6,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "mongoose",
+      "name": "Mongoose",
+      "value": 4,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "monitor-lizard",
+      "name": "Monitor lizard",
+      "value": 150,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "otter",
+      "name": "Otter",
+      "value": 20,
+      "weight": 10,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "ox",
+      "name": "Ox",
+      "value": 15,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "parrot",
+      "name": "Parrot",
+      "value": 50,
+      "weight": 4,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "pig",
+      "name": "Pig",
+      "value": 3,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "poison-frog",
+      "name": "Poison frog",
+      "value": 60,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "pony",
+      "name": "Pony",
+      "value": 30,
+      "weight": 800,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "pony-combat-trained",
+      "name": "Pony (combat-trained)",
+      "value": 45,
+      "weight": 900,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "rabbit",
+      "name": "Rabbit",
+      "value": 2,
+      "weight": 3,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "ram",
+      "name": "Ram",
+      "value": 25,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "rat",
+      "name": "Rat",
+      "value": 0.01,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "rat-blue",
+      "name": "Rat, Blue",
+      "value": 1,
+      "weight": 1,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "rat-dire",
+      "name": "Rat, dire",
+      "value": 5,
+      "weight": 50,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "rhinoceros",
+      "name": "Rhinoceros",
+      "value": 1000,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "roc",
+      "name": "Roc",
+      "value": 7200,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "seal",
+      "name": "Seal",
+      "value": 45,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "shark",
+      "name": "Shark",
+      "value": 325,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "sheep",
+      "name": "Sheep",
+      "value": 2,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "snake-constrictor",
+      "name": "Snake, constrictor",
+      "value": 5,
+      "weight": 60,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "snake-viper",
+      "name": "Snake, viper",
+      "value": 5,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "spider",
+      "name": "Spider",
+      "value": 25,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "stegosaurus",
+      "name": "Stegosaurus",
+      "value": 4200,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "tiger",
+      "name": "Tiger",
+      "value": 325,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "toucan",
+      "name": "Toucan",
+      "value": 40,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "triceratops",
+      "name": "Triceratops",
+      "value": 5600,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "whale",
+      "name": "Whale",
+      "value": 10000,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "wolf",
+      "name": "Wolf",
+      "value": 100,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "wolverine",
+      "name": "Wolverine",
+      "value": 125,
+      "weight": 0,
+      "url": null,
+      "category": "Livestock"
+    },
+    {
+      "id": "woolly-mammoth",
+      "name": "Woolly mammoth",
+      "value": 3000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "woolly-mammoth-combat-trained",
+      "name": "Woolly mammoth (combat-trained)",
+      "value": 4500,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "woolly-rhinoceros",
+      "name": "Woolly rhinoceros",
+      "value": 2000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    },
+    {
+      "id": "woolly-rhinoceros-combat-trained",
+      "name": "Woolly rhinoceros (combat-trained)",
+      "value": 3000,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/equipment/goods-and-services/animals-animal-gear/",
+      "category": "Livestock"
+    }
+  ]
+}
