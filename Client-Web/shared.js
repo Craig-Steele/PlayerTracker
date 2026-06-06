@@ -5,6 +5,9 @@
   let confirmDialogState = null;
   let confirmDialogResolve = null;
   let confirmDialogLastFocus = null;
+  let choiceDialogState = null;
+  let choiceDialogResolve = null;
+  let choiceDialogLastFocus = null;
 
   function toArray(targets) {
     if (!targets) return [];
@@ -119,6 +122,25 @@
     confirmDialogLastFocus = null;
   }
 
+  function closeChoiceDialog(result) {
+    if (!choiceDialogState) return;
+    const resolve = choiceDialogResolve;
+    choiceDialogResolve = null;
+    choiceDialogState.modal.classList.add('hidden');
+    choiceDialogState.modal.setAttribute('aria-hidden', 'true');
+    if (resolve) {
+      resolve(result);
+    }
+    if (choiceDialogLastFocus && typeof choiceDialogLastFocus.focus === 'function') {
+      try {
+        choiceDialogLastFocus.focus();
+      } catch (err) {
+        // Ignore focus restoration failures.
+      }
+    }
+    choiceDialogLastFocus = null;
+  }
+
   function ensureConfirmDialog() {
     if (confirmDialogState) return confirmDialogState;
     if (!document.body) return null;
@@ -186,6 +208,74 @@
     return state;
   }
 
+  function ensureChoiceDialog() {
+    if (choiceDialogState) return choiceDialogState;
+    if (!document.body) return null;
+    const modal = document.createElement('div');
+    modal.id = 'shared-choice-modal';
+    modal.className = 'conditions-modal hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+      <div class="conditions-dialog confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="shared-choice-title" aria-describedby="shared-choice-message">
+        <div class="conditions-dialog-header confirm-dialog-header">
+          <div class="confirm-dialog-copy">
+            <h2 id="shared-choice-title"></h2>
+            <div id="shared-choice-header" class="subtitle confirm-dialog-header-text hidden"></div>
+          </div>
+          <div class="conditions-dialog-actions choice-dialog-actions">
+            <button type="button" id="shared-choice-option-1" class="secondary"></button>
+            <button type="button" id="shared-choice-option-2" class="secondary"></button>
+            <button type="button" id="shared-choice-option-3"></button>
+          </div>
+        </div>
+        <div id="shared-choice-message" class="confirm-dialog-message hidden"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const dialog = modal.querySelector('.conditions-dialog');
+    const title = modal.querySelector('#shared-choice-title');
+    const header = modal.querySelector('#shared-choice-header');
+    const message = modal.querySelector('#shared-choice-message');
+    const option1 = modal.querySelector('#shared-choice-option-1');
+    const option2 = modal.querySelector('#shared-choice-option-2');
+    const option3 = modal.querySelector('#shared-choice-option-3');
+
+    const state = {
+      modal,
+      dialog,
+      title,
+      header,
+      message,
+      option1,
+      option2,
+      option3,
+      dismissValue: null
+    };
+
+    modal.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (event.target === modal) {
+        closeChoiceDialog(state.dismissValue);
+      }
+    });
+    dialog.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeChoiceDialog(state.dismissValue);
+      }
+    });
+    option1.addEventListener('click', () => closeChoiceDialog(option1.dataset.choiceValue || null));
+    option2.addEventListener('click', () => closeChoiceDialog(option2.dataset.choiceValue || null));
+    option3.addEventListener('click', () => closeChoiceDialog(option3.dataset.choiceValue || null));
+
+    choiceDialogState = state;
+    return state;
+  }
+
   function showConfirmDialog(options = {}) {
     const state = ensureConfirmDialog();
     const {
@@ -230,6 +320,64 @@
     });
   }
 
+  function showChoiceDialog(options = {}) {
+    const state = ensureChoiceDialog();
+    const {
+      title = 'Choose',
+      header = '',
+      message = '',
+      option1Label = 'Option 1',
+      option2Label = 'Option 2',
+      option3Label = 'Option 3',
+      option1Value = 'option-1',
+      option2Value = 'option-2',
+      option3Value = 'option-3',
+      option1ButtonClass = 'secondary',
+      option2ButtonClass = 'secondary',
+      option3ButtonClass = 'danger',
+      initialFocus = 'option1',
+      dismissValue = null
+    } = options;
+
+    if (!state) {
+      return Promise.resolve(dismissValue);
+    }
+
+    if (choiceDialogResolve) {
+      closeChoiceDialog(dismissValue);
+    }
+
+    state.title.textContent = title;
+    state.header.textContent = header;
+    state.header.classList.toggle('hidden', !header);
+    state.message.textContent = message;
+    state.message.classList.toggle('hidden', !message);
+    state.option1.textContent = option1Label;
+    state.option2.textContent = option2Label;
+    state.option3.textContent = option3Label;
+    state.option1.className = option1ButtonClass || 'secondary';
+    state.option2.className = option2ButtonClass || 'secondary';
+    state.option3.className = option3ButtonClass || 'danger';
+    state.option1.dataset.choiceValue = option1Value;
+    state.option2.dataset.choiceValue = option2Value;
+    state.option3.dataset.choiceValue = option3Value;
+    state.dismissValue = dismissValue;
+    state.modal.classList.remove('hidden');
+    state.modal.setAttribute('aria-hidden', 'false');
+
+    return new Promise((resolve) => {
+      choiceDialogResolve = resolve;
+      choiceDialogLastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      window.requestAnimationFrame(() => {
+        const focusTarget =
+          initialFocus === 'option2' ? state.option2 : initialFocus === 'option3' ? state.option3 : state.option1;
+        if (focusTarget) {
+          focusTarget.focus();
+        }
+      });
+    });
+  }
+
   window.PlayerTrackerShared = {
     APP_NAME,
     APP_ICON_URL,
@@ -240,6 +388,7 @@
     formatInitiative,
     updateCampaignHeader,
     appendOverflowMenuSeparator,
-    showConfirmDialog
+    showConfirmDialog,
+    showChoiceDialog
   };
 })();

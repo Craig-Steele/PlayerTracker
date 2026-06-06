@@ -6,27 +6,29 @@ let loadStateRefreshQueued = false;
 let displayRosterLayoutFrame = null;
 let displayRosterLayoutMode = 'single';
 
-const {
-  APP_NAME,
-  APP_ICON_URL,
-  QR_CODE_SIZE,
-  isAdminHost,
-  rollStandardDie,
-  formatInitiative,
-  updateCampaignHeader,
-  appendOverflowMenuSeparator,
-  showConfirmDialog
-} = window.PlayerTrackerShared || {
+  const {
+    APP_NAME,
+    APP_ICON_URL,
+    QR_CODE_SIZE,
+    isAdminHost,
+    rollStandardDie,
+    formatInitiative,
+    updateCampaignHeader,
+    appendOverflowMenuSeparator,
+    showConfirmDialog,
+    showChoiceDialog
+  } = window.PlayerTrackerShared || {
   APP_NAME: 'Roll4Initiative',
   APP_ICON_URL: '/favicon-512.png',
   QR_CODE_SIZE: 96,
   isAdminHost: () => false,
   rollStandardDie: () => null,
-  formatInitiative: () => '🎲',
-  updateCampaignHeader: () => {},
-  appendOverflowMenuSeparator: (menuEl) => menuEl,
-  showConfirmDialog: async () => true
-};
+    formatInitiative: () => '🎲',
+    updateCampaignHeader: () => {},
+    appendOverflowMenuSeparator: (menuEl) => menuEl,
+    showConfirmDialog: async () => true,
+    showChoiceDialog: async () => null
+  };
 const {
   normalizeConditionEntry,
   createConditionLink,
@@ -448,11 +450,10 @@ window.addEventListener('DOMContentLoaded', () => {
   const inventoryCloseBtn = document.getElementById('inventory-close');
   const inventoryAddBtn = document.getElementById('inventory-add');
   const inventoryAddContainerBtn = document.getElementById('inventory-add-container');
-  const inventoryEditBtn = document.getElementById('inventory-edit');
-  const inventoryRemoveBtn = document.getElementById('inventory-remove');
   const inventoryDialogTitle = document.getElementById('inventory-dialog-title');
   const inventoryTotalWeight = document.getElementById('inventory-total-weight');
   const inventoryAddForm = document.getElementById('inventory-add-form');
+  const inventoryAddFormContainerRow = document.getElementById('inventory-add-container-row');
   const inventoryAddFormTitle = document.getElementById('inventory-add-form-title');
   const inventoryAddFormName = document.getElementById('inventory-add-name');
   const inventoryAddFormContainer = document.getElementById('inventory-add-container-id');
@@ -1770,14 +1771,14 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     inventoryTotalWeight.textContent = `Total weight carried: ${formattedTotal}`;
   }
 
-  function createInventorySectionTable(firstColumnLabel = 'Item') {
+  function createInventorySectionTable(firstColumnLabel = '🧳', secondColumnLabel = 'Item') {
     const wrap = document.createElement('div');
     wrap.className = 'inventory-table-wrap';
     const table = document.createElement('table');
     table.className = 'inventory-table';
     const thead = document.createElement('thead');
     const tr = document.createElement('tr');
-    [firstColumnLabel, 'Qty', 'Value', 'Weight'].forEach((label) => {
+    [firstColumnLabel, secondColumnLabel, 'Qty', 'Value', 'Weight'].forEach((label) => {
       const th = document.createElement('th');
       th.textContent = label;
       tr.appendChild(th);
@@ -1787,7 +1788,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const tbody = document.createElement('tbody');
     table.appendChild(tbody);
     wrap.appendChild(table);
-    return { wrap, tbody, titleCell: tr.firstChild };
+    return { wrap, tbody };
   }
 
   function buildInventoryContainerDisplayLabels(containerEntries = []) {
@@ -1809,6 +1810,140 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     );
   }
 
+  function buildInventoryRowOverflowControls(entry, row, options = {}) {
+    const containerLabels = options.containerLabels || buildInventoryContainerDisplayLabels(
+      currentInventory.filter((candidate) => candidate && candidate.isContainer && candidate.id)
+    );
+    const overflow = document.createElement('div');
+    overflow.className = 'character-overflow inventory-row-overflow';
+
+    const overflowToggle = document.createElement('button');
+    overflowToggle.type = 'button';
+    overflowToggle.className = 'character-overflow-toggle';
+    overflowToggle.setAttribute('aria-label', `Manage ${entry.name || 'item'}`);
+    overflowToggle.setAttribute('aria-haspopup', 'menu');
+    overflowToggle.setAttribute('aria-expanded', 'false');
+    overflowToggle.textContent = entry.isContainer ? '🧳' : '🗡';
+
+    const overflowMenu = document.createElement('div');
+    overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu';
+    overflowMenu.setAttribute('role', 'menu');
+    overflowMenu.setAttribute('aria-hidden', 'true');
+
+    const overflowTitle = document.createElement('div');
+    overflowTitle.className = 'character-overflow-title';
+    overflowTitle.textContent = entry.name || 'Item';
+    overflowMenu.appendChild(overflowTitle);
+
+    const openOverflowMenu = () => {
+      closeCharacterOverflowMenu(overflowMenu);
+      overflowMenu.classList.remove('hidden');
+      overflowMenu.setAttribute('aria-hidden', 'false');
+      const centered = isNarrowPopupViewport();
+      overflowMenu.classList.toggle('popup-centered', centered);
+      overflowMenu.style.left = centered ? '' : '0';
+      overflowMenu.style.right = centered ? '' : 'auto';
+      overflowMenu.style.top = centered ? '' : 'calc(100% + 0.35rem)';
+      overflowMenu.style.bottom = '';
+      overflowMenu.style.transform = '';
+      overflowToggle.setAttribute('aria-expanded', 'true');
+      if (!centered) {
+        window.requestAnimationFrame(() => {
+          const menuRect = overflowMenu.getBoundingClientRect();
+          const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+          const overflowRight = menuRect.right > viewportWidth - 8;
+          const overflowLeft = menuRect.left < 8;
+          if (overflowRight && !overflowLeft) {
+            overflowMenu.style.left = 'auto';
+            overflowMenu.style.right = '0';
+          }
+        });
+      }
+    };
+
+    const addMenuItem = (label, handler, options = {}) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className || 'secondary';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
+      if (options.hidden) {
+        button.classList.add('hidden');
+      }
+      button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeCharacterOverflowMenu();
+        await handler();
+      });
+      overflowMenu.appendChild(button);
+      return button;
+    };
+
+    addMenuItem('Edit', () => {
+      setSelectedInventoryRow(row);
+      editSelectedInventoryEntry();
+    });
+    addMenuItem('Remove', () => {
+      setSelectedInventoryRow(row);
+      removeSelectedInventoryEntry();
+    }, {
+      className: 'secondary danger'
+    });
+
+    if (!entry.isContainer) {
+      const currentContainerId = entry.containerId || null;
+      if (currentContainerId) {
+        appendOverflowMenuSeparator(overflowMenu);
+        addMenuItem('Equip Item', async () => {
+          await moveInventoryEntryToContainer(entry.id, null);
+        });
+      }
+      const moveTargets = currentInventory
+        .filter((candidate) => candidate && candidate.isContainer && candidate.id && candidate.id !== currentContainerId)
+        .map((candidate) => ({
+          id: candidate.id,
+          label: containerLabels.get(candidate.id) || candidate.name || 'Container'
+        }));
+      if (moveTargets.length > 0) {
+        appendOverflowMenuSeparator(overflowMenu);
+        moveTargets.forEach((target) => {
+          addMenuItem(`Move to ${target.label}`, async () => {
+            await moveInventoryEntryToContainer(entry.id, target.id);
+          });
+        });
+      }
+    }
+
+    overflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeCharacterOverflowMenu();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowToggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeCharacterOverflowMenu();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    overflow.appendChild(overflowToggle);
+    overflow.appendChild(overflowMenu);
+    return overflow;
+  }
+
   function createInventoryDisplayRow(entry = {}, options = {}) {
     const normalized = normalizeInventoryEntry(entry, options.containerId ?? null, options.isContainer ?? false);
     const row = document.createElement('tr');
@@ -1824,6 +1959,12 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     row.addEventListener('click', () => {
       setSelectedInventoryRow(row);
     });
+
+    const menuCell = document.createElement('td');
+    menuCell.className = 'inventory-entry-menu-cell';
+    const overflow = buildInventoryRowOverflowControls(normalized, row, options);
+    menuCell.appendChild(overflow);
+    row.appendChild(menuCell);
 
     const fields = [
       { key: 'name', value: normalized.name || '', isLink: false },
@@ -1877,22 +2018,23 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     return row;
   }
 
-  function buildInventoryContainerSection(containerEntry, allEntries, displayLabel = null) {
+  function buildInventoryContainerSection(containerEntry, allEntries, displayLabel = null, containerLabels = null) {
     if (!inventoryContainerSections) return null;
     const section = document.createElement('section');
     section.className = 'inventory-section inventory-container-section';
     section.dataset.containerId = containerEntry.id;
 
-    const { wrap, tbody } = createInventorySectionTable(displayLabel || containerEntry.name || 'Container');
+    const { wrap, tbody } = createInventorySectionTable('🧳', displayLabel || containerEntry.name || 'Container');
     const containerRow = appendInventoryDisplayRow(containerEntry, {
       containerId: null,
       isContainer: true,
-      targetBody: tbody
+      targetBody: tbody,
+      containerLabels
     });
     allEntries
       .filter((entry) => entry.containerId === containerEntry.id && !entry.isContainer)
       .forEach((entry) => {
-        appendInventoryDisplayRow(entry, { containerId: containerEntry.id, targetBody: tbody });
+        appendInventoryDisplayRow(entry, { containerId: containerEntry.id, targetBody: tbody, containerLabels });
       });
 
     section.appendChild(wrap);
@@ -1914,17 +2056,19 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const containerEntries = currentInventory.filter((entry) => entry.isContainer && !entry.containerId);
     const containerLabels = buildInventoryContainerDisplayLabels(containerEntries);
     rootEntries.forEach((entry) => {
-      appendInventoryDisplayRow(entry, { targetBody: inventoryFields });
+      appendInventoryDisplayRow(entry, { targetBody: inventoryFields, containerLabels });
     });
     containerEntries.forEach((entry) => {
-      buildInventoryContainerSection(entry, currentInventory, containerLabels.get(entry.id) || null);
+      buildInventoryContainerSection(entry, currentInventory, containerLabels.get(entry.id) || null, containerLabels);
     });
     if (inventoryAddFormContainer) {
       const preservedContainerId = inventoryAddFormContainer.value || inventoryEditingContainerId || '';
-      buildInventoryContainerOptions(
-        inventoryEditingIsContainer ? '' : preservedContainerId,
-        inventoryEditingIsContainer
-      );
+      if (inventoryEditingIsContainer) {
+        inventoryAddFormContainer.value = '';
+        inventoryAddFormContainer.disabled = true;
+      } else {
+        buildInventoryContainerOptions(preservedContainerId, inventoryEditingIsContainer);
+      }
     }
     const restoredSelection =
       (previouslySelectedEntryId
@@ -1939,7 +2083,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function updateInventoryActionButtons() {
     const isAddFormOpen = inventoryAddFormOpen || Boolean(inventoryAddForm && !inventoryAddForm.classList.contains('hidden'));
-    const hasSelection = Boolean(inventorySelectedRow);
     if (inventoryAddBtn) {
       inventoryAddBtn.disabled = isAddFormOpen;
       inventoryAddBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
@@ -1948,16 +2091,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       inventoryAddContainerBtn.disabled = isAddFormOpen;
       inventoryAddContainerBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
     }
-    if (inventoryEditBtn) {
-      const canEdit = hasSelection && !isAddFormOpen;
-      inventoryEditBtn.disabled = !canEdit;
-      inventoryEditBtn.setAttribute('aria-disabled', (!canEdit).toString());
-    }
-    if (inventoryRemoveBtn) {
-      const canRemove = hasSelection && !isAddFormOpen;
-      inventoryRemoveBtn.disabled = !canRemove;
-      inventoryRemoveBtn.setAttribute('aria-disabled', (!canRemove).toString());
-    }
   }
 
   function populateInventoryAddForm(entry = null) {
@@ -1965,14 +2098,25 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       ? normalizeInventoryEntry(entry, inventoryEditingContainerId, inventoryEditingIsContainer)
       : normalizeInventoryEntry({}, inventoryEditingContainerId, inventoryEditingIsContainer);
     if (inventoryAddFormName) inventoryAddFormName.value = normalized.name || '';
-    buildInventoryContainerOptions(
-      inventoryTargetHelpers.resolveInventoryDraftContainerId({
-        selectedRowData: getInventoryRowData(inventorySelectedRow),
-        chosenContainerId: inventoryEditingContainerId,
-        isContainer: inventoryEditingIsContainer
-      }) || '',
-      inventoryEditingIsContainer
-    );
+    if (inventoryAddFormContainerRow) {
+      inventoryAddFormContainerRow.classList.toggle('hidden', inventoryEditingIsContainer);
+      inventoryAddFormContainerRow.setAttribute('aria-hidden', inventoryEditingIsContainer.toString());
+    }
+    if (inventoryEditingIsContainer) {
+      if (inventoryAddFormContainer) {
+        inventoryAddFormContainer.value = '';
+        inventoryAddFormContainer.disabled = true;
+      }
+    } else {
+      buildInventoryContainerOptions(
+        inventoryTargetHelpers.resolveInventoryDraftContainerId({
+          selectedRowData: getInventoryRowData(inventorySelectedRow),
+          chosenContainerId: inventoryEditingContainerId,
+          isContainer: inventoryEditingIsContainer
+        }) || '',
+        inventoryEditingIsContainer
+      );
+    }
     if (inventoryAddFormQuantity) inventoryAddFormQuantity.value = String(normalized.quantity ?? 1);
     if (inventoryAddFormValue) inventoryAddFormValue.value = String(normalized.value ?? 0);
     if (inventoryAddFormWeight) inventoryAddFormWeight.value = String(normalized.weight ?? 0);
@@ -1987,6 +2131,10 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     inventoryEditingEntryId = open && entry ? (entry.id || null) : null;
     inventoryEditingContainerId = open ? (options.containerId ?? null) : null;
     inventoryEditingIsContainer = open ? Boolean(options.isContainer) : false;
+    if (inventoryAddFormContainerRow) {
+      inventoryAddFormContainerRow.classList.toggle('hidden', inventoryEditingIsContainer);
+      inventoryAddFormContainerRow.setAttribute('aria-hidden', inventoryEditingIsContainer.toString());
+    }
     if (inventoryAddFormTitle) {
       if (open && entry) {
         inventoryAddFormTitle.textContent = inventoryEditingIsContainer ? 'Edit Container' : 'Edit Item';
@@ -1998,7 +2146,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       if (open && entry) {
         inventoryAddFormSaveBtn.textContent = 'Save Changes';
       } else {
-        inventoryAddFormSaveBtn.textContent = inventoryEditingIsContainer ? 'Add Container' : 'Add Item';
+        inventoryAddFormSaveBtn.textContent = inventoryEditingIsContainer ? '🧳 Add Container' : '🗡 Add Item';
       }
     }
     if (open) {
@@ -2186,16 +2334,24 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const rowName = (entry?.name || 'Item').trim() || 'Item';
     let moveContainedItems = false;
     if (rowData.isContainer) {
-      const deleteAllItems = await showConfirmDialog({
+      const removalChoice = await showChoiceDialog({
         title: 'Remove Container?',
         header: rowName,
-        message: 'Choose whether to keep the items by moving them to the main inventory, or delete everything inside the container.',
-        confirmLabel: 'Delete all items',
-        cancelLabel: 'Keep all items',
-        confirmButtonClass: 'danger',
-        initialFocus: 'cancel'
+        message: 'Choose what should happen to the container and the items inside it.',
+        option1Label: 'Keep Container and Contents',
+        option2Label: 'Keep Contents',
+        option3Label: 'Discard Contents',
+        option1Value: 'keep-container',
+        option2Value: 'keep-contents',
+        option3Value: 'discard-contents',
+        option3ButtonClass: 'danger',
+        initialFocus: 'option1',
+        dismissValue: null
       });
-      moveContainedItems = !deleteAllItems;
+      if (removalChoice === 'keep-container' || removalChoice === null) {
+        return;
+      }
+      moveContainedItems = removalChoice === 'keep-contents';
     }
     const items = inventoryRemovalHelpers.removeInventoryEntry(currentInventory, rowData.id || '', {
       moveContainedItems
@@ -2216,6 +2372,44 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     } catch (err) {
       if (statusDiv) {
         statusDiv.textContent = `Inventory remove failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
+  }
+
+  async function moveInventoryEntryToContainer(entryId, containerId) {
+    const normalizedEntryId = typeof entryId === 'string' ? entryId.trim() : '';
+    const normalizedContainerId =
+      typeof containerId === 'string'
+        ? containerId.trim()
+        : (containerId === null ? null : '');
+    if (!normalizedEntryId || (normalizedContainerId !== null && !normalizedContainerId)) return;
+    const entry = currentInventory.find((item) => item && item.id === normalizedEntryId);
+    if (!entry || entry.isContainer) return;
+    const normalizedTargetContainerId = normalizedContainerId || null;
+    if ((entry.containerId || null) === normalizedTargetContainerId) return;
+    const targetContainer = normalizedTargetContainerId
+      ? currentInventory.find((item) => item && item.isContainer && item.id === normalizedTargetContainerId)
+      : null;
+    if (normalizedTargetContainerId && !targetContainer) return;
+    const items = currentInventory.map((item) =>
+      item.id === normalizedEntryId
+        ? { ...item, containerId: normalizedTargetContainerId }
+        : item
+    );
+    try {
+      const savedCharacter = await saveInventoryItems(items);
+      if (!savedCharacter) return;
+      currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : items;
+      buildInventoryFields(currentInventory);
+      setSelectedInventoryRow(findInventoryRowById(normalizedEntryId) || getInventoryPanelRows()[0] || null);
+      if (statusDiv) {
+        statusDiv.textContent = normalizedTargetContainerId
+          ? `Moved ${entry.name || 'Item'} to ${targetContainer?.name || 'Container'}.`
+          : `Equipped ${entry.name || 'Item'}.`;
+      }
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = `Inventory move failed: ${err instanceof Error ? err.message : String(err)}`;
       }
     }
   }
@@ -4977,18 +5171,6 @@ function getOwnerName() {
   if (inventoryAddContainerBtn) {
     inventoryAddContainerBtn.addEventListener('click', () => {
       addInventoryContainer();
-    });
-  }
-
-  if (inventoryEditBtn) {
-    inventoryEditBtn.addEventListener('click', () => {
-      editSelectedInventoryEntry();
-    });
-  }
-
-  if (inventoryRemoveBtn) {
-    inventoryRemoveBtn.addEventListener('click', () => {
-      removeSelectedInventoryEntry();
     });
   }
 

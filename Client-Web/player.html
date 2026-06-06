@@ -263,10 +263,8 @@
           </div>
         </div>
         <div class="party-treasure-actions-row party-treasure-actions-row-top inventory-actions-row">
-          <button type="button" id="inventory-add" class="secondary">Add</button>
-          <button type="button" id="inventory-add-container" class="secondary">Add Container</button>
-          <button type="button" id="inventory-edit" class="secondary">Edit</button>
-          <button type="button" id="inventory-remove" class="secondary">Remove</button>
+          <button type="button" id="inventory-add" class="secondary">🗡 Add</button>
+          <button type="button" id="inventory-add-container" class="secondary">🧳 Add Container</button>
         </div>
         <p id="inventory-total-weight" class="inventory-summary">Total weight carried: 0</p>
         <div id="inventory-add-form" class="inventory-inline-form hidden" aria-hidden="true">
@@ -278,7 +276,7 @@
                 <input type="text" id="inventory-add-name" list="inventory-item-options" placeholder="Item name" />
               </span>
             </label>
-            <label class="property-row">
+            <label class="property-row" id="inventory-add-container-row">
               <span class="property-label">Container</span>
               <span class="property-control">
                 <select id="inventory-add-container-id">
@@ -312,14 +310,15 @@
           </div>
           <div class="party-treasure-inline-actions">
             <button type="button" id="inventory-add-form-cancel" class="secondary">Cancel</button>
-            <button type="button" id="inventory-add-form-save">Add Item</button>
+            <button type="button" id="inventory-add-form-save">🗡 Add Item</button>
           </div>
         </div>
         <div class="inventory-table-wrap">
           <table class="inventory-table">
             <thead>
               <tr>
-                <th>Item</th>
+                <th>🧳</th>
+                <th>Equipped Items</th>
                 <th>Qty</th>
                 <th>Value</th>
                 <th>Weight</th>
@@ -388,7 +387,7 @@
     </div>
   </form>
 
-  <script src="shared.js?v=4"></script>
+  <script src="shared.js?v=5"></script>
   <script src="live-stream.js?v=5"></script>
   <script src="party-treasure.js?v=12"></script>
   <script src="inventory-id.js?v=2"></script>
@@ -400,6 +399,6 @@
   <script src="claimable-characters.js?v=2"></script>
   <script src="ruleset.js?v=2"></script>
   <script src="encounter.js?v=2"></script>
-  <script src="app.js?v=86"></script>
+  <script src="app.js?v=97"></script>
 </body>
 </html>
