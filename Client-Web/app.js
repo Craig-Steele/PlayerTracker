@@ -711,6 +711,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return firstRow;
     },
   };
+  const inventoryView = window.PlayerTrackerInventoryView || {};
   let playerNameRequired = false;
   let allowNegativeHealth = false;
   let supportsTempHp = false;
@@ -1083,45 +1084,13 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function buildCurrencyFields(character) {
-    if (!currencyFields) return;
-    currencyFields.innerHTML = '';
-    const units = currencySystem?.units || [];
-    const currencyByUnit = new Map(
-      Array.isArray(character?.currency)
-        ? character.currency
-            .filter((entry) => entry && typeof entry.unitId === 'string')
-            .map((entry) => [entry.unitId, entry])
-        : []
-    );
-
-    units.forEach((unit) => {
-      const row = document.createElement('label');
-      row.className = 'property-row';
-      row.setAttribute('for', `currency-${unit.id}`);
-
-      const label = document.createElement('span');
-      label.className = 'property-label';
-      label.textContent = `${unit.label}${unit.symbol ? ` (${unit.symbol})` : ''}`;
-      row.appendChild(label);
-
-      const control = document.createElement('span');
-      control.className = 'property-control';
-
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.step = '1';
-      input.id = `currency-${unit.id}`;
-      input.inputMode = 'numeric';
-      input.value = Number.isFinite(currencyByUnit.get(unit.id)?.amount)
-        ? String(currencyByUnit.get(unit.id).amount)
-        : '0';
-      input.dataset.currencyUnitId = unit.id;
-      input.addEventListener('input', () => {
+    if (!currencyFields || !inventoryView.buildCurrencyFields) return;
+    inventoryView.buildCurrencyFields(currencyFields, character, currencySystem, {
+      readOnly: false,
+      inputIdPrefix: 'currency',
+      onDirty: () => {
         currencyEditorDirty = true;
-      });
-      control.appendChild(input);
-      row.appendChild(control);
-      currencyFields.appendChild(row);
+      }
     });
   }
 
@@ -1308,22 +1277,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function getCharacterCurrencyTotal(character) {
-    if (!character || !currencySystem || !Array.isArray(character.currency)) {
-      return null;
-    }
-    const unitValueById = new Map(
-      currencySystem.units.map((unit) => [unit.id, unit.valueInCommonCurrency])
-    );
-    let total = 0;
-    let hasValue = false;
-    character.currency.forEach((amount) => {
-      if (!amount || typeof amount.unitId !== 'string') return;
-      const unitValue = unitValueById.get(amount.unitId.trim());
-      if (!Number.isFinite(unitValue) || !Number.isFinite(amount.amount)) return;
-      total += amount.amount * unitValue;
-      hasValue = true;
-    });
-    return hasValue ? total : 0;
+    return inventoryView.calculateCurrencyTotal
+      ? inventoryView.calculateCurrencyTotal(character, currencySystem)
+      : null;
   }
 
   function getCommonCurrencyUnitLabel() {
@@ -1339,13 +1295,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function formatCharacterCurrencyTotal(character) {
-    const total = getCharacterCurrencyTotal(character);
-    const unitLabel = getCommonCurrencyUnitLabel();
-    if (!unitLabel) {
-      return null;
-    }
-    const formattedTotal = Number.isFinite(total) ? total.toFixed(2) : '0.00';
-    return `${formattedTotal} ${unitLabel}`;
+    return inventoryView.formatCurrencyTotal
+      ? inventoryView.formatCurrencyTotal(character, currencySystem)
+      : null;
   }
 
   function updatePartyTreasureActionButtons() {
@@ -1754,17 +1706,19 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function updateInventoryTotalWeight() {
     if (!inventoryTotalWeight) return;
-    const totalWeight = currentInventory.reduce((sum, entry) => {
-      if (!entry || entry.containerId) {
-        return sum;
-      }
-      const quantity = Number(entry.quantity);
-      const weight = Number(entry.weight);
-      if (!Number.isFinite(quantity) || !Number.isFinite(weight)) {
-        return sum;
-      }
-      return sum + (quantity * weight);
-    }, 0);
+    const totalWeight = inventoryView.calculateInventoryTotalWeight
+      ? inventoryView.calculateInventoryTotalWeight(currentInventory)
+      : currentInventory.reduce((sum, entry) => {
+          if (!entry || entry.containerId) {
+            return sum;
+          }
+          const quantity = Number(entry.quantity);
+          const weight = Number(entry.weight);
+          if (!Number.isFinite(quantity) || !Number.isFinite(weight)) {
+            return sum;
+          }
+          return sum + (quantity * weight);
+        }, 0);
     const formattedTotal = Number.isInteger(totalWeight)
       ? String(totalWeight)
       : String(Math.round(totalWeight * 1000) / 1000);
@@ -1772,42 +1726,33 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function createInventorySectionTable(firstColumnLabel = '🧳', secondColumnLabel = 'Item') {
-    const wrap = document.createElement('div');
-    wrap.className = 'inventory-table-wrap';
-    const table = document.createElement('table');
-    table.className = 'inventory-table';
-    const thead = document.createElement('thead');
-    const tr = document.createElement('tr');
-    [firstColumnLabel, secondColumnLabel, 'Qty', 'Value', 'Weight'].forEach((label) => {
-      const th = document.createElement('th');
-      th.textContent = label;
-      tr.appendChild(th);
-    });
-    thead.appendChild(tr);
-    table.appendChild(thead);
-    const tbody = document.createElement('tbody');
-    table.appendChild(tbody);
-    wrap.appendChild(table);
-    return { wrap, tbody };
+    return inventoryView.createInventorySectionTable
+      ? inventoryView.createInventorySectionTable(firstColumnLabel, secondColumnLabel)
+      : (() => {
+          const wrap = document.createElement('div');
+          wrap.className = 'inventory-table-wrap';
+          const table = document.createElement('table');
+          table.className = 'inventory-table';
+          const thead = document.createElement('thead');
+          const tr = document.createElement('tr');
+          [firstColumnLabel, secondColumnLabel, 'Qty', 'Value', 'Weight'].forEach((label) => {
+            const th = document.createElement('th');
+            th.textContent = label;
+            tr.appendChild(th);
+          });
+          thead.appendChild(tr);
+          table.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          table.appendChild(tbody);
+          wrap.appendChild(table);
+          return { wrap, tbody };
+        })();
   }
 
   function buildInventoryContainerDisplayLabels(containerEntries = []) {
-    const nameCounts = new Map();
-    containerEntries.forEach((entry) => {
-      const baseName = (entry?.name || 'Container').trim() || 'Container';
-      nameCounts.set(baseName, (nameCounts.get(baseName) || 0) + 1);
-    });
-    const seenCounts = new Map();
-    return new Map(
-      containerEntries.map((entry) => {
-        const baseName = (entry?.name || 'Container').trim() || 'Container';
-        const totalCount = nameCounts.get(baseName) || 0;
-        const seen = (seenCounts.get(baseName) || 0) + 1;
-        seenCounts.set(baseName, seen);
-        const label = totalCount > 1 ? `${baseName} (${seen})` : baseName;
-        return [entry.id, label];
-      })
-    );
+    return inventoryView.buildInventoryContainerDisplayLabels
+      ? inventoryView.buildInventoryContainerDisplayLabels(containerEntries)
+      : new Map();
   }
 
   function buildInventoryRowOverflowControls(entry, row, options = {}) {
@@ -1946,64 +1891,15 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function createInventoryDisplayRow(entry = {}, options = {}) {
     const normalized = normalizeInventoryEntry(entry, options.containerId ?? null, options.isContainer ?? false);
-    const row = document.createElement('tr');
-    row.className = 'inventory-entry';
-    row.classList.add('inventory-entry-display');
-    if (normalized.isContainer) {
-      row.classList.add('inventory-container-row');
-    }
-    row.dataset.inventoryEntryId = normalized.id;
-    row.dataset.inventoryContainerId = normalized.containerId || '';
-    row.dataset.inventoryIsContainer = normalized.isContainer ? 'true' : 'false';
-    row.dataset.inventoryEntry = JSON.stringify(normalized);
-    row.addEventListener('click', () => {
-      setSelectedInventoryRow(row);
-    });
-
-    const menuCell = document.createElement('td');
-    menuCell.className = 'inventory-entry-menu-cell';
-    const overflow = buildInventoryRowOverflowControls(normalized, row, options);
-    menuCell.appendChild(overflow);
-    row.appendChild(menuCell);
-
-    const fields = [
-      { key: 'name', value: normalized.name || '', isLink: false },
-      { key: 'quantity', value: String(normalized.quantity ?? 1), isLink: false },
-      { key: 'value', value: String(normalized.value ?? 0), isLink: false },
-      { key: 'weight', value: String(normalized.weight ?? 0), isLink: false }
-    ];
-
-    fields.forEach((field) => {
-      const cell = document.createElement('td');
-      cell.dataset.inventoryFieldCell = field.key;
-      if (field.key === 'name') {
-        const url = typeof normalized.url === 'string' ? normalized.url.trim() : '';
-        if (url) {
-          const link = document.createElement('a');
-          link.className = 'inventory-display-value inventory-display-name inventory-display-link';
-          link.href = url;
-          link.target = '_blank';
-          link.rel = 'noopener';
-          link.textContent = field.value || 'Item';
-          link.addEventListener('click', (event) => {
-            event.stopPropagation();
-          });
-          cell.appendChild(link);
-        } else {
-          const display = document.createElement('span');
-          display.className = 'inventory-display-value inventory-display-name';
-          display.textContent = field.value || 'Item';
-          cell.appendChild(display);
-        }
-      } else {
-        const display = document.createElement('span');
-        display.className = `inventory-display-value inventory-display-${field.key}`;
-        display.textContent = field.value;
-        cell.appendChild(display);
-      }
-      row.appendChild(cell);
-    });
-
+    const row = inventoryView.createInventoryDisplayRow
+      ? inventoryView.createInventoryDisplayRow(normalized, {
+          ...options,
+          rowClassName: 'inventory-entry-display',
+          datasetEntry: JSON.stringify(normalized),
+          onRowClick: (selectedRow) => setSelectedInventoryRow(selectedRow),
+          firstColumnRenderer: ({ row: renderedRow }) => buildInventoryRowOverflowControls(normalized, renderedRow, options)
+        })
+      : null;
     return row;
   }
 
@@ -2020,26 +1916,17 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function buildInventoryContainerSection(containerEntry, allEntries, displayLabel = null, containerLabels = null) {
     if (!inventoryContainerSections) return null;
-    const section = document.createElement('section');
-    section.className = 'inventory-section inventory-container-section';
-    section.dataset.containerId = containerEntry.id;
-
-    const { wrap, tbody } = createInventorySectionTable('🧳', displayLabel || containerEntry.name || 'Container');
-    const containerRow = appendInventoryDisplayRow(containerEntry, {
-      containerId: null,
-      isContainer: true,
-      targetBody: tbody,
-      containerLabels
-    });
-    allEntries
-      .filter((entry) => entry.containerId === containerEntry.id && !entry.isContainer)
-      .forEach((entry) => {
-        appendInventoryDisplayRow(entry, { containerId: containerEntry.id, targetBody: tbody, containerLabels });
+    if (inventoryView.buildInventoryContainerSection) {
+      return inventoryView.buildInventoryContainerSection(containerEntry, allEntries, {
+        displayLabel: displayLabel || containerEntry.name || 'Container',
+        containerLabels,
+        containerSectionsEl: inventoryContainerSections,
+        rowClassName: 'inventory-entry-display',
+        onRowClick: (selectedRow) => setSelectedInventoryRow(selectedRow),
+        firstColumnRenderer: ({ row, entry, options: rowOptions }) => buildInventoryRowOverflowControls(entry, row, rowOptions)
       });
-
-    section.appendChild(wrap);
-    inventoryContainerSections.appendChild(section);
-    return containerRow;
+    }
+    return null;
   }
 
   function buildInventoryFields(items = []) {
@@ -2056,7 +1943,11 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const containerEntries = currentInventory.filter((entry) => entry.isContainer && !entry.containerId);
     const containerLabels = buildInventoryContainerDisplayLabels(containerEntries);
     rootEntries.forEach((entry) => {
-      appendInventoryDisplayRow(entry, { targetBody: inventoryFields, containerLabels });
+      appendInventoryDisplayRow(entry, {
+        targetBody: inventoryFields,
+        containerLabels,
+        onRowClick: (selectedRow) => setSelectedInventoryRow(selectedRow)
+      });
     });
     containerEntries.forEach((entry) => {
       buildInventoryContainerSection(entry, currentInventory, containerLabels.get(entry.id) || null, containerLabels);
@@ -2883,39 +2774,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function normalizeCurrencySystem(entry) {
-    if (!entry || typeof entry !== 'object') {
-      return null;
-    }
-    const commonCurrencyId =
-      typeof entry.commonCurrencyId === 'string' ? entry.commonCurrencyId.trim() : '';
-    const units = Array.isArray(entry.units)
-      ? entry.units
-          .map((unit) => {
-            if (!unit || typeof unit.id !== 'string' || typeof unit.label !== 'string') {
-              return null;
-            }
-            const id = unit.id.trim();
-            const label = unit.label.trim();
-            if (!id || !label) {
-              return null;
-            }
-            const valueInCommonCurrency = Number(unit.valueInCommonCurrency);
-            if (!Number.isFinite(valueInCommonCurrency)) {
-              return null;
-            }
-            return {
-              id,
-              label,
-              symbol: typeof unit.symbol === 'string' && unit.symbol.trim() ? unit.symbol.trim() : null,
-              valueInCommonCurrency
-            };
-          })
-          .filter(Boolean)
-      : [];
-    if (!commonCurrencyId || units.length === 0) {
-      return null;
-    }
-    return { commonCurrencyId, units };
+    return inventoryView.normalizeCurrencySystem ? inventoryView.normalizeCurrencySystem(entry) : null;
   }
 
   function normalizeEquipmentItem(entry) {

@@ -74,6 +74,7 @@ const {
     selectEl.appendChild(option);
   }
 };
+const inventoryView = window.PlayerTrackerInventoryView || {};
 const {
   normalizeConditionEntry,
   formatEncounterStateText,
@@ -153,6 +154,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const partyTreasureAddFormSaveBtn = document.getElementById('ref-party-treasure-add-form-save');
   const partyTreasureAddFormCancelBtn = document.getElementById('ref-party-treasure-add-form-cancel');
   const partyTreasureItemOptions = document.getElementById('ref-party-treasure-item-options');
+  const currencyPanel = document.getElementById('currency-panel');
+  const currencyCloseBtn = document.getElementById('currency-cancel');
+  const currencyDialogTitle = document.getElementById('currency-dialog-title');
+  const currencySummary = document.getElementById('currency-summary');
+  const currencyFields = document.getElementById('currency-fields');
+  const inventoryPanel = document.getElementById('inventory-panel');
+  const inventoryCloseBtn = document.getElementById('inventory-close');
+  const inventoryDialogTitle = document.getElementById('inventory-dialog-title');
+  const inventorySummary = document.getElementById('inventory-summary');
+  const inventoryTotalWeight = document.getElementById('inventory-total-weight');
+  const inventoryFields = document.getElementById('inventory-fields');
+  const inventoryContainerSections = document.getElementById('inventory-container-sections');
 
   const form = document.getElementById('ref-add-panel');
   const nameInput = document.getElementById('ref-name');
@@ -225,6 +238,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentCampaignClaimTimeoutMinutes = 5;
   let currentCampaignInviteOnly = false;
   let currentPartyTreasure = [];
+  let currentInventory = [];
   let availableRulesets = [];
   let currentHealthLabel = 'HP';
   let statKeys = ['HP'];
@@ -274,6 +288,9 @@ window.addEventListener('DOMContentLoaded', () => {
   let conditionsDirty = false;
   let partyTreasureSelectedRow = null;
   let partyTreasureEditingEntryId = null;
+  let currencySystem = null;
+  let currencyViewerCharacterId = null;
+  let inventoryViewerCharacterId = null;
   let equipmentLibraryItems = [];
   let equipmentLibraryLoaded = false;
   let equipmentLibraryLoading = false;
@@ -603,6 +620,28 @@ window.addEventListener('DOMContentLoaded', () => {
     partyTreasurePanel.addEventListener('click', async (event) => {
       if (event.target !== partyTreasurePanel) return;
       closePartyTreasureEditor();
+    });
+  }
+  if (currencyCloseBtn) {
+    currencyCloseBtn.addEventListener('click', () => {
+      closeCurrencyViewer();
+    });
+  }
+  if (inventoryCloseBtn) {
+    inventoryCloseBtn.addEventListener('click', () => {
+      closeInventoryViewer();
+    });
+  }
+  if (currencyPanel) {
+    currencyPanel.addEventListener('click', (event) => {
+      if (event.target !== currencyPanel) return;
+      closeCurrencyViewer();
+    });
+  }
+  if (inventoryPanel) {
+    inventoryPanel.addEventListener('click', (event) => {
+      if (event.target !== inventoryPanel) return;
+      closeInventoryViewer();
     });
   }
   updateInvitePlayerButtonState();
@@ -2889,6 +2928,12 @@ window.addEventListener('DOMContentLoaded', () => {
       const normalized = (json?.conditions ?? []).map((entry) => normalizeConditionEntry(entry)).filter(Boolean);
       conditionLibrary = normalized;
       conditionLookup = new Map(normalized.map((entry) => [entry.name, entry]));
+      currencySystem = inventoryView.normalizeCurrencySystem
+        ? inventoryView.normalizeCurrencySystem(json?.currency)
+        : null;
+      if (!currencySystem) {
+        closeCurrencyViewer();
+      }
       renderEditorConditions(editorConditionFilter ? editorConditionFilter.value : '');
     } catch (err) {
       console.warn('Unable to load condition library:', err);
@@ -2910,6 +2955,9 @@ window.addEventListener('DOMContentLoaded', () => {
       allowNegativeHealth = false;
       supportsTempHp = false;
       currentStandardDie = null;
+      currencySystem = null;
+      closeCurrencyViewer();
+      closeInventoryViewer();
       statKeys = ['HP'];
       setStatAliases(null);
       statBlockDefinitions = [];
@@ -2970,6 +3018,156 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function setCurrencyPanelOpen(open) {
+    if (!currencyPanel) return;
+    currencyPanel.classList.toggle('hidden', !open);
+    currencyPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function setInventoryPanelOpen(open) {
+    if (!inventoryPanel) return;
+    inventoryPanel.classList.toggle('hidden', !open);
+    inventoryPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function normalizeInventoryEntry(entry = {}, containerId = null, isContainer = false) {
+    const normalizedContainerId =
+      typeof entry.containerId === 'string' && entry.containerId.trim()
+        ? entry.containerId.trim()
+        : containerId;
+    return {
+      id: typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : (window.PlayerTrackerInventoryIds?.createInventoryEntryId?.() || `inventory-${Date.now().toString(36)}`),
+      name: typeof entry.name === 'string' ? entry.name : '',
+      quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
+      value: Number.isFinite(entry.value) ? entry.value : 0,
+      weight: Number.isFinite(entry.weight) ? entry.weight : 0,
+      url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      containerId: normalizedContainerId,
+      isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
+    };
+  }
+
+  function buildCurrencyFields(character) {
+    if (!currencyFields || !inventoryView.buildCurrencyFields) return;
+    inventoryView.buildCurrencyFields(currencyFields, character, currencySystem, {
+      readOnly: true,
+      inputIdPrefix: 'ref-currency'
+    });
+  }
+
+  function formatCharacterCurrencyTotal(character) {
+    return inventoryView.formatCurrencyTotal
+      ? inventoryView.formatCurrencyTotal(character, currencySystem)
+      : null;
+  }
+
+  function closeCurrencyViewer() {
+    currencyViewerCharacterId = null;
+    if (currencyDialogTitle) {
+      currencyDialogTitle.textContent = 'Money';
+    }
+    if (currencySummary) {
+      currencySummary.textContent = 'Money for —';
+    }
+    if (currencyFields) {
+      currencyFields.innerHTML = '';
+    }
+    setCurrencyPanelOpen(false);
+  }
+
+  function closeInventoryViewer() {
+    inventoryViewerCharacterId = null;
+    currentInventory = [];
+    if (inventoryDialogTitle) {
+      inventoryDialogTitle.textContent = 'Inventory';
+    }
+    if (inventorySummary) {
+      inventorySummary.textContent = 'Inventory for —';
+    }
+    if (inventoryFields) {
+      inventoryFields.innerHTML = '';
+    }
+    if (inventoryContainerSections) {
+      inventoryContainerSections.innerHTML = '';
+    }
+    if (inventoryTotalWeight) {
+      inventoryTotalWeight.textContent = 'Total weight carried: 0';
+    }
+    setInventoryPanelOpen(false);
+  }
+
+  function buildInventoryFields(character) {
+    if (!inventoryFields || !inventoryContainerSections || !inventoryView.appendInventoryDisplayRow) return;
+    const inventoryItems = Array.isArray(character?.inventory)
+      ? character.inventory.map((entry) => normalizeInventoryEntry(entry)).filter(Boolean)
+      : [];
+    currentInventory = inventoryItems;
+    if (inventoryDialogTitle) {
+      inventoryDialogTitle.textContent = `Inventory - ${character?.name || 'Character'}`;
+    }
+    if (inventorySummary) {
+      inventorySummary.textContent = `Inventory for ${character?.name || 'Character'}`;
+    }
+    inventoryFields.innerHTML = '';
+    inventoryContainerSections.innerHTML = '';
+    const rootEntries = inventoryItems.filter((entry) => !entry.isContainer && !entry.containerId);
+    const containerEntries = inventoryItems.filter((entry) => entry.isContainer && !entry.containerId);
+    const containerLabels = inventoryView.buildInventoryContainerDisplayLabels
+      ? inventoryView.buildInventoryContainerDisplayLabels(containerEntries)
+      : new Map();
+    rootEntries.forEach((entry) => {
+      inventoryView.appendInventoryDisplayRow(inventoryFields, entry, {
+        rowClassName: 'inventory-entry-display'
+      });
+    });
+    containerEntries.forEach((entry) => {
+      inventoryView.buildInventoryContainerSection(entry, inventoryItems, {
+        displayLabel: containerLabels.get(entry.id) || entry.name || 'Container',
+        containerLabels,
+        containerSectionsEl: inventoryContainerSections
+      });
+    });
+    if (inventoryTotalWeight) {
+      const totalWeight = inventoryView.calculateInventoryTotalWeight
+        ? inventoryView.calculateInventoryTotalWeight(inventoryItems)
+        : 0;
+      const formattedTotal = Number.isInteger(totalWeight)
+        ? String(totalWeight)
+        : String(Math.round(totalWeight * 1000) / 1000);
+      inventoryTotalWeight.textContent = `Total weight carried: ${formattedTotal}`;
+    }
+  }
+
+  async function openCurrencyViewer(player) {
+    if (!player || !currencySystem || !currencyFields) return;
+    closeRefereeRowOverflowMenus();
+    closeInventoryViewer();
+    currencyViewerCharacterId = player.id;
+    if (currencyDialogTitle) {
+      currencyDialogTitle.textContent = `Money - ${player.name || 'Character'}`;
+    }
+    if (currencySummary) {
+      currencySummary.textContent = `Money for ${player.name || 'Character'}`;
+    }
+    buildCurrencyFields(player);
+    setCurrencyPanelOpen(true);
+    window.requestAnimationFrame(() => {
+      currencyCloseBtn?.focus();
+    });
+  }
+
+  async function openInventoryViewer(player) {
+    if (!player || !inventoryFields) return;
+    closeRefereeRowOverflowMenus();
+    closeCurrencyViewer();
+    inventoryViewerCharacterId = player.id;
+    buildInventoryFields(player);
+    setInventoryPanelOpen(true);
+    window.requestAnimationFrame(() => {
+      inventoryCloseBtn?.focus();
+    });
+  }
+
   /**
    * Apply a fresh campaign state snapshot to the referee view.
    * @param {object} state Campaign state payload.
@@ -2997,6 +3195,22 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (statusDiv) {
       statusDiv.textContent = '';
+    }
+    if (currencyViewerCharacterId) {
+      const updatedMoneyCharacter = currentPlayers.find((player) => player.id === currencyViewerCharacterId);
+      if (updatedMoneyCharacter) {
+        buildCurrencyFields(updatedMoneyCharacter);
+      } else {
+        closeCurrencyViewer();
+      }
+    }
+    if (inventoryViewerCharacterId) {
+      const updatedInventoryCharacter = currentPlayers.find((player) => player.id === inventoryViewerCharacterId);
+      if (updatedInventoryCharacter) {
+        buildInventoryFields(updatedInventoryCharacter);
+      } else {
+        closeInventoryViewer();
+      }
     }
     updateTurnControls();
   }
@@ -3144,6 +3358,8 @@ window.addEventListener('DOMContentLoaded', () => {
     closeRefereeRowOverflowMenus();
     closeExpandedOrderStats();
     closeInitiativeEditor();
+    closeCurrencyViewer();
+    closeInventoryViewer();
     hideAddForm();
     closeCampaignSettingsModal();
     closePartyTreasureEditor();
@@ -3168,6 +3384,8 @@ window.addEventListener('DOMContentLoaded', () => {
     const hasOpenOverflow = document.querySelector('.referee-row-menu:not(.hidden)');
     const hasOpenStats = Boolean(expandedOrderStatsCharacterId);
     const hasOpenInitiative = Boolean(initiativeEditorCharacterId);
+    const hasOpenCurrency = Boolean(currencyViewerCharacterId);
+    const hasOpenInventory = Boolean(inventoryViewerCharacterId);
     if (hasOpenOverflow) {
       closeRefereeRowOverflowMenus();
       handled = true;
@@ -3182,6 +3400,14 @@ window.addEventListener('DOMContentLoaded', () => {
         if (!(await confirmDiscardInitiativeChanges())) return;
         closeInitiativeEditor();
       })();
+    }
+    if (hasOpenCurrency) {
+      closeCurrencyViewer();
+      handled = true;
+    }
+    if (hasOpenInventory) {
+      closeInventoryViewer();
+      handled = true;
     }
     if (handled) {
       event.preventDefault();
@@ -3498,6 +3724,17 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     addMenuItem('Open Reference', () => openCharacterReference(player), {
       hidden: !player.referenceUrl
+    });
+    const currencyTotal = formatCharacterCurrencyTotal(player);
+    addMenuItem(currencyTotal ? `Money: ${currencyTotal}` : 'Money', async () => {
+      await openCurrencyViewer(player);
+    }, {
+      hidden: player.isReferee || !(currencySystem && Array.isArray(currencySystem.units) && currencySystem.units.length > 0)
+    });
+    addMenuItem('Inventory', async () => {
+      await openInventoryViewer(player);
+    }, {
+      hidden: player.isReferee
     });
     appendOverflowMenuSeparator(overflowMenu);
     addMenuItem('Claim Character', async () => {
