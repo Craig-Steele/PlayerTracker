@@ -7,12 +7,11 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="style.css?v=55">
 </head>
 <body class="admin-page">
-  <div class="container">
   <div class="display-page-header">
-    <div class="player-campaign-card display-campaign-card admin-campaign-card">
+    <div class="player-campaign-card admin-campaign-card">
       <img id="admin-ruleset-icon" class="ruleset-icon" alt="" />
       <div class="player-campaign-text">
         <div id="admin-campaign-name" class="player-campaign-name">Roll4Initiative - Admin</div>
@@ -22,7 +21,6 @@
             (<a id="admin-ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
           </span>
         </div>
-        <div id="admin-active-summary" class="player-campaign-meta">No campaign selected.</div>
       </div>
       <div class="display-header-side admin-header-side">
         <div class="admin-nav">
@@ -33,58 +31,54 @@
     </div>
   </div>
 
-  <div class="container">
-    <section class="detail-panel admin-panel">
-      <div class="admin-toolbar">
-        <button type="button" id="admin-campaign-new">New Campaign</button>
-        <button type="button" id="admin-campaign-edit" disabled>Edit Campaign Details</button>
-      </div>
-
-      <div class="form-section-block property-group">
-        <div class="form-section-title">Campaigns</div>
-        <div class="subtitle admin-help">
-          Click to select. Double-click to activate.
-        </div>
-        <div id="admin-campaign-list" class="admin-campaign-list" aria-label="Campaign list"></div>
-      </div>
-
-      <div id="admin-campaign-status" class="subtitle"></div>
-    </section>
-  </div>
-
-  <div class="display-page-header admin-owner-header">
-    <div class="player-campaign-card display-campaign-card admin-owner-card">
-      <div class="admin-owner-group">
-        <div id="admin-auth-credentials">
-          <div class="form-section-block property-group">
-            <label class="property-row">
-              <span class="property-label">Email</span>
-              <span class="property-control">
-                <input type="email" id="admin-auth-email" autocomplete="username" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Password</span>
-              <span class="property-control">
-                <input type="password" id="admin-auth-password" autocomplete="current-password" />
-              </span>
-            </label>
-          </div>
-          <div class="admin-auth-submit-row">
-            <button type="button" id="admin-auth-signup" class="secondary">Sign Up</button>
-            <button type="button" id="admin-auth-login">Log In</button>
-          </div>
-        </div>
-        <div class="admin-auth-footer-row">
-          <div id="admin-auth-summary" class="player-campaign-meta">Not signed in.</div>
-          <div id="admin-auth-session-actions" class="admin-toolbar admin-auth-toolbar hidden">
-            <button type="button" id="admin-auth-logout" class="secondary" disabled>Log Out</button>
-            <button type="button" id="admin-auth-shutdown" class="secondary" disabled>Shutdown</button>
-          </div>
-        </div>
-      </div>
-      <div id="admin-auth-status" class="subtitle"></div>
+  <section class="detail-panel admin-panel">
+    <div class="admin-toolbar">
+      <button type="button" id="admin-campaign-new">New Campaign</button>
+      <button type="button" id="admin-campaign-edit" disabled>Edit Campaign Details</button>
     </div>
+
+    <div class="form-section-block property-group">
+      <div class="form-section-title">Campaigns</div>
+      <div class="subtitle admin-help">
+        Click to select. Double-click to activate.
+      </div>
+      <div id="admin-campaign-list" class="admin-campaign-list" aria-label="Campaign list"></div>
+    </div>
+
+    <div id="admin-campaign-status" class="subtitle"></div>
+  </section>
+
+  <div class="player-campaign-card admin-owner-card">
+    <div class="admin-owner-group">
+      <div id="admin-auth-credentials">
+        <div class="form-section-block property-group">
+          <label class="property-row">
+            <span class="property-label">Email</span>
+            <span class="property-control">
+              <input type="email" id="admin-auth-email" autocomplete="username" />
+            </span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Password</span>
+            <span class="property-control">
+              <input type="password" id="admin-auth-password" autocomplete="current-password" />
+            </span>
+          </label>
+        </div>
+        <div class="admin-auth-submit-row">
+          <button type="button" id="admin-auth-signup" class="secondary">Sign Up</button>
+          <button type="button" id="admin-auth-login">Log In</button>
+        </div>
+      </div>
+      <div class="admin-auth-footer-row">
+        <div id="admin-auth-summary" class="player-campaign-meta">Not signed in.</div>
+        <div id="admin-auth-session-actions" class="admin-toolbar admin-auth-toolbar hidden">
+          <button type="button" id="admin-auth-logout" class="secondary" disabled>Log Out</button>
+          <button type="button" id="admin-auth-shutdown" class="secondary" disabled>Shutdown</button>
+        </div>
+      </div>
+    </div>
+    <div id="admin-auth-status" class="subtitle"></div>
   </div>
 
   <div id="admin-signup-modal" class="conditions-modal hidden" aria-hidden="true">
@@ -185,6 +179,6 @@
   <script src="shared.js?v=2"></script>
   <script src="campaign-settings.js?v=1"></script>
   <script src="ruleset.js?v=1"></script>
-  <script src="admin.js?v=6"></script>
+  <script src="admin.js?v=8"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="style.css?v=55">
 </head>
 <body class="display-only">
   <div class="display-page-header">
@@ -45,6 +45,32 @@
         </thead>
         <tbody id="players-body"></tbody>
       </table>
+      <div id="display-roster-columns" class="display-roster-columns hidden" aria-hidden="true">
+        <div class="display-roster-columns-grid">
+          <table class="display-roster-column-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Character</th>
+                <th id="display-left-health-heading">Stats</th>
+                <th class="conditions-col">Conditions</th>
+              </tr>
+            </thead>
+            <tbody id="display-players-body-left"></tbody>
+          </table>
+          <table class="display-roster-column-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Character</th>
+                <th id="display-right-health-heading">Stats</th>
+                <th class="conditions-col">Conditions</th>
+              </tr>
+            </thead>
+            <tbody id="display-players-body-right"></tbody>
+          </table>
+        </div>
+      </div>
       <div id="status"></div>
     </section>
   </div>
@@ -58,6 +84,6 @@
   <script src="player-name-save.js?v=1"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="app.js?v=21"></script>
+  <script src="app.js?v=84"></script>
 </body>
 </html>

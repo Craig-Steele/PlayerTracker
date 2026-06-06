@@ -24,6 +24,7 @@
   --border-pill: #c8defc;
   --border-success: #b7e5c1;
   --border-danger: #f4b5b5;
+  --border-turn-active: #d4aa00;
   --text-primary: #000;
   --text-secondary: #555;
   --text-body-soft: #4a4a4a;
@@ -74,6 +75,7 @@
     --border-pill: #567db2;
     --border-success: #486b52;
     --border-danger: #865353;
+    --border-turn-active: #d9c15a;
     --text-primary: #eef0f3;
     --text-secondary: #c2c7cf;
     --text-body-soft: #d6d9de;
@@ -126,6 +128,8 @@ body:not(.display-only):not(.referee-page) {
 }
 
 body.referee-page {
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -133,6 +137,8 @@ body.referee-page {
 }
 
 body.player-page {
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -310,6 +316,47 @@ th, td {
   flex: 1 1 100%;
 }
 
+body.display-only.display-roster-split #players-body {
+  display: none;
+}
+
+body.display-only.display-roster-split #display-roster-columns {
+  display: flex;
+}
+
+.display-roster-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.display-roster-columns-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.display-roster-column-table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+body.display-only.display-roster-compact .display-roster-columns-grid {
+  gap: 0.45rem;
+}
+
+body.display-only.display-roster-compact .display-roster-column-table {
+  font-size: 0.94rem;
+}
+
+body.display-only.display-roster-compact .display-roster-column-table th,
+body.display-only.display-roster-compact .display-roster-column-table td {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
 .join-page .container {
   flex-direction: column;
   max-width: 960px;
@@ -446,7 +493,6 @@ th, td {
 .character-list {
   flex: 1;
   min-width: 0;
-  order: 2;
 }
 
 .detail-panel {
@@ -455,21 +501,19 @@ th, td {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  order: 1;
 }
 
 body.referee-page .character-list,
-body.referee-page .character-list,
-body.referee-page .referee-panel {
+body.referee-page .character-list {
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
 }
 
 body.player-page .character-list,
 body.player-page .character-list {
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   overscroll-behavior: contain;
 }
 
@@ -482,6 +526,7 @@ body.referee-page .character-list,
 body.referee-page .character-list {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   position: relative;
   z-index: 1;
 }
@@ -491,6 +536,33 @@ body.player-page .character-list {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+}
+
+body.player-page .character-list-scroll,
+body.player-page .character-list-scroll,
+body.referee-page .character-list-scroll,
+body.referee-page .character-list-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+body.player-page .character-list-scroll table,
+body.player-page .character-list-scroll table,
+body.referee-page .character-list-scroll table,
+body.referee-page .character-list-scroll table {
+  margin-top: 0;
+}
+
+body.player-page .character-list-scroll thead th,
+body.player-page .character-list-scroll thead th,
+body.referee-page .character-list-scroll thead th,
+body.referee-page .character-list-scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg-page);
 }
 
 body.referee-page .referee-panel {
@@ -2135,19 +2207,6 @@ body.referee-page .referee-panel {
     overflow: auto;
   }
 
-  body.player-page {
-    overflow: auto;
-  }
-
-  body.player-page .character-list,
-  body.player-page .character-list,
-  body.referee-page .character-list,
-  body.referee-page .character-list,
-  body.referee-page .referee-panel {
-    overflow: visible;
-    max-height: none;
-  }
-
   .container {
     flex-direction: column;
     width: 100%;
@@ -2166,6 +2225,13 @@ body.referee-page .referee-panel {
   .character-list {
     margin-bottom: 0;
     padding: 0.1rem;
+  }
+
+  body.referee-page .character-list,
+  body.referee-page .character-list,
+  body.referee-page .referee-panel {
+    overflow: visible;
+    max-height: none;
   }
 
   body {
@@ -2530,7 +2596,20 @@ body.referee-page .referee-panel {
 }
 
 .current-turn {
-  background-color: var(--bg-turn-active);
+  background-color: transparent;
+}
+
+.current-turn > td {
+  background-color: transparent;
+  box-shadow: inset 0 1px 0 var(--border-turn-active), inset 0 -1px 0 var(--border-turn-active);
+}
+
+.current-turn > td:first-child {
+  box-shadow: inset 1px 0 0 var(--border-turn-active), inset 0 1px 0 var(--border-turn-active), inset 0 -1px 0 var(--border-turn-active);
+}
+
+.current-turn > td:last-child {
+  box-shadow: inset -1px 0 0 var(--border-turn-active), inset 0 1px 0 var(--border-turn-active), inset 0 -1px 0 var(--border-turn-active);
 }
 
 .character-list td.init-referee,
@@ -2936,21 +3015,13 @@ body.admin-page .admin-campaign-card {
   border-radius: 0 0 12px 12px;
 }
 
-body.admin-page .admin-owner-header {
-  margin-top: 1.2rem;
-}
-
 body.admin-page .admin-owner-card {
-  margin-top: 0;
+  margin-top: 1.2rem;
   padding-top: 0.85rem;
   border-radius: 12px;
   flex-direction: column;
   align-items: stretch;
   gap: 0.75rem;
-}
-
-body.admin-page .display-page-header.admin-owner-header .admin-owner-card {
-  border-radius: 12px;
 }
 
 body.admin-page .admin-owner-card .admin-owner-group {
@@ -3431,11 +3502,6 @@ body.admin-page .admin-owner-card .admin-owner-group {
 #admin-link a:hover,
 .admin-nav a:hover {
   text-decoration: underline;
-}
-
-.admin-page .container {
-  flex-direction: column;
-  max-width: none;
 }
 
 .admin-page .detail-panel {

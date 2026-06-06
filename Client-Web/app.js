@@ -3,6 +3,8 @@ let lastStateJson = null;
 let skipRefresh = false;
 let loadStateInFlight = false;
 let loadStateRefreshQueued = false;
+let displayRosterLayoutFrame = null;
+let displayRosterLayoutMode = 'single';
 
 const {
   APP_NAME,
@@ -467,6 +469,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsCancelBtn = document.getElementById('details-cancel');
   const playerListSection = document.querySelector('.character-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
+  const displayRosterColumns = document.getElementById('display-roster-columns');
+  const displayRosterColumnsLeftBody = document.getElementById('display-players-body-left');
+  const displayRosterColumnsRightBody = document.getElementById('display-players-body-right');
   const characterListActions = document.querySelector('.character-list-actions');
   const inventoryCharacterBtn = document.getElementById('character-inventory');
   const moneyCharacterBtn = document.getElementById('character-money');
@@ -785,6 +790,97 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   function logDisplayForbidden(context) {
     if (!displayOnly) return;
     console.warn(`[display] ${context}: 403 Forbidden`);
+  }
+
+  function clearDisplayRosterColumns() {
+    if (displayRosterColumnsLeftBody) {
+      displayRosterColumnsLeftBody.innerHTML = '';
+    }
+    if (displayRosterColumnsRightBody) {
+      displayRosterColumnsRightBody.innerHTML = '';
+    }
+  }
+
+  function setDisplayRosterLayoutMode(mode) {
+    displayRosterLayoutMode = mode;
+    document.body.classList.toggle('display-roster-split', mode !== 'single');
+    document.body.classList.toggle('display-roster-compact', mode === 'compact');
+    if (playerTable) {
+      playerTable.classList.toggle('hidden', mode !== 'single');
+      playerTable.setAttribute('aria-hidden', (mode !== 'single').toString());
+    }
+    if (displayRosterColumns) {
+      displayRosterColumns.classList.toggle('hidden', mode === 'single');
+      displayRosterColumns.setAttribute('aria-hidden', (mode === 'single').toString());
+    }
+  }
+
+  function splitDisplayRosterRows(rows) {
+    if (!displayRosterColumnsLeftBody || !displayRosterColumnsRightBody) return;
+    const leftFragment = document.createDocumentFragment();
+    const rightFragment = document.createDocumentFragment();
+    const leftCount = Math.ceil(rows.length / 2);
+    rows.forEach((row) => {
+      const clone = row.cloneNode(true);
+      if (leftFragment.childNodes.length < leftCount) {
+        leftFragment.appendChild(clone);
+      } else {
+        rightFragment.appendChild(clone);
+      }
+    });
+    displayRosterColumnsLeftBody.innerHTML = '';
+    displayRosterColumnsRightBody.innerHTML = '';
+    displayRosterColumnsLeftBody.appendChild(leftFragment);
+    displayRosterColumnsRightBody.appendChild(rightFragment);
+  }
+
+  function measureDisplayRosterOverflow() {
+    if (!displayOnly || !playerListSection) return false;
+    const rosterRect = playerListSection.getBoundingClientRect();
+    return rosterRect.bottom > window.innerHeight - 8;
+  }
+
+  function updateDisplayRosterLayout() {
+    if (!displayOnly || !playersBody || !playerListSection || !displayRosterColumns) return;
+    if (displayRosterLayoutMode !== 'single') {
+      clearDisplayRosterColumns();
+      setDisplayRosterLayoutMode('single');
+    }
+    const rows = Array.from(playersBody.querySelectorAll('tr'));
+    if (rows.length === 0) {
+      clearDisplayRosterColumns();
+      setDisplayRosterLayoutMode('single');
+      return;
+    }
+
+    const shouldSplit = window.innerWidth >= 1100 && measureDisplayRosterOverflow() && rows.length >= 6;
+    if (!shouldSplit) {
+      clearDisplayRosterColumns();
+      setDisplayRosterLayoutMode('single');
+      return;
+    }
+
+    splitDisplayRosterRows(rows);
+    setDisplayRosterLayoutMode('split');
+    const splitOverflow = measureDisplayRosterOverflow();
+    if (splitOverflow) {
+      setDisplayRosterLayoutMode('compact');
+      const compactOverflow = measureDisplayRosterOverflow();
+      if (!compactOverflow) {
+        return;
+      }
+    }
+  }
+
+  function queueDisplayRosterLayoutUpdate() {
+    if (!displayOnly) return;
+    if (displayRosterLayoutFrame) {
+      window.cancelAnimationFrame(displayRosterLayoutFrame);
+    }
+    displayRosterLayoutFrame = window.requestAnimationFrame(() => {
+      displayRosterLayoutFrame = null;
+      updateDisplayRosterLayout();
+    });
   }
 
   function setConditionsPanelOpen(open) {
@@ -4040,6 +4136,7 @@ function getOwnerName() {
       tr.appendChild(conditionsTd);
       playersBody.appendChild(tr);
     }
+    queueDisplayRosterLayoutUpdate();
   }
 
   function selectCharacter(id) {
@@ -4918,6 +5015,11 @@ function getOwnerName() {
     closeExpandedOrderStats();
   });
 
+  if (displayOnly) {
+    window.addEventListener('resize', queueDisplayRosterLayoutUpdate);
+    window.addEventListener('orientationchange', queueDisplayRosterLayoutUpdate);
+  }
+
   updateSelectedConditionsDisplay();
 
   async function handleAddCharacterSubmit() {
@@ -5102,6 +5204,7 @@ function getOwnerName() {
             playersBody.innerHTML = '';
             playersBody.appendChild(createEmptyEncounterRow(conditionLibrary.length > 0 ? 4 : 3));
           }
+          queueDisplayRosterLayoutUpdate();
           updateEncounterStateDisplay();
           updateConditionsAvailability();
           updateTurnCompleteButtonState();

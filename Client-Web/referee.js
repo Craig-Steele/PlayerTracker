@@ -3576,6 +3576,9 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const initTd = document.createElement('td');
       initTd.textContent = formatInitiative(p.initiative);
+      if (!p.isReferee) {
+        initTd.classList.add('init-mine');
+      }
 
       const nameTd = document.createElement('td');
       nameTd.classList.add('referee-order-name-cell');

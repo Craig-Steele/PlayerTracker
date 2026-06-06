@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=45">
+  <link rel="stylesheet" href="style.css?v=55">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -40,17 +40,19 @@
       <button type="button" id="encounter-start">Start Encounter</button>
       <button type="button" id="encounter-suspend">Suspend Encounter</button>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Character</th>
-          <th id="health-heading">Stats</th>
-          <th class="conditions-col">Conditions</th>
-        </tr>
-      </thead>
-      <tbody id="players-body"></tbody>
-    </table>
+    <div class="character-list-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Character</th>
+            <th id="health-heading">Stats</th>
+            <th class="conditions-col">Conditions</th>
+          </tr>
+        </thead>
+        <tbody id="players-body"></tbody>
+      </table>
+    </div>
     <div id="status" class="subtitle"></div>
   </section>
 
@@ -363,6 +365,6 @@
   <script src="party-treasure.js?v=11"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=34"></script>
+  <script src="referee.js?v=35"></script>
 </body>
 </html>

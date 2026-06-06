@@ -96,7 +96,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const adminRulesetLicense = document.getElementById('admin-ruleset-license');
   const adminRulesetLicenseWrap = document.getElementById('admin-ruleset-license-wrap');
   const adminRulesetIcon = document.getElementById('admin-ruleset-icon');
-  const adminActiveSummary = document.getElementById('admin-active-summary');
   const adminHeaderNameTargets = [adminCampaignName];
   const adminHeaderIconTargets = [adminRulesetIcon];
   const adminHeaderLinkTargets = [adminRulesetLink];
@@ -254,14 +253,6 @@ window.addEventListener('DOMContentLoaded', () => {
             fallbackName: `${APP_NAME} - Admin`
           }
     );
-    if (adminActiveSummary) {
-      if (!activeCampaign) {
-        adminActiveSummary.textContent = 'No campaign selected.';
-      } else {
-        const label = library?.label || activeCampaign.rulesetLabel || activeCampaign.rulesetId || 'No Conditions';
-        adminActiveSummary.textContent = `Active: ${activeCampaign.name} - ${label} · ${claimTimeoutLabel(activeCampaign.claimTimeoutMinutes)} · ${accessLabel(activeCampaign)}`;
-      }
-    }
   }
 
   function updateAuthSummary() {
@@ -589,8 +580,7 @@ window.addEventListener('DOMContentLoaded', () => {
       setStatus(activeCampaignId ? 'Select a campaign to edit or double-click to activate it.' : 'Create or activate a campaign.');
       return;
     }
-    const label = selected.rulesetLabel || selected.rulesetId || 'No Conditions';
-    setStatus(`Selected ${selected.name} - ${label}.`);
+    setStatus('');
   }
 
   function updateEditButtonState() {
