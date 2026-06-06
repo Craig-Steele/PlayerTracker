@@ -96,6 +96,78 @@ const {
     };
   }
 };
+const {
+  createInventoryEntryId
+} = window.PlayerTrackerInventoryIds || {
+  createInventoryEntryId: () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    const bytes = new Uint8Array(16);
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let index = 0; index < bytes.length; index += 1) {
+        bytes[index] = Math.floor(Math.random() * 256);
+      }
+    }
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'));
+    return [
+      hex.slice(0, 4).join(''),
+      hex.slice(4, 6).join(''),
+      hex.slice(6, 8).join(''),
+      hex.slice(8, 10).join(''),
+      hex.slice(10, 16).join('')
+    ].join('-');
+  }
+};
+const {
+  normalizePlayerName,
+  sanitizePlayerDisplayName,
+  hasRealPlayerName,
+  resolvePlayerDisplayName
+} = window.PlayerTrackerPlayerName || {
+  normalizePlayerName: (value) => (value || '').trim().toLowerCase(),
+  sanitizePlayerDisplayName: (value) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+      return '';
+    }
+    return trimmed;
+  },
+  hasRealPlayerName: (value) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+      return false;
+    }
+    return trimmed.toLowerCase() !== 'player';
+  },
+  resolvePlayerDisplayName: (player, fallbackName = '') => {
+    const sanitize = (value) => {
+      const trimmed = (value || '').trim();
+      if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+        return '';
+      }
+      return trimmed;
+    };
+    const isReal = (value) => {
+      const trimmed = sanitize(value);
+      return Boolean(trimmed) && trimmed.toLowerCase() !== 'player';
+    };
+    const loginName = sanitize(player?.loginName);
+    const displayName = sanitize(player?.displayName);
+    if (isReal(displayName)) {
+      return displayName;
+    }
+    if (isReal(loginName)) {
+      return loginName;
+    }
+    const fallback = sanitize(fallbackName);
+    return isReal(fallback) ? fallback : '';
+  }
+};
 const AUTO_SAVE_DELAY_MS = 600;
 const LOCAL_DRAFT_PREFIX = 'characterDrafts:';
 const LOCAL_TEMP_HP_VISIBILITY_PREFIX = 'characterTempHpVisibility:';
@@ -110,34 +182,71 @@ const EMPTY_CONDITION_SET = {
 const campaignHeaderNameTargets = [];
 const campaignHeaderIconTargets = [];
 const campaignHeaderLinkTargets = [];
-  const campaignHeaderLicenseTargets = [];
-  const APP_JS_VERSION = '54';
-  let statBlockDefinitions = [];
-  let statBlockLookup = new Map();
+const campaignHeaderLicenseTargets = [];
+const APP_JS_VERSION = '54';
+let statBlockDefinitions = [];
+let statBlockLookup = new Map();
 
-function normalizePlayerName(name) {
-  return (name || '').trim().toLowerCase();
-}
-
-function isUuidLike(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    (value || '').trim()
-  );
-}
-
-function sanitizePlayerDisplayName(value) {
-  const trimmed = (value || '').trim();
-  if (!trimmed || isUuidLike(trimmed)) {
-    return '';
+const inventoryTargetHelpers = window.PlayerTrackerInventoryTarget || {
+  normalizeContainerId: (value) => {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    return trimmed || null;
+  },
+  resolveInventoryDraftContainerId: ({
+    selectedRowData = null,
+    chosenContainerId = null,
+    isContainer = false
+  } = {}) => {
+    if (isContainer) return null;
+    const chosen = typeof chosenContainerId === 'string' ? chosenContainerId.trim() : '';
+    if (chosen) return chosen;
+    if (selectedRowData?.isContainer) {
+      const containerId = typeof selectedRowData.id === 'string' ? selectedRowData.id.trim() : '';
+      return containerId || null;
+    }
+    const containerId = typeof selectedRowData?.containerId === 'string' ? selectedRowData.containerId.trim() : '';
+    return containerId || null;
   }
-  return trimmed;
-}
-
-function hasRealPlayerName(value) {
-  const trimmed = sanitizePlayerDisplayName(value);
-  if (!trimmed) return false;
-  return normalizePlayerName(trimmed) !== 'player';
-}
+};
+const inventoryRemovalHelpers = window.PlayerTrackerInventoryRemoval || {
+  normalizeInventoryEntry: (entry = {}) => ({
+    id: typeof entry.id === 'string' ? entry.id.trim() : '',
+    name: typeof entry.name === 'string' ? entry.name : '',
+    quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
+    value: Number.isFinite(entry.value) ? entry.value : 0,
+    weight: Number.isFinite(entry.weight) ? entry.weight : 0,
+    url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+    containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : null,
+    isContainer: Boolean(entry.isContainer)
+  }),
+  removeInventoryEntry: (items = [], entryId, options = {}) => {
+    const normalizedId = typeof entryId === 'string' ? entryId.trim() : '';
+    if (!normalizedId) {
+      return Array.isArray(items) ? items.slice() : [];
+    }
+    const normalizedItems = Array.isArray(items)
+      ? items.map((item) => inventoryRemovalHelpers.normalizeInventoryEntry(item))
+      : [];
+    if (options.moveContainedItems) {
+      return normalizedItems
+        .filter((item) => item.id !== normalizedId)
+        .map((item) => (item.containerId === normalizedId ? { ...item, containerId: null } : item));
+    }
+    const removedIds = new Set([normalizedId]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      normalizedItems.forEach((item) => {
+        if (item.containerId && removedIds.has(item.containerId) && !removedIds.has(item.id)) {
+          removedIds.add(item.id);
+          changed = true;
+        }
+      });
+    }
+    return normalizedItems.filter((item) => !removedIds.has(item.id));
+  }
+};
 
 function isDisplayPath() {
   const path = window.location.pathname || '';
@@ -348,6 +457,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const inventoryAddForm = document.getElementById('inventory-add-form');
   const inventoryAddFormTitle = document.getElementById('inventory-add-form-title');
   const inventoryAddFormName = document.getElementById('inventory-add-name');
+  const inventoryAddFormContainer = document.getElementById('inventory-add-container-id');
   const inventoryAddFormQuantity = document.getElementById('inventory-add-quantity');
   const inventoryAddFormValue = document.getElementById('inventory-add-value');
   const inventoryAddFormWeight = document.getElementById('inventory-add-weight');
@@ -1113,6 +1223,28 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     return hasValue ? total : 0;
   }
 
+  function getCommonCurrencyUnitLabel() {
+    if (!currencySystem || !Array.isArray(currencySystem.units) || currencySystem.units.length === 0) {
+      return '';
+    }
+    const commonUnit =
+      currencySystem.units.find((unit) => unit.id === currencySystem.commonCurrencyId) ||
+      currencySystem.units[0];
+    return commonUnit && typeof commonUnit.label === 'string'
+      ? commonUnit.label.trim().toLowerCase()
+      : '';
+  }
+
+  function formatCharacterCurrencyTotal(character) {
+    const total = getCharacterCurrencyTotal(character);
+    const unitLabel = getCommonCurrencyUnitLabel();
+    if (!unitLabel) {
+      return null;
+    }
+    const formattedTotal = Number.isFinite(total) ? total.toFixed(2) : '0.00';
+    return `${formattedTotal} ${unitLabel}`;
+  }
+
   function updatePartyTreasureActionButtons() {
     const isAddFormOpen = Boolean(partyTreasureAddForm && !partyTreasureAddForm.classList.contains('hidden'));
     const hasSelection = Boolean(partyTreasureSelectedRow);
@@ -1406,13 +1538,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
-  function createInventoryEntryId() {
-    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-      return crypto.randomUUID();
-    }
-    return `inventory-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-  }
-
   function normalizeInventoryEntry(entry = {}, containerId = null, isContainer = false) {
     const normalizedContainerId =
       typeof entry.containerId === 'string' && entry.containerId.trim()
@@ -1492,6 +1617,38 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     }
   }
 
+  function buildInventoryContainerOptions(selectedContainerId = null, disabled = false) {
+    if (!inventoryAddFormContainer) return;
+    const nextValue = typeof selectedContainerId === 'string' ? selectedContainerId : '';
+    inventoryAddFormContainer.innerHTML = '';
+
+    const rootOption = document.createElement('option');
+    rootOption.value = '';
+    rootOption.textContent = 'Carried';
+    inventoryAddFormContainer.appendChild(rootOption);
+
+    const containerEntries = currentInventory.filter((entry) => entry && entry.isContainer && entry.id);
+    const nameCounts = new Map();
+    containerEntries.forEach((entry) => {
+      const baseName = (entry.name || 'Container').trim() || 'Container';
+      nameCounts.set(baseName, (nameCounts.get(baseName) || 0) + 1);
+    });
+    const seenCounts = new Map();
+    containerEntries.forEach((entry) => {
+      const option = document.createElement('option');
+      option.value = entry.id;
+      const baseName = (entry.name || 'Container').trim() || 'Container';
+      const count = nameCounts.get(baseName) || 0;
+      const seen = (seenCounts.get(baseName) || 0) + 1;
+      seenCounts.set(baseName, seen);
+      option.textContent = count > 1 ? `${baseName} (${seen})` : baseName;
+      inventoryAddFormContainer.appendChild(option);
+    });
+
+    inventoryAddFormContainer.value = nextValue;
+    inventoryAddFormContainer.disabled = disabled;
+  }
+
   function updateInventoryTotalWeight() {
     if (!inventoryTotalWeight) return;
     const totalWeight = currentInventory.reduce((sum, entry) => {
@@ -1529,6 +1686,25 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     table.appendChild(tbody);
     wrap.appendChild(table);
     return { wrap, tbody, titleCell: tr.firstChild };
+  }
+
+  function buildInventoryContainerDisplayLabels(containerEntries = []) {
+    const nameCounts = new Map();
+    containerEntries.forEach((entry) => {
+      const baseName = (entry?.name || 'Container').trim() || 'Container';
+      nameCounts.set(baseName, (nameCounts.get(baseName) || 0) + 1);
+    });
+    const seenCounts = new Map();
+    return new Map(
+      containerEntries.map((entry) => {
+        const baseName = (entry?.name || 'Container').trim() || 'Container';
+        const totalCount = nameCounts.get(baseName) || 0;
+        const seen = (seenCounts.get(baseName) || 0) + 1;
+        seenCounts.set(baseName, seen);
+        const label = totalCount > 1 ? `${baseName} (${seen})` : baseName;
+        return [entry.id, label];
+      })
+    );
   }
 
   function createInventoryDisplayRow(entry = {}, options = {}) {
@@ -1599,13 +1775,13 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     return row;
   }
 
-  function buildInventoryContainerSection(containerEntry, allEntries) {
+  function buildInventoryContainerSection(containerEntry, allEntries, displayLabel = null) {
     if (!inventoryContainerSections) return null;
     const section = document.createElement('section');
     section.className = 'inventory-section inventory-container-section';
     section.dataset.containerId = containerEntry.id;
 
-    const { wrap, tbody } = createInventorySectionTable(containerEntry.name || 'Container');
+    const { wrap, tbody } = createInventorySectionTable(displayLabel || containerEntry.name || 'Container');
     const containerRow = appendInventoryDisplayRow(containerEntry, {
       containerId: null,
       isContainer: true,
@@ -1624,6 +1800,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
   function buildInventoryFields(items = []) {
     if (!inventoryFields) return;
+    const previouslySelectedEntryId = inventorySelectedRow?.dataset.inventoryEntryId || null;
     currentInventory = Array.isArray(items)
       ? items.map((entry) => normalizeInventoryEntry(entry)).filter(Boolean)
       : [];
@@ -1633,13 +1810,27 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     }
     const rootEntries = currentInventory.filter((entry) => !entry.isContainer && !entry.containerId);
     const containerEntries = currentInventory.filter((entry) => entry.isContainer && !entry.containerId);
+    const containerLabels = buildInventoryContainerDisplayLabels(containerEntries);
     rootEntries.forEach((entry) => {
       appendInventoryDisplayRow(entry, { targetBody: inventoryFields });
     });
     containerEntries.forEach((entry) => {
-      buildInventoryContainerSection(entry, currentInventory);
+      buildInventoryContainerSection(entry, currentInventory, containerLabels.get(entry.id) || null);
     });
-    setSelectedInventoryRow(getInventoryPanelRows()[0] || null);
+    if (inventoryAddFormContainer) {
+      const preservedContainerId = inventoryAddFormContainer.value || inventoryEditingContainerId || '';
+      buildInventoryContainerOptions(
+        inventoryEditingIsContainer ? '' : preservedContainerId,
+        inventoryEditingIsContainer
+      );
+    }
+    const restoredSelection =
+      (previouslySelectedEntryId
+        ? findInventoryRowById(previouslySelectedEntryId)
+        : null) ||
+      getInventoryPanelRows()[0] ||
+      null;
+    setSelectedInventoryRow(restoredSelection);
     updateInventoryTotalWeight();
     updateInventoryActionButtons();
   }
@@ -1672,6 +1863,14 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       ? normalizeInventoryEntry(entry, inventoryEditingContainerId, inventoryEditingIsContainer)
       : normalizeInventoryEntry({}, inventoryEditingContainerId, inventoryEditingIsContainer);
     if (inventoryAddFormName) inventoryAddFormName.value = normalized.name || '';
+    buildInventoryContainerOptions(
+      inventoryTargetHelpers.resolveInventoryDraftContainerId({
+        selectedRowData: getInventoryRowData(inventorySelectedRow),
+        chosenContainerId: inventoryEditingContainerId,
+        isContainer: inventoryEditingIsContainer
+      }) || '',
+      inventoryEditingIsContainer
+    );
     if (inventoryAddFormQuantity) inventoryAddFormQuantity.value = String(normalized.quantity ?? 1);
     if (inventoryAddFormValue) inventoryAddFormValue.value = String(normalized.value ?? 0);
     if (inventoryAddFormWeight) inventoryAddFormWeight.value = String(normalized.weight ?? 0);
@@ -1733,6 +1932,11 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     if (!Number.isFinite(weight)) {
       throw new Error(`Weight for ${name} must be a valid number.`);
     }
+    const selectedContainerId = inventoryTargetHelpers.resolveInventoryDraftContainerId({
+      selectedRowData: getInventoryRowData(inventorySelectedRow),
+      chosenContainerId: inventoryAddFormContainer ? inventoryAddFormContainer.value : null,
+      isContainer: inventoryEditingIsContainer
+    });
     return {
       id: inventoryEditingEntryId || createInventoryEntryId(),
       name,
@@ -1740,7 +1944,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       value,
       weight,
       url: url || null,
-      containerId: inventoryEditingIsContainer ? null : (inventoryEditingContainerId || null),
+      containerId: inventoryEditingIsContainer ? null : selectedContainerId,
       isContainer: inventoryEditingIsContainer
     };
   }
@@ -1757,29 +1961,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       normalizedItems.push(normalizedEntry);
     }
     return normalizedItems;
-  }
-
-  function removeInventoryEntry(items = [], entryId) {
-    const normalizedId = typeof entryId === 'string' ? entryId.trim() : '';
-    if (!normalizedId) {
-      return Array.isArray(items) ? items.map((item) => normalizeInventoryEntry(item)) : [];
-    }
-    let remaining = Array.isArray(items)
-      ? items.map((item) => normalizeInventoryEntry(item))
-      : [];
-    const removedIds = new Set([normalizedId]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      remaining.forEach((item) => {
-        if (item.containerId && removedIds.has(item.containerId) && !removedIds.has(item.id)) {
-          removedIds.add(item.id);
-          changed = true;
-        }
-      });
-    }
-    remaining = remaining.filter((item) => !removedIds.has(item.id));
-    return remaining;
   }
 
   function getSelectedInventoryContainerId() {
@@ -1901,18 +2082,34 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     const rowData = getInventoryRowData(inventorySelectedRow) || {};
     const entry = getInventoryRowEntry(inventorySelectedRow);
     const rowName = (entry?.name || 'Item').trim() || 'Item';
-    if (rowData.isContainer && !confirm(`Remove ${rowName} and everything inside it?`)) {
-      return;
+    let moveContainedItems = false;
+    if (rowData.isContainer) {
+      const deleteAllItems = await showConfirmDialog({
+        title: 'Remove Container?',
+        header: rowName,
+        message: 'Choose whether to keep the items by moving them to the main inventory, or delete everything inside the container.',
+        confirmLabel: 'Delete all items',
+        cancelLabel: 'Keep all items',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      });
+      moveContainedItems = !deleteAllItems;
     }
-    const items = removeInventoryEntry(currentInventory, rowData.id || '');
+    const items = inventoryRemovalHelpers.removeInventoryEntry(currentInventory, rowData.id || '', {
+      moveContainedItems
+    });
     try {
       const savedCharacter = await saveInventoryItems(items);
       if (!savedCharacter) return;
       currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : items;
       buildInventoryFields(currentInventory);
-      setSelectedInventoryRow(getInventoryPanelRows()[0] || null);
+      setSelectedInventoryRow(findInventoryRowById(rowData.id || '') || getInventoryPanelRows()[0] || null);
       if (statusDiv) {
-        statusDiv.textContent = `Removed ${rowName}.`;
+        statusDiv.textContent = rowData.isContainer
+          ? moveContainedItems
+            ? `Removed ${rowName} and kept contained items.`
+            : `Removed ${rowName} and deleted contained items.`
+          : `Removed ${rowName}.`;
       }
     } catch (err) {
       if (statusDiv) {
@@ -3006,8 +3203,9 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     updateReleaseButtonState();
   }
 
-  function getOwnerName() {
-    return ownerInput ? ownerInput.value.trim() : '';
+function getOwnerName() {
+    const ownerName = ownerInput ? ownerInput.value.trim() : '';
+    return hasRealPlayerName(ownerName) ? ownerName : '';
   }
 
   function generateUuid() {
@@ -3054,8 +3252,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     const payload = await res.json();
     const player = payload.player || {};
     currentPlayerSessionId = player.id || currentPlayerSessionId;
-    const loginName = sanitizePlayerDisplayName(player.loginName || trimmedName) || trimmedName;
-    const displayNameValue = sanitizePlayerDisplayName(player.displayName) || loginName;
+    const displayNameValue = resolvePlayerDisplayName(player, trimmedName);
     if (ownerInput) ownerInput.value = displayNameValue;
     if (playerNameInput) playerNameInput.value = displayNameValue;
     updatePlayerNameDisplay();
@@ -3075,8 +3272,7 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       const payload = await res.json();
       const player = payload.player || {};
       currentPlayerSessionId = player.id || currentPlayerSessionId;
-      const loginName = sanitizePlayerDisplayName(player.loginName);
-      const displayName = sanitizePlayerDisplayName(player.displayName);
+      const displayName = resolvePlayerDisplayName(player);
       if (ownerInput) {
         ownerInput.value = displayName;
       }
@@ -3168,7 +3364,6 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
         });
       }
     };
-
     const addMenuItem = (label, handler, options = {}) => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -3199,7 +3394,8 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     addMenuItem('Inventory', async () => {
       await openInventoryEditor(character);
     });
-    addMenuItem('Money', () => openCurrencyEditor(character), {
+    const currencyTotal = formatCharacterCurrencyTotal(character);
+    addMenuItem(currencyTotal ? `Money: ${currencyTotal}` : 'Money', () => openCurrencyEditor(character), {
       hidden: !(currencySystem && currencySystem.units.length > 0)
     });
     addMenuItem('Party Treasure', async () => {
@@ -3355,10 +3551,14 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
       item.appendChild(row);
 
       const conditionsList = buildEncounterConditionsList(character.conditions, conditionLookup);
+      const conditionsCell = document.createElement('div');
+      conditionsCell.className = 'character-card-conditions';
       if (conditionsList) {
-        conditionsList.classList.add('character-card-conditions');
-        item.appendChild(conditionsList);
+        conditionsCell.appendChild(conditionsList);
+      } else {
+        conditionsCell.textContent = '—';
       }
+      item.appendChild(conditionsCell);
 
       characterList.appendChild(item);
     });
@@ -4710,6 +4910,12 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     });
   }
 
+  if (inventoryAddFormContainer) {
+    inventoryAddFormContainer.addEventListener('change', () => {
+      inventoryEditingContainerId = inventoryAddFormContainer.value || null;
+    });
+  }
+
   if (inventoryPanel) {
     inventoryPanel.addEventListener('click', (event) => {
       if (event.target !== inventoryPanel) return;
@@ -4826,8 +5032,12 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
 
   async function initApp() {
     const hadPlayerSession = await bootstrapPlayerSession();
-    updatePlayerEntryGate();
-    updatePlayerNameDisplay();
+    try {
+      updatePlayerEntryGate();
+      updatePlayerNameDisplay();
+    } catch (err) {
+      console.error('Failed to initialize player header:', err);
+    }
     if (!displayOnly) {
       if (!hadPlayerSession && !getOwnerName()) {
         if (!isJoinPage() && !preferPlayerView) {

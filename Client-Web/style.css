@@ -324,11 +324,6 @@ body.player-page .container {
   display: none;
 }
 
-.no-conditions .conditions-col,
-.no-conditions .conditions-cell {
-  display: none;
-}
-
 .display-only .detail-panel {
   display: none;
 }
@@ -1755,7 +1750,7 @@ body.referee-page .referee-panel {
 
 .party-treasure-inline-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   justify-content: flex-end;
   margin-top: 0.7rem;
@@ -2424,6 +2419,17 @@ body.referee-page .referee-panel {
   .property-toggle-row {
     grid-template-columns: 1fr;
     gap: 0.45rem;
+  }
+
+  .inventory-inline-form-grid .property-row {
+    grid-template-columns: minmax(4.25rem, 5.75rem) minmax(0, 1fr);
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.45rem 0.55rem;
+  }
+
+  .inventory-inline-form-grid .property-label {
+    white-space: nowrap;
   }
 
   .property-label {

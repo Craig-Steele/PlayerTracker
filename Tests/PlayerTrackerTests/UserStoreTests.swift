@@ -237,6 +237,64 @@ final class UserStoreTests: XCTestCase {
         XCTAssertEqual(view.inventory.first(where: { $0.name == "Rations" })?.url, "https://example.com/rations")
     }
 
+    func testCharacterInventoryPreservesNestedContainerReferences() async throws {
+        let store = UserStore()
+        let campaignName = "Nested Inventory"
+        let backpackID = UUID()
+        let inventory = [
+            InventoryEntry(
+                id: backpackID,
+                name: "Backpack",
+                quantity: 1,
+                value: 2,
+                weight: 5,
+                url: nil,
+                containerId: nil,
+                isContainer: true
+            ),
+            InventoryEntry(
+                name: "Rations",
+                quantity: 3,
+                value: 0.5,
+                weight: 1.5,
+                url: "https://example.com/rations",
+                containerId: backpackID,
+                isContainer: false
+            )
+        ]
+
+        let character = await store.upsertCharacter(
+            id: nil,
+            campaignName: campaignName,
+            ownerId: UUID(),
+            ownerName: "Player",
+            characterName: "Pack Mule",
+            initiative: nil,
+            stats: [],
+            currency: [],
+            inventory: inventory,
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        let state = await store.state(
+            campaignName: campaignName,
+            includeHidden: true,
+            encounterState: .new
+        )
+        let view = try XCTUnwrap(state.players.first { $0.id == character.id })
+        XCTAssertEqual(view.inventory.count, 2)
+        let backpack = try XCTUnwrap(view.inventory.first(where: { $0.id == backpackID }))
+        XCTAssertTrue(backpack.isContainer)
+        let rations = try XCTUnwrap(view.inventory.first(where: { $0.name == "Rations" }))
+        XCTAssertEqual(rations.containerId, backpackID)
+    }
+
     func testStaleClaimExpiresAfterClaimTimeout() async throws {
         let store = UserStore()
         let campaignName = "Timeout"

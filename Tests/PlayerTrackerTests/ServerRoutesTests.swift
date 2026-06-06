@@ -549,6 +549,77 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertNotNil(updatedCampaign.partyTreasure.first?.id)
     }
 
+    func testCharacterInventoryRoutesPreserveNestedContainerReferences() async throws {
+        let tester = try await makeTester()
+        let playerSession = try await join(displayName: "Player", in: tester)
+        let backpackID = UUID()
+        let campaignResponse = try await tester.sendRequest(
+            .GET,
+            "/campaign",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let campaign = try campaignResponse.content.decode(CampaignState.self)
+        let payload = CharacterInput(
+            id: nil,
+            campaignName: nil,
+            ownerId: UUID(),
+            ownerName: "Player",
+            name: "Pack Mule",
+            inventory: [
+                InventoryEntry(
+                    id: backpackID,
+                    name: "Backpack",
+                    quantity: 1,
+                    value: 2,
+                    weight: 5,
+                    url: nil,
+                    containerId: nil,
+                    isContainer: true
+                ),
+                InventoryEntry(
+                    name: "Rations",
+                    quantity: 3,
+                    value: 0.5,
+                    weight: 1.5,
+                    url: "https://example.com/rations",
+                    containerId: backpackID,
+                    isContainer: false
+                )
+            ],
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        let created = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: payload
+        )
+
+        XCTAssertEqual(created.inventory.count, 2)
+        let createdBackpack = try XCTUnwrap(created.inventory.first(where: { $0.id == backpackID }))
+        XCTAssertTrue(createdBackpack.isContainer)
+        let createdRations = try XCTUnwrap(created.inventory.first(where: { $0.name == "Rations" }))
+        XCTAssertEqual(createdRations.containerId, backpackID)
+
+        let charactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(campaign.id.uuidString)/me/characters",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+        XCTAssertEqual(charactersResponse.status, .ok)
+        let characters = try charactersResponse.content.decode([PlayerView].self)
+        let reloaded = try XCTUnwrap(characters.first(where: { $0.id == created.id }))
+        XCTAssertEqual(reloaded.inventory.count, 2)
+        XCTAssertEqual(reloaded.inventory.first(where: { $0.name == "Rations" })?.containerId, backpackID)
+    }
+
     func testCreatureLibraryImportRoutePersistsImportedFileForReferee() async throws {
         let tempBaseDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-route-\(UUID().uuidString)", isDirectory: true)

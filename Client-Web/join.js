@@ -14,29 +14,27 @@ const {
   resolveJoinOutcome: () => ({ state: 'inactive' })
 };
 
-function isUuidLike(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    (value || '').trim()
-  );
-}
-
-function normalizePlayerName(value) {
-  return (value || '').trim().toLowerCase();
-}
-
-function sanitizePlayerDisplayName(value) {
-  const trimmed = (value || '').trim();
-  if (!trimmed || isUuidLike(trimmed)) {
-    return '';
+const {
+  normalizePlayerName,
+  sanitizePlayerDisplayName,
+  hasRealPlayerName
+} = window.PlayerTrackerPlayerName || {
+  normalizePlayerName: (value) => (value || '').trim().toLowerCase(),
+  sanitizePlayerDisplayName: (value) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+      return '';
+    }
+    return trimmed;
+  },
+  hasRealPlayerName: (value) => {
+    const trimmed = (value || '').trim();
+    if (!trimmed || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(trimmed)) {
+      return false;
+    }
+    return trimmed.toLowerCase() !== 'player';
   }
-  return trimmed;
-}
-
-function hasRealPlayerName(value) {
-  const trimmed = sanitizePlayerDisplayName(value);
-  if (!trimmed) return false;
-  return normalizePlayerName(trimmed) !== 'player';
-}
+};
 
 function responseErrorMessage(fallback, response, text) {
   const status = response?.status ? `Server returned ${response.status}` : fallback;
