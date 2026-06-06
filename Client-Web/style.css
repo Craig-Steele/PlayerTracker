@@ -253,15 +253,6 @@ th, td {
   justify-content: flex-end;
 }
 
-.current-actor {
-  margin-top: 0.2rem;
-}
-
-.current-actor-mine {
-  color: var(--text-link);
-  font-weight: 700;
-}
-
 .subtitle {
   font-size: 0.85rem;
   color: var(--text-muted);
@@ -313,13 +304,6 @@ body.referee-page .referee-container {
   min-height: 0;
 }
 
-body.player-page .container {
-  flex: 1 1 auto;
-  flex-direction: column;
-  align-items: stretch;
-  min-height: 0;
-}
-
 .no-conditions .conditions-section {
   display: none;
 }
@@ -328,7 +312,7 @@ body.player-page .container {
   display: none;
 }
 
-.display-only .player-list {
+.display-only .character-list {
   flex: 1 1 100%;
 }
 
@@ -464,7 +448,8 @@ body.player-page .container {
   min-width: 7rem;
 }
 
-.player-list {
+.character-list,
+.character-list {
   flex: 1;
   min-width: 0;
   order: 2;
@@ -479,41 +464,38 @@ body.player-page .container {
   order: 1;
 }
 
-body.referee-page .player-list,
+body.referee-page .character-list,
+body.referee-page .character-list,
 body.referee-page .referee-panel {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-body.player-page .player-list,
-body.player-page .detail-panel {
+body.player-page .character-list,
+body.player-page .character-list {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-body.player-page .detail-panel {
+body.player-page #modal-form-stack {
   flex: 0 0 auto;
-  padding: 0;
   margin: 0;
 }
 
-body.player-page #player-form {
-  flex: 0 0 auto;
-}
-
-body.referee-page .player-list {
+body.referee-page .character-list,
+body.referee-page .character-list {
   display: flex;
   flex-direction: column;
   position: relative;
   z-index: 1;
 }
 
-body.player-page .player-list {
+body.player-page .character-list,
+body.player-page .character-list {
   display: flex;
   flex-direction: column;
-  order: 1;
   flex: 1 1 auto;
 }
 
@@ -524,7 +506,7 @@ body.referee-page .referee-panel {
   z-index: 2;
 }
 
-#player-form {
+#modal-form-stack {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -1596,7 +1578,7 @@ body.referee-page .referee-panel {
   z-index: 1000;
 }
 
-.conditions-dialog {
+.dialog-shell {
   width: min(42rem, 100%);
   max-height: min(80vh, 48rem);
   display: flex;
@@ -2168,18 +2150,10 @@ body.referee-page .referee-panel {
     overflow: auto;
   }
 
-  body.player-page .container {
-    flex-direction: column;
-    min-height: auto;
-  }
-
-  body.player-page .player-list,
-  body.player-page .detail-panel {
-    overflow: visible;
-    max-height: none;
-  }
-
-  body.referee-page .player-list,
+  body.player-page .character-list,
+  body.player-page .character-list,
+  body.referee-page .character-list,
+  body.referee-page .character-list,
   body.referee-page .referee-panel {
     overflow: visible;
     max-height: none;
@@ -2191,14 +2165,16 @@ body.referee-page .referee-panel {
     min-width: 0;
   }
 
-  .player-list,
+  .character-list,
+  .character-list,
   .detail-panel {
     width: 100% !important;    /* full width on stacked mode */
     box-sizing: border-box;
     min-width: 0;
   }
   
-  .player-list {
+  .character-list,
+  .character-list {
     margin-bottom: 0;
     padding: 0.1rem;
   }
@@ -2213,19 +2189,12 @@ body.referee-page .referee-panel {
     margin: 0;
   }
 
-  body.referee-page .player-list {
+  body.referee-page .character-list,
+  body.referee-page .character-list {
     order: 1;
   }
 
   body.referee-page .referee-panel {
-    order: 2;
-  }
-
-  body.player-page .player-list {
-    order: 1;
-  }
-
-  body.player-page .detail-panel {
     order: 2;
   }
 
@@ -2355,11 +2324,13 @@ body.referee-page .referee-panel {
     margin-top: 0.1rem;
   }
 
-  .player-list {
+  .character-list,
+  .character-list {
     overflow-x: hidden;
   }
 
-  .player-list table {
+  .character-list table,
+  .character-list table {
     table-layout: fixed;
     max-width: 100%;
   }
@@ -2373,29 +2344,38 @@ body.referee-page .referee-panel {
     margin-bottom: 0;
   }
 
-  .player-list table th:nth-child(1),
-  .player-list table td:nth-child(1) {
+  .character-list table th:nth-child(1),
+  .character-list table td:nth-child(1),
+  .character-list table th:nth-child(1),
+  .character-list table td:nth-child(1) {
     width: 2.5ch;
   }
 
-  .player-list table th:nth-child(2),
-  .player-list table td:nth-child(2) {
+  .character-list table th:nth-child(2),
+  .character-list table td:nth-child(2),
+  .character-list table th:nth-child(2),
+  .character-list table td:nth-child(2) {
     width: auto;
     white-space: normal;
   }
 
-  .player-list table th:nth-child(3),
-  .player-list table td:nth-child(3) {
+  .character-list table th:nth-child(3),
+  .character-list table td:nth-child(3),
+  .character-list table th:nth-child(3),
+  .character-list table td:nth-child(3) {
     width: 90px;
   }
 
-  .player-list table th:last-child,
-  .player-list table td:last-child {
+  .character-list table th:last-child,
+  .character-list table td:last-child,
+  .character-list table th:last-child,
+  .character-list table td:last-child {
     width: auto;
     white-space: normal;
   }
 
-  .player-list table td:nth-child(3) {
+  .character-list table td:nth-child(3),
+  .character-list table td:nth-child(3) {
     font-size: 0.9rem;
   }
 
@@ -2440,7 +2420,7 @@ body.referee-page .referee-panel {
     font-size: 1rem;
   }
 
-  .conditions-dialog {
+  .dialog-shell {
     max-height: 88vh;
     padding: 0.85rem;
   }
@@ -2523,21 +2503,6 @@ body.referee-page .referee-panel {
     padding: 0.4rem 1.5rem;
   }
 
-  #header-bar {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
-    min-width: 0;
-  }
-
-  #header-bar-right {
-    width: auto;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-    min-width: 0;
-  }
-
   #qr-container canvas,
   #qr-container img {
     width: 96px;
@@ -2579,24 +2544,28 @@ body.referee-page .referee-panel {
   background-color: var(--bg-turn-active);
 }
 
-.player-list td.init-referee {
+.character-list td.init-referee,
+.character-list td.init-referee {
   background-color: var(--bg-referee);
   color: var(--text-referee);
   font-weight: 700;
 }
 
-.player-list td.init-referee + td {
+.character-list td.init-referee + td,
+.character-list td.init-referee + td {
   background-color: var(--bg-referee);
   color: var(--text-referee);
 }
 
-.player-list td.init-mine {
+.character-list td.init-mine,
+.character-list td.init-mine {
   background-color: var(--bg-mine);
   color: var(--text-mine);
   font-weight: 700;
 }
 
-.player-list td.init-mine + td {
+.character-list td.init-mine + td,
+.character-list td.init-mine + td {
   background-color: var(--bg-mine);
   color: var(--text-mine);
 }
@@ -2784,64 +2753,73 @@ body.referee-page .referee-panel {
 }
 
 /* Make the first column narrow, second column wide */
-.player-list table {
+.character-list table,
+.character-list table {
   table-layout: auto;
   width: 100%;
 }
 
 /* Initiative column */
-.player-list table th:nth-child(1),
-.player-list table td:nth-child(1) {
+.character-list table th:nth-child(1),
+.character-list table td:nth-child(1),
+.character-list table th:nth-child(1),
+.character-list table td:nth-child(1) {
   width: 2.5ch;
   text-align: center;
   white-space: nowrap;
 }
 
 /* Character column */
-.player-list table th:nth-child(2),
-.player-list table td:nth-child(2) {
+.character-list table th:nth-child(2),
+.character-list table td:nth-child(2),
+.character-list table th:nth-child(2),
+.character-list table td:nth-child(2) {
   width: auto;
   white-space: normal;
 }
 
 /* HP column */
-.player-list table th:nth-child(3),
-.player-list table td:nth-child(3) {
+.character-list table th:nth-child(3),
+.character-list table td:nth-child(3),
+.character-list table th:nth-child(3),
+.character-list table td:nth-child(3) {
   width: 120px;
   text-align: center;
 }
 
-.display-only .player-list table th:nth-child(3),
-.display-only .player-list table td:nth-child(3) {
+.display-only .character-list table th:nth-child(3),
+.display-only .character-list table td:nth-child(3) {
   width: 180px;
 }
 
-.display-only .player-list table td:nth-child(3) {
+.display-only .character-list table td:nth-child(3) {
   white-space: nowrap;
 }
 
-.display-only .player-list table td:nth-child(3) > div {
+.display-only .character-list table td:nth-child(3) > div {
   display: inline;
   margin-right: 0.35rem;
 }
 
-.display-only .player-list table td:nth-child(3) > div:last-child {
+.display-only .character-list table td:nth-child(3) > div:last-child {
   margin-right: 0;
 }
 
-.display-only .player-list table th:nth-child(2),
-.display-only .player-list table td:nth-child(2) {
+.display-only .character-list table th:nth-child(2),
+.display-only .character-list table td:nth-child(2) {
   width: 30%;
 }
 
-.display-only .player-list table th:nth-child(4),
-.display-only .player-list table td:nth-child(4) {
+.display-only .character-list table th:nth-child(4),
+.display-only .character-list table td:nth-child(4) {
   width: 40%;
 }
 
 /* Conditions column takes the rest */
-.player-list table th:last-child,
-.player-list table td:last-child {
+.character-list table th:last-child,
+.character-list table td:last-child,
+.character-list table th:last-child,
+.character-list table td:last-child {
   width: auto;
   white-space: normal;
 }
@@ -2852,7 +2830,8 @@ body.referee-page .referee-panel {
 }
 
 @media (orientation: portrait), (max-width: 900px) {
-  .player-list table {
+  .character-list table,
+  .character-list table {
     table-layout: fixed;
     width: 100%;
   }
@@ -2861,10 +2840,14 @@ body.referee-page .referee-panel {
     gap: 0.2rem;
   }
 
-  .player-list table th:nth-child(2),
-  .player-list table td:nth-child(2),
-  .player-list table th:last-child,
-  .player-list table td:last-child {
+  .character-list table th:nth-child(2),
+  .character-list table td:nth-child(2),
+  .character-list table th:last-child,
+  .character-list table td:last-child,
+  .character-list table th:nth-child(2),
+  .character-list table td:nth-child(2),
+  .character-list table th:last-child,
+  .character-list table td:last-child {
     white-space: normal;
   }
 }
@@ -2875,35 +2858,10 @@ body.referee-page .referee-panel {
   margin-top: 0.5rem;
 }
 
-#header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: top;
-  margin-bottom: 1rem;
-}
-
-body:not(.display-only):not(.referee-page) #header-bar {
-  display: none;
-}
-
-body.referee-page #header-bar {
-  display: none;
-}
-
-#header-bar-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
 .campaign-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.player-page-header {
-  display: block;
 }
 
 .referee-page-header {
@@ -2925,7 +2883,7 @@ body.referee-page #header-bar {
   background: var(--bg-panel);
 }
 
-body:not(.display-only):not(.referee-page) .player-page-header {
+body:not(.display-only):not(.referee-page) .player-campaign-card {
   position: -webkit-sticky;
   position: sticky;
   top: 0;
@@ -3270,23 +3228,8 @@ body.admin-page .admin-owner-card .admin-owner-group {
   text-decoration: underline;
 }
 
-#header-bar-right {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  min-width: 0;
-}
-
 .player-name-edit {
   width: auto;
-}
-
-.referee-page #header-bar-right {
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.35rem;
 }
 
 .player-name-edit {
@@ -3351,21 +3294,6 @@ body.admin-page .admin-owner-card .admin-owner-group {
 }
 
 @media (max-width: 700px) {
-  #header-bar {
-    flex-wrap: wrap;
-    margin-bottom: 0.4rem;
-  }
-
-  #header-bar-left,
-  #header-bar-right {
-    flex: 1 1 100%;
-  }
-
-  #header-bar-right {
-    align-items: flex-start;
-    gap: 0.35rem;
-  }
-
   .player-campaign-player-row {
     align-items: flex-start;
   }
@@ -3690,12 +3618,6 @@ body.display-only {
   max-width: none;
 }
 
-.display-only #header-bar-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
 .display-join-controls {
   display: flex;
   flex-direction: column;
@@ -3791,13 +3713,6 @@ body.display-only {
   }
 }
 
-@media (orientation: portrait), (max-width: 900px) {
-  .display-only #header-bar {
-    flex-direction: row;
-    align-items: center;
-    gap: 1rem;
-  }
-}
   .round-row {
     flex-direction: row;
     align-items: center;

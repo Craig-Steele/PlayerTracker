@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=33">
+  <link rel="stylesheet" href="style.css?v=42">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -30,7 +30,7 @@
   </div>
 
   <div class="container referee-container">
-    <section class="player-list">
+    <section class="character-list">
       <div class="character-list-actions referee-list-actions referee-top-actions">
         <button type="button" id="ref-add-button">Add<br/>Character</button>
         <button type="button" id="ref-party-treasure-button">Party<br/>Treasure</button>
@@ -58,7 +58,7 @@
 
   <!-- Add a new character to the referee roster, either manually or from the library. -->
   <form id="ref-add-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
-    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-add-dialog-title">
+    <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-add-dialog-title">
       <div class="conditions-dialog-header">
         <h2 id="ref-add-dialog-title">Add Character</h2>
         <div class="conditions-dialog-actions">
@@ -131,7 +131,7 @@
   <!-- Edit the selected character's details, stats, and conditions. -->
   <form id="ref-editor" class="ref-editor hidden" aria-hidden="true">
     <div id="ref-details-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
-      <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-details-dialog-title">
+      <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-details-dialog-title">
         <div class="conditions-dialog-header">
           <h2 id="ref-details-dialog-title">Details</h2>
           <div class="conditions-dialog-actions">
@@ -160,7 +160,7 @@
       </div>
     </div>
     <div id="ref-conditions-panel" class="conditions-panel-collapsed hidden" aria-hidden="true">
-      <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-conditions-dialog-title">
+      <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-conditions-dialog-title">
         <div class="conditions-dialog-header">
           <h2 id="ref-conditions-dialog-title">Conditions</h2>
           <div class="conditions-dialog-actions">
@@ -177,7 +177,7 @@
 
   <!-- Set or clear initiative for the selected character without opening the full editor. -->
   <div id="ref-initiative-modal" class="conditions-modal hidden" aria-hidden="true">
-    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-initiative-dialog-title">
+    <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-initiative-dialog-title">
       <div class="conditions-dialog-header">
         <div>
           <h2 id="ref-initiative-dialog-title">Edit Initiative</h2>
@@ -199,7 +199,7 @@
 
   <!-- Manage the active campaign's shared treasure inventory. -->
   <div id="ref-party-treasure-panel" class="conditions-modal hidden" aria-hidden="true">
-    <div class="conditions-dialog inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-party-treasure-dialog-title">
+    <div class="dialog-shell inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-party-treasure-dialog-title">
       <div class="conditions-dialog-header">
         <h2 id="ref-party-treasure-dialog-title">Party Treasure</h2>
         <div class="conditions-dialog-actions party-treasure-actions">
@@ -269,7 +269,7 @@
 
   <!-- Configure campaign-wide referee settings, loaded creature libraries, and access rules. -->
   <div id="ref-campaign-settings-modal" class="conditions-modal hidden" aria-hidden="true">
-    <div class="conditions-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-campaign-settings-dialog-title">
+    <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-campaign-settings-dialog-title">
       <div class="conditions-dialog-header">
         <h2 id="ref-campaign-settings-dialog-title">Campaign Settings</h2>
         <div class="conditions-dialog-actions">

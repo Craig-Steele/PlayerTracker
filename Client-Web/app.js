@@ -346,12 +346,9 @@ async function showServerIP() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  const form = document.getElementById('player-form');
+  const form = document.getElementById('modal-form-stack');
   const statusDiv = document.getElementById('status');
   const playersBody = document.getElementById('players-body');
-
-  const adminToolbar = document.getElementById('admin-toolbar');
-  const clearBtn = document.getElementById('clear');
 
   const qrContainer = document.getElementById('qr-container'); // if you have it
 
@@ -370,7 +367,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const currentStatsInputs = document.getElementById('current-stats-inputs');
   const revealStatsInput = document.getElementById('reveal-stats');
   const autoSkipTurnInput = document.getElementById('auto-skip-turn');
-  const currentActor = document.getElementById('current-actor');
   const healthHeading = document.getElementById('health-heading');
   const conditionGrid = document.getElementById('conditions-grid');
   const selectedConditionsWrap = document.getElementById('selected-conditions');
@@ -414,7 +410,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const detailsToggles = document.querySelector('.details-toggles');
   const detailsToggle = document.getElementById('details-toggle');
   const detailsPanel = document.getElementById('details-panel');
-  const detailPanel = document.querySelector('.detail-panel');
   const conditionsToggle = document.getElementById('conditions-toggle');
   const conditionsPanel = document.getElementById('conditions-panel');
   const initiativePanel = document.getElementById('initiative-panel');
@@ -470,7 +465,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const conditionsCancelBtn = document.getElementById('conditions-cancel');
   const detailsSaveBtn = document.getElementById('details-save');
   const detailsCancelBtn = document.getElementById('details-cancel');
-  const playerListSection = document.querySelector('.player-list');
+  const playerListSection = document.querySelector('.character-list');
   const playerTable = playerListSection ? playerListSection.querySelector('table') : null;
   const characterListActions = document.querySelector('.character-list-actions');
   const inventoryCharacterBtn = document.getElementById('character-inventory');
@@ -478,7 +473,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const releaseCharacterBtn = document.getElementById('character-release');
   const characterOverflowToggle = document.getElementById('character-overflow-toggle');
   const characterOverflowMenu = document.getElementById('character-overflow-menu');
-  const selectionToolbarAnchor = document.getElementById('player-selection-toolbar-anchor');
 
   let selectedConditions = new Set();
   let conditionsDirty = false;
@@ -773,9 +767,8 @@ const displayOnly = isDisplayPath();
 const viewMode = new URLSearchParams(window.location.search).get('view');
 const playerPath = (window.location.pathname || '').endsWith('/player.html');
 const preferPlayerView = viewMode === 'player' || playerPath;
-const hideTurnTable = !displayOnly && viewMode === 'B';
   if (playerTable) {
-    playerTable.style.display = hideTurnTable ? 'none' : '';
+    playerTable.style.display = '';
   }
   if (characterListActions) {
     characterListActions.style.display = 'flex';
@@ -2283,15 +2276,12 @@ const hideTurnTable = !displayOnly && viewMode === 'B';
     }
   }
 
-  // Admin UI: show/hide toolbar & IP banner/QR
+  // Admin UI: show/hide IP banner/QR
   if (displayOnly) {
-    if (adminToolbar) adminToolbar.style.display = 'none';
-    if (detailPanel) detailPanel.style.display = 'none';
     if (playerNameEdit) playerNameEdit.style.display = 'none';
     document.body.classList.add('display-only');
     showServerIP();
   } else {
-    if (adminToolbar) adminToolbar.style.display = 'none';
     if (qrContainer) qrContainer.innerHTML = '';
   }
 
@@ -5112,10 +5102,6 @@ function getOwnerName() {
             playersBody.innerHTML = '';
             playersBody.appendChild(createEmptyEncounterRow(conditionLibrary.length > 0 ? 4 : 3));
           }
-          if (currentActor) {
-            currentActor.textContent = '';
-            currentActor.classList.remove('current-actor-mine');
-          }
           updateEncounterStateDisplay();
           updateConditionsAvailability();
           updateTurnCompleteButtonState();
@@ -5162,21 +5148,6 @@ function getOwnerName() {
       } else {
         lastStateJson = currentJson;
         updateEncounterStateDisplay(round, currentTurnPlayer, isMineTurn);
-        if (currentActor) {
-          if (hideTurnTable && currentTurnId) {
-            const current = players.find((player) => player.id === currentTurnId);
-            if (current) {
-              currentActor.textContent = `Acting: ${current.name}`;
-              currentActor.classList.toggle('current-actor-mine', Boolean(isMineTurn));
-            } else {
-              currentActor.textContent = '';
-              currentActor.classList.remove('current-actor-mine');
-            }
-          } else {
-            currentActor.textContent = '';
-            currentActor.classList.remove('current-actor-mine');
-          }
-        }
 
         renderEncounterRows(lastEncounterSnapshot);
 
@@ -5554,10 +5525,6 @@ function getOwnerName() {
     character.initiative = initiative;
     await saveCharacterEntry(character);
     closeInitiativeEditor();
-  }
-
-  if (clearBtn) {
-    clearBtn.addEventListener('click', handleClear);
   }
 
   // Initial load + auto-refresh
