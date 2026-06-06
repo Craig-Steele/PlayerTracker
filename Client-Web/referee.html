@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=42">
+  <link rel="stylesheet" href="style.css?v=45">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -29,32 +29,30 @@
     </div>
   </div>
 
-  <div class="container referee-container">
-    <section class="character-list">
-      <div class="character-list-actions referee-list-actions referee-top-actions">
-        <button type="button" id="ref-add-button">Add<br/>Character</button>
-        <button type="button" id="ref-party-treasure-button">Party<br/>Treasure</button>
-        <button type="button" id="turn-complete">Turn<br/>Complete</button>
-      </div>
-      <div class="encounter-controls">
-        <button type="button" id="encounter-new">New Encounter</button>
-        <button type="button" id="encounter-start">Start Encounter</button>
-        <button type="button" id="encounter-suspend">Suspend Encounter</button>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Character</th>
-            <th id="health-heading">Stats</th>
-            <th class="conditions-col">Conditions</th>
-          </tr>
-        </thead>
-        <tbody id="players-body"></tbody>
-      </table>
-      <div id="status" class="subtitle"></div>
-    </section>
-  </div>
+  <section class="character-list">
+    <div class="character-list-actions referee-list-actions referee-top-actions">
+      <button type="button" id="ref-add-button">Add<br/>Character</button>
+      <button type="button" id="ref-party-treasure-button">Party<br/>Treasure</button>
+      <button type="button" id="turn-complete">Turn<br/>Complete</button>
+    </div>
+    <div class="encounter-controls">
+      <button type="button" id="encounter-new">New Encounter</button>
+      <button type="button" id="encounter-start">Start Encounter</button>
+      <button type="button" id="encounter-suspend">Suspend Encounter</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Character</th>
+          <th id="health-heading">Stats</th>
+          <th class="conditions-col">Conditions</th>
+        </tr>
+      </thead>
+      <tbody id="players-body"></tbody>
+    </table>
+    <div id="status" class="subtitle"></div>
+  </section>
 
   <!-- Add a new character to the referee roster, either manually or from the library. -->
   <form id="ref-add-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
@@ -341,13 +339,14 @@
             <div id="ref-campaign-library-import-status" class="creature-library-summary creature-library-import-status"></div>
           </div>
           <div class="creature-library-userdata">
-            <div class="creature-library-header-row creature-library-userdata-header">
-              <div id="ref-campaign-userdata-summary" class="creature-library-summary"></div>
-              <div class="creature-library-userdata-actions">
-                <button type="button" id="ref-campaign-userdata-refresh" class="secondary">Refresh</button>
-                <button type="button" id="ref-campaign-userdata-save" class="secondary">Save Selection</button>
+              <div class="creature-library-header-row creature-library-userdata-header">
+                <div id="ref-campaign-userdata-summary" class="creature-library-summary"></div>
+                <div class="creature-library-userdata-actions">
+                  <button type="button" id="ref-campaign-userdata-open-folders" class="secondary hidden">Open Folders</button>
+                  <button type="button" id="ref-campaign-userdata-refresh" class="secondary">Refresh</button>
+                  <button type="button" id="ref-campaign-userdata-save" class="secondary">Save Selection</button>
+                </div>
               </div>
-            </div>
             <div id="ref-campaign-userdata-status" class="creature-library-summary creature-library-import-status"></div>
             <div id="ref-campaign-userdata-list" class="creature-library-userdata-list"></div>
           </div>
@@ -359,10 +358,11 @@
   </div>
 
   <script src="shared.js?v=3"></script>
+  <script src="campaign-settings.js?v=1"></script>
   <script src="live-stream.js?v=3"></script>
   <script src="party-treasure.js?v=11"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=32"></script>
+  <script src="referee.js?v=34"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 import Foundation
+import Vapor
 
 enum AppPaths {
     nonisolated(unsafe) static var appDataDirectoryOverride: URL?
@@ -115,6 +116,35 @@ enum BrowserLauncher {
         return (executable, [url])
         #elseif os(Windows)
         return ("cmd.exe", ["/C", "start", "", url])
+        #else
+        return nil
+        #endif
+    }
+}
+
+enum DirectoryLauncher {
+    static func launch(url: URL) throws {
+        guard let command = launchCommand(for: url) else {
+            throw Abort(.internalServerError, reason: "No supported folder launcher is available for this platform.")
+        }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: command.executable)
+        process.arguments = command.arguments
+        try process.run()
+    }
+
+    private static func launchCommand(for url: URL) -> (executable: String, arguments: [String])? {
+        #if os(macOS)
+        return ("/usr/bin/open", [url.path])
+        #elseif os(Linux)
+        let executable = "/usr/bin/xdg-open"
+        guard FileManager.default.isExecutableFile(atPath: executable) else {
+            return nil
+        }
+        return (executable, [url.path])
+        #elseif os(Windows)
+        return ("cmd.exe", ["/C", "start", "", url.path])
         #else
         return nil
         #endif

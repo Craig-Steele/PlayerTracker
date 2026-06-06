@@ -9,6 +9,66 @@ const {
   isAdminHost: () => false,
   updateCampaignHeader: () => {}
 };
+const {
+  DEFAULT_CLAIM_TIMEOUT_MINUTES,
+  normalizeCampaignName: sharedNormalizeCampaignName,
+  claimTimeoutLabel: sharedClaimTimeoutLabel,
+  formatAccessLabel: sharedFormatAccessLabel,
+  readClaimTimeoutMode: sharedReadClaimTimeoutMode,
+  readClaimTimeoutMinutes: sharedReadClaimTimeoutMinutes,
+  syncClaimTimeoutUi: sharedSyncClaimTimeoutUi,
+  populateRulesetSelect: sharedPopulateRulesetSelect
+} = window.PlayerTrackerCampaignSettings || {
+  DEFAULT_CLAIM_TIMEOUT_MINUTES: 5,
+  normalizeCampaignName: (value) => (value || '').trim(),
+  claimTimeoutLabel: (minutes, defaultMinutes = 5) => {
+    if (!Number.isInteger(minutes)) return `${defaultMinutes}m claim timeout`;
+    if (minutes < 0) return 'Explicit release only';
+    if (minutes === 0) return 'Release immediately on disconnect';
+    return `${minutes}m claim timeout`;
+  },
+  formatAccessLabel: (isInviteOnly) => (isInviteOnly ? 'Invite only' : 'Open join'),
+  readClaimTimeoutMode: (manualInput) => (manualInput?.checked ? 'manual' : 'timed'),
+  readClaimTimeoutMinutes: (manualInput, input, defaultMinutes = 5) => (
+    manualInput?.checked
+      ? -1
+      : ((Number.isFinite(Number.parseInt(String(input?.value || '').trim(), 10)) &&
+        Number.parseInt(String(input?.value || '').trim(), 10) >= 0)
+        ? Number.parseInt(String(input?.value || '').trim(), 10)
+        : defaultMinutes)
+  ),
+  syncClaimTimeoutUi: (manualInput, input) => {
+    const manual = Boolean(manualInput?.checked);
+    if (input) {
+      input.disabled = manual;
+      input.classList.toggle('hidden', manual);
+    }
+    return manual;
+  },
+  populateRulesetSelect: (selectEl, rulesets, options = {}) => {
+    if (!selectEl) return;
+    const {
+      currentRulesetId = '',
+      emptyValue = 'none',
+      emptyLabel = 'No Conditions',
+      createOption = () => document.createElement('option')
+    } = options;
+    selectEl.innerHTML = '';
+    if (Array.isArray(rulesets) && rulesets.length > 0) {
+      rulesets.forEach((ruleset) => {
+        const option = createOption();
+        option.value = ruleset.id;
+        option.textContent = ruleset.label || ruleset.id;
+        selectEl.appendChild(option);
+      });
+      return;
+    }
+    const option = createOption();
+    option.value = currentRulesetId || emptyValue;
+    option.textContent = currentRulesetId || emptyLabel;
+    selectEl.appendChild(option);
+  }
+};
 
 window.addEventListener('DOMContentLoaded', () => {
   document.title = `${APP_NAME} - Admin`;
@@ -295,21 +355,10 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function populateRulesetSelect(rulesets) {
-    if (!campaignRulesetSelect) return;
-    campaignRulesetSelect.innerHTML = '';
-    if (Array.isArray(rulesets) && rulesets.length > 0) {
-      rulesets.forEach((ruleset) => {
-        const option = document.createElement('option');
-        option.value = ruleset.id;
-        option.textContent = ruleset.label || ruleset.id;
-        campaignRulesetSelect.appendChild(option);
-      });
-    } else {
-      const option = document.createElement('option');
-      option.value = 'none';
-      option.textContent = 'No Conditions';
-      campaignRulesetSelect.appendChild(option);
-    }
+    sharedPopulateRulesetSelect(campaignRulesetSelect, rulesets, {
+      emptyValue: 'none',
+      emptyLabel: 'No Conditions'
+    });
   }
 
   function setEquals(left, right) {
@@ -550,49 +599,31 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function normalizeName(name) {
-    return (name || '').trim();
-  }
-
-  function normalizeClaimTimeoutMinutes(value) {
-    const parsed = Number.parseInt(String(value || '').trim(), 10);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      return null;
-    }
-    return parsed;
+    return sharedNormalizeCampaignName(name);
   }
 
   function claimTimeoutLabel(minutes) {
-    if (!Number.isInteger(minutes)) {
-      return `${defaultClaimTimeoutMinutes}m claim timeout`;
-    }
-    if (minutes < 0) return 'Explicit release only';
-    if (minutes === 0) return 'Release immediately on disconnect';
-    return `${minutes}m claim timeout`;
+    return sharedClaimTimeoutLabel(minutes, defaultClaimTimeoutMinutes);
   }
 
   function accessLabel(campaign) {
-    return campaign?.isInviteOnly ? 'Invite only' : 'Open join';
+    return sharedFormatAccessLabel(campaign?.isInviteOnly);
   }
 
   function getClaimTimeoutMode() {
-    if (campaignClaimTimeoutManualInput?.checked) {
-      return 'manual';
-    }
-    return 'timed';
+    return sharedReadClaimTimeoutMode(campaignClaimTimeoutManualInput);
   }
 
   function getClaimTimeoutMinutes() {
-    return getClaimTimeoutMode() === 'manual'
-      ? -1
-      : (normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value) ?? defaultClaimTimeoutMinutes);
+    return sharedReadClaimTimeoutMinutes(
+      campaignClaimTimeoutManualInput,
+      campaignClaimTimeoutInput,
+      defaultClaimTimeoutMinutes
+    );
   }
 
   function syncClaimTimeoutUi() {
-    const manual = getClaimTimeoutMode() === 'manual';
-    if (campaignClaimTimeoutInput) {
-      campaignClaimTimeoutInput.disabled = manual;
-      campaignClaimTimeoutInput.classList.toggle('hidden', manual);
-    }
+    return sharedSyncClaimTimeoutUi(campaignClaimTimeoutManualInput, campaignClaimTimeoutInput);
   }
 
   function nameExists(name, ignoreId = null) {
@@ -625,9 +656,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const name = normalizeName(campaignNameInput.value);
     const rulesetId = campaignRulesetSelect.value;
     const claimTimeoutMode = getClaimTimeoutMode();
-    const claimTimeoutMinutes = claimTimeoutMode === 'manual'
-      ? -1
-      : normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value);
+    const claimTimeoutMinutes = getClaimTimeoutMinutes();
     const inviteOnly = Boolean(campaignInviteOnlyInput?.checked);
     if (!name) return false;
     if (campaignRulesetSelect.options.length > 0 && !rulesetId) return false;

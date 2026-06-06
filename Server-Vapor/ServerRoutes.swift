@@ -1529,6 +1529,21 @@ func routes(
         return updated
     }
 
+    app.post("campaign", "userdata", "open-folders") { req async throws -> HTTPStatus in
+        let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let rulesetsDirectory = AppPaths.webClientDirectory()
+            .appendingPathComponent("rulesets", isDirectory: true)
+        let userdataDirectory = AppPaths.userDataDirectory(rulesetId: campaign.rulesetId)
+        try FileManager.default.createDirectory(
+            at: userdataDirectory,
+            withIntermediateDirectories: true
+        )
+        try DirectoryLauncher.launch(url: rulesetsDirectory)
+        try DirectoryLauncher.launch(url: userdataDirectory)
+        await logServerEvent("open-folders rulesets=\(rulesetsDirectory.path) userdata=\(userdataDirectory.path)")
+        return .ok
+    }
+
     app.get("campaign", "events") { req async throws -> Response in
         let response = Response(status: .ok)
         response.headers.replaceOrAdd(name: .contentType, value: "text/event-stream; charset=utf-8")

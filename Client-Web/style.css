@@ -298,12 +298,6 @@ th, td {
   min-width: 0;
 }
 
-body.referee-page .referee-container {
-  flex: 1 1 auto;
-  align-items: stretch;
-  min-height: 0;
-}
-
 .no-conditions .conditions-section {
   display: none;
 }
@@ -2141,11 +2135,6 @@ body.referee-page .referee-panel {
     overflow: auto;
   }
 
-  body.referee-page .referee-container {
-    flex-direction: column;
-    min-height: auto;
-  }
-
   body.player-page {
     overflow: auto;
   }
@@ -3446,7 +3435,7 @@ body.admin-page .admin-owner-card .admin-owner-group {
 
 .admin-page .container {
   flex-direction: column;
-  max-width: 960px;
+  max-width: none;
 }
 
 .admin-page .detail-panel {
@@ -3544,7 +3533,9 @@ body.admin-page .admin-owner-card .admin-owner-group {
 }
 
 .admin-help {
-  margin-top: -0.35rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
+  line-height: 1.25;
 }
 
 .admin-campaign-list {

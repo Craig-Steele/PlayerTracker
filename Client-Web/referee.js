@@ -1,6 +1,7 @@
 const {
   APP_NAME,
   APP_ICON_URL,
+  isAdminHost,
   rollStandardDie,
   formatInitiative,
   updateCampaignHeader,
@@ -9,11 +10,69 @@ const {
 } = window.PlayerTrackerShared || {
   APP_NAME: 'Roll4Initiative',
   APP_ICON_URL: '/favicon-512.png',
+  isAdminHost: () => false,
   rollStandardDie: () => null,
   formatInitiative: () => 'X',
   updateCampaignHeader: () => {},
   appendOverflowMenuSeparator: (menuEl) => menuEl,
   showConfirmDialog: async () => true
+};
+const {
+  DEFAULT_CLAIM_TIMEOUT_MINUTES,
+  claimTimeoutLabel: sharedClaimTimeoutLabel,
+  formatAccessLabel: sharedFormatAccessLabel,
+  readClaimTimeoutMode: sharedReadClaimTimeoutMode,
+  readClaimTimeoutMinutes: sharedReadClaimTimeoutMinutes,
+  syncClaimTimeoutUi: sharedSyncClaimTimeoutUi,
+  populateRulesetSelect: sharedPopulateRulesetSelect
+} = window.PlayerTrackerCampaignSettings || {
+  DEFAULT_CLAIM_TIMEOUT_MINUTES: 5,
+  claimTimeoutLabel: (minutes, defaultMinutes = 5) => {
+    if (!Number.isInteger(minutes)) return `${defaultMinutes}m claim timeout`;
+    if (minutes < 0) return 'Explicit release only';
+    if (minutes === 0) return 'Release immediately on disconnect';
+    return `${minutes}m claim timeout`;
+  },
+  readClaimTimeoutMode: (manualInput) => (manualInput?.checked ? 'manual' : 'timed'),
+  readClaimTimeoutMinutes: (manualInput, input, defaultMinutes = 5) => (
+    manualInput?.checked
+      ? -1
+      : ((Number.isFinite(Number.parseInt(String(input?.value || '').trim(), 10)) &&
+        Number.parseInt(String(input?.value || '').trim(), 10) >= 0)
+        ? Number.parseInt(String(input?.value || '').trim(), 10)
+        : defaultMinutes)
+  ),
+  syncClaimTimeoutUi: (manualInput, input) => {
+    const manual = Boolean(manualInput?.checked);
+    if (input) {
+      input.disabled = manual;
+      input.classList.toggle('hidden', manual);
+    }
+    return manual;
+  },
+  populateRulesetSelect: (selectEl, rulesets, options = {}) => {
+    if (!selectEl) return;
+    const {
+      currentRulesetId = '',
+      emptyValue = 'none',
+      emptyLabel = 'No Conditions',
+      createOption = () => document.createElement('option')
+    } = options;
+    selectEl.innerHTML = '';
+    if (Array.isArray(rulesets) && rulesets.length > 0) {
+      rulesets.forEach((ruleset) => {
+        const option = createOption();
+        option.value = ruleset.id;
+        option.textContent = ruleset.label || ruleset.id;
+        selectEl.appendChild(option);
+      });
+      return;
+    }
+    const option = createOption();
+    option.value = currentRulesetId || emptyValue;
+    option.textContent = currentRulesetId || emptyLabel;
+    selectEl.appendChild(option);
+  }
 };
 const {
   normalizeConditionEntry,
@@ -120,6 +179,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const userdataSummary = document.getElementById('ref-campaign-userdata-summary');
   const userdataStatus = document.getElementById('ref-campaign-userdata-status');
   const userdataList = document.getElementById('ref-campaign-userdata-list');
+  const userdataOpenFoldersButton = document.getElementById('ref-campaign-userdata-open-folders');
   const userdataRefreshButton = document.getElementById('ref-campaign-userdata-refresh');
   const userdataSaveButton = document.getElementById('ref-campaign-userdata-save');
   const healthHeading = document.getElementById('health-heading');
@@ -217,6 +277,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let equipmentLibraryItems = [];
   let equipmentLibraryLoaded = false;
   let equipmentLibraryLoading = false;
+  const allowLocalFolderAccess = isAdminHost();
   const narrowPopupQuery = typeof window.matchMedia === 'function'
     ? window.matchMedia('(max-width: 760px)')
     : null;
@@ -558,6 +619,14 @@ window.addEventListener('DOMContentLoaded', () => {
       void loadCampaignUserData();
     });
   }
+  if (userdataOpenFoldersButton) {
+    userdataOpenFoldersButton.classList.toggle('hidden', !allowLocalFolderAccess);
+    userdataOpenFoldersButton.disabled = !allowLocalFolderAccess || !activeCampaignId;
+    userdataOpenFoldersButton.setAttribute('aria-disabled', userdataOpenFoldersButton.disabled.toString());
+    userdataOpenFoldersButton.addEventListener('click', () => {
+      void openCampaignUserDataFolders();
+    });
+  }
   if (userdataSaveButton) {
     userdataSaveButton.addEventListener('click', () => {
       void saveCampaignUserDataSelection();
@@ -597,12 +666,11 @@ window.addEventListener('DOMContentLoaded', () => {
       campaignSettingsModalSummary.textContent = 'No active campaign selected.';
       return;
     }
-    const claimTimeoutLabel = campaign.claimTimeoutMinutes < 0
-      ? 'explicit release only'
-      : campaign.claimTimeoutMinutes === 0
-        ? 'release immediately on disconnect'
-        : `${campaign.claimTimeoutMinutes}m claim timeout`;
-    const inviteLabel = campaign.isInviteOnly ? 'invite only' : 'open join';
+    const claimTimeoutLabel = sharedClaimTimeoutLabel(
+      campaign.claimTimeoutMinutes,
+      DEFAULT_CLAIM_TIMEOUT_MINUTES
+    );
+    const inviteLabel = sharedFormatAccessLabel(campaign.isInviteOnly);
     campaignSettingsModalSummary.textContent = `${campaign.name} · ${campaign.rulesetLabel || campaign.rulesetId || 'No Conditions'} · ${claimTimeoutLabel} · ${inviteLabel}`;
   }
 
@@ -647,20 +715,10 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function populateCampaignRulesetSelect() {
-    if (!campaignRulesetSelect) return;
-    campaignRulesetSelect.innerHTML = '';
-    if (availableRulesets.length === 0) {
-      const option = document.createElement('option');
-      option.value = currentRulesetId || 'none';
-      option.textContent = currentRulesetId || 'No Conditions';
-      campaignRulesetSelect.appendChild(option);
-      return;
-    }
-    availableRulesets.forEach((ruleset) => {
-      const option = document.createElement('option');
-      option.value = ruleset.id;
-      option.textContent = ruleset.label || ruleset.id;
-      campaignRulesetSelect.appendChild(option);
+    sharedPopulateRulesetSelect(campaignRulesetSelect, availableRulesets, {
+      currentRulesetId,
+      emptyValue: 'none',
+      emptyLabel: currentRulesetId || 'No Conditions'
     });
   }
 
@@ -732,23 +790,12 @@ window.addEventListener('DOMContentLoaded', () => {
    * @param {unknown} value Raw input value from the form.
    * @returns {number|null}
    */
-  function normalizeClaimTimeoutMinutes(value) {
-    const parsed = Number.parseInt(String(value || '').trim(), 10);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      return null;
-    }
-    return parsed;
-  }
-
   /**
    * Read the current claim-timeout mode from the campaign settings form.
    * @returns {'manual'|'timed'}
    */
   function getCampaignClaimTimeoutMode() {
-    if (campaignClaimTimeoutManualInput?.checked) {
-      return 'manual';
-    }
-    return 'timed';
+    return sharedReadClaimTimeoutMode(campaignClaimTimeoutManualInput);
   }
 
   /**
@@ -756,9 +803,11 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {number|null}
    */
   function getCampaignClaimTimeoutMinutes() {
-    return getCampaignClaimTimeoutMode() === 'manual'
-      ? -1
-      : normalizeClaimTimeoutMinutes(campaignClaimTimeoutInput?.value);
+    return sharedReadClaimTimeoutMinutes(
+      campaignClaimTimeoutManualInput,
+      campaignClaimTimeoutInput,
+      DEFAULT_CLAIM_TIMEOUT_MINUTES
+    );
   }
 
   /**
@@ -766,11 +815,7 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function syncCampaignClaimTimeoutUi() {
-    const manual = getCampaignClaimTimeoutMode() === 'manual';
-    if (campaignClaimTimeoutInput) {
-      campaignClaimTimeoutInput.disabled = manual;
-      campaignClaimTimeoutInput.classList.toggle('hidden', manual);
-    }
+    return sharedSyncClaimTimeoutUi(campaignClaimTimeoutManualInput, campaignClaimTimeoutInput);
   }
 
   /**
@@ -1601,6 +1646,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     setCampaignUserDataStatus('');
     updateCampaignUserDataSaveState();
+    updateCampaignUserDataFolderButtonState();
   }
 
   /**
@@ -1611,6 +1657,17 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!userdataSaveButton) return;
     userdataSaveButton.disabled = !campaignUserdataDirty || campaignUserdataLoading;
     userdataSaveButton.setAttribute('aria-disabled', userdataSaveButton.disabled.toString());
+  }
+
+  /**
+   * Refresh the folder-open button state.
+   * @returns {void}
+   */
+  function updateCampaignUserDataFolderButtonState() {
+    if (!userdataOpenFoldersButton) return;
+    userdataOpenFoldersButton.classList.toggle('hidden', !allowLocalFolderAccess);
+    userdataOpenFoldersButton.disabled = !allowLocalFolderAccess || campaignUserdataLoading || !activeCampaignId;
+    userdataOpenFoldersButton.setAttribute('aria-disabled', userdataOpenFoldersButton.disabled.toString());
   }
 
   /**
@@ -1798,6 +1855,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     campaignUserdataLoading = true;
     updateCampaignUserDataSaveState();
+    updateCampaignUserDataFolderButtonState();
     try {
       const res = await fetch('/campaign/userdata');
       if (!res.ok) {
@@ -1830,6 +1888,7 @@ window.addEventListener('DOMContentLoaded', () => {
     } finally {
       campaignUserdataLoading = false;
       updateCampaignUserDataSaveState();
+      updateCampaignUserDataFolderButtonState();
     }
   }
 
@@ -1867,6 +1926,39 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       setCampaignUserDataStatus(`Unable to save userdata: ${err.message}`);
       return false;
+    }
+  }
+
+  /**
+   * Ask the local server to open the bundled rulesets folder and the campaign userdata folder.
+   * @returns {Promise<boolean>}
+   */
+  async function openCampaignUserDataFolders() {
+    if (!allowLocalFolderAccess) {
+      setCampaignUserDataStatus('Open folders is only available from localhost.');
+      return false;
+    }
+    if (!activeCampaignId) {
+      setCampaignUserDataStatus('No active campaign selected.');
+      return false;
+    }
+    if (!userdataOpenFoldersButton) {
+      return false;
+    }
+    userdataOpenFoldersButton.disabled = true;
+    setCampaignUserDataStatus('Opening library folders...');
+    try {
+      const res = await fetch('/campaign/userdata/open-folders', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error(`Server returned ${res.status}`);
+      }
+      setCampaignUserDataStatus('Opened default rulesets and userdata folders.');
+      return true;
+    } catch (err) {
+      setCampaignUserDataStatus(`Unable to open folders: ${err.message}`);
+      return false;
+    } finally {
+      updateCampaignUserDataFolderButtonState();
     }
   }
 
@@ -2362,6 +2454,7 @@ window.addEventListener('DOMContentLoaded', () => {
       );
       setCampaignSummary(campaign);
       updateInvitePlayerButtonState();
+      updateCampaignUserDataFolderButtonState();
       if (previousCampaignId && previousCampaignId !== activeCampaignId) {
         campaignLiveStream.close();
         window.location.replace('/index.html');
@@ -2394,6 +2487,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!activeCampaignId) {
         resetCampaignUserDataState();
       }
+      updateCampaignUserDataFolderButtonState();
       campaignLiveStream.close();
       document.title = currentCampaignName ? `${currentCampaignName} - Referee` : APP_NAME;
       return false;
