@@ -37,17 +37,6 @@
       ]
     },
     {
-      "id": "bunyip",
-      "name": "Bunyip",
-      "cr": "3",
-      "hp": 32,
-      "source": "Wrath of Thrune, page 41",
-      "notes": "the myceloids. Unwilling to leave its companion, the infected bunyip’s mate remains as well. There is a 50% chance of encountering the two bunyips when the PCs first enter this chamber. Otherwise, anyone entering the river attracts the bunyips’ attention after 1d6 rounds. BUNYIP CR 3 XP 800 hp 32 (Pathfinder RPG Bestiary 2 50) PURPLE POX-AFFLICTED BUNYIP CR 3 XP 800 hp 27 (Pathfinder RPG Bestiary 2 50) Fort +4, Will +0 Weaknesses purple pox-afflicted, spore-dominated Special Attacks roar (DC 12)",
-      "tags": [
-        "creature"
-      ]
-    },
-    {
       "id": "exemplar",
       "name": "Exemplar",
       "cr": "7",
