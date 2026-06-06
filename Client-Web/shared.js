@@ -39,7 +39,7 @@
   }
 
   function formatInitiative(value) {
-    if (!Number.isFinite(value)) return 'X';
+    if (!Number.isFinite(value)) return '🎲';
     return Number.isInteger(value) ? String(value) : String(value);
   }
 

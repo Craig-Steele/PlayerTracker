@@ -22,7 +22,7 @@ const {
   QR_CODE_SIZE: 96,
   isAdminHost: () => false,
   rollStandardDie: () => null,
-  formatInitiative: () => 'X',
+  formatInitiative: () => '🎲',
   updateCampaignHeader: () => {},
   appendOverflowMenuSeparator: (menuEl) => menuEl,
   showConfirmDialog: async () => true
@@ -396,6 +396,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const claimableCharacterPanel = document.getElementById('claimable-character-panel');
   const claimableCharacterList = document.getElementById('claimable-character-list');
   const addCharacterBtn = document.getElementById('character-add');
+  const rollInitiativeAllBtn = document.getElementById('roll-initiative-all');
   const turnCompleteBtn = document.getElementById('turn-complete');
   const removeCharacterBtn = document.getElementById('character-remove');
   const addForm = document.getElementById('add-character-form');
@@ -1060,6 +1061,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     turnCompleteBtn.disabled = !canCompleteTurn;
     turnCompleteBtn.setAttribute('aria-disabled', (!canCompleteTurn).toString());
     turnCompleteBtn.setAttribute('aria-hidden', (!canCompleteTurn).toString());
+  }
+
+  function updateRollInitiativeButtonState() {
+    if (!rollInitiativeAllBtn) return;
+    const canRollInitiative =
+      !displayOnly &&
+      encounterState === 'active' &&
+      myCharacters.some((character) => needsInitiativeAction(character));
+    rollInitiativeAllBtn.classList.toggle('hidden', !canRollInitiative);
+    rollInitiativeAllBtn.disabled = !canRollInitiative;
+    rollInitiativeAllBtn.setAttribute('aria-disabled', (!canRollInitiative).toString());
+    rollInitiativeAllBtn.setAttribute('aria-hidden', (!canRollInitiative).toString());
   }
 
   function setCurrencyPanelOpen(open) {
@@ -2297,7 +2310,10 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function updatePlayerEntryGate() {
     const ownerName = getOwnerName();
-    if (!ownerName) return;
+    if (!ownerName) {
+      updateRollInitiativeButtonState();
+      return;
+    }
     playerNameRequired = !ownerName;
     if (playerNameNudge) {
       playerNameNudge.classList.toggle('hidden', Boolean(ownerName));
@@ -2330,6 +2346,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       conditionsToggle.setAttribute('aria-disabled', (!ownerName).toString());
     }
     updateReleaseButtonState();
+    updateRollInitiativeButtonState();
   }
 
   function updatePlayerNameDisplay() {
@@ -3546,6 +3563,7 @@ function getOwnerName() {
         removeCharacterBtn.setAttribute('aria-disabled', 'true');
       }
       updateTurnCompleteButtonState();
+      updateRollInitiativeButtonState();
       return;
     }
 
@@ -3656,6 +3674,7 @@ function getOwnerName() {
     }
     updateReleaseButtonState();
     updateTurnCompleteButtonState();
+    updateRollInitiativeButtonState();
 
     renderClaimableCharacterList();
   }
@@ -4108,24 +4127,6 @@ function getOwnerName() {
         conditionsTd.textContent = '—';
       }
 
-      if (isMine && needsInitiativeAction(p)) {
-        if (!list) {
-          conditionsTd.textContent = '';
-        }
-        const initiativeAction = document.createElement('div');
-        initiativeAction.className = 'player-row-initiative-action';
-        const rollButton = document.createElement('button');
-        rollButton.type = 'button';
-        rollButton.className = 'initiative-inline-button';
-        rollButton.textContent = 'Roll for Initiative';
-        rollButton.addEventListener('click', async (event) => {
-          event.stopPropagation();
-          await handleInitiativeAction(p);
-        });
-        initiativeAction.appendChild(rollButton);
-        conditionsTd.appendChild(initiativeAction);
-      }
-
       if (currentTurnId && p.id === currentTurnId) {
         tr.classList.add('current-turn');
       }
@@ -4234,11 +4235,16 @@ function getOwnerName() {
   }
 
   function needsInitiativeAction(character) {
-    return encounterState === 'active' && (character.initiative === null || character.initiative === undefined);
+    return (
+      Boolean(character) &&
+      encounterState === 'active' &&
+      (character.initiative === null || character.initiative === undefined)
+    );
   }
 
   async function handleInitiativeAction(character) {
     if (!character) return;
+    if (character.initiative !== null && character.initiative !== undefined) return;
     if (character.useAppInitiativeRoll !== false) {
       const rolled = rollStandardDie(currentStandardDie, character.initiativeBonus);
       if (Number.isFinite(rolled)) {
@@ -4259,6 +4265,15 @@ function getOwnerName() {
     }
     character.initiative = initiative;
     await saveCharacterEntry(character);
+  }
+
+  async function handleRollInitiativeForAllCharacters() {
+    if (displayOnly || encounterState !== 'active') return;
+    const charactersToRoll = myCharacters.filter((character) => needsInitiativeAction(character));
+    for (const character of charactersToRoll) {
+      await handleInitiativeAction(character);
+    }
+    renderCharacterList();
   }
 
   function showAddForm() {
@@ -4333,6 +4348,7 @@ function getOwnerName() {
       } else {
         clearCharacterSelection();
       }
+      updateRollInitiativeButtonState();
     } catch (err) {
       console.error('Failed to load characters:', err);
     }
@@ -5200,6 +5216,7 @@ function getOwnerName() {
           lastTurnId = null;
           lastStateJson = null;
           renderCharacterList();
+          updateRollInitiativeButtonState();
           if (playersBody) {
             playersBody.innerHTML = '';
             playersBody.appendChild(createEmptyEncounterRow(conditionLibrary.length > 0 ? 4 : 3));
@@ -5218,6 +5235,7 @@ function getOwnerName() {
       const round = state.round || 1;
       encounterState = state.encounterState || 'new';
       currentTurnId = state.currentTurnId || null;
+      updateRollInitiativeButtonState();
       const currentTurnPlayer = currentTurnId
         ? players.find((player) => player.id === currentTurnId) || null
         : null;
@@ -5269,6 +5287,7 @@ function getOwnerName() {
         lastTurnId = currentTurnId;
       }
       updateTurnCompleteButtonState();
+      updateRollInitiativeButtonState();
 
     } catch (err) {
       statusDiv.textContent = 'Error loading state: ' + err.message;
@@ -5479,6 +5498,9 @@ function getOwnerName() {
     form.addEventListener('submit', (event) => {
       event.preventDefault();
     });
+  }
+  if (rollInitiativeAllBtn) {
+    rollInitiativeAllBtn.addEventListener('click', handleRollInitiativeForAllCharacters);
   }
   if (turnCompleteBtn) {
     turnCompleteBtn.addEventListener('click', handleTurnComplete);

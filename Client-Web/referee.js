@@ -12,7 +12,7 @@ const {
   APP_ICON_URL: '/favicon-512.png',
   isAdminHost: () => false,
   rollStandardDie: () => null,
-  formatInitiative: () => 'X',
+  formatInitiative: () => '🎲',
   updateCampaignHeader: () => {},
   appendOverflowMenuSeparator: (menuEl) => menuEl,
   showConfirmDialog: async () => true
