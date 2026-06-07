@@ -1879,8 +1879,6 @@ body.referee-page .referee-panel {
 
 .inventory-table-wrap {
   margin-top: 0.75rem;
-  max-height: 55vh;
-  overflow: auto;
   border: 1px solid var(--border-soft);
   border-radius: 10px;
   background: var(--bg-panel);
