@@ -1178,6 +1178,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     inventoryPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
+  function setInventoryTablesVisible(visible) {
+    const tableWrappers = inventoryPanel?.querySelectorAll('.inventory-table-wrap') || [];
+    tableWrappers.forEach((wrap) => {
+      wrap.classList.toggle('hidden', !visible);
+      wrap.setAttribute('aria-hidden', (!visible).toString());
+    });
+    if (inventoryContainerSections) {
+      inventoryContainerSections.classList.toggle('hidden', !visible);
+      inventoryContainerSections.setAttribute('aria-hidden', (!visible).toString());
+    }
+  }
+
   function updateInventoryItemOptions() {
     if (!inventoryItemOptions) return;
     inventoryItemOptions.innerHTML = '';
@@ -1830,7 +1842,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       setSelectedInventoryRow(row);
       editSelectedInventoryEntry();
     });
-    addMenuItem('Remove', () => {
+    addMenuItem(entry.isContainer ? 'Remove Container' : 'Remove', () => {
       setSelectedInventoryRow(row);
       removeSelectedInventoryEntry();
     }, {
@@ -1974,6 +1986,11 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function updateInventoryActionButtons() {
     const isAddFormOpen = inventoryAddFormOpen || Boolean(inventoryAddForm && !inventoryAddForm.classList.contains('hidden'));
+    setInventoryTablesVisible(!isAddFormOpen);
+    if (inventoryCloseBtn) {
+      inventoryCloseBtn.classList.toggle('hidden', isAddFormOpen);
+      inventoryCloseBtn.setAttribute('aria-hidden', isAddFormOpen.toString());
+    }
     if (inventoryAddBtn) {
       inventoryAddBtn.disabled = isAddFormOpen;
       inventoryAddBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
@@ -2344,6 +2361,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     }
     setInventoryAddFormOpen(false);
     setInventoryPanelOpen(false);
+    setInventoryTablesVisible(true);
     updateInventoryActionButtons();
   }
 
@@ -2362,9 +2380,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     let handled = false;
+    const hasOpenInventoryForm = inventoryAddFormOpen || Boolean(inventoryAddForm && !inventoryAddForm.classList.contains('hidden'));
+    const hasOpenInventory = Boolean(inventoryPanel && !inventoryPanel.classList.contains('hidden'));
     const hasOpenOverflow = document.querySelector('.character-overflow-menu:not(.hidden)');
     const hasOpenStats = Boolean(expandedOrderStatsCharacterId);
     const hasOpenInitiative = Boolean(initiativeEditorCharacterId);
+    if (hasOpenInventoryForm) {
+      setInventoryAddFormOpen(false);
+      handled = true;
+    } else if (hasOpenInventory) {
+      closeInventoryEditor();
+      handled = true;
+    }
     if (hasOpenOverflow) {
       closeCharacterOverflowMenu();
       handled = true;

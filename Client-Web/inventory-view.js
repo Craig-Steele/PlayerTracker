@@ -49,7 +49,7 @@
   function calculateInventoryTotalWeight(items = []) {
     return Array.isArray(items)
       ? items.reduce((sum, entry) => {
-          if (!entry || entry.containerId) {
+          if (!entry || entry.containerId || entry.isContainer) {
             return sum;
           }
           const quantity = Number(entry.quantity);
