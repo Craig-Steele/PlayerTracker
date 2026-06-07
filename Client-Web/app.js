@@ -3595,7 +3595,7 @@ function getOwnerName() {
       return button;
     };
 
-    addMenuItem('Details', () => {
+    addMenuItem('Edit Character', () => {
       void openDetailsEditorForCharacter(character);
     });
     addMenuItem('Conditions', () => {

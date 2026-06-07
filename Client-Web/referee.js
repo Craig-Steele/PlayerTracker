@@ -3808,7 +3808,7 @@ window.addEventListener('DOMContentLoaded', () => {
       disabled: encounterState !== 'active'
     });
     appendOverflowMenuSeparator(overflowMenu);
-    addMenuItem('Details', async () => {
+    addMenuItem('Edit Character', async () => {
       if (detailsDirty) {
         const discard = await confirmDiscardUnsavedDetails();
         if (!discard) return;
