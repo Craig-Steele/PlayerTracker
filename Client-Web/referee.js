@@ -3096,6 +3096,124 @@ window.addEventListener('DOMContentLoaded', () => {
     setInventoryPanelOpen(false);
   }
 
+  function formatInventoryMenuNumber(value) {
+    const rounded = Math.round(Number(value) * 100) / 100;
+    return Number.isFinite(rounded) ? String(rounded) : '0';
+  }
+
+  function buildInventoryInfoControl(entry = {}, row = null) {
+    const overflow = document.createElement('div');
+    overflow.className = 'character-overflow inventory-row-overflow';
+
+    const overflowToggle = document.createElement('button');
+    overflowToggle.type = 'button';
+    overflowToggle.className = 'character-overflow-toggle inventory-row-info-toggle';
+    overflowToggle.setAttribute('aria-label', `Show info for ${entry.name || 'item'}`);
+    overflowToggle.setAttribute('aria-haspopup', 'menu');
+    overflowToggle.setAttribute('aria-expanded', 'false');
+    overflowToggle.textContent = entry.isContainer ? '🧳' : '🗡';
+
+    const overflowMenu = document.createElement('div');
+    overflowMenu.className = 'character-overflow-menu referee-row-menu inventory-row-info-menu hidden';
+    overflowMenu.setAttribute('role', 'menu');
+    overflowMenu.setAttribute('aria-hidden', 'true');
+    overflowMenu.style.position = 'fixed';
+    overflowMenu.style.zIndex = '10000';
+    overflowMenu._overflowToggle = overflowToggle;
+    document.body.appendChild(overflowMenu);
+
+    const overflowTitle = document.createElement('div');
+    overflowTitle.className = 'character-overflow-title';
+    overflowTitle.textContent = entry.name || 'Item';
+    overflowMenu.appendChild(overflowTitle);
+
+    const menuSummary = document.createElement('div');
+    menuSummary.className = 'inventory-row-menu-summary';
+
+    const valueLine = document.createElement('div');
+    valueLine.className = 'inventory-row-menu-summary-line';
+    const valueLabel = document.createElement('span');
+    valueLabel.className = 'inventory-row-menu-summary-label';
+    valueLabel.textContent = 'Value';
+    const valueAmount = document.createElement('span');
+    valueAmount.className = 'inventory-row-menu-summary-value';
+    valueAmount.textContent = formatInventoryMenuNumber(entry.value ?? 0);
+    valueLine.appendChild(valueLabel);
+    valueLine.appendChild(valueAmount);
+    menuSummary.appendChild(valueLine);
+
+    const weightLine = document.createElement('div');
+    weightLine.className = 'inventory-row-menu-summary-line';
+    const weightLabel = document.createElement('span');
+    weightLabel.className = 'inventory-row-menu-summary-label';
+    weightLabel.textContent = 'Weight';
+    const weightAmount = document.createElement('span');
+    weightAmount.className = 'inventory-row-menu-summary-value';
+    weightAmount.textContent = formatInventoryMenuNumber(entry.weight ?? 0);
+    weightLine.appendChild(weightLabel);
+    weightLine.appendChild(weightAmount);
+    menuSummary.appendChild(weightLine);
+    overflowMenu.appendChild(menuSummary);
+
+    const openOverflowMenu = () => {
+      closeRefereeRowOverflowMenus(overflowMenu);
+      overflowMenu.classList.remove('hidden');
+      overflowMenu.setAttribute('aria-hidden', 'false');
+      overflowToggle.setAttribute('aria-expanded', 'true');
+      const centered = isNarrowPopupViewport();
+      overflowMenu.classList.toggle('popup-centered', centered);
+      const toggleRect = row?.getBoundingClientRect?.() || overflowToggle.getBoundingClientRect();
+      if (centered) {
+        overflowMenu.style.top = '';
+        overflowMenu.style.left = '';
+        overflowMenu.style.right = '';
+        overflowMenu.style.bottom = '';
+        overflowMenu.style.transform = '';
+      } else {
+        overflowMenu.style.top = `${toggleRect.bottom + 6}px`;
+        overflowMenu.style.left = `${toggleRect.left}px`;
+        overflowMenu.style.right = 'auto';
+        overflowMenu.style.bottom = '';
+        overflowMenu.style.transform = '';
+        window.requestAnimationFrame(() => {
+          const menuRect = overflowMenu.getBoundingClientRect();
+          const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+          const overflowRight = menuRect.right > viewportWidth - 8;
+          const overflowLeft = menuRect.left < 8;
+          if (overflowRight && !overflowLeft) {
+            overflowMenu.style.left = `${Math.max(8, viewportWidth - menuRect.width - 8)}px`;
+          }
+        });
+      }
+    };
+
+    overflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeRefereeRowOverflowMenus();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowToggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeRefereeRowOverflowMenus();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    overflow.appendChild(overflowToggle);
+    return overflow;
+  }
+
   function buildInventoryFields(character) {
     if (!inventoryFields || !inventoryContainerSections || !inventoryView.appendInventoryDisplayRow) return;
     const inventoryItems = Array.isArray(character?.inventory)
@@ -3115,16 +3233,19 @@ window.addEventListener('DOMContentLoaded', () => {
     const containerLabels = inventoryView.buildInventoryContainerDisplayLabels
       ? inventoryView.buildInventoryContainerDisplayLabels(containerEntries)
       : new Map();
+    const firstColumnRenderer = ({ row, entry }) => buildInventoryInfoControl(entry, row);
     rootEntries.forEach((entry) => {
       inventoryView.appendInventoryDisplayRow(inventoryFields, entry, {
-        rowClassName: 'inventory-entry-display'
+        rowClassName: 'inventory-entry-display',
+        firstColumnRenderer
       });
     });
     containerEntries.forEach((entry) => {
       inventoryView.buildInventoryContainerSection(entry, inventoryItems, {
         displayLabel: containerLabels.get(entry.id) || entry.name || 'Container',
         containerLabels,
-        containerSectionsEl: inventoryContainerSections
+        containerSectionsEl: inventoryContainerSections,
+        firstColumnRenderer
       });
     });
     if (inventoryTotalWeight) {

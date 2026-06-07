@@ -63,9 +63,8 @@
   }
 
   function formatInventoryNumber(value) {
-    return Number.isInteger(value)
-      ? String(value)
-      : String(Math.round(value * 1000) / 1000);
+    const rounded = Math.round(Number(value) * 100) / 100;
+    return Number.isFinite(rounded) ? String(rounded) : '0';
   }
 
   function createInventoryDisplayRow(entry = {}, options = {}) {
@@ -118,7 +117,7 @@
     const fields = [
       { key: 'name', value: normalized.name || '', isLink: false },
       { key: 'quantity', value: String(normalized.quantity ?? 1), isLink: false },
-      { key: 'value', value: String(normalized.value ?? 0), isLink: false },
+      { key: 'value', value: formatInventoryNumber(normalized.value ?? 0), isLink: false },
       { key: 'weight', value: String(normalized.weight ?? 0), isLink: false }
     ];
 

@@ -1771,6 +1771,10 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const containerLabels = options.containerLabels || buildInventoryContainerDisplayLabels(
       currentInventory.filter((candidate) => candidate && candidate.isContainer && candidate.id)
     );
+    const formatInventoryMenuNumber = (value) => {
+      const rounded = Math.round(Number(value) * 100) / 100;
+      return Number.isFinite(rounded) ? String(rounded) : '0';
+    };
     const overflow = document.createElement('div');
     overflow.className = 'character-overflow inventory-row-overflow';
 
@@ -1791,6 +1795,74 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     overflowTitle.className = 'character-overflow-title';
     overflowTitle.textContent = entry.name || 'Item';
     overflowMenu.appendChild(overflowTitle);
+
+    const menuSummary = document.createElement('div');
+    menuSummary.className = 'inventory-row-menu-summary';
+    const valueLine = document.createElement('div');
+    valueLine.className = 'inventory-row-menu-summary-line';
+    valueLine.innerHTML = '<span class="inventory-row-menu-summary-label">Value</span>';
+    const valueAmount = document.createElement('span');
+    valueAmount.className = 'inventory-row-menu-summary-value';
+    valueAmount.textContent = formatInventoryMenuNumber(entry.value ?? 0);
+    valueLine.appendChild(valueAmount);
+    menuSummary.appendChild(valueLine);
+
+    const weightLine = document.createElement('div');
+    weightLine.className = 'inventory-row-menu-summary-line';
+    weightLine.innerHTML = '<span class="inventory-row-menu-summary-label">Weight</span>';
+    const weightAmount = document.createElement('span');
+    weightAmount.className = 'inventory-row-menu-summary-value';
+    weightAmount.textContent = formatInventoryMenuNumber(entry.weight ?? 0);
+    weightLine.appendChild(weightAmount);
+    menuSummary.appendChild(weightLine);
+
+    overflowMenu.appendChild(menuSummary);
+
+    const addMenuItem = (label, handler, options = {}) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className || 'secondary';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
+      if (options.hidden) {
+        button.classList.add('hidden');
+      }
+      button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeCharacterOverflowMenu();
+        await handler();
+      });
+      overflowMenu.appendChild(button);
+      return button;
+    };
+
+    const currentContainerId = entry.isContainer ? null : entry.containerId || null;
+    const moveTargets = entry.isContainer
+      ? []
+      : currentInventory
+          .filter((candidate) => candidate && candidate.isContainer && candidate.id && candidate.id !== currentContainerId)
+          .map((candidate) => ({
+            id: candidate.id,
+            label: containerLabels.get(candidate.id) || candidate.name || 'Container'
+          }));
+    const hasMoveSection = !entry.isContainer && (moveTargets.length > 0 || currentContainerId);
+
+    if (hasMoveSection) {
+      appendOverflowMenuSeparator(overflowMenu);
+      if (currentContainerId) {
+        addMenuItem('Equip Item', async () => {
+          await moveInventoryEntryToContainer(entry.id, null);
+        });
+      }
+      moveTargets.forEach((target) => {
+        addMenuItem(`Move to ${target.label}`, async () => {
+          await moveInventoryEntryToContainer(entry.id, target.id);
+        });
+      });
+      appendOverflowMenuSeparator(overflowMenu);
+    }
 
     const openOverflowMenu = () => {
       closeCharacterOverflowMenu(overflowMenu);
@@ -1818,26 +1890,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       }
     };
 
-    const addMenuItem = (label, handler, options = {}) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = options.className || 'secondary';
-      button.setAttribute('role', 'menuitem');
-      button.textContent = label;
-      button.disabled = Boolean(options.disabled);
-      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
-      if (options.hidden) {
-        button.classList.add('hidden');
-      }
-      button.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        closeCharacterOverflowMenu();
-        await handler();
-      });
-      overflowMenu.appendChild(button);
-      return button;
-    };
-
     addMenuItem('Edit', () => {
       setSelectedInventoryRow(row);
       editSelectedInventoryEntry();
@@ -1848,30 +1900,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     }, {
       className: 'secondary danger'
     });
-
-    if (!entry.isContainer) {
-      const currentContainerId = entry.containerId || null;
-      if (currentContainerId) {
-        appendOverflowMenuSeparator(overflowMenu);
-        addMenuItem('Equip Item', async () => {
-          await moveInventoryEntryToContainer(entry.id, null);
-        });
-      }
-      const moveTargets = currentInventory
-        .filter((candidate) => candidate && candidate.isContainer && candidate.id && candidate.id !== currentContainerId)
-        .map((candidate) => ({
-          id: candidate.id,
-          label: containerLabels.get(candidate.id) || candidate.name || 'Container'
-        }));
-      if (moveTargets.length > 0) {
-        appendOverflowMenuSeparator(overflowMenu);
-        moveTargets.forEach((target) => {
-          addMenuItem(`Move to ${target.label}`, async () => {
-            await moveInventoryEntryToContainer(entry.id, target.id);
-          });
-        });
-      }
-    }
 
     overflowToggle.addEventListener('click', (event) => {
       event.stopPropagation();
