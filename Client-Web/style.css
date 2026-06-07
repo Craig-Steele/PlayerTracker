@@ -1950,6 +1950,12 @@ body.referee-page .referee-panel {
   min-width: 0;
 }
 
+.inventory-display-icon {
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+}
+
 #inventory-panel .inventory-entry-menu-cell {
   text-align: center;
   padding-left: 0.25rem;
