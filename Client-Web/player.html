@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=58">
+  <link rel="stylesheet" href="style.css?v=61">
 </head>
 <body class="player-page">
   <!-- Campaign header -->
@@ -150,9 +150,14 @@
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="initiative-dialog-title">
         <div class="conditions-dialog-header">
           <h2 id="initiative-dialog-title">Set Initiative</h2>
-          <div class="conditions-dialog-actions">
-            <button type="button" id="initiative-cancel" class="secondary">Cancel</button>
-            <button type="button" id="initiative-save">Save</button>
+          <div>
+            <div class="conditions-dialog-actions">
+              <button type="button" id="initiative-cancel" class="secondary">Cancel</button>
+              <button type="button" id="initiative-save">Save</button>
+            </div>
+            <div class="initiative-roll-row">
+              <button type="button" id="initiative-roll" class="secondary hidden" aria-hidden="true">🎲 Roll for Initiative</button>
+            </div>
           </div>
         </div>
         <label class="property-row">
@@ -165,9 +170,9 @@
               step="any"
               placeholder="Enter initiative"
             />
+            <div id="initiative-help" class="property-help">Leave blank to clear the current initiative.</div>
           </span>
         </label>
-        <p id="initiative-help">Leave blank to clear the current initiative.</p>
       </div>
     </div>
     <!-- Money modal -->
@@ -400,6 +405,6 @@
   <script src="claimable-characters.js?v=2"></script>
   <script src="ruleset.js?v=2"></script>
   <script src="encounter.js?v=2"></script>
-  <script src="app.js?v=108"></script>
+  <script src="app.js?v=110"></script>
 </body>
 </html>

@@ -421,6 +421,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const initiativeEditorInput = document.getElementById('initiative-editor-input');
   const initiativeSaveBtn = document.getElementById('initiative-save');
   const initiativeCancelBtn = document.getElementById('initiative-cancel');
+  const initiativeRollBtn = document.getElementById('initiative-roll');
   const initiativeDialogTitle = document.getElementById('initiative-dialog-title');
   const currencyPanel = document.getElementById('currency-panel');
   const currencyFields = document.getElementById('currency-fields');
@@ -5641,6 +5642,21 @@ function getOwnerName() {
     });
   }
 
+  if (initiativeRollBtn) {
+    initiativeRollBtn.addEventListener('click', async () => {
+      if (!initiativeEditorCharacterId || !initiativeEditorInput) return;
+      const character = myCharacters.find((entry) => entry.id === initiativeEditorCharacterId);
+      if (!character) return;
+      const rolled = rollStandardDie(currentStandardDie, character.initiativeBonus);
+      if (!Number.isFinite(rolled)) {
+        statusDiv.textContent = 'Unable to roll initiative.';
+        return;
+      }
+      initiativeEditorInput.value = String(rolled);
+      await saveInitiativeFromEditor(false);
+    });
+  }
+
   if (initiativeEditorInput) {
     initiativeEditorInput.addEventListener('keydown', async (event) => {
       if (event.key === 'Enter') {
@@ -5699,6 +5715,11 @@ function getOwnerName() {
     initiativeEditorCharacterId = character.id;
     if (initiativeDialogTitle) {
       initiativeDialogTitle.textContent = `Set Initiative for ${character.name}`;
+    }
+    if (initiativeRollBtn) {
+      const hasInitiative = Number.isFinite(character.initiative);
+      initiativeRollBtn.classList.toggle('hidden', hasInitiative);
+      initiativeRollBtn.setAttribute('aria-hidden', hasInitiative.toString());
     }
     initiativeEditorInput.value = Number.isFinite(character.initiative) ? String(character.initiative) : '';
     setInitiativePanelOpen(true);

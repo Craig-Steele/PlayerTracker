@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=58">
+  <link rel="stylesheet" href="style.css?v=61">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -178,22 +178,28 @@
   <!-- Set or clear initiative for the selected character without opening the full editor. -->
   <div id="ref-initiative-modal" class="conditions-modal hidden" aria-hidden="true">
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-initiative-dialog-title">
-      <div class="conditions-dialog-header">
-        <div>
-          <h2 id="ref-initiative-dialog-title">Edit Initiative</h2>
-          <div id="ref-initiative-character" class="subtitle"></div>
+        <div class="conditions-dialog-header">
+          <div>
+            <h2 id="ref-initiative-dialog-title">Edit Initiative</h2>
+            <div id="ref-initiative-character" class="subtitle"></div>
+          </div>
+          <div>
+            <div class="conditions-dialog-actions">
+              <button type="button" id="ref-initiative-cancel" class="secondary">Cancel</button>
+              <button type="button" id="ref-initiative-save">Save</button>
+            </div>
+            <div class="initiative-roll-row">
+              <button type="button" id="ref-initiative-roll" class="secondary hidden" aria-hidden="true">🎲 Roll for Initiative</button>
+            </div>
+          </div>
         </div>
-        <div class="conditions-dialog-actions">
-          <button type="button" id="ref-initiative-cancel" class="secondary">Cancel</button>
-          <button type="button" id="ref-initiative-save">Save</button>
-        </div>
-      </div>
-      <label class="property-row">
-        <span class="property-label">Initiative</span>
-        <span class="property-control">
-          <input type="number" id="ref-initiative-edit-input" />
-        </span>
-      </label>
+        <label class="property-row">
+          <span class="property-label">Initiative</span>
+          <span class="property-control">
+            <input type="number" id="ref-initiative-edit-input" />
+            <div id="ref-initiative-help" class="property-help">Leave blank to clear the current initiative.</div>
+          </span>
+        </label>
     </div>
   </div>
 
@@ -409,6 +415,6 @@
   <script src="inventory-view.js?v=5"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=1"></script>
-  <script src="referee.js?v=40"></script>
+  <script src="referee.js?v=42"></script>
 </body>
 </html>

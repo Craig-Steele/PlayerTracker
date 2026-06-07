@@ -223,6 +223,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const initiativeModalInput = document.getElementById('ref-initiative-edit-input');
   const initiativeModalCancelBtn = document.getElementById('ref-initiative-cancel');
   const initiativeModalSaveBtn = document.getElementById('ref-initiative-save');
+  const initiativeModalRollBtn = document.getElementById('ref-initiative-roll');
   const revealNowBtn = document.getElementById('ref-reveal-now');
   const revealTurnBtn = document.getElementById('ref-reveal-turn');
   const hideBtn = document.getElementById('ref-hide-character');
@@ -3579,6 +3580,11 @@ window.addEventListener('DOMContentLoaded', () => {
       initiativeModalCharacter.textContent = player.name || 'Character';
     }
     initiativeEditorOriginalValue = Number.isFinite(player.initiative) ? String(player.initiative) : '';
+    if (initiativeModalRollBtn) {
+      const hasInitiative = Number.isFinite(player.initiative);
+      initiativeModalRollBtn.classList.toggle('hidden', hasInitiative);
+      initiativeModalRollBtn.setAttribute('aria-hidden', hasInitiative.toString());
+    }
     initiativeModalInput.value = initiativeEditorOriginalValue;
     initiativeModal.classList.toggle('popup-centered', isNarrowPopupViewport());
     initiativeModal.classList.remove('hidden');
@@ -4967,6 +4973,20 @@ window.addEventListener('DOMContentLoaded', () => {
     initiativeModalCancelBtn.addEventListener('click', async () => {
       if (!(await confirmDiscardInitiativeChanges())) return;
       closeInitiativeEditor();
+    });
+  }
+  if (initiativeModalRollBtn) {
+    initiativeModalRollBtn.addEventListener('click', async () => {
+      if (!initiativeEditorCharacterId || !initiativeModalInput) return;
+      const player = currentPlayers.find((entry) => entry.id === initiativeEditorCharacterId);
+      if (!player) return;
+      const rolled = rollStandardDie(currentStandardDie, player.initiativeBonus);
+      if (!Number.isFinite(rolled)) {
+        if (statusDiv) statusDiv.textContent = 'Unable to roll initiative.';
+        return;
+      }
+      initiativeModalInput.value = String(rolled);
+      await saveInitiativeEditor();
     });
   }
   if (initiativeModalSaveBtn) {
