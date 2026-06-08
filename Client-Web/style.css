@@ -1823,12 +1823,14 @@ body.referee-page .referee-panel {
   margin-top: 0.1rem;
   padding: 0.1rem 0 0;
   background: var(--bg-page);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   overflow: visible;
 }
 
 #inventory-panel .inventory-actions-row button {
-  flex: 0 0 auto;
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .inventory-inline-form {
