@@ -1180,15 +1180,11 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function setInventoryTablesVisible(visible) {
-    const tableWrappers = inventoryPanel?.querySelectorAll('.inventory-table-wrap') || [];
+    const tableWrappers = inventoryPanel?.querySelectorAll('.inventory-scroll') || [];
     tableWrappers.forEach((wrap) => {
       wrap.classList.toggle('hidden', !visible);
       wrap.setAttribute('aria-hidden', (!visible).toString());
     });
-    if (inventoryContainerSections) {
-      inventoryContainerSections.classList.toggle('hidden', !visible);
-      inventoryContainerSections.setAttribute('aria-hidden', (!visible).toString());
-    }
   }
 
   function updateInventoryItemOptions() {

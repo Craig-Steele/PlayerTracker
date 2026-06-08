@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=61">
+  <link rel="stylesheet" href="style.css?v=64">
 </head>
 <body class="player-page">
   <!-- Campaign header -->
@@ -268,10 +268,10 @@
           </div>
         </div>
         <div class="party-treasure-actions-row party-treasure-actions-row-top inventory-actions-row">
-          <button type="button" id="inventory-add" class="secondary">🗡 Add</button>
+          <button type="button" id="inventory-add" class="secondary">🗡 Add Item</button>
           <button type="button" id="inventory-add-container" class="secondary">🧳 Add Container</button>
         </div>
-        <p id="inventory-total-weight" class="inventory-summary">Total weight carried: 0</p>
+        <p id="inventory-total-weight" class="inventory-summary">Total equipped weight: 0</p>
         <div id="inventory-add-form" class="inventory-inline-form hidden" aria-hidden="true">
           <div id="inventory-add-form-title" class="inventory-inline-form-title">Add Item</div>
           <div class="inventory-inline-form-grid">
@@ -318,21 +318,23 @@
             <button type="button" id="inventory-add-form-save">🗡 Add Item</button>
           </div>
         </div>
-        <div class="inventory-table-wrap">
-          <table class="inventory-table">
-            <thead>
-              <tr>
-                <th>🧳</th>
-                <th>Equipped Items</th>
-                <th>Qty</th>
-                <th>Value</th>
-                <th>Weight</th>
-              </tr>
-            </thead>
-            <tbody id="inventory-fields"></tbody>
-          </table>
+        <div class="inventory-scroll">
+          <div class="inventory-table-wrap">
+            <table class="inventory-table">
+              <thead>
+                <tr>
+                  <th>🧳</th>
+                  <th>Equipped Items</th>
+                  <th>Qty</th>
+                  <th>Value</th>
+                  <th>Weight</th>
+                </tr>
+              </thead>
+              <tbody id="inventory-fields"></tbody>
+            </table>
+          </div>
+          <div id="inventory-container-sections" class="inventory-container-sections"></div>
         </div>
-        <div id="inventory-container-sections" class="inventory-container-sections"></div>
         <datalist id="inventory-item-options"></datalist>
       </div>
     </div>
@@ -405,6 +407,6 @@
   <script src="claimable-characters.js?v=2"></script>
   <script src="ruleset.js?v=2"></script>
   <script src="encounter.js?v=2"></script>
-  <script src="app.js?v=110"></script>
+  <script src="app.js?v=111"></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=61">
+  <link rel="stylesheet" href="style.css?v=64">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -390,21 +390,23 @@
       </div>
       <p id="inventory-total-weight" class="inventory-summary">Total weight carried: 0</p>
       <div id="inventory-summary" class="inventory-summary">Inventory for —</div>
-      <div class="inventory-table-wrap">
-        <table class="inventory-table">
-          <thead>
-            <tr>
-              <th>🧳</th>
-              <th>Equipped Items</th>
-              <th>Qty</th>
-              <th>Value</th>
-              <th>Weight</th>
-            </tr>
-          </thead>
-          <tbody id="inventory-fields"></tbody>
-        </table>
+      <div class="inventory-scroll">
+        <div class="inventory-table-wrap">
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>🧳</th>
+                <th>Equipped Items</th>
+                <th>Qty</th>
+                <th>Value</th>
+                <th>Weight</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-fields"></tbody>
+          </table>
+        </div>
+        <div id="inventory-container-sections" class="inventory-container-sections"></div>
       </div>
-      <div id="inventory-container-sections" class="inventory-container-sections"></div>
     </div>
   </div>
 

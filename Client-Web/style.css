@@ -1717,6 +1717,17 @@ body.referee-page .referee-panel {
   width: min(58rem, 100%);
 }
 
+#inventory-panel .inventory-dialog {
+  overflow: hidden;
+}
+
+#inventory-panel .inventory-dialog > .inventory-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .conditions-dialog-header {
   position: sticky;
   top: -1rem;
@@ -1803,6 +1814,21 @@ body.referee-page .referee-panel {
   margin: 0.75rem 0 0;
   color: var(--text-body-soft);
   font-size: 0.95rem;
+}
+
+#inventory-panel .inventory-actions-row {
+  position: static;
+  top: auto;
+  z-index: auto;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0 0.3rem;
+  background: var(--bg-page);
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+#inventory-panel .inventory-actions-row button {
+  flex: 0 0 auto;
 }
 
 .inventory-inline-form {
