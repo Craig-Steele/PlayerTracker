@@ -82,6 +82,8 @@ const {
   encounterStatusInfo,
   applyEncounterHealthClasses,
   formatEncounterStatsText,
+  formatEncounterStatsItems = (stats) => (Array.isArray(stats) ? stats : []),
+  formatEncounterStatLine = (stat) => (stat ? `${stat.key} ${stat.current}/${stat.max}` : ''),
   buildEncounterConditionsList,
   createEmptyEncounterRow,
   setEncounterHealthLabel
@@ -92,6 +94,8 @@ const {
   encounterStatusInfo: () => null,
   applyEncounterHealthClasses: () => {},
   formatEncounterStatsText: () => '',
+  formatEncounterStatsItems: (stats) => (Array.isArray(stats) ? stats : []),
+  formatEncounterStatLine: (stat) => (stat ? `${stat.key} ${stat.current}/${stat.max}` : ''),
   buildEncounterConditionsList: () => null,
   createEmptyEncounterRow: (colSpan, text) => {
     const tr = document.createElement('tr');
@@ -3721,6 +3725,19 @@ window.addEventListener('DOMContentLoaded', () => {
     return popover;
   }
 
+  function createStatsActionButton(character) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'icon-button stats-edit-button';
+    button.textContent = '❤️';
+    button.setAttribute('aria-label', `Edit stats for ${character?.name || 'character'}`);
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleExpandedOrderStats(character?.id);
+    });
+    return button;
+  }
+
   /**
    * Build the referee row overflow menu for a character in the encounter table.
    * @param {object} player Character record.
@@ -3808,90 +3825,139 @@ window.addEventListener('DOMContentLoaded', () => {
       return button;
     };
 
-    addMenuItem('Act Now', () => {
-      setTurnNow(player.id);
-    }, {
-      disabled: encounterState !== 'active'
-    });
-    appendOverflowMenuSeparator(overflowMenu);
-    addMenuItem('Edit Character', async () => {
-      if (detailsDirty) {
-        const discard = await confirmDiscardUnsavedDetails();
-        if (!discard) return;
-      }
-      if (conditionsDirty) {
-        const discard = await confirmDiscardUnsavedConditions();
-        if (!discard) return;
-        setConditionsPanelOpen(false);
-      }
-      setSelectedCharacter(player);
-      setDetailsPanelOpen(true);
-    });
-    addMenuItem('Conditions', async () => {
-      if (detailsDirty) {
-        const discard = await confirmDiscardUnsavedDetails();
-        if (!discard) return;
-      }
-      if (conditionsDirty && selectedCharacterId === player.id) {
-        const discard = await confirmDiscardUnsavedConditions();
-        if (!discard) return;
-      }
-      setSelectedCharacter(player);
-      setConditionsPanelOpen(true);
-    });
-    appendOverflowMenuSeparator(overflowMenu);
-    addMenuItem('Reveal Now', () => updateVisibility(player.id, false, false), {
-      hidden: !player.isReferee || !player.isHidden
-    });
-    addMenuItem('Reveal on Turn', () => updateVisibility(player.id, true, true), {
-      hidden: !player.isReferee || !player.isHidden
-    });
-    addMenuItem('Hide Character', () => updateVisibility(player.id, true, false), {
-      hidden: !player.isReferee || player.isHidden
-    });
-    addMenuItem('Open Reference', () => openCharacterReference(player), {
-      hidden: !player.referenceUrl
-    });
     const currencyTotal = formatCharacterCurrencyTotal(player);
-    addMenuItem(currencyTotal ? `Money: ${currencyTotal}` : 'Money', async () => {
-      await openCurrencyViewer(player);
-    }, {
-      hidden: player.isReferee || !(currencySystem && Array.isArray(currencySystem.units) && currencySystem.units.length > 0)
-    });
-    addMenuItem('Inventory', async () => {
-      await openInventoryViewer(player);
-    }, {
-      hidden: player.isReferee
-    });
-    appendOverflowMenuSeparator(overflowMenu);
-    addMenuItem('Claim Character', async () => {
-      await claimCharacter(player);
-    }, {
-      hidden: Boolean(player.isReferee) || Boolean(player.claimedSessionId)
-    });
-    addMenuItem(player.isReferee ? 'Release to Pool' : 'Release Character', async () => {
-      if (player.isReferee) {
-        await releaseCharacterToPool(player);
-        return;
+    const menuGroups = [
+      [
+        {
+          label: 'Act Now',
+          handler: () => {
+            setTurnNow(player.id);
+          },
+          options: {
+            disabled: encounterState !== 'active'
+          }
+        }
+      ],
+      [
+        {
+          label: 'Reveal Now',
+          handler: () => updateVisibility(player.id, false, false),
+          options: {
+            hidden: !player.isReferee || !player.isHidden
+          }
+        },
+        {
+          label: 'Reveal on Turn',
+          handler: () => updateVisibility(player.id, true, true),
+          options: {
+            hidden: !player.isReferee || !player.isHidden
+          }
+        },
+        {
+          label: 'Hide Character',
+          handler: () => updateVisibility(player.id, true, false),
+          options: {
+            hidden: !player.isReferee || player.isHidden
+          }
+        },
+        {
+          label: 'Open Reference',
+          handler: () => openCharacterReference(player),
+          options: {
+            hidden: !player.referenceUrl
+          }
+        },
+        {
+          label: currencyTotal ? `Money: ${currencyTotal}` : 'Money',
+          handler: async () => {
+            await openCurrencyViewer(player);
+          },
+          options: {
+            hidden: player.isReferee || !(currencySystem && Array.isArray(currencySystem.units) && currencySystem.units.length > 0)
+          }
+        },
+        {
+          label: 'Inventory',
+          handler: async () => {
+            await openInventoryViewer(player);
+          },
+          options: {
+            hidden: player.isReferee
+          }
+        }
+      ],
+      [
+        {
+          label: 'Edit Character',
+          handler: async () => {
+            if (detailsDirty) {
+              const discard = await confirmDiscardUnsavedDetails();
+              if (!discard) return;
+            }
+            if (conditionsDirty) {
+              const discard = await confirmDiscardUnsavedConditions();
+              if (!discard) return;
+              setConditionsPanelOpen(false);
+            }
+            setSelectedCharacter(player);
+            setDetailsPanelOpen(true);
+          }
+        },
+        {
+          label: 'Claim Character',
+          handler: async () => {
+            await claimCharacter(player);
+          },
+          options: {
+            hidden: Boolean(player.isReferee) || Boolean(player.claimedSessionId)
+          }
+        },
+        {
+          label: player.isReferee ? 'Release to Pool' : 'Release Character',
+          handler: async () => {
+            if (player.isReferee) {
+              await releaseCharacterToPool(player);
+              return;
+            }
+            await forceReleaseCharacter(player);
+          },
+          options: {
+            hidden: !Boolean(player.claimedSessionId) && !player.isReferee
+          }
+        },
+        {
+          label: 'Remove Character',
+          handler: async () => {
+            const confirmed = await showConfirmDialog({
+              title: 'Remove Character?',
+              header: player.name || 'This character',
+              message: 'Remove this character from the tracker?',
+              confirmLabel: 'Remove Character',
+              cancelLabel: 'Keep Character',
+              confirmButtonClass: 'danger',
+              initialFocus: 'cancel'
+            });
+            if (!confirmed) return;
+            await deleteCharacter(player.id);
+          },
+          options: {
+            className: 'secondary character-remove'
+          }
+        }
+      ]
+    ];
+
+    let appendedGroup = false;
+    menuGroups.forEach((group) => {
+      const visibleItems = group.filter((item) => !item.options?.hidden);
+      if (visibleItems.length === 0) return;
+      if (appendedGroup) {
+        appendOverflowMenuSeparator(overflowMenu);
       }
-      await forceReleaseCharacter(player);
-    }, {
-      hidden: !Boolean(player.claimedSessionId) && !player.isReferee
-    });
-    addMenuItem('Remove Character', async () => {
-      const confirmed = await showConfirmDialog({
-        title: 'Remove Character?',
-        header: player.name || 'This character',
-        message: 'Remove this character from the tracker?',
-        confirmLabel: 'Remove Character',
-        cancelLabel: 'Keep Character',
-        confirmButtonClass: 'danger',
-        initialFocus: 'cancel'
+      visibleItems.forEach((item) => {
+        addMenuItem(item.label, item.handler, item.options || {});
       });
-      if (!confirmed) return;
-      await deleteCharacter(player.id);
-    }, {
-      className: 'secondary character-remove'
+      appendedGroup = true;
     });
 
     overflowToggle.addEventListener('click', (event) => {
@@ -3985,10 +4051,20 @@ window.addEventListener('DOMContentLoaded', () => {
       const statusInfo = encounterStatusInfo(stats, statKeys);
       if (statusInfo) {
         applyEncounterHealthClasses(hpTd, statusInfo);
-        hpTd.classList.add('player-row-stats-cell');
-        const valueLine = document.createElement('div');
-        valueLine.textContent = formatEncounterStatsText(orderedStats, statKeys);
-        hpTd.appendChild(valueLine);
+        hpTd.classList.add('player-row-stats-cell', 'stats-cell-with-action');
+        const statsContent = document.createElement('div');
+        statsContent.className = 'stats-cell-content';
+        const statsInner = document.createElement('div');
+        statsInner.className = 'stats-cell-text';
+        const statItems = formatEncounterStatsItems(orderedStats, statKeys);
+        statsContent.appendChild(createStatsActionButton(p));
+        statItems.forEach((stat) => {
+          const valueLine = document.createElement('div');
+          valueLine.textContent = formatEncounterStatLine(stat);
+          statsInner.appendChild(valueLine);
+        });
+        statsContent.appendChild(statsInner);
+        hpTd.appendChild(statsContent);
         if (p.id === expandedOrderStatsCharacterId) {
           const statsPopover = buildOrderStatsPopover(p, statKeys);
           hpTd.appendChild(statsPopover);
@@ -4013,11 +4089,27 @@ window.addEventListener('DOMContentLoaded', () => {
       const conditionsTd = document.createElement('td');
       conditionsTd.classList.add('conditions-cell');
       const list = buildEncounterConditionsList(p.conditions, conditionLookup);
+      const conditionsContent = document.createElement('div');
+      conditionsContent.className = 'conditions-cell-content';
+      const conditionButton = document.createElement('button');
+      conditionButton.type = 'button';
+      conditionButton.className = 'icon-button condition-edit-button';
+      conditionButton.textContent = '🩸';
+      conditionButton.setAttribute('aria-label', `Edit conditions for ${p.name || 'character'}`);
+      conditionButton.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        await openConditionsEditorForCharacter(p);
+      });
+      const conditionsInner = document.createElement('div');
+      conditionsInner.className = 'conditions-cell-text';
+      conditionsContent.appendChild(conditionButton);
       if (list) {
-        conditionsTd.appendChild(list);
+        conditionsInner.appendChild(list);
       } else {
-        conditionsTd.textContent = '—';
+        conditionsInner.textContent = '—';
       }
+      conditionsContent.appendChild(conditionsInner);
+      conditionsTd.appendChild(conditionsContent);
 
       tr.appendChild(initTd);
       tr.appendChild(nameTd);
@@ -4162,6 +4254,25 @@ window.addEventListener('DOMContentLoaded', () => {
     selectedConditions = new Set(player.conditions || []);
     renderEditorConditions(editorConditionFilter ? editorConditionFilter.value : '');
     updateSelectedConditionsDisplay();
+  }
+
+  /**
+   * Open the condition editor for a specific character.
+   * @param {object} player Character record.
+   * @returns {Promise<void>}
+   */
+  async function openConditionsEditorForCharacter(player) {
+    if (!player) return;
+    if (detailsDirty) {
+      const discard = await confirmDiscardUnsavedDetails();
+      if (!discard) return;
+    }
+    if (conditionsDirty && selectedCharacterId === player.id) {
+      const discard = await confirmDiscardUnsavedConditions();
+      if (!discard) return;
+    }
+    setSelectedCharacter(player);
+    setConditionsPanelOpen(true);
   }
 
   /**

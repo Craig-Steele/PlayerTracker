@@ -683,7 +683,7 @@ body.referee-page .referee-panel {
   top: calc(100% + 0.35rem);
   left: 0;
   right: auto;
-  z-index: 20;
+  z-index: 60;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -2440,6 +2440,40 @@ body.referee-page .referee-panel {
     display: inline-flex;
   }
 
+  .condition-edit-button {
+    width: auto !important;
+    display: inline-flex;
+    padding: 0;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: inherit;
+  }
+
+  .stats-cell-with-action {
+    padding: 0;
+  }
+
+  .stats-cell-content {
+    flex-wrap: nowrap;
+    padding: 0.15rem 0.2rem 0.15rem 0.3rem;
+  }
+
+  .conditions-cell-content {
+    padding: 0.15rem 0.2rem 0.15rem 0.3rem;
+  }
+
+  .stats-edit-button {
+    width: auto !important;
+    display: inline-flex;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: inherit;
+  }
+
   .character-force-release {
     width: auto !important;
     flex: 0 0 auto;
@@ -2850,7 +2884,7 @@ body.referee-page .referee-panel {
   top: 0.25rem;
   left: 0;
   flex: 0 0 auto;
-  z-index: 1;
+  z-index: 70;
 }
 
 .player-row-overflow .character-overflow-toggle {
@@ -2901,6 +2935,54 @@ body.referee-page .referee-panel {
 
 .player-row-stats-cell {
   position: relative;
+  vertical-align: middle;
+  padding: 0;
+}
+
+.stats-cell-with-action {
+  padding: 0;
+}
+
+.stats-cell-content {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0.25rem 0.35rem;
+  box-sizing: border-box;
+}
+
+.stats-cell-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.1rem;
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 auto;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
+  text-align: right;
+}
+
+.stats-edit-button {
+  position: relative;
+  width: auto !important;
+  min-width: 0;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: inherit;
+  z-index: 1;
 }
 
 .player-row-stats-popover {
@@ -2998,6 +3080,12 @@ body.referee-page .referee-panel {
   white-space: normal;
 }
 
+body.display-only .stats-cell-text,
+.stats-cell-status-only .stats-cell-text {
+  align-items: center;
+  text-align: center;
+}
+
 /* HP column */
 .character-list table th:nth-child(3),
 .character-list table td:nth-child(3),
@@ -3042,6 +3130,19 @@ body.referee-page .referee-panel {
 .character-list table td:last-child {
   width: auto;
   white-space: normal;
+}
+
+@media (min-width: 901px) {
+  .character-list table th:nth-child(2),
+  .character-list table td:nth-child(2) {
+    width: 42%;
+  }
+
+  .character-list table th:nth-child(3),
+  .character-list table td:nth-child(3) {
+    width: 10%;
+    min-width: 8.5rem;
+  }
 }
 
 #qr-container canvas,
@@ -3578,7 +3679,43 @@ body.admin-page .admin-owner-card .admin-owner-group {
 .player-conditions {
   display: block;
   line-height: 1.35;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.conditions-cell {
+  position: relative;
+  vertical-align: middle;
+  padding: 0;
+}
+
+.conditions-cell-content {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.25rem 0.35rem;
+  z-index: 0;
+}
+
+.conditions-cell-text {
+  min-width: 0;
+  width: 100%;
+  flex: 1 1 auto;
+}
+
+.condition-edit-button {
+  position: relative;
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 0;
+  font-size: 0.95rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: inherit;
+  z-index: 1;
 }
 
 .hp-cell {

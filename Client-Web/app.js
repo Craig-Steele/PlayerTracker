@@ -38,6 +38,8 @@ const {
   encounterStatusInfo,
   applyEncounterHealthClasses,
   formatEncounterStatsText,
+  formatEncounterStatsItems = (stats) => (Array.isArray(stats) ? stats : []),
+  formatEncounterStatLine = (stat) => (stat ? `${stat.key} ${stat.current}/${stat.max}` : ''),
   buildEncounterConditionsList,
   createEmptyEncounterRow,
   setEncounterHealthLabel
@@ -50,6 +52,8 @@ const {
   encounterStatusInfo: () => null,
   applyEncounterHealthClasses: () => {},
   formatEncounterStatsText: () => '',
+  formatEncounterStatsItems: (stats) => (Array.isArray(stats) ? stats : []),
+  formatEncounterStatLine: (stat) => (stat ? `${stat.key} ${stat.current}/${stat.max}` : ''),
   buildEncounterConditionsList: () => null,
   createEmptyEncounterRow: (colSpan, text) => {
     const tr = document.createElement('tr');
@@ -3592,36 +3596,71 @@ function getOwnerName() {
       return button;
     };
 
-    addMenuItem('Edit Character', () => {
-      void openDetailsEditorForCharacter(character);
-    });
-    addMenuItem('Conditions', () => {
-      void openConditionsEditorForCharacter(character);
-    });
-    appendOverflowMenuSeparator(overflowMenu);
-    addMenuItem('Inventory', async () => {
-      await openInventoryEditor(character);
-    });
     const currencyTotal = formatCharacterCurrencyTotal(character);
-    addMenuItem(currencyTotal ? `Money: ${currencyTotal}` : 'Money', () => openCurrencyEditor(character), {
-      hidden: !(currencySystem && currencySystem.units.length > 0)
-    });
-    addMenuItem('Party Treasure', async () => {
-      openPartyTreasureEditor(character);
-    });
-    appendOverflowMenuSeparator(overflowMenu);
-    addMenuItem('Release Character', async () => {
-      if (character.claimedSessionId !== currentPlayerSessionId) return;
-      await releaseClaimForCharacter(character);
-    }, {
-      hidden: character.claimedSessionId !== currentPlayerSessionId
-    });
-    addMenuItem('Remove Character', async () => {
-      const confirmed = confirm(`Remove ${character.name || 'this character'} from the tracker?`);
-      if (!confirmed) return;
-      await deleteMyCharacter(character);
-    }, {
-      className: 'secondary character-remove'
+    const menuGroups = [
+      [
+        {
+          label: 'Inventory',
+          handler: async () => {
+            await openInventoryEditor(character);
+          }
+        },
+        {
+          label: currencyTotal ? `Money: ${currencyTotal}` : 'Money',
+          handler: () => openCurrencyEditor(character),
+          options: {
+            hidden: !(currencySystem && currencySystem.units.length > 0)
+          }
+        },
+        {
+          label: 'Party Treasure',
+          handler: async () => {
+            openPartyTreasureEditor(character);
+          }
+        }
+      ],
+      [
+        {
+          label: 'Edit Character',
+          handler: () => {
+            void openDetailsEditorForCharacter(character);
+          }
+        },
+        {
+          label: 'Release Character',
+          handler: async () => {
+            if (character.claimedSessionId !== currentPlayerSessionId) return;
+            await releaseClaimForCharacter(character);
+          },
+          options: {
+            hidden: character.claimedSessionId !== currentPlayerSessionId
+          }
+        },
+        {
+          label: 'Remove Character',
+          handler: async () => {
+            const confirmed = confirm(`Remove ${character.name || 'this character'} from the tracker?`);
+            if (!confirmed) return;
+            await deleteMyCharacter(character);
+          },
+          options: {
+            className: 'secondary character-remove'
+          }
+        }
+      ]
+    ];
+
+    let appendedGroup = false;
+    menuGroups.forEach((group) => {
+      const visibleItems = group.filter((item) => !item.options?.hidden);
+      if (visibleItems.length === 0) return;
+      if (appendedGroup) {
+        appendOverflowMenuSeparator(overflowMenu);
+      }
+      visibleItems.forEach((item) => {
+        addMenuItem(item.label, item.handler, item.options || {});
+      });
+      appendedGroup = true;
     });
 
     overflowToggle.addEventListener('click', (event) => {
@@ -4102,6 +4141,32 @@ function getOwnerName() {
     return popover;
   }
 
+  function createConditionEditButton(character) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'icon-button condition-edit-button';
+    button.textContent = '🩸';
+    button.setAttribute('aria-label', `Edit conditions for ${character?.name || 'character'}`);
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      void openConditionsEditorForCharacter(character);
+    });
+    return button;
+  }
+
+  function createStatsActionButton(character) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'icon-button stats-edit-button';
+    button.textContent = '❤️';
+    button.setAttribute('aria-label', `Edit stats for ${character?.name || 'character'}`);
+    button.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleExpandedOrderStats(character?.id);
+    });
+    return button;
+  }
+
   function renderEncounterRows(snapshot) {
     if (!playersBody || !snapshot) return;
     const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
@@ -4194,21 +4259,41 @@ function getOwnerName() {
 
       if (statusInfo) {
         applyEncounterHealthClasses(hpTd, statusInfo);
+        hpTd.classList.add('player-row-stats-cell');
         hpTd.innerHTML = '';
+        const statsContent = document.createElement('div');
+        statsContent.className = 'stats-cell-content';
+        const statsInner = document.createElement('div');
+        statsInner.className = 'stats-cell-text';
         const canReveal = isMine || p.revealStats;
+        const statItems = formatEncounterStatsItems(orderedStats, displayStatKeys);
+        if (isMine) {
+          hpTd.classList.add('stats-cell-with-action');
+          statsContent.appendChild(createStatsActionButton(p));
+        }
         if (!canReveal) {
+          hpTd.classList.add('stats-cell-status-only');
           const statusLabel = healthStatusLabel(statusInfo.ratio, statusInfo.isDead);
           const statusLine = document.createElement('div');
           statusLine.textContent = statusLabel;
-          hpTd.appendChild(statusLine);
+          statsInner.appendChild(statusLine);
         }
         if (canReveal) {
-          const valueLine = document.createElement('div');
-          valueLine.textContent = formatEncounterStatsText(orderedStats, displayStatKeys);
-          hpTd.appendChild(valueLine);
+          if (displayOnly) {
+            const valueLine = document.createElement('div');
+            valueLine.textContent = formatEncounterStatsText(orderedStats, displayStatKeys);
+            statsInner.appendChild(valueLine);
+          } else {
+            statItems.forEach((stat) => {
+              const valueLine = document.createElement('div');
+              valueLine.textContent = formatEncounterStatLine(stat);
+              statsInner.appendChild(valueLine);
+            });
+          }
         }
+        statsContent.appendChild(statsInner);
+        hpTd.appendChild(statsContent);
         if (isMine && p.id === expandedOrderStatsCharacterId) {
-          hpTd.classList.add('player-row-stats-cell');
           const statsPopover = buildOrderStatsPopover(p, displayStatKeys);
           hpTd.appendChild(statsPopover);
         }
@@ -4217,7 +4302,6 @@ function getOwnerName() {
       }
 
       if (isMine && statusInfo) {
-        hpTd.classList.add('player-row-stats-cell');
         hpTd.style.cursor = 'pointer';
         hpTd.addEventListener('click', (event) => {
           event.stopPropagation();
@@ -4226,11 +4310,21 @@ function getOwnerName() {
       }
 
       const list = buildEncounterConditionsList(p.conditions, conditionLookup);
-      if (list) {
-        conditionsTd.appendChild(list);
-      } else {
-        conditionsTd.textContent = '—';
+      const conditionsContent = document.createElement('div');
+      conditionsContent.className = 'conditions-cell-content';
+      const conditionButton = isMine ? createConditionEditButton(p) : null;
+      const conditionsInner = document.createElement('div');
+      conditionsInner.className = 'conditions-cell-text';
+      if (conditionButton) {
+        conditionsContent.appendChild(conditionButton);
       }
+      if (list) {
+        conditionsInner.appendChild(list);
+      } else {
+        conditionsInner.textContent = '—';
+      }
+      conditionsContent.appendChild(conditionsInner);
+      conditionsTd.appendChild(conditionsContent);
 
       if (currentTurnId && p.id === currentTurnId) {
         tr.classList.add('current-turn');

@@ -117,18 +117,28 @@
   }
 
   function formatEncounterStatsText(stats, statKeys) {
-    const displayStats = orderedEncounterStats(stats, statKeys);
-    const visibleStats = displayStats.filter(
-      (stat) => stat.key !== 'TempHP' || Number(stat.current) > 0
-    );
-    const source = visibleStats.length > 0 ? visibleStats : displayStats;
-    return source
+    return formatEncounterStatsItems(stats, statKeys)
       .map((stat) =>
         stat.key === 'TempHP'
           ? `${stat.key} ${stat.current}`
           : `${stat.key === 'HP' ? currentHealthLabel : stat.key} ${stat.current}/${stat.max}`
       )
       .join(' • ');
+  }
+
+  function formatEncounterStatsItems(stats, statKeys) {
+    const displayStats = orderedEncounterStats(stats, statKeys);
+    const visibleStats = displayStats.filter(
+      (stat) => stat.key !== 'TempHP' || Number(stat.current) > 0
+    );
+    return visibleStats.length > 0 ? visibleStats : displayStats;
+  }
+
+  function formatEncounterStatLine(stat) {
+    if (!stat) return '';
+    return stat.key === 'TempHP'
+      ? `${stat.key} ${stat.current}`
+      : `${stat.key === 'HP' ? currentHealthLabel : stat.key} ${stat.current}/${stat.max}`;
   }
 
   function buildEncounterConditionsList(conditionNames, conditionLookup) {
@@ -172,6 +182,8 @@
     encounterStatusInfo,
     applyEncounterHealthClasses,
     formatEncounterStatsText,
+    formatEncounterStatsItems,
+    formatEncounterStatLine,
     buildEncounterConditionsList,
     createEmptyEncounterRow,
     setEncounterHealthLabel
