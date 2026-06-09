@@ -1,130 +1,144 @@
 import Vapor
-import XCTVapor
-import XCTest
+import VaporTesting
+import Testing
 @testable import PlayerTracker
 
-final class AuthRoutesTests: XCTestCase {
-    func testSignupLoginSessionAndLogoutRoundTrip() async throws {
+@Suite("Auth Routes")
+struct AuthRoutesTests {
+    @Test("signup login session and logout round trip")
+    func signupLoginSessionAndLogoutRoundTrip() async throws {
         let app = try await makeApp()
-        let tester = try app.testable()
+        defer { shutdownApplicationSynchronously(app) }
+        let tester = try app.testing()
 
         let signupPayload = AuthSignupInput(
             email: "owner@example.com",
             password: "s3cr3t-password"
         )
-        let signupResponse = try await tester.sendRequest(
+        let signupResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/signup",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(signupPayload))
         )
-        XCTAssertEqual(signupResponse.status, .ok)
+        #expect(signupResponse.status == .ok)
         let signupSession = try signupResponse.content.decode(AuthSessionResponse.self)
-        XCTAssertEqual(signupSession.user.email, "owner@example.com")
-        let signupCookie = try XCTUnwrap(signupResponse.headers.first(name: .setCookie))
-        let signupToken = try XCTUnwrap(signupCookie.split(separator: ";").first?.split(separator: "=").last)
+        #expect(signupSession.user.email == "owner@example.com")
+        let signupCookie = try #require(signupResponse.headers.first(name: .setCookie))
+        let signupToken = try #require(signupCookie.split(separator: ";").first?.split(separator: "=").last)
 
-        let sessionResponse = try await tester.sendRequest(
+        let sessionResponse = try await sendRequest(
+            tester,
             .GET,
             "/auth/session",
             headers: ["Cookie": "roll4_session=\(signupToken)"]
         )
-        XCTAssertEqual(sessionResponse.status, .ok)
+        #expect(sessionResponse.status == .ok)
         let sessionPayload = try sessionResponse.content.decode(AuthSessionResponse.self)
-        XCTAssertEqual(sessionPayload.user.email, "owner@example.com")
+        #expect(sessionPayload.user.email == "owner@example.com")
 
-        let logoutResponse = try await tester.sendRequest(
+        let logoutResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/logout",
             headers: ["Cookie": "roll4_session=\(signupToken)"]
         )
-        XCTAssertEqual(logoutResponse.status, .ok)
+        #expect(logoutResponse.status == .ok)
 
-        let revokedSessionResponse = try await tester.sendRequest(
+        let revokedSessionResponse = try await sendRequest(
+            tester,
             .GET,
             "/auth/session",
             headers: ["Cookie": "roll4_session=\(signupToken)"]
         )
-        XCTAssertEqual(revokedSessionResponse.status, .unauthorized)
+        #expect(revokedSessionResponse.status == .unauthorized)
 
         let loginPayload = AuthLoginInput(email: "owner@example.com", password: "s3cr3t-password")
-        let loginResponse = try await tester.sendRequest(
+        let loginResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/login",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(loginPayload))
         )
-        XCTAssertEqual(loginResponse.status, .ok)
+        #expect(loginResponse.status == .ok)
         let loginSession = try loginResponse.content.decode(AuthSessionResponse.self)
-        XCTAssertEqual(loginSession.user.email, "owner@example.com")
-
-        try await app.asyncShutdown()
+        #expect(loginSession.user.email == "owner@example.com")
     }
 
-    func testDuplicateSignupIsRejected() async throws {
+    @Test("duplicate signup is rejected")
+    func duplicateSignupIsRejected() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let payload = AuthSignupInput(
             email: "owner@example.com",
             password: "s3cr3t-password"
         )
 
-        let firstResponse = try await tester.sendRequest(
+        let firstResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/signup",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(payload))
         )
-        XCTAssertEqual(firstResponse.status, .ok)
+        #expect(firstResponse.status == .ok)
 
-        let duplicateResponse = try await tester.sendRequest(
+        let duplicateResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/signup",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(payload))
         )
-        XCTAssertEqual(duplicateResponse.status, .conflict)
+        #expect(duplicateResponse.status == .conflict)
     }
 
-    func testBadLoginIsRejected() async throws {
+    @Test("bad login is rejected")
+    func badLoginIsRejected() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let signupPayload = AuthSignupInput(
             email: "owner@example.com",
             password: "s3cr3t-password"
         )
-        let signupResponse = try await tester.sendRequest(
+        let signupResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/signup",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(signupPayload))
         )
-        XCTAssertEqual(signupResponse.status, .ok)
+        #expect(signupResponse.status == .ok)
 
         let wrongPassword = AuthLoginInput(email: "owner@example.com", password: "wrong-password")
-        let wrongPasswordResponse = try await tester.sendRequest(
+        let wrongPasswordResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/login",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(wrongPassword))
         )
-        XCTAssertEqual(wrongPasswordResponse.status, .unauthorized)
+        #expect(wrongPasswordResponse.status == .unauthorized)
 
         let unknownUser = AuthLoginInput(email: "missing@example.com", password: "anything")
-        let unknownUserResponse = try await tester.sendRequest(
+        let unknownUserResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/login",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(unknownUser))
         )
-        XCTAssertEqual(unknownUserResponse.status, .unauthorized)
+        #expect(unknownUserResponse.status == .unauthorized)
     }
 
-    func testExpiredSessionIsRejected() async throws {
+    @Test("expired session is rejected")
+    func expiredSessionIsRejected() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
 
@@ -138,69 +152,77 @@ final class AuthRoutesTests: XCTestCase {
             expiresAt: Date(timeIntervalSinceNow: -60),
             on: app.db
         )
-        let tester = try app.testable()
+        let tester = try app.testing()
 
-        let sessionResponse = try await tester.sendRequest(
+        let sessionResponse = try await sendRequest(
+            tester,
             .GET,
             "/auth/session",
             headers: ["Cookie": "roll4_session=\(token)"]
         )
-        XCTAssertEqual(sessionResponse.status, .unauthorized)
+        #expect(sessionResponse.status == .unauthorized)
     }
 
-    func testAuthSessionRequiresCookie() async throws {
+    @Test("auth session requires cookie")
+    func authSessionRequiresCookie() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
-        let sessionResponse = try await tester.sendRequest(.GET, "/auth/session")
-        XCTAssertEqual(sessionResponse.status, .unauthorized)
+        let sessionResponse = try await sendRequest(tester, .GET, "/auth/session")
+        #expect(sessionResponse.status == .unauthorized)
     }
 
-    func testLogoutInvalidatesSession() async throws {
+    @Test("logout invalidates session")
+    func logoutInvalidatesSession() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let signupPayload = AuthSignupInput(
             email: "owner@example.com",
             password: "s3cr3t-password"
         )
-        let signupResponse = try await tester.sendRequest(
+        let signupResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/signup",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(signupPayload))
         )
-        let signupCookie = try XCTUnwrap(signupResponse.headers.first(name: .setCookie))
-        let signupToken = try XCTUnwrap(signupCookie.split(separator: ";").first?.split(separator: "=").last)
+        let signupCookie = try #require(signupResponse.headers.first(name: .setCookie))
+        let signupToken = try #require(signupCookie.split(separator: ";").first?.split(separator: "=").last)
 
-        let logoutResponse = try await tester.sendRequest(
+        let logoutResponse = try await sendRequest(
+            tester,
             .POST,
             "/auth/logout",
             headers: ["Cookie": "roll4_session=\(signupToken)"]
         )
-        XCTAssertEqual(logoutResponse.status, .ok)
+        #expect(logoutResponse.status == .ok)
 
-        let sessionResponse = try await tester.sendRequest(
+        let sessionResponse = try await sendRequest(
+            tester,
             .GET,
             "/auth/session",
             headers: ["Cookie": "roll4_session=\(signupToken)"]
         )
-        XCTAssertEqual(sessionResponse.status, .unauthorized)
+        #expect(sessionResponse.status == .unauthorized)
     }
 
-    func testShutdownRequiresAuthentication() async throws {
+    @Test("shutdown requires authentication")
+    func shutdownRequiresAuthentication() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
-        let response = try await tester.sendRequest(.POST, "/admin/shutdown")
-        XCTAssertEqual(response.status, .unauthorized)
+        let response = try await sendRequest(tester, .POST, "/admin/shutdown")
+        #expect(response.status == .unauthorized)
     }
 
     private func makeApp() async throws -> Application {
         let app = try await Application.make(.testing)
+        quietTestLogging(for: app)
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
         options.hostname = "127.0.0.1"
@@ -214,5 +236,22 @@ final class AuthRoutesTests: XCTestCase {
         options.verboseOutput = false
         try await ServerBootstrap.configure(app, options: options, library: library)
         return app
+    }
+
+    private func sendRequest(
+        _ tester: TestingApplicationTester,
+        _ method: HTTPMethod,
+        _ path: String,
+        headers: HTTPHeaders = [:],
+        body: ByteBuffer? = nil
+    ) async throws -> TestingHTTPResponse {
+        try await tester.performTest(
+            request: TestingHTTPRequest(
+                method: method,
+                url: URI(path: path),
+                headers: headers,
+                body: body ?? ByteBufferAllocator().buffer(capacity: 0)
+            )
+        )
     }
 }

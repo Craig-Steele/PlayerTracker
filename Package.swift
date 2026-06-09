@@ -30,6 +30,7 @@ let package = Package(
             name: "PlayerTrackerTests",
             dependencies: [
                 "PlayerTracker",
+                .product(name: "VaporTesting", package: "vapor"),
                 .product(name: "XCTVapor", package: "vapor")
             ],
             exclude: [
