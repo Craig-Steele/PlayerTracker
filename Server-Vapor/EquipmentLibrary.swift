@@ -1,10 +1,6 @@
 import Foundation
 import Vapor
 
-enum EquipmentLibraryConfiguration {
-    nonisolated(unsafe) static var includeLocalEquipment = false
-}
-
 actor EquipmentLibraryStore {
     static let shared = EquipmentLibraryStore()
 
