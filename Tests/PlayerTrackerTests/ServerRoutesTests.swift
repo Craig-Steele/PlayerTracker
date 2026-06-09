@@ -1,10 +1,12 @@
 import Vapor
-import XCTVapor
+import VaporTesting
+import Testing
 import XCTest
 import Logging
 @testable import PlayerTracker
 
-final class ServerRoutesTests: XCTestCase {
+@Suite(.serialized)
+struct ServerRoutesTests {
     static let setupLogging: Void = {
         // Configure logging to suppress info-level messages during tests
         LoggingSystem.bootstrap { label in
@@ -14,21 +16,27 @@ final class ServerRoutesTests: XCTestCase {
         }
     }()
 
-    private var app: Application!
-    private var cleanupDirectories: [URL] = []
+    private final class TestEnvironment {
+        let app: Application
+        let tester: TestingApplicationTester
 
-    override func tearDown() async throws {
-        try await app?.asyncShutdown()
-        await userStore.resetMemoryForTesting()
-        for url in cleanupDirectories.reversed() {
-            try? FileManager.default.removeItem(at: url)
+        init(app: Application, tester: TestingApplicationTester) {
+            self.app = app
+            self.tester = tester
         }
-        cleanupDirectories.removeAll()
-        CreatureLibraryConfiguration.includeLocalCreatures = true
-        AppPaths.appDataDirectoryOverride = nil
-        app = nil
+
+        deinit {
+            shutdownApplicationSynchronously(app)
+        }
     }
 
+    private final class EnvironmentKeeper: @unchecked Sendable {
+        var current: TestEnvironment?
+    }
+
+    private static let environmentKeeper = EnvironmentKeeper()
+
+    @Test
     func testCampaignAndRulesetRoutesReturnInitialState() async throws {
         let tester = try await makeTester()
 
@@ -47,6 +55,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(rulesets.contains { $0.id == "none" })
     }
 
+    @Test
     func testCampaignPatchRejectsRulesetChangesAfterCreation() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let adminCookie = try await signInOwner(in: tester)
@@ -92,6 +101,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(refreshedCampaign.rulesetId, "dnd5e")
     }
 
+    @Test
     func testCreatureLibraryRouteReturnsFilteredCreaturesForActiveRuleset() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -114,6 +124,7 @@ final class ServerRoutesTests: XCTestCase {
         })
     }
 
+    @Test
     func testCreatureLibraryDoesNotReturnThirdPartyCreaturesByDefaultForPathfinder() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -131,6 +142,7 @@ final class ServerRoutesTests: XCTestCase {
         })
     }
 
+    @Test
     func testCreatureLibraryReturnsBansheeVariantsForPathfinder() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -151,6 +163,7 @@ final class ServerRoutesTests: XCTestCase {
         })
     }
 
+    @Test
     func testCreatureLibraryReturnsSplitVariantCreaturesForPathfinder() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -216,6 +229,7 @@ final class ServerRoutesTests: XCTestCase {
         })
     }
 
+    @Test
     func testCreatureLibraryNormalizesTypeCommaSpacing() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -231,6 +245,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(creature.type, "Medium outsider (archon, extraplanar, good, lawful)")
     }
 
+    @Test
     func testCreatureLibraryReturnsOpen5eBestiaryForDnd5e() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
@@ -252,6 +267,7 @@ final class ServerRoutesTests: XCTestCase {
         })
     }
 
+    @Test
     func testCampaignUserdataSelectionControlsLoadedCreatureLibrary() async throws {
         let tempBaseDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-userdata-\(UUID().uuidString)", isDirectory: true)
@@ -259,7 +275,7 @@ final class ServerRoutesTests: XCTestCase {
             .appendingPathComponent("userdata", isDirectory: true)
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
-        cleanupDirectories.append(tempBaseDirectory)
+        defer { try? FileManager.default.removeItem(at: tempBaseDirectory) }
 
         let localCreatureJSON = """
         {
@@ -340,6 +356,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(updatedLibrary.creatures.contains { $0.name == "Local Alpha" })
     }
 
+    @Test
     func testCampaignUserdataRoutesRejectNonReferees() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -366,6 +383,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(putResponse.status, .forbidden)
     }
 
+    @Test
     func testPartyTreasureClaimDistributesValueAcrossParty() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
@@ -459,6 +477,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(claimant.inventory.contains(where: { $0.name == "Ancient Relic" && $0.quantity == 1 }))
     }
 
+    @Test
     func testPartyTreasureClaimCreatesDebtWhenCharacterCannotAffordIt() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
@@ -526,6 +545,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(updatedCharacter.inventory.contains(where: { $0.name == "Expensive Crown" }))
     }
 
+    @Test
     func testPartyTreasureUpdateNormalizesInvalidItemIds() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
@@ -562,6 +582,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertNotNil(updatedCampaign.partyTreasure.first?.id)
     }
 
+    @Test
     func testCharacterInventoryRoutesPreserveNestedContainerReferences() async throws {
         let tester = try await makeTester()
         let playerSession = try await join(displayName: "Player", in: tester)
@@ -633,6 +654,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(reloaded.inventory.first(where: { $0.name == "Rations" })?.containerId, backpackID)
     }
 
+    @Test
     func testCreatureLibraryImportRoutePersistsImportedFileForReferee() async throws {
         let tempBaseDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-route-\(UUID().uuidString)", isDirectory: true)
@@ -640,7 +662,7 @@ final class ServerRoutesTests: XCTestCase {
             .appendingPathComponent("userdata", isDirectory: true)
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
-        cleanupDirectories.append(tempBaseDirectory)
+        defer { try? FileManager.default.removeItem(at: tempBaseDirectory) }
         let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
         AppPaths.appDataDirectoryOverride = tempBaseDirectory
         defer {
@@ -698,6 +720,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: tempUserDataDirectory.appendingPathComponent("imported-aasimar.json").path))
     }
 
+    @Test
     func testCreatureLibraryImportRouteRejectsNonReferees() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -733,6 +756,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(response.status, .forbidden)
     }
 
+    @Test
     func testCreatureLibraryImportRouteSkipsExistingFileWhenOverwriteIsFalse() async throws {
         let tempBaseDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-skip-\(UUID().uuidString)", isDirectory: true)
@@ -740,7 +764,7 @@ final class ServerRoutesTests: XCTestCase {
             .appendingPathComponent("userdata", isDirectory: true)
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
-        cleanupDirectories.append(tempBaseDirectory)
+        defer { try? FileManager.default.removeItem(at: tempBaseDirectory) }
         let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
         AppPaths.appDataDirectoryOverride = tempBaseDirectory
         defer {
@@ -809,6 +833,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(resultingObject["hp"] as? Int, 9)
     }
 
+    @Test
     func testConditionsLibraryReturnsStatBlocksForTraveller2() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")
@@ -824,6 +849,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(refereeBlock.stats, ["HP"])
     }
 
+    @Test
     func testTraveller2CreatureLibraryReturnsSampleBestiary() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")
@@ -870,6 +896,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(cyborgAssassin.referenceUrl?.contains("#page=150") ?? false)
     }
 
+    @Test
     func testRootRedirectsToAdminOnLocalhost() async throws {
         let tester = try await makeTester()
 
@@ -883,6 +910,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(response.headers.first(name: .location), "/admin.html")
     }
 
+    @Test
     func testIndexHtmlViewPlayerRedirectsBeforeRenderBasedOnPlayerSession() async throws {
         let tester = try await makeTester()
 
@@ -910,6 +938,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(noCookieResponse.body.string.contains("<title>"))
     }
 
+    @Test
     func testCampaignListAndUUIDSelectionRoute() async throws {
         let tester = try await makeTester()
 
@@ -956,6 +985,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(campaignsAfterSelect.first(where: { $0.id == secondCampaign.id })?.isActive, false)
     }
 
+    @Test
     func testCampaignSelectionRequiresAdminSession() async throws {
         let tester = try await makeTester()
 
@@ -989,6 +1019,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(selected.id, created.id)
     }
 
+    @Test
     func testLegacyCharacterCreateRouteIsUnavailable() async throws {
         let tester = try await makeTester()
         _ = try await activateCampaign(tester, name: "Ancients!", rulesetId: "traveller")
@@ -1021,6 +1052,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(legacyCreateResponse.status, .notFound)
     }
 
+    @Test
     func testRefereeCharacterCreatePersistsStatBlockId() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")
@@ -1068,6 +1100,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(stored.statBlockId, "refereeHealthPool")
     }
 
+    @Test
     func testCampaignEventStreamAndKeepaliveRequireMembership() async throws {
         let tester = try await makeTester()
         let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
@@ -1109,6 +1142,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(deniedKeepaliveResponse.status, .forbidden)
     }
 
+    @Test
     func testActiveCampaignEventStreamSnapshotsSelectionChanges() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
 
@@ -1146,6 +1180,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(campaignResponse.body.string.contains("\"name\":\"Join Stream\""))
     }
 
+    @Test
     func testCampaignCreateAndEditRoutesDoNotActivateCampaign() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
 
@@ -1218,6 +1253,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(campaigns.first(where: { $0.id == betaCampaign.id })?.name, "Hell's Vengance Revised")
     }
 
+    @Test
     func testCharacterStateAndEncounterFlowRoutes() async throws {
         let tester = try await makeTester()
         let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -1282,6 +1318,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(nextState.round, 2)
     }
 
+    @Test
     func testTurnCompleteRejectsInactiveEncounter() async throws {
         let tester = try await makeTester()
         let playerSession = try await join(displayName: "Player", in: tester)
@@ -1294,9 +1331,10 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertEqual(response.status, .conflict)
     }
 
+    @Test
     func testServerBootstrapConfiguresRoutesWithoutLaunchingProductionServer() async throws {
         await userStore.resetMemoryForTesting()
-        app = try await Application.make(.testing)
+        let app = try await Application.make(.testing)
 
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
@@ -1322,6 +1360,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(response.body.string.contains("No campaign selected"))
     }
 
+    @Test
     func testLegacyRoutesRejectRequestsWithoutActiveCampaign() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
 
@@ -1338,6 +1377,7 @@ final class ServerRoutesTests: XCTestCase {
         XCTAssertTrue(campaignResponse.body.string.contains("No campaign selected"))
     }
 
+    @Test
     func testCharacterPersistsAcrossRestartWithSQLite() async throws {
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         let databaseURL = FileManager.default.temporaryDirectory
@@ -1399,6 +1439,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app2.asyncShutdown()
     }
 
+    @Test
     func testFreshPackagedSQLiteDatabaseBootsCleanly() async throws {
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         let databaseDirectory = FileManager.default.temporaryDirectory
@@ -1436,6 +1477,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
+    @Test
     func testChangingCampaignPreservesEachCampaignStateAndClearsRoster() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-switch-\(UUID().uuidString).sqlite3")
@@ -1557,6 +1599,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
+    @Test
     func testCampaignEncounterStateSurvivesRestartPerCampaign() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-encounter-restart-\(UUID().uuidString).sqlite3")
@@ -1718,6 +1761,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app3.asyncShutdown()
     }
 
+    @Test
     func testDeletingCharacterOnlyAffectsCurrentCampaign() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-delete-\(UUID().uuidString).sqlite3")
@@ -1844,6 +1888,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
+    @Test
     func testDeletedCurrentTurnFallsBackToRemainingCharacterOnRestart() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-turn-fallback-\(UUID().uuidString).sqlite3")
@@ -1946,6 +1991,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app2.asyncShutdown()
     }
 
+    @Test
     func testRenamingOwnerOnlyAffectsCurrentCampaign() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-rename-\(UUID().uuidString).sqlite3")
@@ -2077,6 +2123,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
+    @Test
     func testConditionsOnlyAffectCurrentCampaign() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-conditions-\(UUID().uuidString).sqlite3")
@@ -2203,6 +2250,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
+    @Test
     func testVisibilityOnlyAffectsCurrentCampaign() async throws {
         let databaseURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-visibility-\(UUID().uuidString).sqlite3")
@@ -2429,9 +2477,11 @@ final class ServerRoutesTests: XCTestCase {
     }
 
     private func makeTester(selectDefaultCampaign: Bool = true) async throws -> XCTApplicationTester {
+        _ = Self.setupLogging
+        Self.environmentKeeper.current = nil
         await userStore.resetMemoryForTesting()
         CreatureLibraryConfiguration.includeLocalCreatures = false
-        app = try await Application.make(.testing)
+        let app = try await Application.make(.testing)
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
         options.hostname = "127.0.0.1"
@@ -2446,6 +2496,7 @@ final class ServerRoutesTests: XCTestCase {
         options.verboseOutput = false
         try await ServerBootstrap.configure(app, options: options, library: library)
         let tester = try app.testable()
+        Self.environmentKeeper.current = TestEnvironment(app: app, tester: tester)
 
         if selectDefaultCampaign {
             let response = try await tester.sendRequest(
