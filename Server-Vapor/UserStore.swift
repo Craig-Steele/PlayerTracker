@@ -2,6 +2,10 @@ import Foundation
 import Fluent
 import Vapor
 
+private struct UserStoreKey: StorageKey {
+    typealias Value = UserStore
+}
+
 // Concurrency-safe store for character and turn state.
 actor UserStore {
     private var storage: [UUID: CharacterState] = [:]
@@ -1235,4 +1239,13 @@ actor UserStore {
     }
 }
 
-let userStore = UserStore()
+extension Application {
+    var userStore: UserStore {
+        if let userStore = storage[UserStoreKey.self] {
+            return userStore
+        }
+        let userStore = UserStore()
+        storage[UserStoreKey.self] = userStore
+        return userStore
+    }
+}

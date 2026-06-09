@@ -1,8 +1,32 @@
 import Foundation
+import Vapor
 
-enum CreatureLibraryConfiguration {
-    nonisolated(unsafe) static var includeLocalCreatures = true
-    nonisolated(unsafe) static var localCreaturesDirectoryProvider: ((String) -> URL)?
+struct CreatureLibraryConfiguration: @unchecked Sendable {
+    var includeLocalCreatures: Bool
+    var localCreaturesDirectoryProvider: ((String) -> URL)?
+
+    init(
+        includeLocalCreatures: Bool = true,
+        localCreaturesDirectoryProvider: ((String) -> URL)? = nil
+    ) {
+        self.includeLocalCreatures = includeLocalCreatures
+        self.localCreaturesDirectoryProvider = localCreaturesDirectoryProvider
+    }
+}
+
+private struct CreatureLibraryConfigurationKey: StorageKey {
+    typealias Value = CreatureLibraryConfiguration
+}
+
+extension Application {
+    var creatureLibraryConfiguration: CreatureLibraryConfiguration {
+        get {
+            storage[CreatureLibraryConfigurationKey.self] ?? CreatureLibraryConfiguration()
+        }
+        set {
+            storage[CreatureLibraryConfigurationKey.self] = newValue
+        }
+    }
 }
 
 actor CreatureLibraryStore {
@@ -15,9 +39,14 @@ actor CreatureLibraryStore {
         rulesetLabel: String,
         query: String? = nil,
         limit: Int = 50,
-        selectedLocalCreatureFiles: [String] = []
+        selectedLocalCreatureFiles: [String] = [],
+        configuration: CreatureLibraryConfiguration = CreatureLibraryConfiguration()
     ) throws -> CreatureLibraryResponse {
-        let allCreatures = try creatures(for: rulesetId, selectedLocalCreatureFiles: selectedLocalCreatureFiles)
+        let allCreatures = try creatures(
+            for: rulesetId,
+            selectedLocalCreatureFiles: selectedLocalCreatureFiles,
+            configuration: configuration
+        )
         let trimmedQuery = query?.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedQuery = trimmedQuery?.lowercased()
         let filtered = allCreatures.filter { creature in
@@ -48,12 +77,15 @@ actor CreatureLibraryStore {
         }
     }
 
-    func availableLocalCreatureFiles(rulesetId: String) throws -> [String] {
-        guard CreatureLibraryConfiguration.includeLocalCreatures else {
+    func availableLocalCreatureFiles(
+        rulesetId: String,
+        configuration: CreatureLibraryConfiguration = CreatureLibraryConfiguration()
+    ) throws -> [String] {
+        guard configuration.includeLocalCreatures else {
             return []
         }
 
-        let directory = CreatureLibraryConfiguration.localCreaturesDirectoryProvider?(rulesetId)
+        let directory = configuration.localCreaturesDirectoryProvider?(rulesetId)
             ?? AppPaths.userDataDirectory(rulesetId: rulesetId)
         guard FileManager.default.fileExists(atPath: directory.path) else {
             return []
@@ -76,20 +108,35 @@ actor CreatureLibraryStore {
 
     private func creatures(
         for rulesetId: String,
-        selectedLocalCreatureFiles: [String]
+        selectedLocalCreatureFiles: [String],
+        configuration: CreatureLibraryConfiguration
     ) throws -> [CreatureLibraryCreature] {
-        let cacheKey = cacheKey(rulesetId: rulesetId, selectedLocalCreatureFiles: selectedLocalCreatureFiles)
+        let cacheKey = cacheKey(
+            rulesetId: rulesetId,
+            selectedLocalCreatureFiles: selectedLocalCreatureFiles,
+            configuration: configuration
+        )
         if let cached = cache[cacheKey] {
             return cached
         }
-        let loaded = try loadCreatures(for: rulesetId, selectedLocalCreatureFiles: selectedLocalCreatureFiles)
+        let loaded = try loadCreatures(
+            for: rulesetId,
+            selectedLocalCreatureFiles: selectedLocalCreatureFiles,
+            configuration: configuration
+        )
         cache[cacheKey] = loaded
         return loaded
     }
 
-    private func cacheKey(rulesetId: String, selectedLocalCreatureFiles: [String]) -> String {
+    private func cacheKey(
+        rulesetId: String,
+        selectedLocalCreatureFiles: [String],
+        configuration: CreatureLibraryConfiguration
+    ) -> String {
         let localKey = normalizeFileNames(selectedLocalCreatureFiles).joined(separator: "|")
-        return "\(rulesetId)::\(localKey)"
+        let includeLocalCreaturesKey = configuration.includeLocalCreatures ? "1" : "0"
+        let localDirectoryKey = (configuration.localCreaturesDirectoryProvider?(rulesetId))?.path ?? ""
+        return "\(rulesetId)::\(localKey)::\(includeLocalCreaturesKey)::\(localDirectoryKey)"
     }
 
     private func normalizeFileNames(_ fileNames: [String]) -> [String] {
@@ -106,7 +153,8 @@ actor CreatureLibraryStore {
 
     private func loadCreatures(
         for rulesetId: String,
-        selectedLocalCreatureFiles: [String]
+        selectedLocalCreatureFiles: [String],
+        configuration: CreatureLibraryConfiguration
     ) throws -> [CreatureLibraryCreature] {
         let ruleset = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
         var creaturesByID: [String: CreatureLibraryCreature] = [:]
@@ -117,7 +165,8 @@ actor CreatureLibraryStore {
         try loadLocalCreatures(
             for: ruleset,
             rulesetId: rulesetId,
-            selectedLocalCreatureFiles: selectedLocalCreatureFiles
+            selectedLocalCreatureFiles: selectedLocalCreatureFiles,
+            configuration: configuration
         ).forEach { creature in
             creaturesByID[creature.id] = creature
         }
@@ -151,9 +200,10 @@ actor CreatureLibraryStore {
     private func loadLocalCreatures(
         for ruleset: RuleSetLibrary,
         rulesetId: String,
-        selectedLocalCreatureFiles: [String]
+        selectedLocalCreatureFiles: [String],
+        configuration: CreatureLibraryConfiguration
     ) throws -> [CreatureLibraryCreature] {
-        guard CreatureLibraryConfiguration.includeLocalCreatures else {
+        guard configuration.includeLocalCreatures else {
             return []
         }
         let selectedFiles = Set(normalizeFileNames(selectedLocalCreatureFiles))
@@ -161,7 +211,7 @@ actor CreatureLibraryStore {
             return []
         }
 
-        let directory = CreatureLibraryConfiguration.localCreaturesDirectoryProvider?(rulesetId)
+        let directory = configuration.localCreaturesDirectoryProvider?(rulesetId)
             ?? AppPaths.userDataDirectory(rulesetId: rulesetId)
         guard FileManager.default.fileExists(atPath: directory.path) else {
             return []

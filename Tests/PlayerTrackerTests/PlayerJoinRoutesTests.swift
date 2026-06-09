@@ -1299,7 +1299,7 @@ struct PlayerJoinRoutesTests {
     private func makeApp(activeCampaign: Bool = true) async throws -> Application {
         let app = try await Application.make(.testing)
         quietTestLogging(for: app)
-        await userStore.resetMemoryForTesting()
+        await app.userStore.resetMemoryForTesting()
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
         options.hostname = "127.0.0.1"

@@ -441,6 +441,8 @@ func routes(
     eventHub: CampaignEventHub,
     activeCampaignEventHub: ActiveCampaignEventHub
 ) throws {
+    let userStore = app.userStore
+
     app.post("auth", "signup") { req async throws -> Response in
         let input = try req.content.decode(AuthSignupInput.self)
         let email = input.email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1312,7 +1314,8 @@ func routes(
             rulesetLabel: library.label,
             query: query,
             limit: limit,
-            selectedLocalCreatureFiles: selectedUserDataFiles
+            selectedLocalCreatureFiles: selectedUserDataFiles,
+            configuration: req.application.creatureLibraryConfiguration
         )
     }
 
@@ -1490,7 +1493,10 @@ func routes(
     app.get("campaign", "userdata") { req async throws -> CampaignUserDataResponse in
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let selected = Set(campaign.userdataFiles)
-        let available = try await CreatureLibraryStore.shared.availableLocalCreatureFiles(rulesetId: campaign.rulesetId)
+        let available = try await CreatureLibraryStore.shared.availableLocalCreatureFiles(
+            rulesetId: campaign.rulesetId,
+            configuration: req.application.creatureLibraryConfiguration
+        )
         var seen = Set<String>()
         let files = available.map { name -> CampaignUserDataFileSummary in
             seen.insert(name)

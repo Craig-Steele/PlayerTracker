@@ -291,15 +291,14 @@ struct ServerRoutesTests {
             encoding: .utf8
         )
 
-        let tester = try await makeTester(selectDefaultCampaign: false)
-        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
-        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
-        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
-        CreatureLibraryConfiguration.includeLocalCreatures = true
-        defer {
-            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
-            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
-        }
+        let creatureLibraryConfiguration = CreatureLibraryConfiguration(
+            includeLocalCreatures: true,
+            localCreaturesDirectoryProvider: { _ in tempUserDataDirectory }
+        )
+        let tester = try await makeTester(
+            selectDefaultCampaign: false,
+            creatureLibraryConfiguration: creatureLibraryConfiguration
+        )
 
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
         let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -669,15 +668,14 @@ struct ServerRoutesTests {
             AppPaths.appDataDirectoryOverride = priorAppDataDirectoryOverride
         }
 
-        let tester = try await makeTester(selectDefaultCampaign: false)
-        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
-        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
-        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
-        CreatureLibraryConfiguration.includeLocalCreatures = true
-        defer {
-            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
-            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
-        }
+        let creatureLibraryConfiguration = CreatureLibraryConfiguration(
+            includeLocalCreatures: true,
+            localCreaturesDirectoryProvider: { _ in tempUserDataDirectory }
+        )
+        let tester = try await makeTester(
+            selectDefaultCampaign: false,
+            creatureLibraryConfiguration: creatureLibraryConfiguration
+        )
 
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
         let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -782,15 +780,14 @@ struct ServerRoutesTests {
         """
         try existingData.write(to: existingURL, atomically: true, encoding: .utf8)
 
-        let tester = try await makeTester(selectDefaultCampaign: false)
-        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
-        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
-        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
-        CreatureLibraryConfiguration.includeLocalCreatures = true
-        defer {
-            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
-            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
-        }
+        let creatureLibraryConfiguration = CreatureLibraryConfiguration(
+            includeLocalCreatures: true,
+            localCreaturesDirectoryProvider: { _ in tempUserDataDirectory }
+        )
+        let tester = try await makeTester(
+            selectDefaultCampaign: false,
+            creatureLibraryConfiguration: creatureLibraryConfiguration
+        )
 
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
         let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -1333,8 +1330,8 @@ struct ServerRoutesTests {
 
     @Test
     func testServerBootstrapConfiguresRoutesWithoutLaunchingProductionServer() async throws {
-        await userStore.resetMemoryForTesting()
         let app = try await Application.make(.testing)
+        await app.userStore.resetMemoryForTesting()
 
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
@@ -1424,9 +1421,8 @@ struct ServerRoutesTests {
         )
 
         try await app1.asyncShutdown()
-        await userStore.resetMemoryForTesting()
-
         let app2 = try await Application.make(.testing)
+        await app2.userStore.resetMemoryForTesting()
         try await ServerBootstrap.configure(app2, options: options, library: library)
         let tester2 = try app2.testable()
         try await activateCampaign(tester2, name: "Persist Smoke", rulesetId: library.id)
@@ -1705,9 +1701,8 @@ struct ServerRoutesTests {
         XCTAssertEqual(pathfinderStartedState.currentTurnName, "Pathfinder Scout")
 
         try await app1.asyncShutdown()
-        await userStore.resetMemoryForTesting()
-
         let app2 = try await Application.make(.testing)
+        await app2.userStore.resetMemoryForTesting()
         try await ServerBootstrap.configure(app2, options: makeOptions(campaignName: "Ancients!"), library: travellerLibrary)
         let tester2 = try app2.testable()
         try await activateCampaign(tester2, name: "Ancients!", rulesetId: travellerLibrary.id)
@@ -1732,9 +1727,8 @@ struct ServerRoutesTests {
         XCTAssertEqual(restoredTravellerState.currentTurnName, "Traveller Scout")
 
         try await app2.asyncShutdown()
-        await userStore.resetMemoryForTesting()
-
         let app3 = try await Application.make(.testing)
+        await app3.userStore.resetMemoryForTesting()
         try await ServerBootstrap.configure(app3, options: makeOptions(campaignName: "Hell's Vengance"), library: pathfinderLibrary)
         let tester3 = try app3.testable()
         try await activateCampaign(tester3, name: "Hell's Vengance", rulesetId: pathfinderLibrary.id)
@@ -1970,9 +1964,8 @@ struct ServerRoutesTests {
         XCTAssertEqual(deleteResponse.status, .ok)
 
         try await app1.asyncShutdown()
-        await userStore.resetMemoryForTesting()
-
         let app2 = try await Application.make(.testing)
+        await app2.userStore.resetMemoryForTesting()
         try await ServerBootstrap.configure(app2, options: options, library: travellerLibrary)
         let tester2 = try app2.testable()
         try await activateCampaign(tester2, name: "Ancients!", rulesetId: travellerLibrary.id)
@@ -2476,12 +2469,15 @@ struct ServerRoutesTests {
         return refereeJoin.cookieToken
     }
 
-    private func makeTester(selectDefaultCampaign: Bool = true) async throws -> XCTApplicationTester {
+    private func makeTester(
+        selectDefaultCampaign: Bool = true,
+        creatureLibraryConfiguration: CreatureLibraryConfiguration = CreatureLibraryConfiguration(includeLocalCreatures: false)
+    ) async throws -> XCTApplicationTester {
         _ = Self.setupLogging
         Self.environmentKeeper.current = nil
-        await userStore.resetMemoryForTesting()
-        CreatureLibraryConfiguration.includeLocalCreatures = false
         let app = try await Application.make(.testing)
+        await app.userStore.resetMemoryForTesting()
+        app.creatureLibraryConfiguration = creatureLibraryConfiguration
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
         options.hostname = "127.0.0.1"

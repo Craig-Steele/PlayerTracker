@@ -2,7 +2,7 @@ import Foundation
 import Testing
 @testable import PlayerTracker
 
-@Suite("Creature Library Import")
+@Suite(.serialized)
 struct CreatureLibraryImportTests {
     @Test("ruleset initiative charts load from json")
     func rulesetInitiativeChartsLoadFromJson() throws {
@@ -445,22 +445,17 @@ struct CreatureLibraryImportTests {
 
         try bundleJSON.write(to: tempUserDataDirectory.appendingPathComponent("custom-user-bestiary.json"), atomically: true, encoding: .utf8)
 
-        let priorProvider = CreatureLibraryConfiguration.localCreaturesDirectoryProvider
-        let priorIncludeLocal = CreatureLibraryConfiguration.includeLocalCreatures
-        CreatureLibraryConfiguration.localCreaturesDirectoryProvider = { _ in tempUserDataDirectory }
-        CreatureLibraryConfiguration.includeLocalCreatures = true
-        defer {
-            CreatureLibraryConfiguration.localCreaturesDirectoryProvider = priorProvider
-            CreatureLibraryConfiguration.includeLocalCreatures = priorIncludeLocal
-        }
-
         await CreatureLibraryStore.shared.invalidate(rulesetId: "pathfinder")
         let response = try await CreatureLibraryStore.shared.library(
             rulesetId: "pathfinder",
             rulesetLabel: "Pathfinder",
             query: "Local",
             limit: 50,
-            selectedLocalCreatureFiles: ["custom-user-bestiary.json"]
+            selectedLocalCreatureFiles: ["custom-user-bestiary.json"],
+            configuration: CreatureLibraryConfiguration(
+                includeLocalCreatures: true,
+                localCreaturesDirectoryProvider: { _ in tempUserDataDirectory }
+            )
         )
 
         #expect(response.totalMatches == 2)
