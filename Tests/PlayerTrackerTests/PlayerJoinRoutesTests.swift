@@ -1,13 +1,16 @@
 import Vapor
-import XCTVapor
+import VaporTesting
+import Testing
 import XCTest
 @testable import PlayerTracker
 
-final class PlayerJoinRoutesTests: XCTestCase {
+@Suite(.serialized)
+struct PlayerJoinRoutesTests {
+    @Test
     func testPlayerJoinSessionRoundTripsThroughCookie() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
 
         let joinPayload = PlayerJoinInput(displayName: "Alex")
@@ -53,10 +56,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(revokedSessionResponse.status, .unauthorized)
     }
 
+    @Test
     func testPlayerJoinReusesIdentityForSameDisplayName() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         _ = try await activateCampaign(in: tester)
 
         let firstJoin = try await join(displayName: "Alex", tester: tester)
@@ -66,10 +70,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(firstJoin.session.player.displayName, secondJoin.session.player.displayName)
     }
 
+    @Test
     func testPlayerJoinRequiresActiveCampaign() async throws {
         let app = try await makeApp(activeCampaign: false)
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let joinPayload = PlayerJoinInput(displayName: "Alex")
         let joinResponse = try await tester.sendRequest(
@@ -81,10 +86,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(joinResponse.status, .conflict)
     }
 
+    @Test
     func testPlayerSessionOverridesClientOwnerIdOnCharacterWrites() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
 
         let joinSession = try await join(displayName: "Alex", tester: tester)
@@ -123,10 +129,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(campaignID, joinSession.session.player.campaignID)
     }
 
+    @Test
     func testOpenCampaignAutoEnrollsPlayerWhenAddingFirstCharacterAfterCampaignSwitch() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let firstCampaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
         let adminCookie = try await signInOwner(in: tester)
@@ -191,10 +198,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertTrue(characters.contains { $0.name == "Scout" })
     }
 
+    @Test
     func testRenamingPlayerKeepsTheSameIdentity() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
 
         let initialJoin = try await join(displayName: "Alex", tester: tester)
@@ -254,10 +262,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(legacyJoin.session.player.displayName, "Ally")
     }
 
+    @Test
     func testMeRouteAndCampaignScopedCharacterRoutesUsePlayerSessionIdentity() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
 
         let joinSession = try await join(displayName: "Alex", tester: tester)
@@ -377,10 +386,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertTrue(finalCharacters.isEmpty)
     }
 
+    @Test
     func testCampaignInvitesAndMeCampaignListRoundTrip() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let firstCampaignID = try await activateCampaign(in: tester)
         let secondCampaignResponse = try await tester.sendRequest(
@@ -429,10 +439,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertTrue(campaigns.contains { $0.id == secondCampaign.id && !$0.isActive })
     }
 
+    @Test
     func testNamedInviteCanTargetAPlayerAndRejectMismatchedPlayer() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let campaignResponse = try await tester.sendRequest(
             .POST,
@@ -486,10 +497,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(acceptedCampaign.id, campaign.id)
     }
 
+    @Test
     func testRefereeCanAddPlayerToCampaignByName() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let campaignID = try await activateCampaign(in: tester)
         let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -508,10 +520,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertFalse(member.isReferee)
     }
 
+    @Test
     func testAdminCanAddPlayerToCampaignByNameAndPlayerSessionCannot() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let campaignID = try await activateCampaign(in: tester)
         let adminCookie = try await signInOwner(in: tester)
@@ -542,10 +555,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(playerResponse.status, .forbidden)
     }
 
+    @Test
     func testLegacyCharacterCreateRouteIsUnavailable() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         _ = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
 
@@ -576,10 +590,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(legacyCreateResponse.status, .notFound)
     }
 
+    @Test
     func testInviteOnlyCampaignRejectsPlainJoinAndAcceptsNamedMembership() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
 
         let campaignResponse = try await tester.sendRequest(
             .POST,
@@ -647,10 +662,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertTrue(campaigns.contains { $0.id == inviteOnlyCampaign.id })
     }
 
+    @Test
     func testCharacterClaimAndReleaseRoutesWorkForCurrentSession() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
         let alexSession = try await join(displayName: "Alex", tester: tester)
@@ -705,10 +721,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(bobClaimed.claimedSessionId, bobSession.session.player.id)
     }
 
+    @Test
     func testClaimedCharacterRejectsSecondSession() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
         let alexSession = try await join(displayName: "Alex", tester: tester)
@@ -729,10 +746,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(secondClaimResponse.status, .conflict)
     }
 
+    @Test
     func testRefereeCanForceReleaseClaimedCharacterWithoutPlayerLogin() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
@@ -757,10 +775,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(released.lastPlayedByName, "Alex")
     }
 
+    @Test
     func testRefereeCanClaimAndReleaseCharacterFromRefereeRoute() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
         let createResponse = try await tester.sendRequest(
@@ -822,10 +841,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(released.lastPlayedByName, "Referee")
     }
 
+    @Test
     func testRefereeCanReleaseOwnedCreatureToClaimPool() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
         let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -851,10 +871,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertTrue(claimableCharacters.contains(where: { $0.id == refereeCharacter.id && $0.isClaimable }))
     }
 
+    @Test
     func testPlayerCannotUseRefereeOnlyRoutes() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
@@ -881,10 +902,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(refereeClaimResponse.status, .forbidden)
     }
 
+    @Test
     func testAdminSessionAloneCannotUseRefereeOnlyRoutes() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
         let adminCookie = try await signInOwner(in: tester)
@@ -904,10 +926,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(refereeReleaseResponse.status, .unauthorized)
     }
 
+    @Test
     func testRevokingRefereeAccessRemovesRefereeRouteAccess() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
         let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -948,10 +971,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(deniedReleaseResponse.status, .forbidden)
     }
 
+    @Test
     func testCampaignMembersRouteRequiresAdminSessionAndRejectsPlayerSession() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
         let adminCookie = try await signInOwner(in: tester)
@@ -972,10 +996,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(playerResponse.status, .unauthorized)
     }
 
+    @Test
     func testAdminSessionCannotUsePlayerRoutes() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let campaignID = try await activateCampaign(in: tester)
         let adminCookie = try await signInOwner(in: tester)
 
@@ -1020,10 +1045,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(createCharacterResponse.status, .unauthorized)
     }
 
+    @Test
     func testPlayerWithoutCampaignMembershipIsForbiddenAfterActiveCampaignSwitch() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let firstCampaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
         let adminCookie = try await signInOwner(in: tester)
@@ -1071,10 +1097,11 @@ final class PlayerJoinRoutesTests: XCTestCase {
         XCTAssertEqual(claimableCharactersResponse.status, .ok)
     }
 
+    @Test
     func testRefereeWithoutCampaignMembershipIsForbiddenAfterActiveCampaignSwitch() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
-        let tester = try app.testable()
+        let tester = try app.testing()
         let firstCampaignID = try await activateCampaign(in: tester)
         let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
         let adminCookie = try await signInOwner(in: tester)
@@ -1271,6 +1298,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     private func makeApp(activeCampaign: Bool = true) async throws -> Application {
         let app = try await Application.make(.testing)
+        quietTestLogging(for: app)
         await userStore.resetMemoryForTesting()
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
