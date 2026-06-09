@@ -2,12 +2,7 @@ import Foundation
 import Vapor
 
 enum AppPaths {
-    nonisolated(unsafe) static var appDataDirectoryOverride: URL?
-
     static func appDataDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
-        if let override = appDataDirectoryOverride {
-            return override
-        }
         #if os(macOS)
         return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/Roll4Initiative", isDirectory: true)
@@ -20,11 +15,29 @@ enum AppPaths {
         #endif
     }
 
+    static func appDataDirectory(
+        application: Application,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> URL {
+        application.appPaths.appDataDirectoryOverride
+            ?? appDataDirectory(environment: environment)
+    }
+
     static func userDataDirectory(
         rulesetId: String,
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) -> URL {
         appDataDirectory(environment: environment)
+            .appendingPathComponent("userdata", isDirectory: true)
+            .appendingPathComponent(rulesetId, isDirectory: true)
+    }
+
+    static func userDataDirectory(
+        rulesetId: String,
+        application: Application,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> URL {
+        appDataDirectory(application: application, environment: environment)
             .appendingPathComponent("userdata", isDirectory: true)
             .appendingPathComponent(rulesetId, isDirectory: true)
     }
@@ -65,6 +78,25 @@ enum AppPaths {
         }
         return FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(fallbackPath, isDirectory: true)
+    }
+}
+
+struct AppPathsConfiguration: @unchecked Sendable {
+    var appDataDirectoryOverride: URL?
+}
+
+private struct AppPathsConfigurationKey: StorageKey {
+    typealias Value = AppPathsConfiguration
+}
+
+extension Application {
+    var appPaths: AppPathsConfiguration {
+        get {
+            storage[AppPathsConfigurationKey.self] ?? AppPathsConfiguration(appDataDirectoryOverride: nil)
+        }
+        set {
+            storage[AppPathsConfigurationKey.self] = newValue
+        }
     }
 }
 

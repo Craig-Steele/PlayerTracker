@@ -1334,7 +1334,10 @@ func routes(
     app.post("creature-library", "import") { req async throws -> CreatureLibraryImportResponse in
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(CreatureLibraryImportInput.self)
-        let destination = AppPaths.userDataDirectory(rulesetId: campaign.rulesetId)
+        let destination = AppPaths.userDataDirectory(
+            rulesetId: campaign.rulesetId,
+            application: req.application
+        )
         let response = try CreatureLibraryImportService.importFiles(
             input.files,
             into: destination,
@@ -1539,7 +1542,10 @@ func routes(
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let rulesetsDirectory = AppPaths.webClientDirectory()
             .appendingPathComponent("rulesets", isDirectory: true)
-        let userdataDirectory = AppPaths.userDataDirectory(rulesetId: campaign.rulesetId)
+        let userdataDirectory = AppPaths.userDataDirectory(
+            rulesetId: campaign.rulesetId,
+            application: req.application
+        )
         try FileManager.default.createDirectory(
             at: userdataDirectory,
             withIntermediateDirectories: true

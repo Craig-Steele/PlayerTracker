@@ -662,19 +662,14 @@ struct ServerRoutesTests {
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempBaseDirectory) }
-        let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
-        AppPaths.appDataDirectoryOverride = tempBaseDirectory
-        defer {
-            AppPaths.appDataDirectoryOverride = priorAppDataDirectoryOverride
-        }
-
         let creatureLibraryConfiguration = CreatureLibraryConfiguration(
             includeLocalCreatures: true,
             localCreaturesDirectoryProvider: { _ in tempUserDataDirectory }
         )
         let tester = try await makeTester(
             selectDefaultCampaign: false,
-            creatureLibraryConfiguration: creatureLibraryConfiguration
+            creatureLibraryConfiguration: creatureLibraryConfiguration,
+            appDataDirectoryOverride: tempBaseDirectory
         )
 
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -763,11 +758,6 @@ struct ServerRoutesTests {
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempBaseDirectory) }
-        let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
-        AppPaths.appDataDirectoryOverride = tempBaseDirectory
-        defer {
-            AppPaths.appDataDirectoryOverride = priorAppDataDirectoryOverride
-        }
 
         let existingURL = tempUserDataDirectory.appendingPathComponent("imported-aasimar.json")
         let existingData = """
@@ -786,7 +776,8 @@ struct ServerRoutesTests {
         )
         let tester = try await makeTester(
             selectDefaultCampaign: false,
-            creatureLibraryConfiguration: creatureLibraryConfiguration
+            creatureLibraryConfiguration: creatureLibraryConfiguration,
+            appDataDirectoryOverride: tempBaseDirectory
         )
 
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
@@ -2471,20 +2462,30 @@ struct ServerRoutesTests {
 
     private func makeTester(
         selectDefaultCampaign: Bool = true,
-        creatureLibraryConfiguration: CreatureLibraryConfiguration = CreatureLibraryConfiguration(includeLocalCreatures: false)
+        creatureLibraryConfiguration: CreatureLibraryConfiguration = CreatureLibraryConfiguration(includeLocalCreatures: false),
+        appDataDirectoryOverride: URL? = nil
     ) async throws -> XCTApplicationTester {
         _ = Self.setupLogging
         Self.environmentKeeper.current = nil
         let app = try await Application.make(.testing)
         await app.userStore.resetMemoryForTesting()
+        var appPaths = app.appPaths
+        appPaths.appDataDirectoryOverride = appDataDirectoryOverride
+        app.appPaths = appPaths
         app.creatureLibraryConfiguration = creatureLibraryConfiguration
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
         options.hostname = "127.0.0.1"
         options.port = 0
         options.campaignName = "Route Smoke"
-        options.databaseFileURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("roll4initiative-route-smoke-\(UUID().uuidString).sqlite3")
+        if let appDataDirectoryOverride {
+            options.databaseFileURL = appDataDirectoryOverride
+                .appendingPathComponent("data", isDirectory: true)
+                .appendingPathComponent("app.sqlite3")
+        } else {
+            options.databaseFileURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("roll4initiative-route-smoke-\(UUID().uuidString).sqlite3")
+        }
         options.restorePersistedState = false
         options.persistChanges = true
         options.launchBrowser = false
