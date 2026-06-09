@@ -1205,6 +1205,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
         return try response.content.decode(PlayerView.self)
     }
 
+    @discardableResult
     private func activateCampaign(in tester: XCTApplicationTester) async throws -> UUID {
         let createPayload = CampaignUpdateInput(name: "Player Smoke", rulesetId: "dnd5e")
         let createResponse = try await tester.sendRequest(

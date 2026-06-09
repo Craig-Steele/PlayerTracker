@@ -2368,6 +2368,7 @@ final class ServerRoutesTests: XCTestCase {
         try await app.asyncShutdown()
     }
 
+    @discardableResult
     private func activateCampaign(
         _ tester: XCTApplicationTester,
         name: String,
