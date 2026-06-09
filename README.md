@@ -9,7 +9,7 @@ The current working architecture is a Vapor service running on a Mac and serving
 - `Server-Vapor`
   The main Vapor service. This is the primary runtime.
 - `Client-Web`
-  Browser clients for player, referee, display, and campaign selection.
+  Browser clients for player, referee, admin, display, and campaign selection.
 - `Client-iOS`
   Native iOS and iPadOS player client for the existing server.
 - `Client-Android`
@@ -24,6 +24,7 @@ The current working architecture is a Vapor service running on a Mac and serving
 - tracks campaigns, encounter state, initiative, character stats, conditions, visibility, and reveal-on-turn behavior
 - supports optional initiative assignment, in-app initiative rolling, decimal initiative values, and auto-skip turn behavior
 - loads rulesets from `Client-Web/rulesets`
+- loads creature and equipment library assets from the ruleset manifest files in `Client-Web/rulesets/*.json`
 - starts on port `8080`
 
 ## Requirements
@@ -46,11 +47,11 @@ The service listens on:
 http://localhost:8080
 ```
 
-On startup, the service opens the local display view in a browser when the platform has a supported launcher. Set `ROLL4INITIATIVE_LAUNCH_BROWSER=0` to run the server without opening a browser.
+On startup, the service opens `admin.html` in a browser when the platform has a supported launcher. Set `ROLL4INITIATIVE_LAUNCH_BROWSER=0` to run the server without opening a browser.
 
 ## Import creature fixtures
 
-The referee creature library has an `Import JSON` button in the library panel. Select the checked-in fixture JSON files for the current ruleset and the app will copy them into the local `userdata/<ruleset>` directory that the server already reads from.
+The referee creature library has an `Import JSON` button in the library panel. Select the checked-in fixture JSON files for the current ruleset and the app will copy them into the local `userdata/<ruleset>` directory that the server already reads from. Creature and equipment library sources are selected from the ruleset manifest, so `creatureLibrary.file` and `equipmentLibrary.file` determine which checked-in assets are available for that ruleset.
 
 If you prefer the command line, the repository still includes the same import path as a script:
 

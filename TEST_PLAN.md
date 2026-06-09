@@ -5,6 +5,22 @@ This plan tracks the practical test coverage needed for the current local-networ
 ## Current Baseline
 
 - SwiftPM now has a `PlayerTrackerTests` test target.
+- `swift test` currently passes with the server and route suites in place.
+- Existing server coverage includes:
+  - `ServerPlatformTests`
+  - `ServerDiagnosticsTests`
+  - `ServerRoutesTests`
+  - `CreatureLibraryImportTests`
+  - `UserPersistenceTests`
+  - `UserStoreTests`
+- Existing web helper coverage includes:
+  - `Client-Web/campaign-settings.test.js`
+  - `Client-Web/claimable-characters.test.js`
+  - `Client-Web/join-state.test.js`
+  - `Client-Web/live-stream.test.js`
+  - `Client-Web/player-name-save.test.js`
+  - `Client-Web/player-name.test.js`
+  - `Client-Web/stat-inputs.test.js`
 - `UserStoreTests` covers core active-encounter turn behavior:
   - auto-skip characters are skipped when selecting the current turn
   - hidden referee characters marked `revealOnTurn` are revealed when their turn starts
@@ -120,6 +136,8 @@ Implementation note: this likely needs a small connection-logging service protoc
 
 The referee page is the highest-risk web surface because it combines startup state, live campaign synchronization, campaign administration, and several modal workflows in one client. The test plan below treats `Client-Web/referee.html` and `Client-Web/referee.js` as the core scope, with supporting coverage in `party-treasure.js`, `live-stream.js`, `encounter.js`, `ruleset.js`, and `shared.js`.
 
+The adjacent admin campaign-settings flow now shares behavior with the referee page, so changes to campaign name, access mode, claim timing, and ruleset/library selection should be reflected in both surfaces.
+
 #### Test strategy
 
 - Keep the existing `node:test` style for pure helper logic and state reducers.
@@ -136,6 +154,7 @@ Goal: the referee page must render a usable shell even when campaign state, SSE,
 - Handles `GET /campaign` returning `409 No campaign selected` by recovering the active campaign when possible.
 - Retries startup after active-campaign recovery and reaches `loadState()`.
 - Keeps the page usable if the equipment library fails to load.
+- Keeps the page usable if the ruleset-driven equipment library is missing or empty.
 - Keeps the page usable if the live stream cannot connect immediately.
 - Does not throw on early startup ordering issues such as temporal-dead-zone reads.
 

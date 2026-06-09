@@ -321,9 +321,15 @@ Windows:
 
 Linux:
 
-- `${XDG_DATA_HOME:-~/.local/share}/roll4initiative`
+- `${XDG_DATA_HOME:-~/.local/share}/Roll4Initiative`
 
 If a future edition supports multi-user hosting or a system service install, add an explicit configurable data root. The app should still default to the per-user path above.
+
+Current implementation note:
+
+- the server already supports an application-scoped app-data override for tests and alternate packaging paths
+- the default app-data root is still platform-specific and currently feeds `data/`, `userdata/`, and SQLite paths from one base directory
+- logs currently live under the per-user logs directory for each platform, not inside the app bundle
 
 ### Top-Level Directory Shape
 
