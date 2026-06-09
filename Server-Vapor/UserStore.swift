@@ -13,6 +13,8 @@ actor UserStore {
     private var currentEncounterState: EncounterState = .new
     private var currentRefereeSessionIDs: Set<UUID> = []
     private let immediateDisconnectGraceSeconds: TimeInterval = 6
+    private var inFlightDatabaseActions = 0
+    private var databaseActionWaiters: [CheckedContinuation<Void, Never>] = []
 
     private struct TurnState {
         var roundIndex: Int
@@ -29,6 +31,8 @@ actor UserStore {
         currentRulesetId = nil
         currentEncounterState = .new
         currentRefereeSessionIDs = []
+        inFlightDatabaseActions = 0
+        databaseActionWaiters.removeAll()
     }
 
     private func configuredCampaignTurnState() -> TurnState {
@@ -39,39 +43,72 @@ actor UserStore {
     }
 
     private func persistConfiguredCampaignCharacters() async throws {
-        guard let database, let campaignID = currentCampaignID, let campaignName = currentCampaignName else {
-            return
-        }
-        try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
-        for state in storage.values where state.campaignName == campaignName {
-            try await DatabasePersistence.persistCharacter(
-                state,
-                campaignID: campaignID,
-                on: database
-            )
+        try await performDatabaseAction {
+            guard let database, let campaignID = currentCampaignID, let campaignName = currentCampaignName else {
+                return
+            }
+            try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
+            for state in storage.values where state.campaignName == campaignName {
+                try await DatabasePersistence.persistCharacter(
+                    state,
+                    campaignID: campaignID,
+                    on: database
+                )
+            }
         }
     }
 
     private func persistConfiguredCampaignEncounter(
         currentTurnID: UUID?
     ) async throws {
-        guard let database,
-              let campaignName = currentCampaignName,
-              let campaignID = currentCampaignID,
-              let rulesetId = currentRulesetId else {
-            return
+        try await performDatabaseAction {
+            guard let database,
+                  let campaignName = currentCampaignName,
+                  let campaignID = currentCampaignID,
+                  let rulesetId = currentRulesetId else {
+                return
+            }
+            let turnState = configuredCampaignTurnState()
+            try await DatabasePersistence.upsertCampaign(
+                name: campaignName,
+                rulesetId: rulesetId,
+                encounterState: currentEncounterState,
+                roundIndex: turnState.roundIndex,
+                turnIndex: turnState.turnIndex,
+                currentTurnID: currentTurnID ?? turnState.currentTurnID,
+                on: database
+            )
+            currentCampaignID = campaignID
         }
-        let turnState = configuredCampaignTurnState()
-        try await DatabasePersistence.upsertCampaign(
-            name: campaignName,
-            rulesetId: rulesetId,
-            encounterState: currentEncounterState,
-            roundIndex: turnState.roundIndex,
-            turnIndex: turnState.turnIndex,
-            currentTurnID: currentTurnID ?? turnState.currentTurnID,
-            on: database
-        )
-        currentCampaignID = campaignID
+    }
+
+    private func performDatabaseAction<T>(_ action: () async throws -> T) async rethrows -> T {
+        beginDatabaseAction()
+        defer { endDatabaseAction() }
+        return try await action()
+    }
+
+    private func beginDatabaseAction() {
+        inFlightDatabaseActions += 1
+    }
+
+    private func endDatabaseAction() {
+        precondition(inFlightDatabaseActions > 0)
+        inFlightDatabaseActions -= 1
+        if inFlightDatabaseActions == 0 {
+            let waiters = databaseActionWaiters
+            databaseActionWaiters.removeAll()
+            for waiter in waiters {
+                waiter.resume()
+            }
+        }
+    }
+
+    private func waitForDatabaseActions() async {
+        guard inFlightDatabaseActions > 0 else { return }
+        await withCheckedContinuation { continuation in
+            databaseActionWaiters.append(continuation)
+        }
     }
 
     func configure(
@@ -83,44 +120,46 @@ actor UserStore {
         self.currentCampaignName = campaignName
         self.currentRulesetId = rulesetId
 
-        guard let loaded = try await DatabasePersistence.loadCampaign(named: campaignName, on: database) else {
-            currentCampaignID = try await DatabasePersistence.upsertCampaignMetadata(
-                name: campaignName,
-                rulesetId: rulesetId,
+        try await performDatabaseAction {
+            guard let loaded = try await DatabasePersistence.loadCampaign(named: campaignName, on: database) else {
+                currentCampaignID = try await DatabasePersistence.upsertCampaignMetadata(
+                    name: campaignName,
+                    rulesetId: rulesetId,
+                    on: database
+                )
+                storage.removeAll()
+                campaignTurns[campaignName] = TurnState(roundIndex: 1, turnIndex: 0, currentTurnID: nil)
+                currentEncounterState = .new
+                currentRefereeSessionIDs = []
+                return
+            }
+
+            currentCampaignID = loaded.id
+            currentRulesetId = loaded.rulesetId
+            currentEncounterState = loaded.encounterState
+            campaignTurns[campaignName] = TurnState(
+                roundIndex: loaded.roundIndex,
+                turnIndex: loaded.turnIndex,
+                currentTurnID: loaded.currentTurnID
+            )
+
+            let loadedCharacters = try await DatabasePersistence.loadCharacters(
+                campaignID: loaded.id,
+                campaignName: campaignName,
                 on: database
             )
-            storage.removeAll()
-            campaignTurns[campaignName] = TurnState(roundIndex: 1, turnIndex: 0, currentTurnID: nil)
-            currentEncounterState = .new
-            currentRefereeSessionIDs = []
-            return
+
+            currentRefereeSessionIDs = try await DatabasePersistence.loadCampaignRefereeSessionIDs(
+                campaignID: loaded.id,
+                on: database
+            )
+            storage = Dictionary(uniqueKeysWithValues: loadedCharacters.map { ($0.id, $0) })
+            applyRefereeFlags()
+            await expireStaleClaims(
+                campaignName: campaignName,
+                claimTimeoutMinutes: loaded.claimTimeoutMinutes
+            )
         }
-
-        currentCampaignID = loaded.id
-        currentRulesetId = loaded.rulesetId
-        currentEncounterState = loaded.encounterState
-        campaignTurns[campaignName] = TurnState(
-            roundIndex: loaded.roundIndex,
-            turnIndex: loaded.turnIndex,
-            currentTurnID: loaded.currentTurnID
-        )
-
-        let loadedCharacters = try await DatabasePersistence.loadCharacters(
-            campaignID: loaded.id,
-            campaignName: campaignName,
-            on: database
-        )
-
-        currentRefereeSessionIDs = try await DatabasePersistence.loadCampaignRefereeSessionIDs(
-            campaignID: loaded.id,
-            on: database
-        )
-        storage = Dictionary(uniqueKeysWithValues: loadedCharacters.map { ($0.id, $0) })
-        applyRefereeFlags()
-        await expireStaleClaims(
-            campaignName: campaignName,
-            claimTimeoutMinutes: loaded.claimTimeoutMinutes
-        )
     }
 
     func rebindActiveCampaign(from oldName: String, to newName: String, rulesetId: String) {
@@ -399,11 +438,14 @@ actor UserStore {
     }
 
     func clear() async {
+        await waitForDatabaseActions()
         storage.removeAll()
         campaignTurns.removeAll()
         if let database, let campaignID = currentCampaignID {
             do {
-                try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
+                try await performDatabaseAction {
+                    try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
+                }
             } catch {
                 print("Failed to clear campaign characters:", error)
             }
@@ -443,7 +485,9 @@ actor UserStore {
         if storage.removeValue(forKey: id) != nil {
             if let database {
                 do {
-                    try await DatabasePersistence.deleteCharacter(id: id, on: database)
+                    try await performDatabaseAction {
+                        try await DatabasePersistence.deleteCharacter(id: id, on: database)
+                    }
                 } catch {
                     print("Failed to delete character:", error)
                 }

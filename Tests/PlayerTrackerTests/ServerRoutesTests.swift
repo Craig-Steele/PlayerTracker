@@ -15,10 +15,15 @@ final class ServerRoutesTests: XCTestCase {
     }()
 
     private var app: Application!
+    private var cleanupDirectories: [URL] = []
 
     override func tearDown() async throws {
         try await app?.asyncShutdown()
         await userStore.resetMemoryForTesting()
+        for url in cleanupDirectories.reversed() {
+            try? FileManager.default.removeItem(at: url)
+        }
+        cleanupDirectories.removeAll()
         CreatureLibraryConfiguration.includeLocalCreatures = true
         AppPaths.appDataDirectoryOverride = nil
         app = nil
@@ -254,9 +259,7 @@ final class ServerRoutesTests: XCTestCase {
             .appendingPathComponent("userdata", isDirectory: true)
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
-        defer {
-            try? FileManager.default.removeItem(at: tempBaseDirectory)
-        }
+        cleanupDirectories.append(tempBaseDirectory)
 
         let localCreatureJSON = """
         {
@@ -637,9 +640,7 @@ final class ServerRoutesTests: XCTestCase {
             .appendingPathComponent("userdata", isDirectory: true)
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
-        defer {
-            try? FileManager.default.removeItem(at: tempBaseDirectory)
-        }
+        cleanupDirectories.append(tempBaseDirectory)
         let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
         AppPaths.appDataDirectoryOverride = tempBaseDirectory
         defer {
@@ -739,9 +740,7 @@ final class ServerRoutesTests: XCTestCase {
             .appendingPathComponent("userdata", isDirectory: true)
             .appendingPathComponent("pathfinder", isDirectory: true)
         try FileManager.default.createDirectory(at: tempUserDataDirectory, withIntermediateDirectories: true)
-        defer {
-            try? FileManager.default.removeItem(at: tempBaseDirectory)
-        }
+        cleanupDirectories.append(tempBaseDirectory)
         let priorAppDataDirectoryOverride = AppPaths.appDataDirectoryOverride
         AppPaths.appDataDirectoryOverride = tempBaseDirectory
         defer {
@@ -1296,7 +1295,7 @@ final class ServerRoutesTests: XCTestCase {
     }
 
     func testServerBootstrapConfiguresRoutesWithoutLaunchingProductionServer() async throws {
-        await userStore.clear()
+        await userStore.resetMemoryForTesting()
         app = try await Application.make(.testing)
 
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
@@ -2429,7 +2428,7 @@ final class ServerRoutesTests: XCTestCase {
     }
 
     private func makeTester(selectDefaultCampaign: Bool = true) async throws -> XCTApplicationTester {
-        await userStore.clear()
+        await userStore.resetMemoryForTesting()
         CreatureLibraryConfiguration.includeLocalCreatures = false
         app = try await Application.make(.testing)
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")

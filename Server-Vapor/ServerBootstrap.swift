@@ -36,6 +36,10 @@ enum ServerBootstrap {
         options: ServerBootstrapOptions = .production,
         library: RuleSetLibrary? = nil
     ) async throws {
+        if options.verboseOutput == false {
+            app.logger.logLevel = .warning
+        }
+
         let sitesDir = options.webClientDirectory.path + "/"
         let conditionLibrary = try library ?? RuleSetLibraryLoader.loadDefault()
         let campaignStore = CampaignStore(

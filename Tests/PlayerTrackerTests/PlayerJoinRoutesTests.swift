@@ -6,7 +6,7 @@ import XCTest
 final class PlayerJoinRoutesTests: XCTestCase {
     func testPlayerJoinSessionRoundTripsThroughCookie() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
 
@@ -55,7 +55,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testPlayerJoinReusesIdentityForSameDisplayName() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         _ = try await activateCampaign(in: tester)
 
@@ -68,7 +68,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testPlayerJoinRequiresActiveCampaign() async throws {
         let app = try await makeApp(activeCampaign: false)
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let joinPayload = PlayerJoinInput(displayName: "Alex")
@@ -83,7 +83,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testPlayerSessionOverridesClientOwnerIdOnCharacterWrites() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
 
@@ -125,7 +125,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testOpenCampaignAutoEnrollsPlayerWhenAddingFirstCharacterAfterCampaignSwitch() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let firstCampaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
@@ -193,7 +193,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testRenamingPlayerKeepsTheSameIdentity() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
 
@@ -256,7 +256,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testMeRouteAndCampaignScopedCharacterRoutesUsePlayerSessionIdentity() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
 
@@ -379,7 +379,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testCampaignInvitesAndMeCampaignListRoundTrip() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let firstCampaignID = try await activateCampaign(in: tester)
@@ -431,7 +431,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testNamedInviteCanTargetAPlayerAndRejectMismatchedPlayer() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let campaignResponse = try await tester.sendRequest(
@@ -488,7 +488,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testRefereeCanAddPlayerToCampaignByName() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let campaignID = try await activateCampaign(in: tester)
@@ -510,7 +510,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testAdminCanAddPlayerToCampaignByNameAndPlayerSessionCannot() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let campaignID = try await activateCampaign(in: tester)
@@ -544,7 +544,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testLegacyCharacterCreateRouteIsUnavailable() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         _ = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
@@ -578,7 +578,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testInviteOnlyCampaignRejectsPlainJoinAndAcceptsNamedMembership() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let campaignResponse = try await tester.sendRequest(
@@ -649,7 +649,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testCharacterClaimAndReleaseRoutesWorkForCurrentSession() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
@@ -707,7 +707,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testClaimedCharacterRejectsSecondSession() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
@@ -731,7 +731,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testRefereeCanForceReleaseClaimedCharacterWithoutPlayerLogin() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
@@ -759,7 +759,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testRefereeCanClaimAndReleaseCharacterFromRefereeRoute() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
@@ -824,7 +824,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testRefereeCanReleaseOwnedCreatureToClaimPool() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
@@ -853,7 +853,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testPlayerCannotUseRefereeOnlyRoutes() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
@@ -883,7 +883,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testAdminSessionAloneCannotUseRefereeOnlyRoutes() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
@@ -906,7 +906,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testRevokingRefereeAccessRemovesRefereeRouteAccess() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
@@ -950,7 +950,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testCampaignMembersRouteRequiresAdminSessionAndRejectsPlayerSession() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
@@ -974,7 +974,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testAdminSessionCannotUsePlayerRoutes() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let campaignID = try await activateCampaign(in: tester)
         let adminCookie = try await signInOwner(in: tester)
@@ -1022,7 +1022,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testPlayerWithoutCampaignMembershipIsForbiddenAfterActiveCampaignSwitch() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let firstCampaignID = try await activateCampaign(in: tester)
         let playerSession = try await join(displayName: "Alex", tester: tester)
@@ -1073,7 +1073,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     func testRefereeWithoutCampaignMembershipIsForbiddenAfterActiveCampaignSwitch() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
         let firstCampaignID = try await activateCampaign(in: tester)
         let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
@@ -1270,7 +1270,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
 
     private func makeApp(activeCampaign: Bool = true) async throws -> Application {
         let app = try await Application.make(.testing)
-        await userStore.clear()
+        await userStore.resetMemoryForTesting()
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         var options = ServerBootstrapOptions.production
         options.hostname = "127.0.0.1"

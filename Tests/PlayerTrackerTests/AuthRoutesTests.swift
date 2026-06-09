@@ -63,7 +63,7 @@ final class AuthRoutesTests: XCTestCase {
 
     func testDuplicateSignupIsRejected() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let payload = AuthSignupInput(
@@ -90,7 +90,7 @@ final class AuthRoutesTests: XCTestCase {
 
     func testBadLoginIsRejected() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let signupPayload = AuthSignupInput(
@@ -126,7 +126,7 @@ final class AuthRoutesTests: XCTestCase {
 
     func testExpiredSessionIsRejected() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
 
         let userID = try await DatabasePersistence.createUser(
             email: "owner@example.com",
@@ -150,7 +150,7 @@ final class AuthRoutesTests: XCTestCase {
 
     func testAuthSessionRequiresCookie() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let sessionResponse = try await tester.sendRequest(.GET, "/auth/session")
@@ -159,7 +159,7 @@ final class AuthRoutesTests: XCTestCase {
 
     func testLogoutInvalidatesSession() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let signupPayload = AuthSignupInput(
@@ -192,7 +192,7 @@ final class AuthRoutesTests: XCTestCase {
 
     func testShutdownRequiresAuthentication() async throws {
         let app = try await makeApp()
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testable()
 
         let response = try await tester.sendRequest(.POST, "/admin/shutdown")

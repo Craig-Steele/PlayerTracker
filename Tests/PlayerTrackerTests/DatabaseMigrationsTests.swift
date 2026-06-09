@@ -7,7 +7,7 @@ import XCTest
 final class DatabaseMigrationsTests: XCTestCase {
     func testDatabaseShapeVerificationRejectsLegacyCampaignPlayerSessionSchema() async throws {
         let app = try await makeApp(withLegacyPlayerSessionSchema: true)
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
 
         do {
             try await DatabaseMigrations.verifyShape(on: app.db)
@@ -20,7 +20,7 @@ final class DatabaseMigrationsTests: XCTestCase {
 
     func testLegacyPlayerSessionSchemaMigrationCreatesPlayersTable() async throws {
         let app = try await makeApp(withLegacyPlayerSessionSchema: true)
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
 
         try await CreatePlayers().prepare(on: app.db)
         try await MigrateLegacyCampaignPlayerSessionsToPlayers().prepare(on: app.db)
@@ -40,7 +40,7 @@ final class DatabaseMigrationsTests: XCTestCase {
 
     func testLegacyCharacterSchemaMigrationAddsLastPlayedByNameColumn() async throws {
         let app = try await makeApp(withLegacyPlayerSessionSchema: true)
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
 
         try await CreatePlayers().prepare(on: app.db)
         try await MigrateLegacyCampaignPlayerSessionsToPlayers().prepare(on: app.db)
@@ -60,7 +60,7 @@ final class DatabaseMigrationsTests: XCTestCase {
 
     func testDatabaseShapeVerificationRejectsLegacyCampaignTimeoutSchema() async throws {
         let app = try await makeApp(withLegacyCampaignSchema: true)
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
 
         try await CreatePlayers().prepare(on: app.db)
         try await MigrateLegacyCampaignPlayerSessionsToPlayers().prepare(on: app.db)
@@ -78,7 +78,7 @@ final class DatabaseMigrationsTests: XCTestCase {
 
     func testLegacyCampaignSchemaMigrationAddsInviteTable() async throws {
         let app = try await makeApp(withLegacyCampaignSchema: true)
-        defer { Task { try? await app.asyncShutdown() } }
+        defer { shutdownApplicationSynchronously(app) }
 
         try await CreatePlayers().prepare(on: app.db)
         try await MigrateLegacyCampaignPlayerSessionsToPlayers().prepare(on: app.db)
