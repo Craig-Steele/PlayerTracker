@@ -1311,8 +1311,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (fieldsContainer) fieldsContainer.innerHTML = '';
     if (currentStatsContainer) currentStatsContainer.innerHTML = '';
     if (headingEl) {
-      headingEl.textContent =
-        keys.length === 1 && keys[0] === 'HP' ? creatureLibraryHealthLabel() : keys.length === 1 ? keys[0] : 'Stats';
+      headingEl.textContent = 'Health';
     }
 
     keys.forEach((key) => {
@@ -1618,14 +1617,16 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function setDetailsPanelOpen(open) {
-    if (!detailsToggle || !detailsPanel) return;
+    if (!detailsPanel) return;
     if (open && conditionsPanel) {
       setConditionsPanelOpen(false);
     }
     detailsPanel.classList.toggle('hidden', !open);
     detailsPanel.classList.toggle('details-panel-open', open);
     detailsPanel.classList.toggle('details-panel-collapsed', !open);
-    detailsToggle.setAttribute('aria-expanded', open.toString());
+    if (detailsToggle) {
+      detailsToggle.setAttribute('aria-expanded', open.toString());
+    }
     detailsPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
@@ -2300,7 +2301,7 @@ window.addEventListener('DOMContentLoaded', () => {
             : `${keyLabel} ${stat.current}/${stat.max}`;
         })
         .join(' • ');
-      addField('Play Stats', statSummary);
+      addField('Play Health', statSummary);
     }
 
     libraryDetails.appendChild(fields);
@@ -2881,7 +2882,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (addStatBlockDefinitions.length === 0) {
         addStatBlockDefinitions = [{
           id: 'default',
-          label: statKeys.length === 1 ? statKeys[0] : 'Stats',
+          label: statKeys.length === 1 ? statKeys[0] : 'Health',
           appliesTo: ['referee'],
           stats: statKeys.slice(),
           defaultBlock: true
@@ -2969,7 +2970,7 @@ window.addEventListener('DOMContentLoaded', () => {
       statBlockLookup = new Map();
       addStatBlockDefinitions = [{
         id: 'default',
-        label: statKeys.length === 1 ? statKeys[0] : 'Stats',
+        label: statKeys.length === 1 ? statKeys[0] : 'Health',
         appliesTo: ['referee'],
         stats: statKeys.slice(),
         defaultBlock: true
@@ -3673,14 +3674,14 @@ window.addEventListener('DOMContentLoaded', () => {
       popover.classList.add('popup-centered');
     }
     popover.setAttribute('role', 'dialog');
-    popover.setAttribute('aria-label', `${character.name || 'character'} stats controls`);
+    popover.setAttribute('aria-label', `${character.name || 'character'} health controls`);
     popover.addEventListener('click', (event) => {
       event.stopPropagation();
     });
 
     const heading = document.createElement('div');
     heading.className = 'player-row-stats-heading';
-    heading.textContent = character.name || 'Character';
+    heading.textContent = `❤️ Health: ${character.name || 'Character'}`;
     popover.appendChild(heading);
 
     displayStatKeys.forEach((key) => {
@@ -3730,7 +3731,7 @@ window.addEventListener('DOMContentLoaded', () => {
     button.type = 'button';
     button.className = 'icon-button stats-edit-button';
     button.textContent = '❤️';
-    button.setAttribute('aria-label', `Edit stats for ${character?.name || 'character'}`);
+    button.setAttribute('aria-label', `Edit health for ${character?.name || 'character'}`);
     button.addEventListener('click', (event) => {
       event.stopPropagation();
       toggleExpandedOrderStats(character?.id);
@@ -4110,6 +4111,13 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       conditionsContent.appendChild(conditionsInner);
       conditionsTd.appendChild(conditionsContent);
+      conditionsTd.style.cursor = 'pointer';
+      conditionsTd.addEventListener('click', (event) => {
+        if (!(event.target instanceof Element)) return;
+        if (event.target.closest('a')) return;
+        event.stopPropagation();
+        void openConditionsEditorForCharacter(p);
+      });
 
       tr.appendChild(initTd);
       tr.appendChild(nameTd);

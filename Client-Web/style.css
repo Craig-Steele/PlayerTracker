@@ -1585,7 +1585,7 @@ body.referee-page .referee-panel {
 }
 
 .character-stat-label {
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-secondary);
   width: 5.25rem;
@@ -2720,7 +2720,7 @@ body.referee-page .referee-panel {
 
 
   .character-stat-label {
-    font-size: 0.65rem;
+    font-size: 1rem;
   }
 
   .hp-stepper {
@@ -3010,10 +3010,12 @@ body.referee-page .referee-panel {
 }
 
 .player-row-stats-heading {
+  width: 100%;
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.1;
+  text-align: left;
 }
 
 .player-row-stats-toggle {

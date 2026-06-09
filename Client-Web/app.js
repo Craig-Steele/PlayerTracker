@@ -2662,12 +2662,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (statsFields) statsFields.innerHTML = '';
     if (currentStatsInputs) currentStatsInputs.innerHTML = '';
     if (healthHeading) {
-      healthHeading.textContent =
-        statKeys.length === 1 && statKeys[0] === 'HP'
-          ? currentHealthLabel
-          : statKeys.length === 1
-            ? statKeys[0]
-            : 'Stats';
+      healthHeading.textContent = 'Health';
     }
 
     statKeys.forEach((key) => {
@@ -4063,14 +4058,14 @@ function getOwnerName() {
       popover.classList.add('popup-centered');
     }
     popover.setAttribute('role', 'dialog');
-    popover.setAttribute('aria-label', `${character.name || 'character'} stats controls`);
+    popover.setAttribute('aria-label', `${character.name || 'character'} health controls`);
     popover.addEventListener('click', (event) => {
       event.stopPropagation();
     });
 
     const heading = document.createElement('div');
     heading.className = 'player-row-stats-heading';
-    heading.textContent = character.name || 'Character';
+    heading.textContent = `❤️ Health: ${character.name || 'Character'}`;
     popover.appendChild(heading);
 
     displayStatKeys.forEach((key) => {
@@ -4159,7 +4154,7 @@ function getOwnerName() {
     button.type = 'button';
     button.className = 'icon-button stats-edit-button';
     button.textContent = '❤️';
-    button.setAttribute('aria-label', `Edit stats for ${character?.name || 'character'}`);
+    button.setAttribute('aria-label', `Edit health for ${character?.name || 'character'}`);
     button.addEventListener('click', (event) => {
       event.stopPropagation();
       toggleExpandedOrderStats(character?.id);
@@ -4325,6 +4320,15 @@ function getOwnerName() {
       }
       conditionsContent.appendChild(conditionsInner);
       conditionsTd.appendChild(conditionsContent);
+      if (isMine) {
+        conditionsTd.style.cursor = 'pointer';
+        conditionsTd.addEventListener('click', (event) => {
+          if (!(event.target instanceof Element)) return;
+          if (event.target.closest('a')) return;
+          event.stopPropagation();
+          void openConditionsEditorForCharacter(p);
+        });
+      }
 
       if (currentTurnId && p.id === currentTurnId) {
         tr.classList.add('current-turn');

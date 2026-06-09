@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=89">
+  <link rel="stylesheet" href="style.css?v=92">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -46,7 +46,7 @@
           <tr>
             <th>#</th>
             <th>Character</th>
-            <th id="health-heading">Stats</th>
+            <th id="health-heading">Health</th>
             <th class="conditions-col">Conditions</th>
           </tr>
         </thead>
@@ -94,7 +94,7 @@
       <div id="ref-add-manual-panel" class="add-form-tabpanel" role="tabpanel" aria-labelledby="ref-add-tab-manual">
         <div class="form-section-block property-group">
           <label id="ref-stat-block-wrap" class="property-row hidden">
-            <span class="property-label">Stat block</span>
+            <span class="property-label">Health Block</span>
             <span class="property-control">
               <select id="ref-stat-block"></select>
             </span>
@@ -162,7 +162,7 @@
     <div id="ref-conditions-panel" class="conditions-panel-collapsed hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-conditions-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="ref-conditions-dialog-title">Conditions</h2>
+          <h2 id="ref-conditions-dialog-title">🩸 Conditions</h2>
           <div class="conditions-dialog-actions">
             <button type="button" id="ref-conditions-cancel" class="secondary">Cancel</button>
             <button type="button" id="ref-conditions-save">Save</button>
@@ -417,6 +417,6 @@
   <script src="inventory-view.js?v=5"></script>
   <script src="ruleset.js?v=1"></script>
   <script src="encounter.js?v=3"></script>
-  <script src="referee.js?v=48"></script>
+  <script src="referee.js?v=52"></script>
 </body>
 </html>
