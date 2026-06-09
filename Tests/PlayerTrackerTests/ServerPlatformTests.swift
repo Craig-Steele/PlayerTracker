@@ -1,52 +1,58 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PlayerTracker
 
-final class ServerPlatformTests: XCTestCase {
-    func testWebClientDirectoryResolvesToCheckedInClientWebFolder() {
+@Suite("Server Platform")
+struct ServerPlatformTests {
+    @Test("web client directory resolves to the checked-in client folder")
+    func webClientDirectoryResolvesToCheckedInClientWebFolder() {
         let directory = AppPaths.webClientDirectory()
-        XCTAssertEqual(directory.lastPathComponent, "Client-Web")
-        XCTAssertTrue(FileManager.default.fileExists(atPath: directory.path))
+        #expect(directory.lastPathComponent == "Client-Web")
+        #expect(FileManager.default.fileExists(atPath: directory.path))
     }
 
-    func testAppDataDirectoryResolvesToExpectedPlatformLocation() {
+    @Test("app data directory resolves to the expected platform location")
+    func appDataDirectoryResolvesToExpectedPlatformLocation() {
         let directory = AppPaths.appDataDirectory(environment: [:])
 
         #if os(macOS)
-        XCTAssertTrue(directory.path.hasSuffix("Library/Application Support/Roll4Initiative"))
+        #expect(directory.path.hasSuffix("Library/Application Support/Roll4Initiative"))
         #elseif os(Windows)
-        XCTAssertEqual(directory.lastPathComponent, "Roll4Initiative")
+        #expect(directory.lastPathComponent == "Roll4Initiative")
         #else
-        XCTAssertTrue(directory.path.contains(".local/share/Roll4Initiative"))
+        #expect(directory.path.contains(".local/share/Roll4Initiative"))
         #endif
     }
 
-    func testLogsDirectoryResolvesToExpectedPlatformLocation() {
+    @Test("logs directory resolves to the expected platform location")
+    func logsDirectoryResolvesToExpectedPlatformLocation() {
         let directory = AppPaths.logsDirectory(environment: [:])
 
         #if os(macOS)
-        XCTAssertTrue(directory.path.hasSuffix("Library/Logs/Roll4Initiative"))
+        #expect(directory.path.hasSuffix("Library/Logs/Roll4Initiative"))
         #elseif os(Windows)
-        XCTAssertTrue(directory.path.replacingOccurrences(of: "\\", with: "/").hasSuffix("Roll4Initiative/Logs"))
+        #expect(directory.path.replacingOccurrences(of: "\\", with: "/").hasSuffix("Roll4Initiative/Logs"))
         #else
-        XCTAssertTrue(directory.path.contains(".local/state/Roll4Initiative/logs"))
+        #expect(directory.path.contains(".local/state/Roll4Initiative/logs"))
         #endif
     }
 
-    func testUserDataDirectoryResolvesToExpectedPlatformLocation() {
+    @Test("user data directory resolves to the expected platform location")
+    func userDataDirectoryResolvesToExpectedPlatformLocation() {
         let directory = AppPaths.userDataDirectory(rulesetId: "pathfinder", environment: [:])
 
         #if os(macOS)
-        XCTAssertTrue(directory.path.hasSuffix("Library/Application Support/Roll4Initiative/userdata/pathfinder"))
+        #expect(directory.path.hasSuffix("Library/Application Support/Roll4Initiative/userdata/pathfinder"))
         #elseif os(Windows)
-        XCTAssertTrue(directory.path.replacingOccurrences(of: "\\", with: "/").hasSuffix("Roll4Initiative/userdata/pathfinder"))
+        #expect(directory.path.replacingOccurrences(of: "\\", with: "/").hasSuffix("Roll4Initiative/userdata/pathfinder"))
         #else
-        XCTAssertTrue(directory.path.contains(".local/share/Roll4Initiative/userdata/pathfinder"))
+        #expect(directory.path.contains(".local/share/Roll4Initiative/userdata/pathfinder"))
         #endif
     }
 
-    func testBrowserLaunchCanBeDisabledByEnvironment() {
+    @Test("browser launch can be disabled by environment")
+    func browserLaunchCanBeDisabledByEnvironment() {
         let environment = ["ROLL4INITIATIVE_LAUNCH_BROWSER": "0"]
-        XCTAssertFalse(BrowserLauncher.shouldLaunchByDefault(environment: environment))
+        #expect(!BrowserLauncher.shouldLaunchByDefault(environment: environment))
     }
 }

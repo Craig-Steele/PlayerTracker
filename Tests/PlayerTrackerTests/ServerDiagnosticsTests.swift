@@ -1,37 +1,41 @@
-import XCTest
+import Testing
 @testable import PlayerTracker
 
-final class ServerDiagnosticsTests: XCTestCase {
-    func testStartupMessagesFormatBootstrapOutput() {
-        XCTAssertEqual(
-            ServerDiagnostics.servingStaticFilesMessage("/tmp/site/"),
-            "Serving static files from: /tmp/site/"
+@Suite("Server Diagnostics")
+struct ServerDiagnosticsTests {
+    @Test("startup messages format bootstrap output")
+    func startupMessagesFormatBootstrapOutput() {
+        #expect(
+            ServerDiagnostics.servingStaticFilesMessage("/tmp/site/")
+                == "Serving static files from: /tmp/site/"
         )
-        XCTAssertEqual(
-            ServerDiagnostics.loadedDefaultRulesetMessage("Pathfinder"),
-            "Loaded default ruleset: Pathfinder"
+        #expect(
+            ServerDiagnostics.loadedDefaultRulesetMessage("Pathfinder")
+                == "Loaded default ruleset: Pathfinder"
         )
-        XCTAssertEqual(
-            ServerDiagnostics.connectionLogsMessage("/tmp/logs/connections.log"),
-            "Connection logs: /tmp/logs/connections.log"
-        )
-    }
-
-    func testBrowserLauncherUnavailableMessageIsStable() {
-        XCTAssertEqual(
-            ServerDiagnostics.browserLauncherUnavailableMessage(),
-            "No supported browser launcher is available for this platform."
+        #expect(
+            ServerDiagnostics.connectionLogsMessage("/tmp/logs/connections.log")
+                == "Connection logs: /tmp/logs/connections.log"
         )
     }
 
-    func testBrowserLaunchFailedMessageIncludesErrorDescription() {
+    @Test("browser launcher unavailable message is stable")
+    func browserLauncherUnavailableMessageIsStable() {
+        #expect(
+            ServerDiagnostics.browserLauncherUnavailableMessage()
+                == "No supported browser launcher is available for this platform."
+        )
+    }
+
+    @Test("browser launch failed message includes the error description")
+    func browserLaunchFailedMessageIncludesErrorDescription() {
         struct SampleError: Error, CustomStringConvertible {
             var description: String { "boom" }
         }
 
-        XCTAssertEqual(
-            ServerDiagnostics.browserLaunchFailedMessage(SampleError()),
-            "Failed to launch display page: boom"
+        #expect(
+            ServerDiagnostics.browserLaunchFailedMessage(SampleError())
+                == "Failed to launch display page: boom"
         )
     }
 }
