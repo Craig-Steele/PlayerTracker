@@ -1281,6 +1281,7 @@ final class PlayerJoinRoutesTests: XCTestCase {
         options.restorePersistedState = false
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
         try await ServerBootstrap.configure(app, options: options, library: library)
         if !activeCampaign {
             return app

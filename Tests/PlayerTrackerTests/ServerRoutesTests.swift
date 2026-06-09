@@ -1,9 +1,19 @@
 import Vapor
 import XCTVapor
 import XCTest
+import Logging
 @testable import PlayerTracker
 
 final class ServerRoutesTests: XCTestCase {
+    static let setupLogging: Void = {
+        // Configure logging to suppress info-level messages during tests
+        LoggingSystem.bootstrap { label in
+            var handler = StreamLogHandler.standardError(label: label)
+            handler.logLevel = .warning
+            return handler
+        }
+    }()
+
     private var app: Application!
 
     override func tearDown() async throws {
@@ -1299,6 +1309,8 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = false
         options.persistChanges = false
         options.launchBrowser = false
+        options.verboseOutput = false
+        options.verboseOutput = false
 
         try await ServerBootstrap.configure(app, options: options, library: library)
 
@@ -1340,6 +1352,8 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
+        options.verboseOutput = false
 
         let app1 = try await Application.make(.testing)
         try await ServerBootstrap.configure(app1, options: options, library: library)
@@ -1402,6 +1416,8 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
+        options.verboseOutput = false
 
         let app = try await Application.make(.testing)
         try await ServerBootstrap.configure(app, options: options, library: library)
@@ -1438,6 +1454,7 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
 
         try await ServerBootstrap.configure(app, options: options, library: initialLibrary)
         let tester = try app.testable()
@@ -1557,6 +1574,8 @@ final class ServerRoutesTests: XCTestCase {
             options.restorePersistedState = true
             options.persistChanges = true
             options.launchBrowser = false
+        options.verboseOutput = false
+            options.verboseOutput = false
             return options
         }
 
@@ -1716,6 +1735,7 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
@@ -1840,6 +1860,7 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
 
         try await ServerBootstrap.configure(app1, options: options, library: travellerLibrary)
         let tester1 = try app1.testable()
@@ -1942,6 +1963,7 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
@@ -2072,6 +2094,7 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
@@ -2197,6 +2220,7 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = true
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
 
         try await ServerBootstrap.configure(app, options: options, library: travellerLibrary)
         let tester = try app.testable()
@@ -2418,6 +2442,8 @@ final class ServerRoutesTests: XCTestCase {
         options.restorePersistedState = false
         options.persistChanges = true
         options.launchBrowser = false
+        options.verboseOutput = false
+        options.verboseOutput = false
         try await ServerBootstrap.configure(app, options: options, library: library)
         let tester = try app.testable()
 

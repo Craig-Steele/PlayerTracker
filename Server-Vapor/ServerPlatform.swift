@@ -90,7 +90,7 @@ enum BrowserLauncher {
 
     static func launchDisplayPage(url: String = "http://localhost:8080/admin.html") {
         guard let command = launchCommand(for: url) else {
-            fputs("No supported browser launcher is available for this platform.\n", stderr)
+            ServerDiagnostics.writeBrowserLauncherUnavailable()
             return
         }
 
@@ -101,7 +101,7 @@ enum BrowserLauncher {
         do {
             try process.run()
         } catch {
-            fputs("Failed to launch display page: \(error)\n", stderr)
+            ServerDiagnostics.writeBrowserLaunchFailed(error)
         }
     }
 

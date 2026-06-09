@@ -12,6 +12,7 @@ struct ServerBootstrapOptions {
     var restorePersistedState: Bool
     var persistChanges: Bool
     var launchBrowser: Bool
+    var verboseOutput: Bool = true
 
     static var production: ServerBootstrapOptions {
         ServerBootstrapOptions(
@@ -44,7 +45,9 @@ enum ServerBootstrap {
             persistChanges: options.persistChanges
         )
 
-        print("Serving static files from:", sitesDir)
+        if options.verboseOutput {
+            ServerDiagnostics.writeServingStaticFiles(sitesDir)
+        }
 
         app.middleware.use(JoinPageRedirectMiddleware(campaignStore: campaignStore))
         app.middleware.use(FileMiddleware(publicDirectory: sitesDir))
@@ -62,8 +65,10 @@ enum ServerBootstrap {
         let eventHub = CampaignEventHub()
         let activeCampaignEventHub = ActiveCampaignEventHub()
         try await campaignStore.configure(database: app.db)
-        print("Loaded default ruleset:", conditionLibrary.label)
-        print("Connection logs:", await connectionLogPath())
+        if options.verboseOutput {
+            ServerDiagnostics.writeLoadedDefaultRuleset(conditionLibrary.label)
+            ServerDiagnostics.writeConnectionLogs(await connectionLogPath())
+        }
         await logServerEvent("startup host=\(options.hostname) port=\(options.port)")
 
         try routes(
