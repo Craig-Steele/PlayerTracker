@@ -107,6 +107,7 @@ struct DatabaseMigrationsTests {
         withLegacyCampaignSchema: Bool = false
     ) async throws -> Application {
         let app = try await Application.make(.testing)
+        quietTestLogging(for: app)
         let databaseFileURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-migration-\(UUID().uuidString).sqlite3")
 

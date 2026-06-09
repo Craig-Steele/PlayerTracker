@@ -1,9 +1,11 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PlayerTracker
 
-final class ActiveCampaignEventHubTests: XCTestCase {
-    func testActiveCampaignEventHubStreamsPublishedUpdates() async throws {
+@Suite("Active Campaign Event Hub")
+struct ActiveCampaignEventHubTests {
+    @Test("streams published updates")
+    func streamsPublishedUpdates() async throws {
         let hub = ActiveCampaignEventHub()
         let campaign = CampaignState(
             id: UUID(),
@@ -27,12 +29,13 @@ final class ActiveCampaignEventHubTests: XCTestCase {
         )
 
         let message = await iterator.next()
-        XCTAssertEqual(message?.event, "campaign-updated")
-        XCTAssertEqual(message?.snapshot.campaign?.id, campaign.id)
-        XCTAssertEqual(message?.snapshot.campaign?.name, "Join Campaign")
+        #expect(message?.event == "campaign-updated")
+        #expect(message?.snapshot.campaign?.id == campaign.id)
+        #expect(message?.snapshot.campaign?.name == "Join Campaign")
     }
 
-    func testActiveCampaignEventHubShutdownFinishesStreams() async throws {
+    @Test("shutdown finishes streams")
+    func shutdownFinishesStreams() async throws {
         let hub = ActiveCampaignEventHub()
         let stream = await hub.subscribe()
         var iterator = stream.makeAsyncIterator()
@@ -40,6 +43,6 @@ final class ActiveCampaignEventHubTests: XCTestCase {
         await hub.shutdown()
 
         let message = await iterator.next()
-        XCTAssertNil(message)
+        #expect(message == nil)
     }
 }

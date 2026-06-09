@@ -1,39 +1,42 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PlayerTracker
 
-final class CreatureLibraryImportTests: XCTestCase {
-    func testRulesetInitiativeChartsLoadFromJson() throws {
+@Suite("Creature Library Import")
+struct CreatureLibraryImportTests {
+    @Test("ruleset initiative charts load from json")
+    func rulesetInitiativeChartsLoadFromJson() throws {
         let traveller = try RuleSetLibraryLoader.loadLibrary(id: "traveller")
         let pathfinder = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
         let dnd5e = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
 
-        XCTAssertEqual(traveller.initiative?.chart?.first?.bonus, -2)
-        XCTAssertEqual(traveller.initiative?.chart?.last?.bonus, 3)
-        XCTAssertEqual(pathfinder.initiative?.chart?.first?.bonus, -5)
-        XCTAssertEqual(pathfinder.initiative?.chart?.last?.bonus, 10)
-        XCTAssertEqual(traveller.statAliases?["Psionic Points"], "PSI")
-        XCTAssertEqual(traveller.statAliases?["Hits"], "HP")
-        XCTAssertEqual(traveller.healthLabel, "Hits")
-        XCTAssertEqual(pathfinder.statAliases?["Dexterity"], "DEX")
-        XCTAssertEqual(pathfinder.healthLabel, "HP")
-        XCTAssertEqual(dnd5e.statAliases?["Dexterity"], "DEX")
-        XCTAssertEqual(dnd5e.healthLabel, "HP")
-        XCTAssertEqual(pathfinder.currency?.commonCurrencyId, "gp")
-        XCTAssertEqual(pathfinder.currency?.units.map(\.id), ["cp", "sp", "gp", "pp"])
-        XCTAssertEqual(pathfinder.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 1, 10])
-        XCTAssertEqual(pathfinder.equipmentLibrary?.file, "pathfinder-equipment")
-        XCTAssertEqual(dnd5e.currency?.commonCurrencyId, "gp")
-        XCTAssertEqual(dnd5e.currency?.units.map(\.id), ["cp", "sp", "ep", "gp", "pp"])
-        XCTAssertEqual(dnd5e.currency?.units.map(\.valueInCommonCurrency), [0.01, 0.1, 0.5, 1, 10])
-        XCTAssertEqual(dnd5e.equipmentLibrary?.file, "dnd5e-equipment.json")
-        XCTAssertEqual(traveller.currency?.commonCurrencyId, "Cr")
-        XCTAssertEqual(traveller.currency?.units.map(\.id), ["Cr", "KCr", "MCr"])
-        XCTAssertEqual(traveller.currency?.units.map(\.valueInCommonCurrency), [1, 1000, 1_000_000])
-        XCTAssertEqual(traveller.equipmentLibrary?.file, "traveller-equipment.json")
+        #expect(traveller.initiative?.chart?.first?.bonus == -2)
+        #expect(traveller.initiative?.chart?.last?.bonus == 3)
+        #expect(pathfinder.initiative?.chart?.first?.bonus == -5)
+        #expect(pathfinder.initiative?.chart?.last?.bonus == 10)
+        #expect(traveller.statAliases?["Psionic Points"] == "PSI")
+        #expect(traveller.statAliases?["Hits"] == "HP")
+        #expect(traveller.healthLabel == "Hits")
+        #expect(pathfinder.statAliases?["Dexterity"] == "DEX")
+        #expect(pathfinder.healthLabel == "HP")
+        #expect(dnd5e.statAliases?["Dexterity"] == "DEX")
+        #expect(dnd5e.healthLabel == "HP")
+        #expect(pathfinder.currency?.commonCurrencyId == "gp")
+        #expect(pathfinder.currency?.units.map(\.id) == ["cp", "sp", "gp", "pp"])
+        #expect(pathfinder.currency?.units.map(\.valueInCommonCurrency) == [0.01, 0.1, 1, 10])
+        #expect(pathfinder.equipmentLibrary?.file == "pathfinder-equipment")
+        #expect(dnd5e.currency?.commonCurrencyId == "gp")
+        #expect(dnd5e.currency?.units.map(\.id) == ["cp", "sp", "ep", "gp", "pp"])
+        #expect(dnd5e.currency?.units.map(\.valueInCommonCurrency) == [0.01, 0.1, 0.5, 1, 10])
+        #expect(dnd5e.equipmentLibrary?.file == "dnd5e-equipment.json")
+        #expect(traveller.currency?.commonCurrencyId == "Cr")
+        #expect(traveller.currency?.units.map(\.id) == ["Cr", "KCr", "MCr"])
+        #expect(traveller.currency?.units.map(\.valueInCommonCurrency) == [1, 1000, 1_000_000])
+        #expect(traveller.equipmentLibrary?.file == "traveller-equipment.json")
     }
 
-    func testEquipmentLibraryLoadFromRulesetJson() async throws {
+    @Test("equipment library load from ruleset json")
+    func equipmentLibraryLoadFromRulesetJson() async throws {
         let library = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
         let response = try await EquipmentLibraryStore.shared.library(
             rulesetId: library.id,
@@ -42,26 +45,28 @@ final class CreatureLibraryImportTests: XCTestCase {
             limit: 10
         )
 
-        XCTAssertEqual(response.rulesetId, "pathfinder")
-        XCTAssertTrue(response.items.contains { $0.name == "Backpack, common" })
+        #expect(response.rulesetId == "pathfinder")
+        #expect(response.items.contains { $0.name == "Backpack, common" })
     }
 
-    func testPathfinderThirdPartyProductsFixtureIncludesBeanSidheVariant() throws {
+    @Test("pathfinder third party products fixture includes bean sidhe variant")
+    func pathfinderThirdPartyProductsFixtureIncludesBeanSidheVariant() throws {
         let fixtureURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .appendingPathComponent("Fixtures/pathfinder/third-party-products.json")
         let data = try Data(contentsOf: fixtureURL)
-        let fixture = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
-        let creatures = try XCTUnwrap(fixture["creatures"] as? [[String: Any]])
+        let fixture = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let creatures = try #require(fixture["creatures"] as? [[String: Any]])
 
-        XCTAssertTrue(creatures.contains { creature in
+        #expect(creatures.contains { creature in
             creature["name"] as? String == "Banshee, Bean Sidhe (3pp)"
                 && creature["baseCreatureName"] as? String == "Banshee"
                 && creature["cr"] as? String == "13"
         })
     }
 
-    func testCreatureLibraryImportNormalizesFixtureShapeIntoUserDataFile() throws {
+    @Test("creature library import normalizes fixture shape into user data file")
+    func creatureLibraryImportNormalizesFixtureShapeIntoUserDataFile() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -92,23 +97,24 @@ final class CreatureLibraryImportTests: XCTestCase {
             rulesetId: "pathfinder"
         )
 
-        XCTAssertEqual(result.imported, 1)
-        XCTAssertEqual(result.skipped, 0)
+        #expect(result.imported == 1)
+        #expect(result.skipped == 0)
 
         let outputURL = tempDirectory.appendingPathComponent("imported-aasimar.json")
         let outputData = try Data(contentsOf: outputURL)
-        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let outputObject = try #require(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
 
-        XCTAssertEqual(outputObject["name"] as? String, "Imported Aasimar")
-        XCTAssertEqual(outputObject["cr"] as? String, "1")
-        XCTAssertEqual(outputObject["initiativeBonus"] as? Int, 2)
-        XCTAssertEqual(outputObject["referenceUrl"] as? String, "https://example.com/reference")
-        XCTAssertEqual(outputObject["type"] as? String, "outsider (native)")
-        XCTAssertEqual(outputObject["hp"] as? Int, 11)
-        XCTAssertEqual(outputObject["tags"] as? [String], ["creature"])
+        #expect(outputObject["name"] as? String == "Imported Aasimar")
+        #expect(outputObject["cr"] as? String == "1")
+        #expect(outputObject["initiativeBonus"] as? Int == 2)
+        #expect(outputObject["referenceUrl"] as? String == "https://example.com/reference")
+        #expect(outputObject["type"] as? String == "outsider (native)")
+        #expect(outputObject["hp"] as? Int == 11)
+        #expect(outputObject["tags"] as? [String] == ["creature"])
     }
 
-    func testCreatureLibraryImportDerivesPathfinderInitiativeFromDexterity() throws {
+    @Test("creature library import derives pathfinder initiative from dexterity")
+    func creatureLibraryImportDerivesPathfinderInitiativeFromDexterity() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -140,14 +146,15 @@ final class CreatureLibraryImportTests: XCTestCase {
 
         let outputURL = tempDirectory.appendingPathComponent("dexterous-pathfinder.json")
         let outputData = try Data(contentsOf: outputURL)
-        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let outputObject = try #require(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
 
-        XCTAssertEqual(outputObject["initiativeBonus"] as? Int, 4)
-        XCTAssertNil(outputObject["baseCreatureId"] as? String)
-        XCTAssertNil(outputObject["baseCreatureName"] as? String)
+        #expect(outputObject["initiativeBonus"] as? Int == 4)
+        #expect(outputObject["baseCreatureId"] as? String == nil)
+        #expect(outputObject["baseCreatureName"] as? String == nil)
     }
 
-    func testCreatureLibraryImportDerivesDnDInitiativeFromDexterity() throws {
+    @Test("creature library import derives dnd initiative from dexterity")
+    func creatureLibraryImportDerivesDnDInitiativeFromDexterity() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -179,14 +186,15 @@ final class CreatureLibraryImportTests: XCTestCase {
 
         let outputURL = tempDirectory.appendingPathComponent("dexterous-hero.json")
         let outputData = try Data(contentsOf: outputURL)
-        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let outputObject = try #require(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
 
-        XCTAssertEqual(outputObject["initiativeBonus"] as? Int, 3)
-        XCTAssertNil(outputObject["baseCreatureId"] as? String)
-        XCTAssertNil(outputObject["baseCreatureName"] as? String)
+        #expect(outputObject["initiativeBonus"] as? Int == 3)
+        #expect(outputObject["baseCreatureId"] as? String == nil)
+        #expect(outputObject["baseCreatureName"] as? String == nil)
     }
 
-    func testCreatureLibraryImportCollapsesFileReferenceIntoSourcePageText() throws {
+    @Test("creature library import collapses file reference into source page text")
+    func creatureLibraryImportCollapsesFileReferenceIntoSourcePageText() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -216,13 +224,14 @@ final class CreatureLibraryImportTests: XCTestCase {
 
         let outputURL = tempDirectory.appendingPathComponent("pdf-import.json")
         let outputData = try Data(contentsOf: outputURL)
-        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let outputObject = try #require(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
 
-        XCTAssertEqual(outputObject["source"] as? String, "Wrath of Thrune, page 47")
-        XCTAssertNil(outputObject["referenceUrl"])
+        #expect(outputObject["source"] as? String == "Wrath of Thrune, page 47")
+        #expect(outputObject["referenceUrl"] as? String == nil)
     }
 
-    func testCreatureLibraryImportLinksMyceloidYoungUnsToBuiltinMyceloid() throws {
+    @Test("creature library import links myceloid young uns to builtin myceloid")
+    func creatureLibraryImportLinksMyceloidYoungUnsToBuiltinMyceloid() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -253,15 +262,16 @@ final class CreatureLibraryImportTests: XCTestCase {
 
         let outputURL = tempDirectory.appendingPathComponent("myceloid-younguns.json")
         let outputData = try Data(contentsOf: outputURL)
-        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let outputObject = try #require(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
 
-        XCTAssertEqual(outputObject["name"] as? String, "Myceloid Young'uns")
-        XCTAssertEqual(outputObject["baseCreatureName"] as? String, "Myceloid")
-        XCTAssertNotNil(outputObject["baseCreatureId"] as? String)
-        XCTAssertEqual(outputObject["initiativeBonus"] as? Int, 4)
+        #expect(outputObject["name"] as? String == "Myceloid Young'uns")
+        #expect(outputObject["baseCreatureName"] as? String == "Myceloid")
+        #expect(outputObject["baseCreatureId"] as? String != nil)
+        #expect(outputObject["initiativeBonus"] as? Int == 4)
     }
 
-    func testCreatureLibraryImportSkipsExactBuiltinDuplicateButKeepsAlternateName() throws {
+    @Test("creature library import skips exact builtin duplicate but keeps alternate name")
+    func creatureLibraryImportSkipsExactBuiltinDuplicateButKeepsAlternateName() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -291,20 +301,21 @@ final class CreatureLibraryImportTests: XCTestCase {
             rulesetId: "pathfinder"
         )
 
-        XCTAssertEqual(result.imported, 1)
-        XCTAssertEqual(result.skipped, 0)
+        #expect(result.imported == 1)
+        #expect(result.skipped == 0)
 
         let outputURL = tempDirectory.appendingPathComponent("bunyip-alt.json")
         let outputData = try Data(contentsOf: outputURL)
-        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let outputObject = try #require(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
 
-        XCTAssertEqual(outputObject["name"] as? String, "Bunyip (Wrath of Thrune)")
-        XCTAssertEqual(outputObject["baseCreatureName"] as? String, "Bunyip")
-        XCTAssertNotNil(outputObject["baseCreatureId"] as? String)
-        XCTAssertEqual(outputObject["initiativeBonus"] as? Int, 3)
+        #expect(outputObject["name"] as? String == "Bunyip (Wrath of Thrune)")
+        #expect(outputObject["baseCreatureName"] as? String == "Bunyip")
+        #expect(outputObject["baseCreatureId"] as? String != nil)
+        #expect(outputObject["initiativeBonus"] as? Int == 3)
     }
 
-    func testCreatureLibraryImportSkipsExactBuiltinDuplicateWhenNameMatchesBase() throws {
+    @Test("creature library import skips exact builtin duplicate when name matches base")
+    func creatureLibraryImportSkipsExactBuiltinDuplicateWhenNameMatchesBase() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -336,12 +347,13 @@ final class CreatureLibraryImportTests: XCTestCase {
             rulesetId: "pathfinder"
         )
 
-        XCTAssertEqual(result.imported, 0)
-        XCTAssertEqual(result.skipped, 1)
-        XCTAssertFalse(FileManager.default.fileExists(atPath: tempDirectory.appendingPathComponent("bunyip.json").path))
+        #expect(result.imported == 0)
+        #expect(result.skipped == 1)
+        #expect(!FileManager.default.fileExists(atPath: tempDirectory.appendingPathComponent("bunyip.json").path))
     }
 
-    func testCreatureLibraryImportPreservesMultiCreatureBundles() throws {
+    @Test("creature library import preserves multi creature bundles")
+    func creatureLibraryImportPreservesMultiCreatureBundles() throws {
         let tempDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-import-\(UUID().uuidString)", isDirectory: true)
         defer {
@@ -384,23 +396,24 @@ final class CreatureLibraryImportTests: XCTestCase {
             rulesetId: "pathfinder"
         )
 
-        XCTAssertEqual(result.imported, 1)
-        XCTAssertEqual(result.skipped, 0)
+        #expect(result.imported == 1)
+        #expect(result.skipped == 0)
 
         let outputURL = tempDirectory.appendingPathComponent("custom-bestiary.json")
         let outputData = try Data(contentsOf: outputURL)
-        let outputObject = try XCTUnwrap(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
-        let creatures = try XCTUnwrap(outputObject["creatures"] as? [[String: Any]])
+        let outputObject = try #require(try JSONSerialization.jsonObject(with: outputData) as? [String: Any])
+        let creatures = try #require(outputObject["creatures"] as? [[String: Any]])
 
-        XCTAssertEqual(outputObject["rulesetId"] as? String, "pathfinder")
-        XCTAssertEqual(creatures.count, 2)
-        XCTAssertEqual(creatures[0]["name"] as? String, "Bundle Alpha")
-        XCTAssertEqual(creatures[0]["init"] as? Int, 3)
-        XCTAssertEqual(creatures[1]["name"] as? String, "Bundle Beta")
-        XCTAssertEqual(creatures[1]["init"] as? Int, 2)
+        #expect(outputObject["rulesetId"] as? String == "pathfinder")
+        #expect(creatures.count == 2)
+        #expect(creatures[0]["name"] as? String == "Bundle Alpha")
+        #expect(creatures[0]["init"] as? Int == 3)
+        #expect(creatures[1]["name"] as? String == "Bundle Beta")
+        #expect(creatures[1]["init"] as? Int == 2)
     }
 
-    func testCreatureLibraryStoreLoadsMultiCreatureUserDataFiles() async throws {
+    @Test("creature library store loads multi creature user data files")
+    func creatureLibraryStoreLoadsMultiCreatureUserDataFiles() async throws {
         let tempBaseDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("roll4initiative-userdata-\(UUID().uuidString)", isDirectory: true)
         let tempUserDataDirectory = tempBaseDirectory
@@ -450,9 +463,9 @@ final class CreatureLibraryImportTests: XCTestCase {
             selectedLocalCreatureFiles: ["custom-user-bestiary.json"]
         )
 
-        XCTAssertEqual(response.totalMatches, 2)
-        XCTAssertEqual(response.creatures.map(\.name).sorted(), ["Local Alpha", "Local Beta"])
-        XCTAssertEqual(response.creatures.first(where: { $0.name == "Local Alpha" })?.initiativeBonus, 2)
-        XCTAssertEqual(response.creatures.first(where: { $0.name == "Local Beta" })?.initiativeBonus, 4)
+        #expect(response.totalMatches == 2)
+        #expect(response.creatures.map(\.name).sorted() == ["Local Alpha", "Local Beta"])
+        #expect(response.creatures.first(where: { $0.name == "Local Alpha" })?.initiativeBonus == 2)
+        #expect(response.creatures.first(where: { $0.name == "Local Beta" })?.initiativeBonus == 4)
     }
 }
