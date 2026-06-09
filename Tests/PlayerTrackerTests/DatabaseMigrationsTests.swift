@@ -1,24 +1,27 @@
 import SQLite3
 import FluentSQLiteDriver
 import Vapor
-import XCTest
+import Testing
 @testable import PlayerTracker
 
-final class DatabaseMigrationsTests: XCTestCase {
-    func testDatabaseShapeVerificationRejectsLegacyCampaignPlayerSessionSchema() async throws {
+@Suite("Database Migrations")
+struct DatabaseMigrationsTests {
+    @Test("database shape verification rejects legacy campaign player session schema")
+    func databaseShapeVerificationRejectsLegacyCampaignPlayerSessionSchema() async throws {
         let app = try await makeApp(withLegacyPlayerSessionSchema: true)
         defer { shutdownApplicationSynchronously(app) }
 
         do {
             try await DatabaseMigrations.verifyShape(on: app.db)
-            XCTFail("Expected legacy database schema verification to fail.")
+            Issue.record("Expected legacy database schema verification to fail.")
         } catch {
             let abort = error as? AbortError
-            XCTAssertEqual(abort?.status, .internalServerError)
+            #expect(abort?.status == .internalServerError)
         }
     }
 
-    func testLegacyPlayerSessionSchemaMigrationCreatesPlayersTable() async throws {
+    @Test("legacy player session schema migration creates players table")
+    func legacyPlayerSessionSchemaMigrationCreatesPlayersTable() async throws {
         let app = try await makeApp(withLegacyPlayerSessionSchema: true)
         defer { shutdownApplicationSynchronously(app) }
 
@@ -38,7 +41,8 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
 
-    func testLegacyCharacterSchemaMigrationAddsLastPlayedByNameColumn() async throws {
+    @Test("legacy character schema migration adds last played by name column")
+    func legacyCharacterSchemaMigrationAddsLastPlayedByNameColumn() async throws {
         let app = try await makeApp(withLegacyPlayerSessionSchema: true)
         defer { shutdownApplicationSynchronously(app) }
 
@@ -58,7 +62,8 @@ final class DatabaseMigrationsTests: XCTestCase {
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
 
-    func testDatabaseShapeVerificationRejectsLegacyCampaignTimeoutSchema() async throws {
+    @Test("database shape verification rejects legacy campaign timeout schema")
+    func databaseShapeVerificationRejectsLegacyCampaignTimeoutSchema() async throws {
         let app = try await makeApp(withLegacyCampaignSchema: true)
         defer { shutdownApplicationSynchronously(app) }
 
@@ -69,14 +74,15 @@ final class DatabaseMigrationsTests: XCTestCase {
 
         do {
             try await DatabaseMigrations.verifyShape(on: app.db)
-            XCTFail("Expected legacy campaign timeout schema verification to fail.")
+            Issue.record("Expected legacy campaign timeout schema verification to fail.")
         } catch {
             let abort = error as? AbortError
-            XCTAssertEqual(abort?.status, .internalServerError)
+            #expect(abort?.status == .internalServerError)
         }
     }
 
-    func testLegacyCampaignSchemaMigrationAddsInviteTable() async throws {
+    @Test("legacy campaign schema migration adds invite table")
+    func legacyCampaignSchemaMigrationAddsInviteTable() async throws {
         let app = try await makeApp(withLegacyCampaignSchema: true)
         defer { shutdownApplicationSynchronously(app) }
 
