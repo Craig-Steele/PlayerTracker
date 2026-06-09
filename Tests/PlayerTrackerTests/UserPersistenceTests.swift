@@ -1,10 +1,12 @@
 import Vapor
 import XCTVapor
-import XCTest
+import Testing
 @testable import PlayerTracker
 
-final class UserPersistenceTests: XCTestCase {
-    func testUserCreateAndLoadRoundTripsThroughSQLite() async throws {
+@Suite("User Persistence")
+struct UserPersistenceTests {
+    @Test("user create and load round trips through SQLite")
+    func userCreateAndLoadRoundTripsThroughSQLite() async throws {
         let app = try await Application.make(.testing)
 
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
@@ -32,10 +34,10 @@ final class UserPersistenceTests: XCTestCase {
             on: app.db
         )
 
-        XCTAssertNotNil(loaded)
-        XCTAssertEqual(loaded?.id, userID)
-        XCTAssertEqual(loaded?.email, "owner@example.com")
-        XCTAssertEqual(loaded?.passwordHash, "hash-value")
+        #expect(loaded != nil)
+        #expect(loaded?.id == userID)
+        #expect(loaded?.email == "owner@example.com")
+        #expect(loaded?.passwordHash == "hash-value")
 
         try await app.asyncShutdown()
     }

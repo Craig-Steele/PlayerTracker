@@ -1,8 +1,11 @@
-import XCTest
+import Foundation
+import Testing
 @testable import PlayerTracker
 
-final class UserStoreTests: XCTestCase {
-    func testActiveStateSkipsAutoSkipCharacters() async {
+@Suite("User Store")
+struct UserStoreTests {
+    @Test("active state skips auto-skip characters")
+    func activeStateSkipsAutoSkipCharacters() async {
         let store = UserStore()
         let campaignName = "Auto Skip"
         let skipped = await addCharacter(
@@ -33,30 +36,31 @@ final class UserStoreTests: XCTestCase {
             includeHidden: true,
             encounterState: .active
         )
-        XCTAssertEqual(initialState.round, 1)
-        XCTAssertEqual(initialState.currentTurnId, first.id)
-        XCTAssertEqual(initialState.currentTurnName, "First")
+        #expect(initialState.round == 1)
+        #expect(initialState.currentTurnId == first.id)
+        #expect(initialState.currentTurnName == "First")
 
         let nextState = await store.nextTurn(
             campaignName: campaignName,
             includeHidden: true,
             encounterState: .active
         )
-        XCTAssertEqual(nextState.round, 1)
-        XCTAssertEqual(nextState.currentTurnId, second.id)
-        XCTAssertEqual(nextState.currentTurnName, "Second")
+        #expect(nextState.round == 1)
+        #expect(nextState.currentTurnId == second.id)
+        #expect(nextState.currentTurnName == "Second")
 
         let wrappedState = await store.nextTurn(
             campaignName: campaignName,
             includeHidden: true,
             encounterState: .active
         )
-        XCTAssertEqual(wrappedState.round, 2)
-        XCTAssertEqual(wrappedState.currentTurnId, first.id)
-        XCTAssertNotEqual(wrappedState.currentTurnId, skipped.id)
+        #expect(wrappedState.round == 2)
+        #expect(wrappedState.currentTurnId == first.id)
+        #expect(wrappedState.currentTurnId != skipped.id)
     }
 
-    func testActiveStateRevealsHiddenCharacterWhenTurnStarts() async throws {
+    @Test("active state reveals hidden character when turn starts")
+    func activeStateRevealsHiddenCharacterWhenTurnStarts() async throws {
         let store = UserStore()
         let campaignName = "Reveal"
         let ambusher = await addCharacter(
@@ -82,14 +86,15 @@ final class UserStoreTests: XCTestCase {
             encounterState: .active
         )
 
-        XCTAssertEqual(state.currentTurnId, ambusher.id)
-        XCTAssertEqual(state.currentTurnName, "Ambusher")
-        let revealed = try XCTUnwrap(state.players.first { $0.id == ambusher.id })
-        XCTAssertFalse(revealed.isHidden)
-        XCTAssertFalse(revealed.revealOnTurn)
+        #expect(state.currentTurnId == ambusher.id)
+        #expect(state.currentTurnName == "Ambusher")
+        let revealed = try #require(state.players.first { $0.id == ambusher.id })
+        #expect(!revealed.isHidden)
+        #expect(!revealed.revealOnTurn)
     }
 
-    func testPlayerCharactersSortAheadOfRefereesOnEqualInitiative() async throws {
+    @Test("player characters sort ahead of referees on equal initiative")
+    func playerCharactersSortAheadOfRefereesOnEqualInitiative() async throws {
         let store = UserStore()
         let campaignName = "Tie Break"
         let playerOwnerId = UUID()
@@ -121,13 +126,14 @@ final class UserStoreTests: XCTestCase {
             encounterState: .active
         )
 
-        XCTAssertEqual(state.players.first?.id, player.id)
-        XCTAssertEqual(state.players.last?.id, referee.id)
-        XCTAssertEqual(state.currentTurnId, player.id)
-        XCTAssertEqual(state.currentTurnName, "Hero")
+        #expect(state.players.first?.id == player.id)
+        #expect(state.players.last?.id == referee.id)
+        #expect(state.currentTurnId == player.id)
+        #expect(state.currentTurnName == "Hero")
     }
 
-    func testNewCharacterRollsInitiativeWhenEncounterIsActive() async throws {
+    @Test("new character rolls initiative when encounter is active")
+    func newCharacterRollsInitiativeWhenEncounterIsActive() async throws {
         let store = UserStore()
         let campaignName = "Active Add"
 
@@ -154,15 +160,16 @@ final class UserStoreTests: XCTestCase {
             conditions: []
         )
 
-        XCTAssertNil(player.initiative)
+        #expect(player.initiative == nil)
 
         let rolled = await store.rollInitiativeForCharacter(id: player.id, standardDie: "1d20")
-        XCTAssertNotNil(rolled?.initiative)
+        #expect(rolled?.initiative != nil)
         let stored = await store.characterState(for: player.id)
-        XCTAssertNotNil(stored?.initiative)
+        #expect(stored?.initiative != nil)
     }
 
-    func testCharacterCurrencyIsIncludedInPlayerView() async throws {
+    @Test("character currency is included in player view")
+    func characterCurrencyIsIncludedInPlayerView() async throws {
         let store = UserStore()
         let campaignName = "Currency"
         let currency = [
@@ -193,13 +200,14 @@ final class UserStoreTests: XCTestCase {
             includeHidden: true,
             encounterState: .new
         )
-        let view = try XCTUnwrap(state.players.first { $0.id == character.id })
-        XCTAssertEqual(view.currency.count, 2)
-        XCTAssertEqual(view.currency.first(where: { $0.unitId == "gp" })?.amount, 42)
-        XCTAssertEqual(view.currency.first(where: { $0.unitId == "sp" })?.amount, 7)
+        let view = try #require(state.players.first { $0.id == character.id })
+        #expect(view.currency.count == 2)
+        #expect(view.currency.first(where: { $0.unitId == "gp" })?.amount == 42)
+        #expect(view.currency.first(where: { $0.unitId == "sp" })?.amount == 7)
     }
 
-    func testCharacterInventoryIsIncludedInPlayerView() async throws {
+    @Test("character inventory is included in player view")
+    func characterInventoryIsIncludedInPlayerView() async throws {
         let store = UserStore()
         let campaignName = "Inventory"
         let inventory = [
@@ -231,13 +239,14 @@ final class UserStoreTests: XCTestCase {
             includeHidden: true,
             encounterState: .new
         )
-        let view = try XCTUnwrap(state.players.first { $0.id == character.id })
-        XCTAssertEqual(view.inventory.count, 2)
-        XCTAssertEqual(view.inventory.first(where: { $0.name == "Backpack" })?.quantity, 1)
-        XCTAssertEqual(view.inventory.first(where: { $0.name == "Rations" })?.url, "https://example.com/rations")
+        let view = try #require(state.players.first { $0.id == character.id })
+        #expect(view.inventory.count == 2)
+        #expect(view.inventory.first(where: { $0.name == "Backpack" })?.quantity == 1)
+        #expect(view.inventory.first(where: { $0.name == "Rations" })?.url == "https://example.com/rations")
     }
 
-    func testCharacterInventoryPreservesNestedContainerReferences() async throws {
+    @Test("character inventory preserves nested container references")
+    func characterInventoryPreservesNestedContainerReferences() async throws {
         let store = UserStore()
         let campaignName = "Nested Inventory"
         let backpackID = UUID()
@@ -287,15 +296,16 @@ final class UserStoreTests: XCTestCase {
             includeHidden: true,
             encounterState: .new
         )
-        let view = try XCTUnwrap(state.players.first { $0.id == character.id })
-        XCTAssertEqual(view.inventory.count, 2)
-        let backpack = try XCTUnwrap(view.inventory.first(where: { $0.id == backpackID }))
-        XCTAssertTrue(backpack.isContainer)
-        let rations = try XCTUnwrap(view.inventory.first(where: { $0.name == "Rations" }))
-        XCTAssertEqual(rations.containerId, backpackID)
+        let view = try #require(state.players.first { $0.id == character.id })
+        #expect(view.inventory.count == 2)
+        let backpack = try #require(view.inventory.first(where: { $0.id == backpackID }))
+        #expect(backpack.isContainer)
+        let rations = try #require(view.inventory.first(where: { $0.name == "Rations" }))
+        #expect(rations.containerId == backpackID)
     }
 
-    func testStaleClaimExpiresAfterClaimTimeout() async throws {
+    @Test("stale claim expires after claim timeout")
+    func staleClaimExpiresAfterClaimTimeout() async throws {
         let store = UserStore()
         let campaignName = "Timeout"
         let claimed = await addCharacter(
@@ -313,12 +323,13 @@ final class UserStoreTests: XCTestCase {
         await store.expireStaleClaims(campaignName: campaignName, claimTimeoutMinutes: 5)
 
         let updated = await store.characterState(for: claimed.id)
-        XCTAssertNil(updated?.claimedSessionId)
-        XCTAssertNil(updated?.claimedDisplayName)
-        XCTAssertNil(updated?.claimedAt)
+        #expect(updated?.claimedSessionId == nil)
+        #expect(updated?.claimedDisplayName == nil)
+        #expect(updated?.claimedAt == nil)
     }
 
-    func testZeroClaimTimeoutUsesDisconnectLease() async throws {
+    @Test("zero claim timeout uses disconnect lease")
+    func zeroClaimTimeoutUsesDisconnectLease() async throws {
         let store = UserStore()
         let campaignName = "Disconnect"
         let claimed = await addCharacter(
@@ -337,7 +348,7 @@ final class UserStoreTests: XCTestCase {
         await store.expireStaleClaims(campaignName: campaignName, claimTimeoutMinutes: 0)
 
         let refreshed = await store.characterState(for: claimed.id)
-        XCTAssertEqual(refreshed?.claimedSessionId, claimed.ownerId)
+        #expect(refreshed?.claimedSessionId == claimed.ownerId)
 
         await store.debugSetClaimTimestamp(
             id: claimed.id,
@@ -346,9 +357,9 @@ final class UserStoreTests: XCTestCase {
         await store.expireStaleClaims(campaignName: campaignName, claimTimeoutMinutes: 0)
 
         let expired = await store.characterState(for: claimed.id)
-        XCTAssertNil(expired?.claimedSessionId)
-        XCTAssertNil(expired?.claimedDisplayName)
-        XCTAssertNil(expired?.claimedAt)
+        #expect(expired?.claimedSessionId == nil)
+        #expect(expired?.claimedDisplayName == nil)
+        #expect(expired?.claimedAt == nil)
     }
 
     @discardableResult

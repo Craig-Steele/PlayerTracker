@@ -1,9 +1,11 @@
 import Foundation
-import XCTest
+import Testing
 @testable import PlayerTracker
 
-final class CampaignEventHubTests: XCTestCase {
-    func testCampaignEventHubStreamsPublishedUpdates() async throws {
+@Suite("Campaign Event Hub")
+struct CampaignEventHubTests {
+    @Test("streams published updates")
+    func streamsPublishedUpdates() async throws {
         let hub = CampaignEventHub()
         let campaign = CampaignState(
             id: UUID(),
@@ -35,12 +37,13 @@ final class CampaignEventHubTests: XCTestCase {
         )
 
         let message = await iterator.next()
-        XCTAssertEqual(message?.event, "campaign-updated")
-        XCTAssertEqual(message?.snapshot.campaign.id, campaign.id)
-        XCTAssertEqual(message?.snapshot.gameState.round, 3)
+        #expect(message?.event == "campaign-updated")
+        #expect(message?.snapshot.campaign.id == campaign.id)
+        #expect(message?.snapshot.gameState.round == 3)
     }
 
-    func testCampaignEventHubStreamsTurnChangedUpdates() async throws {
+    @Test("streams turn changed updates")
+    func streamsTurnChangedUpdates() async throws {
         let hub = CampaignEventHub()
         let campaign = CampaignState(
             id: UUID(),
@@ -72,13 +75,14 @@ final class CampaignEventHubTests: XCTestCase {
         )
 
         let message = await iterator.next()
-        XCTAssertEqual(message?.event, "turn-changed")
-        XCTAssertEqual(message?.snapshot.campaign.id, campaign.id)
-        XCTAssertEqual(message?.snapshot.gameState.round, 4)
-        XCTAssertEqual(message?.snapshot.gameState.currentTurnName, "Hero")
+        #expect(message?.event == "turn-changed")
+        #expect(message?.snapshot.campaign.id == campaign.id)
+        #expect(message?.snapshot.gameState.round == 4)
+        #expect(message?.snapshot.gameState.currentTurnName == "Hero")
     }
 
-    func testCampaignEventHubShutdownFinishesStreams() async throws {
+    @Test("shutdown finishes streams")
+    func shutdownFinishesStreams() async throws {
         let hub = CampaignEventHub()
         let campaign = CampaignState(
             id: UUID(),
@@ -97,6 +101,6 @@ final class CampaignEventHubTests: XCTestCase {
         await hub.shutdown()
 
         let message = await iterator.next()
-        XCTAssertNil(message)
+        #expect(message == nil)
     }
 }
