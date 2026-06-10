@@ -1154,6 +1154,7 @@ body.referee-page .referee-panel {
 
 .character-list-actions-right > button {
   flex: 0 0 auto;
+  margin-top: 0;
 }
 
 .referee-list-actions {

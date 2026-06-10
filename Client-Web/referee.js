@@ -3975,7 +3975,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     overflow.appendChild(overflowToggle);
-    overflow.appendChild(overflowMenu);
     return { overflow, openOverflowMenu };
   }
 

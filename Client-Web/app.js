@@ -2399,7 +2399,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       if (menu === exceptMenu) return;
       menu.classList.add('hidden');
       menu.setAttribute('aria-hidden', 'true');
-      const toggle = menu.parentElement?.querySelector('.character-overflow-toggle');
+      const toggle = menu._overflowToggle || menu.parentElement?.querySelector('.character-overflow-toggle');
       if (toggle) {
         toggle.setAttribute('aria-expanded', 'false');
       }
@@ -3540,6 +3540,10 @@ function getOwnerName() {
     overflowMenu.className = 'character-overflow-menu hidden';
     overflowMenu.setAttribute('role', 'menu');
     overflowMenu.setAttribute('aria-hidden', 'true');
+    overflowMenu.style.position = 'fixed';
+    overflowMenu.style.zIndex = '10000';
+    overflowMenu._overflowToggle = overflowToggle;
+    document.body.appendChild(overflowMenu);
 
     const overflowTitle = document.createElement('div');
     overflowTitle.className = 'character-overflow-title';
@@ -3552,13 +3556,17 @@ function getOwnerName() {
       overflowMenu.setAttribute('aria-hidden', 'false');
       const centered = isNarrowPopupViewport();
       overflowMenu.classList.toggle('popup-centered', centered);
-      overflowMenu.style.left = centered ? '' : '0';
-      overflowMenu.style.right = centered ? '' : 'auto';
-      overflowMenu.style.top = centered ? '' : 'calc(100% + 0.35rem)';
+      overflowMenu.style.left = centered ? '' : '';
+      overflowMenu.style.right = centered ? '' : '';
+      overflowMenu.style.top = centered ? '' : '';
       overflowMenu.style.bottom = '';
       overflowMenu.style.transform = '';
       overflowToggle.setAttribute('aria-expanded', 'true');
       if (!centered) {
+        const toggleRect = overflowToggle.getBoundingClientRect();
+        overflowMenu.style.top = `${toggleRect.bottom + 6}px`;
+        overflowMenu.style.left = `${toggleRect.left}px`;
+        overflowMenu.style.right = 'auto';
         window.requestAnimationFrame(() => {
           const menuRect = overflowMenu.getBoundingClientRect();
           const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
@@ -3684,7 +3692,6 @@ function getOwnerName() {
     });
 
     overflow.appendChild(overflowToggle);
-    overflow.appendChild(overflowMenu);
     return { overflow, openOverflowMenu };
   }
 
