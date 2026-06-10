@@ -123,6 +123,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerNameEditBtn = document.getElementById('edit-player-name');
   const playerNameSaveBtn = document.getElementById('player-name-save');
   const playerNameCancelBtn = document.getElementById('player-name-cancel');
+  const playerNameLogoutBtn = document.getElementById('player-name-logout');
   const refereeRulesetLink = document.getElementById('ref-ruleset-link');
   const refereeRulesetLicense = document.getElementById('ref-ruleset-license');
   const refereeRulesetLicenseWrap = document.getElementById('ref-ruleset-license-wrap');
@@ -594,6 +595,11 @@ window.addEventListener('DOMContentLoaded', () => {
       showPlayerNameEdit(false);
     });
   }
+  if (playerNameLogoutBtn) {
+    playerNameLogoutBtn.addEventListener('click', () => {
+      void logoutPlayerSession();
+    });
+  }
   if (playerNameSaveBtn && playerNameInput) {
     playerNameSaveBtn.addEventListener('click', () => {
       const newName = playerNameInput.value.trim();
@@ -812,6 +818,24 @@ window.addEventListener('DOMContentLoaded', () => {
     if (playerNameInput) {
       playerNameInput.readOnly = !show;
     }
+  }
+
+  async function logoutPlayerSession() {
+    const confirmed = window.confirm('Log out and return to the join page?');
+    if (!confirmed) return;
+    try {
+      await fetch('/player/logout', { method: 'POST' });
+    } catch (_err) {
+      // Continue with local cleanup and redirect even if the request fails.
+    }
+    try {
+      localStorage.removeItem('ownerName');
+      localStorage.removeItem('playerLoginName');
+    } catch (_err) {
+      // Ignore storage failures.
+    }
+    updateRefereeHeaderPlayerName();
+    window.location.replace('/index.html');
   }
 
   /**

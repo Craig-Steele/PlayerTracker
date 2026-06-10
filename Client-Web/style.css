@@ -2479,6 +2479,81 @@ body.referee-page .referee-panel {
     display: inline-flex;
   }
 
+  .referee-top-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "add treasure settings"
+      "round round turn";
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .referee-top-actions > button {
+    width: 100% !important;
+    min-width: 0;
+    margin-top: 0;
+    padding: 0.5rem 0.65rem;
+    min-height: 0;
+    line-height: 1.05;
+  }
+
+  .referee-top-actions > #ref-add-button {
+    grid-area: add;
+  }
+
+  .referee-top-actions > #ref-party-treasure-button {
+    grid-area: treasure;
+  }
+
+  .referee-top-actions > #ref-campaign-settings {
+    grid-area: settings;
+  }
+
+  .referee-top-actions > #ref-round-indicator {
+    grid-area: round;
+    position: static;
+    transform: none;
+    justify-self: start;
+    width: fit-content;
+    margin: 0;
+    padding: 0.28rem 0.8rem;
+    min-height: 0;
+  }
+
+  .referee-top-actions > #turn-complete {
+    grid-area: turn;
+    justify-self: end;
+    width: fit-content !important;
+    margin: 0;
+    padding: 0.5rem 0.7rem;
+  }
+
+  body.referee-page .referee-campaign-card {
+    margin-bottom: 0.4rem;
+  }
+
+  .referee-page .encounter-controls {
+    gap: 0.4rem;
+    margin-top: -0.2rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .referee-page .encounter-controls button {
+    padding: 0.45rem 0.65rem;
+    margin-top: 0;
+    min-height: 0;
+    line-height: 1.05;
+  }
+
+  body.referee-page .referee-campaign-card .ruleset-icon {
+    width: 40px !important;
+    height: 40px !important;
+    flex-basis: 40px !important;
+    flex-grow: 0;
+    flex-shrink: 0;
+  }
+
   .condition-edit-button {
     width: auto !important;
     display: inline-flex;

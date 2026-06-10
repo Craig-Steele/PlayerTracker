@@ -366,6 +366,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerNameEditBtn = document.getElementById('edit-player-name');
   const playerNameSaveBtn = document.getElementById('player-name-save');
   const playerNameCancelBtn = document.getElementById('player-name-cancel');
+  const playerNameLogoutBtn = document.getElementById('player-name-logout');
   const playerNameNudge = document.getElementById('player-name-nudge');
   const nameInput = document.getElementById('name');
   const useAppInitiativeRollInput = document.getElementById('use-app-initiative-roll');
@@ -5047,6 +5048,27 @@ function getOwnerName() {
     }
   }
 
+  async function logoutPlayerSession() {
+    const confirmed = window.confirm('Log out and return to the join page?');
+    if (!confirmed) return;
+    try {
+      await fetch('/player/logout', { method: 'POST' });
+    } catch (_err) {
+      // Continue with local cleanup and redirect even if the request fails.
+    }
+    try {
+      localStorage.removeItem('ownerName');
+      localStorage.removeItem('playerLoginName');
+    } catch (_err) {
+      // Ignore storage failures.
+    }
+    currentPlayerSessionId = '';
+    if (ownerInput) ownerInput.value = '';
+    if (playerNameInput) playerNameInput.value = '';
+    updatePlayerNameDisplay();
+    window.location.replace('/index.html');
+  }
+
   if (playerNameEditBtn && playerNameInput) {
     playerNameEditBtn.addEventListener('click', () => {
       const ownerName = getOwnerName();
@@ -5101,6 +5123,12 @@ function getOwnerName() {
       updatePlayerNameDisplay();
       showPlayerNameEdit(false);
       updateWindowTitle();
+    });
+  }
+
+  if (playerNameLogoutBtn) {
+    playerNameLogoutBtn.addEventListener('click', () => {
+      void logoutPlayerSession();
     });
   }
 
