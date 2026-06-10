@@ -376,6 +376,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const revealStatsInput = document.getElementById('reveal-stats');
   const autoSkipTurnInput = document.getElementById('auto-skip-turn');
   const healthHeading = document.getElementById('health-heading');
+  const roundIndicator = document.getElementById('round-indicator');
+  const conditionsDialogTitle = document.getElementById('conditions-dialog-title');
   const conditionGrid = document.getElementById('conditions-grid');
   const selectedConditionsWrap = document.getElementById('selected-conditions');
   const conditionFilterInput = document.getElementById('condition-filter');
@@ -902,12 +904,86 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     conditionsPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
+  function updateConditionsDialogTitle(name = '') {
+    if (!conditionsDialogTitle) return;
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    conditionsDialogTitle.textContent = `Conditions - ${trimmedName || 'this character'}`;
+  }
+
   function setDetailsPanelOpen(open) {
     if (!detailsPanel) return;
     detailsPanel.classList.toggle('hidden', !open);
     detailsPanel.classList.toggle('details-panel-open', open);
     detailsPanel.classList.toggle('details-panel-collapsed', !open);
     detailsPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function closeOpenModalOverlay() {
+    if (playerNameEdit && playerNameEdit.classList.contains('visible')) {
+      if (playerNameCancelBtn) {
+        playerNameCancelBtn.click();
+      } else {
+        showPlayerNameEdit(false);
+      }
+      return true;
+    }
+    if (addForm && addForm.classList.contains('details-panel-open') && !addForm.classList.contains('hidden')) {
+      if (addCancelBtn) {
+        addCancelBtn.click();
+      } else {
+        hideAddForm();
+      }
+      return true;
+    }
+    if (detailsPanel && detailsPanel.classList.contains('details-panel-open') && !detailsPanel.classList.contains('hidden')) {
+      if (detailsCancelBtn) {
+        detailsCancelBtn.click();
+      } else {
+        setDetailsPanelOpen(false);
+      }
+      return true;
+    }
+    if (conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open') && !conditionsPanel.classList.contains('hidden')) {
+      if (conditionsCancelBtn) {
+        conditionsCancelBtn.click();
+      } else {
+        setConditionsPanelOpen(false);
+      }
+      return true;
+    }
+    if (initiativePanel && !initiativePanel.classList.contains('hidden')) {
+      if (initiativeCancelBtn) {
+        initiativeCancelBtn.click();
+      } else {
+        closeInitiativeEditor();
+      }
+      return true;
+    }
+    if (currencyPanel && !currencyPanel.classList.contains('hidden')) {
+      if (currencyCancelBtn) {
+        currencyCancelBtn.click();
+      } else {
+        closeCurrencyEditor();
+      }
+      return true;
+    }
+    if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
+      if (partyTreasureCancelBtn) {
+        partyTreasureCancelBtn.click();
+      } else {
+        closePartyTreasureEditor();
+      }
+      return true;
+    }
+    if (inventoryPanel && !inventoryPanel.classList.contains('hidden')) {
+      if (inventoryCloseBtn) {
+        inventoryCloseBtn.click();
+      } else {
+        closeInventoryEditor();
+      }
+      return true;
+    }
+    return false;
   }
 
   async function openDetailsEditorForCharacter(character) {
@@ -2408,6 +2484,11 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    if (closeOpenModalOverlay()) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     let handled = false;
     const hasOpenInventoryForm = inventoryAddFormOpen || Boolean(inventoryAddForm && !inventoryAddForm.classList.contains('hidden'));
     const hasOpenInventory = Boolean(inventoryPanel && !inventoryPanel.classList.contains('hidden'));
@@ -2498,7 +2579,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     document.body.classList.toggle('no-player-name', !ownerName);
     updatePlayerEntryGate();
     if (playerCardPlayerName) {
-      playerCardPlayerName.textContent = `Player: ${ownerName || 'Player'}`;
+      playerCardPlayerName.textContent = ownerName || 'Player';
     }
     updateConditionsAvailability();
     updateWindowTitle();
@@ -2520,6 +2601,12 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isMineTurn = false) {
     const encounterText = formatEncounterStateText(encounterState, round, currentTurnPlayer);
+    if (roundIndicator) {
+      roundIndicator.textContent = `Round: ${round || 1}`;
+      roundIndicator.classList.toggle('round-indicator-active', encounterState === 'active');
+      roundIndicator.classList.toggle('round-indicator-suspended', encounterState === 'suspended');
+      roundIndicator.classList.toggle('round-indicator-new', encounterState !== 'active' && encounterState !== 'suspended');
+    }
     if (playerEncounterState) {
       playerEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isMineTurn));
       playerEncounterState.textContent = encounterText;
@@ -4399,6 +4486,7 @@ function getOwnerName() {
     if (conditionsCharacter) {
       conditionsCharacter.textContent = found.name || 'this character';
     }
+    updateConditionsDialogTitle(found.name || 'this character');
   }
 
   function clearCharacterSelection() {
@@ -4425,6 +4513,7 @@ function getOwnerName() {
     if (conditionsCharacter) {
       conditionsCharacter.textContent = 'this character';
     }
+    updateConditionsDialogTitle('this character');
   }
 
   function revertSelectedCharacterForm() {
@@ -4498,6 +4587,7 @@ function getOwnerName() {
     if (conditionsCharacter) {
       conditionsCharacter.textContent = addNameInput ? addNameInput.value.trim() || 'this character' : 'this character';
     }
+    updateConditionsDialogTitle(addNameInput ? addNameInput.value.trim() || 'this character' : 'this character');
   }
 
   function hideAddForm() {
@@ -4513,6 +4603,7 @@ function getOwnerName() {
     if (conditionsCharacter) {
       conditionsCharacter.textContent = 'this character';
     }
+    updateConditionsDialogTitle('this character');
   }
 
   async function loadCharactersForOwner(ownerName) {
@@ -4947,6 +5038,7 @@ function getOwnerName() {
   function showPlayerNameEdit(show) {
     if (!playerNameEdit) return;
     playerNameEdit.classList.toggle('visible', show);
+    playerNameEdit.setAttribute('aria-hidden', (!show).toString());
     if (playerNameEditBtn) {
       playerNameEditBtn.classList.toggle('hidden', show);
     }
@@ -4962,6 +5054,39 @@ function getOwnerName() {
       playerNameInput.classList.remove('player-name-placeholder');
       showPlayerNameEdit(true);
       playerNameInput.focus();
+    });
+  }
+
+  if (playerNameEdit) {
+    playerNameEdit.addEventListener('click', (event) => {
+      if (event.target !== playerNameEdit) return;
+      if (playerNameCancelBtn) {
+        playerNameCancelBtn.click();
+      } else {
+        showPlayerNameEdit(false);
+      }
+    });
+  }
+
+  if (detailsPanel) {
+    detailsPanel.addEventListener('click', (event) => {
+      if (event.target !== detailsPanel) return;
+      if (detailsCancelBtn) {
+        detailsCancelBtn.click();
+      } else {
+        setDetailsPanelOpen(false);
+      }
+    });
+  }
+
+  if (addForm) {
+    addForm.addEventListener('click', (event) => {
+      if (event.target !== addForm) return;
+      if (addCancelBtn) {
+        addCancelBtn.click();
+      } else {
+        hideAddForm();
+      }
     });
   }
 
@@ -5420,7 +5545,7 @@ function getOwnerName() {
             playersBody.appendChild(createEmptyEncounterRow(conditionLibrary.length > 0 ? 4 : 3));
           }
           queueDisplayRosterLayoutUpdate();
-          updateEncounterStateDisplay();
+          updateEncounterStateDisplay(1);
           updateConditionsAvailability();
           updateTurnCompleteButtonState();
           return;
@@ -5765,6 +5890,7 @@ function getOwnerName() {
         await saveInitiativeFromEditor(false);
       } else if (event.key === 'Escape') {
         event.preventDefault();
+        event.stopPropagation();
         closeInitiativeEditor();
       }
     });
@@ -5786,6 +5912,7 @@ function getOwnerName() {
       if (conditionsCharacter && isCreatingCharacter) {
         conditionsCharacter.textContent = addNameInput.value.trim() || 'this character';
       }
+      updateConditionsDialogTitle(addNameInput.value.trim() || 'this character');
     });
   }
   if (addCancelBtn) {

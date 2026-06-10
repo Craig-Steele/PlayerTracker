@@ -1,5 +1,5 @@
 (function () {
-  const DEFAULT_ICON_SIZE = 96;
+  const DEFAULT_ICON_SIZE = 67;
 
   function resolveIconUrl(iconUrl) {
     if (!iconUrl) return null;

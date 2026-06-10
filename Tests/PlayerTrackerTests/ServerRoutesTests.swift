@@ -1304,6 +1304,28 @@ struct ServerRoutesTests {
         XCTAssertEqual(nextState.encounterState, .active)
         XCTAssertEqual(nextState.currentTurnName, "Hero")
         XCTAssertEqual(nextState.round, 2)
+
+        let suspendResponse = try await tester.sendRequest(
+            .POST,
+            "/encounter/suspend",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeSession)")])
+        )
+        XCTAssertEqual(suspendResponse.status, .ok)
+        let suspendedState = try suspendResponse.content.decode(GameState.self)
+        XCTAssertEqual(suspendedState.encounterState, .suspended)
+        XCTAssertEqual(suspendedState.currentTurnName, "Hero")
+        XCTAssertEqual(suspendedState.round, 2)
+
+        let resumeResponse = try await tester.sendRequest(
+            .POST,
+            "/encounter/resume",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeSession)")])
+        )
+        XCTAssertEqual(resumeResponse.status, .ok)
+        let resumedState = try resumeResponse.content.decode(GameState.self)
+        XCTAssertEqual(resumedState.encounterState, .active)
+        XCTAssertEqual(resumedState.currentTurnName, "Hero")
+        XCTAssertEqual(resumedState.round, 2)
     }
 
     @Test

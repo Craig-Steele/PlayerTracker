@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=93">
+  <link rel="stylesheet" href="style.css?v=101">
 </head>
 <body class="player-page">
   <!-- Campaign header -->
@@ -21,27 +21,45 @@
           (<a id="player-ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
         </span>
       </div>
-      <div class="player-campaign-player-row">
-        <div id="player-card-player-name" class="player-campaign-meta">Player: —</div>
-        <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✎</button>
+    </div>
+    <div class="player-header-side">
+      <div class="player-header-labels">
+        <div class="referee-card-player-role">Player</div>
+        <div id="player-card-player-name" class="player-campaign-meta referee-card-player-name">—</div>
       </div>
-      <div id="player-name-edit" class="player-name-edit">
-        <input type="text" id="player-name-input" aria-label="Player name" />
-        <div class="player-name-actions">
-          <button type="button" id="player-name-save" class="icon-button icon-button-success" aria-label="Save player name">✓</button>
-          <button type="button" id="player-name-cancel" class="icon-button icon-button-danger" aria-label="Cancel player name edit">✕</button>
-        </div>
+      <div class="player-campaign-player-row">
+        <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✎</button>
       </div>
       <div id="player-name-nudge" class="player-name-nudge hidden">
         Set your player name to continue.
       </div>
-      <div id="player-encounter-state" class="player-campaign-meta">Encounter: New</div>
+    </div>
+  </div>
+
+  <div id="player-name-edit" class="player-name-edit" aria-hidden="true">
+    <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="player-name-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="player-name-dialog-title">Player Name</h2>
+        <div class="conditions-dialog-actions">
+          <button type="button" id="player-name-cancel" class="secondary">Cancel</button>
+          <button type="button" id="player-name-save">Save</button>
+        </div>
+      </div>
+      <div class="form-section-block property-group">
+        <label class="property-row">
+          <span class="property-label">Player Name</span>
+          <span class="property-control">
+            <input type="text" id="player-name-input" aria-label="Player name" />
+          </span>
+        </label>
+      </div>
     </div>
   </div>
 
   <!-- Roster toolbar -->
   <div class="character-list-actions character-list-header">
     <button type="button" id="character-add">👤 Add Character</button>
+    <div id="round-indicator" class="round-indicator">Round: 1</div>
     <div class="character-list-actions-right">
       <button type="button" id="roll-initiative-all" class="hidden" aria-hidden="true">🎲 Roll for Initiative</button>
       <button type="button" id="turn-complete" class="hidden" aria-hidden="true">✅ Turn Complete</button>
@@ -133,14 +151,13 @@
     <div id="conditions-panel" class="conditions-modal hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="conditions-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="conditions-dialog-title">🩸 Conditions</h2>
+          <h2 id="conditions-dialog-title">Conditions - this character</h2>
           <div class="conditions-dialog-actions">
             <button type="button" id="conditions-cancel" class="secondary">Cancel</button>
             <button type="button" id="conditions-save">Save</button>
           </div>
         </div>
         <input type="search" id="condition-filter" placeholder="Filter list…" />
-        <p id="form-help">Select the conditions affecting <span id="conditions-character">this character</span>.</p>
         <div id="conditions-grid" class="conditions-grid"></div>
         <div id="selected-conditions" class="selected-conditions"></div>
       </div>
@@ -405,8 +422,8 @@
   <script src="stat-inputs.js?v=2"></script>
   <script src="player-name-save.js?v=2"></script>
   <script src="claimable-characters.js?v=2"></script>
-  <script src="ruleset.js?v=2"></script>
+  <script src="ruleset.js?v=3"></script>
   <script src="encounter.js?v=3"></script>
-  <script src="app.js?v=122"></script>
+  <script src="app.js?v=125"></script>
 </body>
 </html>

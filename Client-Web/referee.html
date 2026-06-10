@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=92">
+  <link rel="stylesheet" href="style.css?v=102">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -21,10 +21,35 @@
             (<a id="ref-ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
           </span>
         </div>
-        <div id="ref-encounter-state" class="player-campaign-meta">Encounter: New</div>
       </div>
-      <div class="referee-card-actions">
-        <button type="button" id="ref-campaign-settings" class="referee-settings-button" aria-label="Campaign settings" title="Campaign settings">⛭</button>
+      <div class="player-header-side referee-header-side">
+        <div class="player-header-labels">
+          <div class="referee-card-player-role">Referee</div>
+          <div id="ref-referee-player-name" class="player-campaign-meta referee-card-player-name">—</div>
+        </div>
+        <div class="player-campaign-player-row">
+          <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✎</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="player-name-edit" class="player-name-edit" aria-hidden="true">
+    <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="player-name-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="player-name-dialog-title">Player Name</h2>
+        <div class="conditions-dialog-actions">
+          <button type="button" id="player-name-cancel" class="secondary">Cancel</button>
+          <button type="button" id="player-name-save">Save</button>
+        </div>
+      </div>
+      <div class="form-section-block property-group">
+        <label class="property-row">
+          <span class="property-label">Player Name</span>
+          <span class="property-control">
+            <input type="text" id="player-name-input" aria-label="Player name" />
+          </span>
+        </label>
       </div>
     </div>
   </div>
@@ -33,12 +58,14 @@
     <div class="character-list-actions referee-list-actions referee-top-actions">
       <button type="button" id="ref-add-button">👤 Add<br/>Character</button>
       <button type="button" id="ref-party-treasure-button">💰 Party<br/>Treasure</button>
+      <button type="button" id="ref-campaign-settings">⚙ Campaign<br/>Settings</button>
+      <div id="ref-round-indicator" class="round-indicator">Round: 1</div>
       <button type="button" id="turn-complete">✅ Turn<br/>Complete</button>
     </div>
     <div class="encounter-controls">
-      <button type="button" id="encounter-new">New Encounter</button>
-      <button type="button" id="encounter-start">Start Encounter</button>
-      <button type="button" id="encounter-suspend">Suspend Encounter</button>
+      <button type="button" id="encounter-new">🆕 New Encounter</button>
+      <button type="button" id="encounter-start">🟢 Resume Encounter</button>
+      <button type="button" id="encounter-suspend">🔴 Suspend Encounter</button>
     </div>
     <div class="character-list-scroll">
       <table>
@@ -162,7 +189,7 @@
     <div id="ref-conditions-panel" class="conditions-panel-collapsed hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-conditions-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="ref-conditions-dialog-title">🩸 Conditions</h2>
+          <h2 id="ref-conditions-dialog-title">Conditions - this character</h2>
           <div class="conditions-dialog-actions">
             <button type="button" id="ref-conditions-cancel" class="secondary">Cancel</button>
             <button type="button" id="ref-conditions-save">Save</button>
@@ -415,8 +442,8 @@
   <script src="live-stream.js?v=3"></script>
   <script src="party-treasure.js?v=11"></script>
   <script src="inventory-view.js?v=5"></script>
-  <script src="ruleset.js?v=1"></script>
+  <script src="ruleset.js?v=2"></script>
   <script src="encounter.js?v=3"></script>
-  <script src="referee.js?v=53"></script>
+  <script src="referee.js?v=57"></script>
 </body>
 </html>

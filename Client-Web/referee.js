@@ -117,10 +117,17 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const refereeCampaignName = document.getElementById('ref-campaign-name');
   const refereeEncounterState = document.getElementById('ref-encounter-state');
+  const roundIndicator = document.getElementById('ref-round-indicator');
+  const playerNameEdit = document.getElementById('player-name-edit');
+  const playerNameInput = document.getElementById('player-name-input');
+  const playerNameEditBtn = document.getElementById('edit-player-name');
+  const playerNameSaveBtn = document.getElementById('player-name-save');
+  const playerNameCancelBtn = document.getElementById('player-name-cancel');
   const refereeRulesetLink = document.getElementById('ref-ruleset-link');
   const refereeRulesetLicense = document.getElementById('ref-ruleset-license');
   const refereeRulesetLicenseWrap = document.getElementById('ref-ruleset-license-wrap');
   const refereeRulesetIcon = document.getElementById('ref-ruleset-icon');
+  const refereeHeaderPlayerName = document.getElementById('ref-referee-player-name');
   const invitePlayerBtn = document.getElementById('ref-invite-player');
   const campaignSettingsBtn = document.getElementById('ref-campaign-settings');
   const campaignSettingsModal = document.getElementById('ref-campaign-settings-modal');
@@ -214,6 +221,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const editorConditionFilter = document.getElementById('ref-condition-filter');
   const editorConditionsGrid = document.getElementById('ref-conditions-grid');
   const editorSelectedConditions = document.getElementById('ref-selected-conditions');
+  const conditionsDialogTitle = document.getElementById('ref-conditions-dialog-title');
   const detailsToggle = document.getElementById('ref-details-toggle');
   const detailsPanel = document.getElementById('ref-details-panel');
   const conditionsPanel = document.getElementById('ref-conditions-panel');
@@ -562,6 +570,53 @@ window.addEventListener('DOMContentLoaded', () => {
       closeCampaignSettingsModal();
     });
   }
+  if (playerNameEditBtn && playerNameInput) {
+    playerNameEditBtn.addEventListener('click', () => {
+      playerNameInput.value = getStoredRefereePlayerName();
+      showPlayerNameEdit(true);
+      playerNameInput.focus();
+      playerNameInput.select();
+    });
+  }
+  if (playerNameEdit) {
+    playerNameEdit.addEventListener('click', (event) => {
+      if (event.target !== playerNameEdit) return;
+      if (playerNameCancelBtn) {
+        playerNameCancelBtn.click();
+      } else {
+        showPlayerNameEdit(false);
+      }
+    });
+  }
+  if (playerNameCancelBtn && playerNameInput) {
+    playerNameCancelBtn.addEventListener('click', () => {
+      playerNameInput.value = getStoredRefereePlayerName();
+      showPlayerNameEdit(false);
+    });
+  }
+  if (playerNameSaveBtn && playerNameInput) {
+    playerNameSaveBtn.addEventListener('click', () => {
+      const newName = playerNameInput.value.trim();
+      if (!newName) {
+        playerNameInput.focus();
+        playerNameInput.select();
+        return;
+      }
+      setStoredRefereePlayerName(newName);
+      updateRefereeHeaderPlayerName();
+      showPlayerNameEdit(false);
+    });
+  }
+  if (form) {
+    form.addEventListener('click', (event) => {
+      if (event.target !== form) return;
+      if (addCancelBtn) {
+        addCancelBtn.click();
+      } else {
+        hideAddForm();
+      }
+    });
+  }
   if (campaignNameInput) {
     campaignNameInput.addEventListener('input', () => validateCampaignSettingsModal());
   }
@@ -676,6 +731,8 @@ window.addEventListener('DOMContentLoaded', () => {
       void saveCampaignUserDataSelection();
     });
   }
+  updateRefereeHeaderPlayerName();
+  window.addEventListener('storage', updateRefereeHeaderPlayerName);
 
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
     getCampaignId: () => activeCampaignId,
@@ -716,6 +773,45 @@ window.addEventListener('DOMContentLoaded', () => {
     );
     const inviteLabel = sharedFormatAccessLabel(campaign.isInviteOnly);
     campaignSettingsModalSummary.textContent = `${campaign.name} · ${campaign.rulesetLabel || campaign.rulesetId || 'No Conditions'} · ${claimTimeoutLabel} · ${inviteLabel}`;
+  }
+
+  function getStoredRefereePlayerName() {
+    try {
+      const ownerName = (localStorage.getItem('ownerName') || '').trim();
+      if (ownerName) return ownerName;
+      return (localStorage.getItem('playerLoginName') || '').trim();
+    } catch (_err) {
+      return '';
+    }
+  }
+
+  function setStoredRefereePlayerName(name) {
+    try {
+      localStorage.setItem('ownerName', name);
+    } catch (_err) {
+      // Ignore localStorage failures; the header will still update for this session.
+    }
+  }
+
+  /**
+   * Update the referee header's player name label.
+   * @returns {void}
+   */
+  function updateRefereeHeaderPlayerName() {
+    if (!refereeHeaderPlayerName) return;
+    refereeHeaderPlayerName.textContent = getStoredRefereePlayerName() || 'Player';
+  }
+
+  function showPlayerNameEdit(show) {
+    if (!playerNameEdit) return;
+    playerNameEdit.classList.toggle('visible', show);
+    playerNameEdit.setAttribute('aria-hidden', (!show).toString());
+    if (playerNameEditBtn) {
+      playerNameEditBtn.classList.toggle('hidden', show);
+    }
+    if (playerNameInput) {
+      playerNameInput.readOnly = !show;
+    }
   }
 
   /**
@@ -1036,9 +1132,16 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
-    if (!refereeEncounterState) return;
-    refereeEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isRefTurn));
-    refereeEncounterState.textContent = formatEncounterStateText(encounterState, round, currentTurnPlayer);
+    if (roundIndicator) {
+      roundIndicator.textContent = `Round: ${round || 1}`;
+      roundIndicator.classList.toggle('round-indicator-active', encounterState === 'active');
+      roundIndicator.classList.toggle('round-indicator-suspended', encounterState === 'suspended');
+      roundIndicator.classList.toggle('round-indicator-new', encounterState !== 'active' && encounterState !== 'suspended');
+    }
+    if (refereeEncounterState) {
+      refereeEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isRefTurn));
+      refereeEncounterState.textContent = formatEncounterStateText(encounterState, round, currentTurnPlayer);
+    }
   }
 
   /**
@@ -1563,6 +1666,12 @@ window.addEventListener('DOMContentLoaded', () => {
     conditionsPanel.classList.toggle('conditions-panel-open', open);
     conditionsPanel.classList.toggle('conditions-panel-collapsed', !open);
     conditionsPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function updateConditionsDialogTitle(name = '') {
+    if (!conditionsDialogTitle) return;
+    const trimmedName = typeof name === 'string' ? name.trim() : '';
+    conditionsDialogTitle.textContent = `Conditions - ${trimmedName || 'this character'}`;
   }
 
   /**
@@ -3404,6 +3513,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (encounterStartBtn) {
       const isActive = encounterState === 'active';
+      const isSuspended = encounterState === 'suspended';
+      encounterStartBtn.textContent = isSuspended ? '🟢 Resume Encounter' : '🟢 Start Encounter';
       encounterStartBtn.disabled = isActive;
       encounterStartBtn.setAttribute('aria-disabled', isActive.toString());
     }
@@ -3493,11 +3604,83 @@ window.addEventListener('DOMContentLoaded', () => {
     clearSelectedCharacter();
   }
 
+  function closeOpenRefereeModalOverlay() {
+    if (playerNameEdit && playerNameEdit.classList.contains('visible')) {
+      if (playerNameCancelBtn) {
+        playerNameCancelBtn.click();
+      } else {
+        showPlayerNameEdit(false);
+      }
+      return true;
+    }
+    if (campaignSettingsModal && !campaignSettingsModal.classList.contains('hidden')) {
+      closeCampaignSettingsModal();
+      return true;
+    }
+    if (conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open') && !conditionsPanel.classList.contains('hidden')) {
+      if (conditionsCancelBtn) {
+        conditionsCancelBtn.click();
+      } else {
+        setConditionsPanelOpen(false);
+      }
+      return true;
+    }
+    if (form && !form.classList.contains('hidden')) {
+      if (addCancelBtn) {
+        addCancelBtn.click();
+      } else {
+        hideAddForm();
+      }
+      return true;
+    }
+    if (detailsPanel && detailsPanel.classList.contains('details-panel-open') && !detailsPanel.classList.contains('hidden')) {
+      if (detailsCancelBtn) {
+        detailsCancelBtn.click();
+      } else {
+        setDetailsPanelOpen(false);
+      }
+      return true;
+    }
+    if (initiativeModal && !initiativeModal.classList.contains('hidden')) {
+      if (initiativeModalCancelBtn) {
+        initiativeModalCancelBtn.click();
+      } else {
+        closeInitiativeEditor();
+      }
+      return true;
+    }
+    if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
+      if (partyTreasureCancelBtn) {
+        partyTreasureCancelBtn.click();
+      } else {
+        closePartyTreasureEditor();
+      }
+      return true;
+    }
+    if (currencyPanel && !currencyPanel.classList.contains('hidden')) {
+      if (currencyCloseBtn) {
+        currencyCloseBtn.click();
+      } else {
+        closeCurrencyViewer();
+      }
+      return true;
+    }
+    if (inventoryPanel && !inventoryPanel.classList.contains('hidden')) {
+      if (inventoryCloseBtn) {
+        inventoryCloseBtn.click();
+      } else {
+        closeInventoryViewer();
+      }
+      return true;
+    }
+    return false;
+  }
+
   document.addEventListener('click', (event) => {
     if (!(event.target instanceof Element)) return;
     if (
       event.target.closest(
-        'button, input, select, textarea, a, label, .character-overflow, .referee-row-menu, .conditions-modal, .details-panel-collapsed, .conditions-panel-collapsed'
+        'button, input, select, textarea, a, label, .character-overflow, .referee-row-menu, .player-name-edit, .conditions-modal, .details-panel-collapsed, .conditions-panel-collapsed'
       )
     ) {
       return;
@@ -3507,6 +3690,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    if (closeOpenRefereeModalOverlay()) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     let handled = false;
     const hasOpenOverflow = document.querySelector('.referee-row-menu:not(.hidden)');
     const hasOpenStats = Boolean(expandedOrderStatsCharacterId);
@@ -4261,6 +4449,7 @@ window.addEventListener('DOMContentLoaded', () => {
     selectedConditions = new Set(player.conditions || []);
     renderEditorConditions(editorConditionFilter ? editorConditionFilter.value : '');
     updateSelectedConditionsDisplay();
+    updateConditionsDialogTitle(player.name || 'this character');
   }
 
   /**
@@ -4353,6 +4542,7 @@ window.addEventListener('DOMContentLoaded', () => {
     closeOverflowMenu();
     setDetailsPanelOpen(false);
     setConditionsPanelOpen(false);
+    updateConditionsDialogTitle('this character');
   }
 
   /**
@@ -5008,7 +5198,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (encounterStartBtn) {
     encounterStartBtn.addEventListener('click', () => {
-      handleEncounterAction('/encounter/start');
+      handleEncounterAction(encounterState === 'suspended' ? '/encounter/resume' : '/encounter/start');
     });
   }
   if (encounterSuspendBtn) {

@@ -988,6 +988,26 @@ func routes(
         return state
     }
 
+    app.post("encounter", "resume") { req async throws -> GameState in
+        logConnection(req, action: "encounter-resume")
+        let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let campaignName = campaign.name
+        _ = await campaignStore.setEncounterState(.active)
+        let updatedCampaign = await campaignStore.activeCampaign() ?? campaign
+        let state = await userStore.state(
+            campaignName: campaignName,
+            includeHidden: true,
+            encounterState: .active
+        )
+        await publishCampaignUpdate(
+            campaign: updatedCampaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "encounter-resume"
+        )
+        return state
+    }
+
     app.post("encounter", "suspend") { req async throws -> GameState in
         logConnection(req, action: "encounter-suspend")
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)

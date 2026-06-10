@@ -1137,8 +1137,10 @@ body.referee-page .referee-panel {
   width: 100%;
 }
 
-.character-list-header {
+.character-list-header,
+.referee-top-actions {
   justify-content: flex-start;
+  position: relative;
 }
 
 .character-list-actions-right {
@@ -1146,6 +1148,42 @@ body.referee-page .referee-panel {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.round-indicator {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.2rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.round-indicator.round-indicator-new {
+  background: var(--bg-panel-subtle);
+  border-color: var(--border-soft);
+  color: var(--text-secondary);
+}
+
+.round-indicator.round-indicator-active {
+  background: var(--bg-success);
+  border-color: var(--border-success);
+  color: var(--text-success-strong);
+}
+
+.round-indicator.round-indicator-suspended {
+  background: var(--bg-danger-soft);
+  border-color: var(--border-danger);
+  color: var(--text-danger);
 }
 
 .character-list-header > button {
@@ -3287,24 +3325,59 @@ body.admin-page .admin-owner-card .admin-owner-group {
 }
 
 .player-campaign-card .ruleset-icon {
-  width: 72px;
-  height: 72px;
-  flex: 0 0 72px;
+  width: 50px;
+  height: 50px;
+  flex: 0 0 50px;
 }
 
 .player-campaign-text {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+  flex: 1 1 auto;
   min-width: 0;
 }
 
-.referee-card-actions {
+.player-header-side {
   margin-left: auto;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.35rem;
+  justify-content: center;
   align-self: stretch;
+  gap: 0.65rem;
+  min-width: 0;
+  text-align: right;
+}
+
+.player-header-labels {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 0;
+  text-align: right;
+  gap: 0.1rem;
+}
+
+.referee-card-player-role {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.1;
+}
+
+.referee-card-player-name {
+  min-width: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.player-header-side .player-campaign-player-row {
+  align-self: center;
+  width: auto;
 }
 
 .admin-header-side {
@@ -3319,14 +3392,16 @@ body.admin-page .admin-owner-card .admin-owner-group {
 .player-campaign-player-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 0.5rem;
   min-width: 0;
+  width: 100%;
 }
 
 .player-campaign-player-row .player-campaign-meta {
   flex: 1 1 auto;
   min-width: 0;
+  text-align: right;
 }
 
 .player-campaign-player-row #edit-player-name {
@@ -3545,13 +3620,14 @@ body.admin-page .admin-owner-card .admin-owner-group {
 }
 
 .player-name-edit {
-  width: auto;
-}
-
-.player-name-edit {
-  display: flex;
+  position: fixed;
+  inset: 0;
+  display: none;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
 }
 
 .player-name-placeholder {
@@ -3572,15 +3648,12 @@ body.admin-page .admin-owner-card .admin-owner-group {
   opacity: 0.55;
 }
 
-.player-name-edit {
-  display: none;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.35rem;
-}
-
 .player-name-edit.visible {
   display: flex;
+}
+
+.player-name-edit .dialog-shell {
+  width: min(32rem, 100%);
 }
 
 .player-name-nudge {
@@ -3594,18 +3667,13 @@ body.admin-page .admin-owner-card .admin-owner-group {
 }
 
 .player-name-edit input {
-  width: min(20rem, 80vw);
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
   align-self: stretch;
 }
 
-.player-name-actions {
-  display: flex;
-  gap: 0.35rem;
-  justify-content: flex-end;
-}
-
 .player-name-edit input {
-  width: min(20rem, 80vw);
   text-align: left;
 }
 
@@ -3618,6 +3686,10 @@ body.admin-page .admin-owner-card .admin-owner-group {
     width: 1.8rem;
     min-width: 1.8rem;
     padding: 0.15rem;
+  }
+
+  .player-name-edit {
+    padding: 0.75rem;
   }
 }
 
