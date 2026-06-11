@@ -392,6 +392,35 @@ struct AddInventoryToCharacters: AsyncMigration {
     }
 }
 
+struct AddInitiativeGroupColumnsToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            if columns.contains(where: { $0.name == "initiative_group_id" }) == false {
+                try await sqlDatabase
+                    .raw("ALTER TABLE characters ADD COLUMN initiative_group_id UUID")
+                    .run()
+            }
+            if columns.contains(where: { $0.name == "initiative_group_index" }) == false {
+                try await sqlDatabase
+                    .raw("ALTER TABLE characters ADD COLUMN initiative_group_index INTEGER")
+                    .run()
+            }
+            connection.logger.notice("Patched characters with initiative group columns.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct AddClaimTimeoutMinutesToCampaigns: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -704,6 +733,8 @@ struct CreateCharacters: AsyncMigration {
             .field("owner_name", .string, .required)
             .field("name", .string, .required)
             .field("initiative", .double)
+            .field("initiative_group_id", .uuid)
+            .field("initiative_group_index", .int)
             .field("stat_block_id", .string)
             .field("currency_json", .string)
             .field("inventory_json", .string)
@@ -802,6 +833,7 @@ enum DatabaseMigrations {
         app.migrations.add(AddStatBlockIdToCharacters())
         app.migrations.add(AddCurrencyToCharacters())
         app.migrations.add(AddInventoryToCharacters())
+        app.migrations.add(AddInitiativeGroupColumnsToCharacters())
         app.migrations.add(CreateCharacterStats())
         app.migrations.add(CreateCharacterConditions())
         app.migrations.add(CreateCampaignEncounters())

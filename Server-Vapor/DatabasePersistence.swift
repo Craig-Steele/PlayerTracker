@@ -417,6 +417,12 @@ final class CharacterRow: Model, @unchecked Sendable {
     @OptionalField(key: "initiative")
     var initiative: Double?
 
+    @OptionalField(key: "initiative_group_id")
+    var initiativeGroupId: UUID?
+
+    @OptionalField(key: "initiative_group_index")
+    var initiativeGroupIndex: Int?
+
     @Field(key: "reveal_stats")
     var revealStats: Bool
 
@@ -459,6 +465,8 @@ final class CharacterRow: Model, @unchecked Sendable {
         claimedAt: Date? = nil,
         name: String,
         initiative: Double?,
+        initiativeGroupId: UUID? = nil,
+        initiativeGroupIndex: Int? = nil,
         revealStats: Bool,
         autoSkipTurn: Bool,
         useAppInitiativeRoll: Bool,
@@ -481,6 +489,8 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.claimedAt = claimedAt
         self.name = name
         self.initiative = initiative
+        self.initiativeGroupId = initiativeGroupId
+        self.initiativeGroupIndex = initiativeGroupIndex
         self.revealStats = revealStats
         self.autoSkipTurn = autoSkipTurn
         self.useAppInitiativeRoll = useAppInitiativeRoll
@@ -1668,6 +1678,8 @@ enum DatabasePersistence {
                     isClaimable: row.isClaimable,
                     characterName: row.name,
                     initiative: row.initiative,
+                    initiativeGroupId: row.initiativeGroupId,
+                    initiativeGroupIndex: row.initiativeGroupIndex,
                     stats: characterStats,
                     currency: decodeCurrencyAmounts(row.currencyJSON),
                     inventory: decodeInventoryEntries(row.inventoryJSON),
@@ -1709,6 +1721,8 @@ enum DatabasePersistence {
                 row.claimedAt = state.claimedAt
                 row.name = state.characterName
                 row.initiative = state.initiative
+                row.initiativeGroupId = state.initiativeGroupId
+                row.initiativeGroupIndex = state.initiativeGroupIndex
                 row.revealStats = state.revealStats
                 row.autoSkipTurn = state.autoSkipTurn
                 row.useAppInitiativeRoll = state.useAppInitiativeRoll
@@ -1737,6 +1751,8 @@ enum DatabasePersistence {
                     claimedAt: state.claimedAt,
                     name: state.characterName,
                     initiative: state.initiative,
+                    initiativeGroupId: state.initiativeGroupId,
+                    initiativeGroupIndex: state.initiativeGroupIndex,
                     revealStats: state.revealStats,
                     autoSkipTurn: state.autoSkipTurn,
                     useAppInitiativeRoll: state.useAppInitiativeRoll,

@@ -305,6 +305,8 @@ struct CharacterState {
     var isClaimable: Bool
     var characterName: String
     var initiative: Double?
+    var initiativeGroupId: UUID?
+    var initiativeGroupIndex: Int?
     var stats: [String: StatEntry]
     var currency: [CurrencyAmount]
     var inventory: [InventoryEntry]
@@ -406,6 +408,8 @@ struct CharacterInput: Content {
     let initiativeBonus: Int?
     let isHidden: Bool?
     let revealOnTurn: Bool?
+    let initiativeGroupId: UUID?
+    let initiativeGroupIndex: Int?
     let conditions: [String]?
 
     init(
@@ -426,6 +430,8 @@ struct CharacterInput: Content {
         initiativeBonus: Int? = nil,
         isHidden: Bool? = nil,
         revealOnTurn: Bool? = nil,
+        initiativeGroupId: UUID? = nil,
+        initiativeGroupIndex: Int? = nil,
         conditions: [String]? = nil
     ) {
         self.id = id
@@ -436,6 +442,8 @@ struct CharacterInput: Content {
         self.referenceUrl = referenceUrl
         self.statBlockId = statBlockId
         self.initiative = initiative
+        self.initiativeGroupId = initiativeGroupId
+        self.initiativeGroupIndex = initiativeGroupIndex
         self.stats = stats
         self.currency = currency
         self.inventory = inventory

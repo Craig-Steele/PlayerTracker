@@ -212,6 +212,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const addCurrentStats = document.getElementById('ref-add-current-stats');
   const addButton = document.getElementById('ref-add-button');
   const addCancelBtn = document.getElementById('ref-add-cancel');
+  const addRunAsGroupInput = document.getElementById('ref-run-as-group');
   const editorEmpty = document.getElementById('ref-editor-empty');
   const editorForm = document.getElementById('ref-editor');
   const editorNameInput = document.getElementById('ref-edit-name');
@@ -4852,6 +4853,30 @@ window.addEventListener('DOMContentLoaded', () => {
    * @param {SubmitEvent} event Submit event from the add form.
    * @returns {Promise<void>}
    */
+  function createAddGroupId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    const bytes = new Uint8Array(16);
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      crypto.getRandomValues(bytes);
+    } else {
+      for (let index = 0; index < bytes.length; index += 1) {
+        bytes[index] = Math.floor(Math.random() * 256);
+      }
+    }
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0'));
+    return [
+      hex.slice(0, 4).join(''),
+      hex.slice(4, 6).join(''),
+      hex.slice(6, 8).join(''),
+      hex.slice(8, 10).join(''),
+      hex.slice(10, 16).join('')
+    ].join('-');
+  }
+
   async function handleAddCharacter(event) {
     event.preventDefault();
     const name = nameInput.value.trim();
@@ -4865,12 +4890,21 @@ window.addEventListener('DOMContentLoaded', () => {
       if (statusDiv) statusDiv.textContent = 'Quantity must be at least 1.';
       return;
     }
+    const runAsGroup = Boolean(addRunAsGroupInput && addRunAsGroupInput.checked);
     const initiativeBonusStr = initiativeBonusInput ? initiativeBonusInput.value.trim() : '';
     const initiativeBonus = initiativeBonusStr === '' ? 0 : Number(initiativeBonusStr);
     if (!Number.isFinite(initiativeBonus)) {
       if (statusDiv) statusDiv.textContent = 'Initiative bonus must be a valid number.';
       return;
     }
+    const groupInitiative = runAsGroup && encounterState === 'active'
+      ? rollStandardDie(currentStandardDie, initiativeBonus)
+      : null;
+    if (runAsGroup && encounterState === 'active' && groupInitiative == null) {
+      if (statusDiv) statusDiv.textContent = 'Unable to roll initiative for the group.';
+      return;
+    }
+    const groupId = runAsGroup && quantity > 1 ? createAddGroupId() : null;
 
     const statsPayload = [];
     for (const key of addStatKeys) {
@@ -4920,7 +4954,7 @@ window.addEventListener('DOMContentLoaded', () => {
           name: `${name}${suffix}`,
           referenceUrl,
           statBlockId,
-          initiative: null,
+          initiative: Number.isFinite(groupInitiative) ? groupInitiative : null,
           useAppInitiativeRoll: true,
           initiativeBonus,
           stats: statsPayload,
@@ -4929,6 +4963,10 @@ window.addEventListener('DOMContentLoaded', () => {
           revealOnTurn: false,
           conditions: []
         };
+        if (groupId) {
+          payload.initiativeGroupId = groupId;
+          payload.initiativeGroupIndex = i;
+        }
         if (currentCampaignName) {
           payload.campaignName = currentCampaignName;
         }
@@ -5003,6 +5041,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (entry.currentInput) entry.currentInput.value = '';
     });
     if (visibleToggle) visibleToggle.checked = false;
+    if (addRunAsGroupInput) addRunAsGroupInput.checked = false;
   }
 
   /**

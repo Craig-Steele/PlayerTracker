@@ -212,20 +212,55 @@ actor UserStore {
         return (count, sides)
     }
 
-    func autoRollUnsetInitiativeForReferee(campaignName: String, standardDie: String?) async {
-        guard let die = parseStandardDie(standardDie) else { return }
-        for (id, var state) in storage {
-            guard state.campaignName == campaignName else { continue }
-            guard state.isReferee else { continue }
-            guard state.initiative == nil else { continue }
-            guard state.useAppInitiativeRoll else { continue }
-            let roll = (0..<die.count).reduce(0) { partialResult, _ in
-                partialResult + Int.random(in: 1...die.sides)
-            }
-            state.initiative = Double(roll + state.initiativeBonus)
-            storage[id] = state
+    private func rolledInitiativeValue(standardDie: String?, bonus: Int) -> Int? {
+        guard let die = parseStandardDie(standardDie) else { return nil }
+        let roll = (0..<die.count).reduce(0) { partialResult, _ in
+            partialResult + Int.random(in: 1...die.sides)
         }
-        if campaignName == currentCampaignName {
+        return roll + bonus
+    }
+
+    func autoRollUnsetInitiativeForReferee(campaignName: String, standardDie: String?) async {
+        let candidates = storage.values.filter {
+            $0.campaignName == campaignName &&
+            $0.isReferee &&
+            $0.initiative == nil &&
+            $0.useAppInitiativeRoll
+        }
+        var processedGroupIds = Set<UUID>()
+        var updatedAny = false
+        for var state in candidates {
+            if let groupId = state.initiativeGroupId {
+                guard processedGroupIds.insert(groupId).inserted else { continue }
+                let groupMembers = storage.values.filter {
+                    $0.campaignName == campaignName &&
+                    $0.isReferee &&
+                    $0.initiativeGroupId == groupId &&
+                    $0.initiative == nil &&
+                    $0.useAppInitiativeRoll
+                }
+                guard !groupMembers.isEmpty,
+                      let roll = rolledInitiativeValue(standardDie: standardDie, bonus: groupMembers[0].initiativeBonus) else {
+                    continue
+                }
+                for member in groupMembers {
+                    storage[member.id] = {
+                        var updated = member
+                        updated.initiative = Double(roll)
+                        return updated
+                    }()
+                }
+                updatedAny = true
+                continue
+            }
+            guard let roll = rolledInitiativeValue(standardDie: standardDie, bonus: state.initiativeBonus) else {
+                continue
+            }
+            state.initiative = Double(roll)
+            storage[state.id] = state
+            updatedAny = true
+        }
+        if updatedAny, campaignName == currentCampaignName {
             do {
                 try await persistConfiguredCampaignCharacters()
             } catch {
@@ -261,6 +296,8 @@ actor UserStore {
         referenceUrl: String? = nil,
         statBlockId: String? = nil,
         initiative: Double?,
+        initiativeGroupId: UUID? = nil,
+        initiativeGroupIndex: Int? = nil,
         stats: [StatEntry]?,
         currency: [CurrencyAmount]? = nil,
         inventory: [InventoryEntry]? = nil,
@@ -287,6 +324,8 @@ actor UserStore {
             isClaimable: false,
             characterName: characterName,
             initiative: initiative,
+            initiativeGroupId: initiativeGroupId,
+            initiativeGroupIndex: initiativeGroupIndex,
             stats: stats.map { Dictionary(uniqueKeysWithValues: $0.map { ($0.key, $0) }) } ?? [:],
             currency: currency ?? [],
             inventory: inventory ?? [],
@@ -310,6 +349,12 @@ actor UserStore {
         }
         state.characterName = characterName
         state.initiative = initiative
+        if let initiativeGroupId {
+            state.initiativeGroupId = initiativeGroupId
+        }
+        if let initiativeGroupIndex {
+            state.initiativeGroupIndex = initiativeGroupIndex
+        }
         if let stats {
             state.stats = Dictionary(uniqueKeysWithValues: stats.map { ($0.key, $0) })
         }
@@ -1005,29 +1050,70 @@ actor UserStore {
         if a.isReferee != b.isReferee {
             return !a.isReferee && b.isReferee
         }
-        if a.ownerName == b.ownerName {
-            return a.characterName.localizedCaseInsensitiveCompare(b.characterName) == .orderedAscending
+        if let leftGroupId = a.initiativeGroupId,
+           let rightGroupId = b.initiativeGroupId,
+           leftGroupId == rightGroupId {
+            let leftGroupIndex = a.initiativeGroupIndex ?? Int.max
+            let rightGroupIndex = b.initiativeGroupIndex ?? Int.max
+            if leftGroupIndex != rightGroupIndex {
+                return leftGroupIndex < rightGroupIndex
+            }
         }
-        return a.ownerName.localizedCaseInsensitiveCompare(b.ownerName) == .orderedAscending
+        if a.ownerName == b.ownerName {
+            return a.characterName.localizedStandardCompare(b.characterName) == .orderedAscending
+        }
+        let ownerComparison = a.ownerName.localizedStandardCompare(b.ownerName)
+        if ownerComparison != .orderedSame {
+            return ownerComparison == .orderedAscending
+        }
+        return a.characterName.localizedStandardCompare(b.characterName) == .orderedAscending
     }
 
     func rollInitiativeForCharacter(id: UUID, standardDie: String?) async -> PlayerView? {
         guard var state = storage[id] else { return nil }
         guard state.initiative == nil else { return view(from: state) }
         guard state.useAppInitiativeRoll else { return view(from: state) }
-        guard let die = standardDie?.trimmingCharacters(in: .whitespacesAndNewlines),
-              let match = die.wholeMatch(of: /(\d+)[dD](\d+)/),
-              let count = Int(match.output.1),
-              let sides = Int(match.output.2),
-              count > 0,
-              sides > 0 else {
+        guard let roll = rolledInitiativeValue(standardDie: standardDie, bonus: state.initiativeBonus) else {
             return view(from: state)
         }
 
-        let roll = (0..<count).reduce(0) { partialResult, _ in
-            partialResult + Int.random(in: 1...sides)
+        if let groupId = state.initiativeGroupId {
+            let groupMembers = storage.values.filter {
+                $0.campaignName == state.campaignName &&
+                $0.initiativeGroupId == groupId &&
+                $0.useAppInitiativeRoll
+            }
+            state.initiative = Double(roll)
+            storage[id] = state
+            for member in groupMembers {
+                var updated = member
+                updated.initiative = Double(roll)
+                storage[member.id] = updated
+            }
+            if state.campaignName == currentCampaignName, let database, let campaignID = currentCampaignID {
+                do {
+                    try await DatabasePersistence.persistCharacter(
+                        state,
+                        campaignID: campaignID,
+                        on: database
+                    )
+                    for member in groupMembers where member.id != state.id {
+                        guard let memberState = storage[member.id] else { continue }
+                        try await DatabasePersistence.persistCharacter(
+                            memberState,
+                            campaignID: campaignID,
+                            on: database
+                        )
+                    }
+                } catch {
+                    print("Failed to persist rolled initiative:", error)
+                }
+            }
+            guard let updatedState = storage[id] else { return view(from: state) }
+            return view(from: updatedState)
         }
-        state.initiative = Double(roll + state.initiativeBonus)
+
+        state.initiative = Double(roll)
         storage[id] = state
         if state.campaignName == currentCampaignName, let database, let campaignID = currentCampaignID {
             do {

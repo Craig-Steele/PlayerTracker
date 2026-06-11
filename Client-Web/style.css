@@ -1001,6 +1001,36 @@ body.referee-page .referee-panel {
   min-width: 0;
 }
 
+.quantity-grid-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  column-gap: 0.65rem;
+  row-gap: 0.2rem;
+  align-items: start;
+}
+
+.quantity-grid-label {
+  margin-top: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  align-self: end;
+}
+
+.quantity-count-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.quantity-toggle-field {
+  width: auto;
+  min-width: 0;
+  justify-self: start;
+  align-self: start;
+}
+
 .stat-editor-row {
   display: grid;
   grid-template-columns: minmax(3.5rem, auto) minmax(0, 1fr) minmax(0, 1fr);
@@ -2754,6 +2784,13 @@ body.referee-page .referee-panel {
   .property-toggle-row {
     grid-template-columns: 1fr;
     gap: 0.45rem;
+  }
+
+  .quantity-grid-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    column-gap: 0.55rem;
+    row-gap: 0.15rem;
   }
 
   .inventory-inline-form-grid .property-row {

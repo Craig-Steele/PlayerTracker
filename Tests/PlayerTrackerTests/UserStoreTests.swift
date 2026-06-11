@@ -132,6 +132,108 @@ struct UserStoreTests {
         #expect(state.currentTurnName == "Hero")
     }
 
+    @Test("grouped referee characters keep numeric order on equal initiative")
+    func groupedRefereeCharactersKeepNumericOrderOnEqualInitiative() async throws {
+        let store = UserStore()
+        let campaignName = "Grouped Order"
+        let ownerId = UUID()
+        let groupId = UUID()
+        let third = await addCharacter(
+            to: store,
+            campaignName: campaignName,
+            ownerId: ownerId,
+            ownerName: "Referee",
+            characterName: "Goblin (10)",
+            initiative: 15,
+            initiativeGroupId: groupId,
+            initiativeGroupIndex: 10
+        )
+        let first = await addCharacter(
+            to: store,
+            campaignName: campaignName,
+            ownerId: ownerId,
+            ownerName: "Referee",
+            characterName: "Goblin (1)",
+            initiative: 15,
+            initiativeGroupId: groupId,
+            initiativeGroupIndex: 1
+        )
+        let second = await addCharacter(
+            to: store,
+            campaignName: campaignName,
+            ownerId: ownerId,
+            ownerName: "Referee",
+            characterName: "Goblin (2)",
+            initiative: 15,
+            initiativeGroupId: groupId,
+            initiativeGroupIndex: 2
+        )
+
+        await store.setCampaignRefereeSessionIDs(
+            campaignName: campaignName,
+            refereeSessionIDs: [ownerId]
+        )
+
+        let state = await store.state(
+            campaignName: campaignName,
+            includeHidden: true,
+            encounterState: .active
+        )
+
+        #expect(state.players.map(\.id) == [first.id, second.id, third.id])
+    }
+
+    @Test("grouped referee characters roll initiative once")
+    func groupedRefereeCharactersRollInitiativeOnce() async throws {
+        let store = UserStore()
+        let campaignName = "Grouped Roll"
+        let ownerId = UUID()
+        let groupId = UUID()
+        let first = await store.upsertCharacter(
+            id: nil,
+            campaignName: campaignName,
+            ownerId: ownerId,
+            ownerName: "Referee",
+            characterName: "Skeleton (1)",
+            initiative: nil,
+            initiativeGroupId: groupId,
+            initiativeGroupIndex: 1,
+            stats: [],
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 2,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+        let second = await store.upsertCharacter(
+            id: nil,
+            campaignName: campaignName,
+            ownerId: ownerId,
+            ownerName: "Referee",
+            characterName: "Skeleton (2)",
+            initiative: nil,
+            initiativeGroupId: groupId,
+            initiativeGroupIndex: 2,
+            stats: [],
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 2,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+
+        _ = await store.rollInitiativeForCharacter(id: first.id, standardDie: "1d20")
+
+        let rolledFirst = await store.characterState(for: first.id)
+        let rolledSecond = await store.characterState(for: second.id)
+        #expect(rolledFirst?.initiative != nil)
+        #expect(rolledFirst?.initiative == rolledSecond?.initiative)
+    }
+
     @Test("new character rolls initiative when encounter is active")
     func newCharacterRollsInitiativeWhenEncounterIsActive() async throws {
         let store = UserStore()
@@ -370,6 +472,8 @@ struct UserStoreTests {
         ownerName: String,
         characterName: String,
         initiative: Double,
+        initiativeGroupId: UUID? = nil,
+        initiativeGroupIndex: Int? = nil,
         autoSkipTurn: Bool = false,
         isHidden: Bool = false,
         revealOnTurn: Bool = false,
@@ -382,6 +486,8 @@ struct UserStoreTests {
             ownerName: ownerName,
             characterName: characterName,
             initiative: initiative,
+            initiativeGroupId: initiativeGroupId,
+            initiativeGroupIndex: initiativeGroupIndex,
             stats: [],
             currency: currency,
             revealStats: false,
