@@ -1,10 +1,6 @@
 # PlayerTracker
 
-Initiative and condition tracking for tabletop RPG encounters.
-
-## Preface
-
-PlayerTracker is a full-stack client-server tabletop RPG tracker started in March 2026. It combines a Vapor console app, browser-based clients, and native companion apps in a single repository. The most active work is currently in the server and web client; the mobile clients remain in the tree for future reference.
+Initiative and condition tracking for tabletop RPG encounters. PlayerTracker is a full-stack client-server tabletop RPG tracker started in March 2026. It combines a Vapor console app, browser-based clients, and native companion apps in a single repository. The most active work is currently in the server and web client; the mobile clients remain in the tree for future reference.
 
 The current working architecture is a Vapor service running on a Mac and serving browser clients over the local network. There are also native iOS and Android player clients that talk to the same HTTP API, but mobile feature work is currently on hold while server and web client feature work continues.
 
