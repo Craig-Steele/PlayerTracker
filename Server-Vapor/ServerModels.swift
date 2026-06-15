@@ -325,6 +325,7 @@ struct PlayerView: Content {
     let ownerName: String
     let referenceUrl: String?
     let statBlockId: String?
+    let initiativeGroupId: UUID?
     let lastPlayedByName: String?
     let claimedSessionId: UUID?
     let claimedDisplayName: String?

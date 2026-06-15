@@ -74,6 +74,49 @@ const {
     selectEl.appendChild(option);
   }
 };
+const refereeVisibilityHelpers = window.PlayerTrackerRefereeVisibility || {
+  getInitiativeGroupMembers: (currentPlayers, player) => (
+    Array.isArray(currentPlayers) && player?.initiativeGroupId
+      ? currentPlayers.filter(
+          (candidate) =>
+            candidate &&
+            candidate.initiativeGroupId &&
+            candidate.initiativeGroupId === player.initiativeGroupId
+        )
+      : []
+  ),
+  getCharacterVisibilityMenuItems: (isHidden) => (
+    isHidden
+      ? [
+          { label: 'Reveal Now', isHidden: false, revealOnTurn: false },
+          { label: 'Reveal on Turn', isHidden: true, revealOnTurn: true }
+        ]
+      : [
+          { label: 'Hide Character', isHidden: true, revealOnTurn: false }
+        ]
+  ),
+  getInitiativeGroupVisibilityMenuItems: (groupMembers, isHidden) => (
+    Array.isArray(groupMembers) && groupMembers.length > 1
+      ? (isHidden
+          ? [
+              { label: 'Group: Reveal Now', isHidden: false, revealOnTurn: false },
+              { label: 'Group: Reveal On Turn', isHidden: true, revealOnTurn: true }
+            ]
+          : [
+              { label: 'Group: Hide', isHidden: true, revealOnTurn: false }
+            ])
+      : []
+  ),
+  buildInitiativeGroupVisibilityUpdates: (groupMembers, isHidden, revealOnTurn) => (
+    Array.isArray(groupMembers)
+      ? groupMembers.filter((member) => Boolean(member && member.id)).map((member) => ({
+          id: member.id,
+          isHidden,
+          revealOnTurn
+        }))
+      : []
+  )
+};
 const inventoryView = window.PlayerTrackerInventoryView || {};
 const {
   normalizeConditionEntry,
@@ -4040,6 +4083,9 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     const currencyTotal = formatCharacterCurrencyTotal(player);
+    const groupMembers = getInitiativeGroupMembers(player);
+    const characterVisibilityMenuItems = refereeVisibilityHelpers.getCharacterVisibilityMenuItems(Boolean(player.isHidden));
+    const groupVisibilityMenuItems = refereeVisibilityHelpers.getInitiativeGroupVisibilityMenuItems(groupMembers, Boolean(player.isHidden));
     const menuGroups = [
       [
         {
@@ -4053,27 +4099,26 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       ],
       [
-        {
-          label: 'Reveal Now',
-          handler: () => updateVisibility(player.id, false, false),
+        ...characterVisibilityMenuItems.map((item) => ({
+          label: item.label,
+          handler: async () => {
+            await updateVisibility(player.id, item.isHidden, item.revealOnTurn);
+          },
           options: {
-            hidden: !player.isReferee || !player.isHidden
+            hidden: !player.isReferee,
+            disabled: !player.isReferee
           }
-        },
-        {
-          label: 'Reveal on Turn',
-          handler: () => updateVisibility(player.id, true, true),
+        })),
+        ...groupVisibilityMenuItems.map((item) => ({
+          label: item.label,
+          handler: async () => {
+            await updateGroupVisibility(player, item.isHidden, item.revealOnTurn);
+          },
           options: {
-            hidden: !player.isReferee || !player.isHidden
+            hidden: !player.isReferee || groupMembers.length <= 1,
+            disabled: !player.isReferee || groupMembers.length <= 1
           }
-        },
-        {
-          label: 'Hide Character',
-          handler: () => updateVisibility(player.id, true, false),
-          options: {
-            hidden: !player.isReferee || player.isHidden
-          }
-        },
+        })),
         {
           label: 'Open Reference',
           handler: () => openCharacterReference(player),
@@ -4708,6 +4753,64 @@ window.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Failed to update visibility: ${err.message}`;
     }
+  }
+
+  /**
+   * Update visibility flags for one or more characters on the server.
+   * @param {Array<{id: string, isHidden: boolean, revealOnTurn: boolean}>} updates Visibility updates to apply.
+   * @returns {Promise<void>}
+   */
+  async function updateVisibilities(updates) {
+    if (!Array.isArray(updates) || updates.length === 0) return;
+    try {
+      for (const update of updates) {
+        const res = await fetch(`/characters/${update.id}/visibility`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            isHidden: update.isHidden,
+            revealOnTurn: update.revealOnTurn
+          })
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            window.location.replace('/index.html');
+            return;
+          }
+          throw new Error('Server returned ' + res.status);
+        }
+      }
+      await loadState();
+    } catch (err) {
+      if (statusDiv) statusDiv.textContent = `Failed to update visibility: ${err.message}`;
+    }
+  }
+
+  /**
+   * Collect the members of a character's initiative group.
+   * @param {object} player Character record.
+   * @returns {Array<object>}
+   */
+  function getInitiativeGroupMembers(player) {
+    return refereeVisibilityHelpers.getInitiativeGroupMembers(currentPlayers, player);
+  }
+
+  /**
+   * Update visibility for every member of a character's initiative group.
+   * @param {object} player Character record.
+   * @param {boolean} isHidden Whether the group should be hidden.
+   * @param {boolean} revealOnTurn Whether the group should reveal on turn.
+   * @returns {Promise<void>}
+   */
+  async function updateGroupVisibility(player, isHidden, revealOnTurn) {
+    const groupMembers = getInitiativeGroupMembers(player);
+    if (groupMembers.length <= 1) {
+      await updateVisibility(player.id, isHidden, revealOnTurn);
+      return;
+    }
+    await updateVisibilities(
+      refereeVisibilityHelpers.buildInitiativeGroupVisibilityUpdates(groupMembers, isHidden, revealOnTurn)
+    );
   }
 
   /**

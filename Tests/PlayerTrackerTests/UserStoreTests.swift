@@ -181,6 +181,7 @@ struct UserStoreTests {
         )
 
         #expect(state.players.map(\.id) == [first.id, second.id, third.id])
+        #expect(state.players.map(\.initiativeGroupId) == [groupId, groupId, groupId])
     }
 
     @Test("grouped referee characters roll initiative once")

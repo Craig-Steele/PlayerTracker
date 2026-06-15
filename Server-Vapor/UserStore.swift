@@ -974,6 +974,7 @@ actor UserStore {
             ownerName: state.ownerName,
             referenceUrl: state.referenceUrl,
             statBlockId: state.statBlockId,
+            initiativeGroupId: state.initiativeGroupId,
             lastPlayedByName: state.lastPlayedByName,
             claimedSessionId: state.claimedSessionId,
             claimedDisplayName: state.claimedDisplayName,
