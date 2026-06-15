@@ -2,7 +2,11 @@
 
 Initiative and condition tracking for tabletop RPG encounters.
 
-The current working architecture is a Vapor service running on a Mac and serving browser clients over the local network. There are also native iOS and Android player clients that talk to the same HTTP API.
+## Preface
+
+PlayerTracker is a full-stack client-server tabletop RPG tracker started in March 2026. It combines a Vapor console app, browser-based clients, and native companion apps in a single repository. The most active work is currently in the server and web client; the mobile clients remain in the tree for future reference.
+
+The current working architecture is a Vapor service running on a Mac and serving browser clients over the local network. There are also native iOS and Android player clients that talk to the same HTTP API, but mobile feature work is currently on hold while server and web client feature work continues.
 
 ## Current status
 
@@ -11,9 +15,9 @@ The current working architecture is a Vapor service running on a Mac and serving
 - `Client-Web`
   Browser clients for player, referee, admin, display, and campaign selection.
 - `Client-iOS`
-  Native iOS and iPadOS player client for the existing server.
+  Native iOS and iPadOS player client for the existing server. Feature work is currently on hold.
 - `Client-Android`
-  Native Android player client built with Jetpack Compose.
+  Native Android player client. Feature work is currently on hold.
 
 ## What the server does
 
@@ -83,3 +87,4 @@ Add `--overwrite` if you want to replace existing local creature files.
 - The server serves the checked-in `Client-Web/` directory from this repository.
 - This repository is currently optimized for local-network table play rather than internet-hosted multiplayer.
 - The iOS app is named `Roll For Initiative!`.
+- The Android client is not tied to any specific local development environment in this README, because mobile work is currently paused.
