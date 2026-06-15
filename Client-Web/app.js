@@ -908,7 +908,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   function updateConditionsDialogTitle(name = '') {
     if (!conditionsDialogTitle) return;
     const trimmedName = typeof name === 'string' ? name.trim() : '';
-    conditionsDialogTitle.textContent = `Conditions - ${trimmedName || 'this character'}`;
+    conditionsDialogTitle.textContent = `🩸 Conditions - ${trimmedName || 'this character'}`;
   }
 
   function setDetailsPanelOpen(open) {
@@ -1185,7 +1185,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (currencyPanel) {
       const title = currencyPanel.querySelector('#currency-dialog-title');
       if (title) {
-        title.textContent = `Money - ${character.name || 'Character'}`;
+        title.textContent = `🪙 Money - ${character.name || 'Character'}`;
       }
     }
     buildCurrencyFields(character);
@@ -1205,7 +1205,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (currencyPanel) {
       const title = currencyPanel.querySelector('#currency-dialog-title');
       if (title) {
-        title.textContent = 'Money';
+        title.textContent = '🪙 Money';
       }
     }
     if (currencyFields) {
@@ -1629,7 +1629,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     closeCurrencyEditor();
     partyTreasureEditorCharacterId = character.id;
     if (partyTreasureDialogTitle) {
-      partyTreasureDialogTitle.textContent = `Party Treasure - ${character.name || 'Character'}`;
+      partyTreasureDialogTitle.textContent = `💰 Party Treasure - ${character.name || 'Character'}`;
     }
     if (partyTreasureContext) {
       partyTreasureContext.classList.add('hidden');
@@ -1649,7 +1649,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     partyTreasureEditorCharacterId = null;
     partyTreasureSelectedRow = null;
     if (partyTreasureDialogTitle) {
-      partyTreasureDialogTitle.textContent = 'Party Treasure';
+      partyTreasureDialogTitle.textContent = '💰 Party Treasure';
     }
     if (partyTreasureContext) {
       partyTreasureContext.classList.add('hidden');
@@ -1930,12 +1930,12 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (hasMoveSection) {
       appendOverflowMenuSeparator(overflowMenu);
       if (currentContainerId) {
-        addMenuItem('Equip Item', async () => {
+        addMenuItem('🛡️ Equip Item', async () => {
           await moveInventoryEntryToContainer(entry.id, null);
         });
       }
       moveTargets.forEach((target) => {
-        addMenuItem(`Move to ${target.label}`, async () => {
+        addMenuItem(`➡️ Move to ${target.label}`, async () => {
           await moveInventoryEntryToContainer(entry.id, target.id);
         });
       });
@@ -1968,11 +1968,11 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       }
     };
 
-    addMenuItem('Edit', () => {
+    addMenuItem('✏️ Edit', () => {
       setSelectedInventoryRow(row);
       editSelectedInventoryEntry();
     });
-    addMenuItem(entry.isContainer ? 'Remove Container' : 'Remove', () => {
+    addMenuItem(entry.isContainer ? '🗑️ Remove Container' : '🗑️ Remove', () => {
       setSelectedInventoryRow(row);
       removeSelectedInventoryEntry();
     }, {
@@ -2435,7 +2435,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     closeCurrencyEditor();
     inventoryEditorCharacterId = character.id;
     if (inventoryDialogTitle) {
-      inventoryDialogTitle.textContent = `Inventory - ${character.name || 'Character'}`;
+      inventoryDialogTitle.textContent = `🎒 Inventory - ${character.name || 'Character'}`;
     }
     await loadEquipmentLibrary();
     setInventoryAddFormOpen(false);
@@ -2454,7 +2454,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     inventorySelectedRow = null;
     currentInventory = [];
     if (inventoryDialogTitle) {
-      inventoryDialogTitle.textContent = 'Inventory';
+      inventoryDialogTitle.textContent = '🎒 Inventory';
     }
     if (inventoryFields) {
       inventoryFields.innerHTML = '';
@@ -3691,20 +3691,20 @@ function getOwnerName() {
     const menuGroups = [
       [
         {
-          label: 'Inventory',
+          label: '🎒 Inventory',
           handler: async () => {
             await openInventoryEditor(character);
           }
         },
         {
-          label: currencyTotal ? `Money: ${currencyTotal}` : 'Money',
+          label: currencyTotal ? `🪙 Money: ${currencyTotal}` : '🪙 Money',
           handler: () => openCurrencyEditor(character),
           options: {
             hidden: !(currencySystem && currencySystem.units.length > 0)
           }
         },
         {
-          label: 'Party Treasure',
+          label: '💰 Party Treasure',
           handler: async () => {
             openPartyTreasureEditor(character);
           }
@@ -3712,13 +3712,13 @@ function getOwnerName() {
       ],
       [
         {
-          label: 'Edit Character',
+          label: '✏️ Edit Character',
           handler: () => {
             void openDetailsEditorForCharacter(character);
           }
         },
         {
-          label: 'Release Character',
+          label: '↩️ Release Character',
           handler: async () => {
             if (character.claimedSessionId !== currentPlayerSessionId) return;
             await releaseClaimForCharacter(character);
@@ -3728,7 +3728,7 @@ function getOwnerName() {
           }
         },
         {
-          label: 'Remove Character',
+          label: '🗑️ Remove Character',
           handler: async () => {
             const confirmed = confirm(`Remove ${character.name || 'this character'} from the tracker?`);
             if (!confirmed) return;
@@ -3970,7 +3970,7 @@ function getOwnerName() {
       actions.className = 'claimable-character-actions';
       const claimButton = document.createElement('button');
       claimButton.type = 'button';
-      claimButton.textContent = 'Claim';
+      claimButton.textContent = '🏷️ Claim';
       claimButton.addEventListener('click', async (event) => {
         event.stopPropagation();
         await claimCharacter(character);
@@ -5970,7 +5970,7 @@ function getOwnerName() {
     if (!character || !initiativePanel || !initiativeEditorInput) return;
     initiativeEditorCharacterId = character.id;
     if (initiativeDialogTitle) {
-      initiativeDialogTitle.textContent = `Set Initiative for ${character.name}`;
+      initiativeDialogTitle.textContent = `🎲 Set Initiative for ${character.name}`;
     }
     if (initiativeRollBtn) {
       const hasInitiative = Number.isFinite(character.initiative);

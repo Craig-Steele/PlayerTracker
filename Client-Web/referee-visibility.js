@@ -22,11 +22,11 @@
   function getCharacterVisibilityMenuItems(isHidden) {
     return isHidden
       ? [
-          { label: 'Reveal Now', isHidden: false, revealOnTurn: false },
-          { label: 'Reveal on Turn', isHidden: true, revealOnTurn: true }
+          { label: '👁️ Reveal Now', isHidden: false, revealOnTurn: false },
+          { label: '⏳👁️ Reveal on Turn', isHidden: true, revealOnTurn: true }
         ]
       : [
-          { label: 'Hide Character', isHidden: true, revealOnTurn: false }
+          { label: '🙈 Hide Character', isHidden: true, revealOnTurn: false }
         ];
   }
 
@@ -34,11 +34,11 @@
     if (!Array.isArray(groupMembers) || groupMembers.length <= 1) return [];
     return isHidden
       ? [
-          { label: 'Group: Reveal Now', isHidden: false, revealOnTurn: false },
-          { label: 'Group: Reveal On Turn', isHidden: true, revealOnTurn: true }
+          { label: '👥👁️ Group: Reveal Now', isHidden: false, revealOnTurn: false },
+          { label: '👥⏳👁️ Group: Reveal On Turn', isHidden: true, revealOnTurn: true }
         ]
       : [
-          { label: 'Group: Hide', isHidden: true, revealOnTurn: false }
+          { label: '👥🙈 Group: Hide', isHidden: true, revealOnTurn: false }
         ];
   }
 

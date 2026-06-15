@@ -28,7 +28,7 @@
         <div id="player-card-player-name" class="player-campaign-meta referee-card-player-name">—</div>
       </div>
       <div class="player-campaign-player-row">
-        <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✎</button>
+        <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✏️</button>
       </div>
       <div id="player-name-nudge" class="player-name-nudge hidden">
         Set your player name to continue.
@@ -39,11 +39,11 @@
   <div id="player-name-edit" class="player-name-edit" aria-hidden="true">
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="player-name-dialog-title">
       <div class="conditions-dialog-header">
-        <h2 id="player-name-dialog-title">Player Name</h2>
+        <h2 id="player-name-dialog-title">✏️ Player Name</h2>
         <div class="conditions-dialog-actions">
-          <button type="button" id="player-name-logout" class="danger">Change User</button>
-          <button type="button" id="player-name-cancel" class="secondary">Cancel</button>
-          <button type="button" id="player-name-save">Save</button>
+          <button type="button" id="player-name-logout" class="danger">🚪 Change User</button>
+          <button type="button" id="player-name-cancel" class="secondary">✖️ Cancel</button>
+          <button type="button" id="player-name-save">💾 Save</button>
         </div>
       </div>
       <div class="form-section-block property-group">
@@ -101,10 +101,10 @@
     <div id="details-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="details-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="details-dialog-title">Details</h2>
+          <h2 id="details-dialog-title">✏️ Details</h2>
           <div class="conditions-dialog-actions">
-            <button type="button" id="details-cancel" class="secondary">Cancel</button>
-            <button type="button" id="details-save">Save</button>
+            <button type="button" id="details-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="details-save">💾 Save</button>
           </div>
         </div>
         <div class="form-section-block property-group">
@@ -152,10 +152,10 @@
     <div id="conditions-panel" class="conditions-modal hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="conditions-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="conditions-dialog-title">Conditions - this character</h2>
+          <h2 id="conditions-dialog-title">🩸 Conditions - this character</h2>
           <div class="conditions-dialog-actions">
-            <button type="button" id="conditions-cancel" class="secondary">Cancel</button>
-            <button type="button" id="conditions-save">Save</button>
+            <button type="button" id="conditions-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="conditions-save">💾 Save</button>
           </div>
         </div>
         <input type="search" id="condition-filter" placeholder="Filter list…" />
@@ -167,11 +167,11 @@
     <div id="initiative-panel" class="conditions-modal hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="initiative-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="initiative-dialog-title">Set Initiative</h2>
+          <h2 id="initiative-dialog-title">🎲 Set Initiative</h2>
           <div>
             <div class="conditions-dialog-actions">
-              <button type="button" id="initiative-cancel" class="secondary">Cancel</button>
-              <button type="button" id="initiative-save">Save</button>
+              <button type="button" id="initiative-cancel" class="secondary">✖️ Cancel</button>
+              <button type="button" id="initiative-save">💾 Save</button>
             </div>
             <div class="initiative-roll-row">
               <button type="button" id="initiative-roll" class="secondary hidden" aria-hidden="true">🎲 Roll for Initiative</button>
@@ -197,10 +197,10 @@
     <div id="currency-panel" class="conditions-modal hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="currency-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="currency-dialog-title">Money</h2>
+          <h2 id="currency-dialog-title">🪙 Money</h2>
           <div class="conditions-dialog-actions">
-            <button type="button" id="currency-cancel" class="secondary">Cancel</button>
-            <button type="button" id="currency-save">Save</button>
+            <button type="button" id="currency-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="currency-save">💾 Save</button>
           </div>
         </div>
         <div id="currency-fields" class="property-group currency-fields"></div>
@@ -210,16 +210,16 @@
     <div id="party-treasure-panel" class="conditions-modal hidden" aria-hidden="true">
       <div class="dialog-shell inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="party-treasure-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="party-treasure-dialog-title">Party Treasure</h2>
+          <h2 id="party-treasure-dialog-title">💰 Party Treasure</h2>
           <div class="conditions-dialog-actions party-treasure-actions">
-            <button type="button" id="party-treasure-cancel" class="secondary">Close</button>
+            <button type="button" id="party-treasure-cancel" class="secondary">✖️ Close</button>
           </div>
         </div>
         <div class="party-treasure-actions-row party-treasure-actions-row-top">
-          <button type="button" id="party-treasure-add" class="secondary">Add</button>
-          <button type="button" id="party-treasure-edit" class="secondary">Edit</button>
-          <button type="button" id="party-treasure-remove" class="secondary">Remove</button>
-          <button type="button" id="party-treasure-claim" class="secondary party-treasure-claim">Claim</button>
+          <button type="button" id="party-treasure-add" class="secondary">➕ Add</button>
+          <button type="button" id="party-treasure-edit" class="secondary">✏️ Edit</button>
+          <button type="button" id="party-treasure-remove" class="secondary">🗑️ Remove</button>
+          <button type="button" id="party-treasure-claim" class="secondary party-treasure-claim">🏷️ Claim</button>
         </div>
         <div id="party-treasure-context" class="inventory-summary">Party treasure for —</div>
         <div id="party-treasure-add-form" class="inventory-inline-form hidden" aria-hidden="true">
@@ -257,8 +257,8 @@
             </label>
           </div>
           <div class="party-treasure-inline-actions">
-            <button type="button" id="party-treasure-add-form-cancel" class="secondary">Cancel</button>
-            <button type="button" id="party-treasure-add-form-save">Add Item</button>
+            <button type="button" id="party-treasure-add-form-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="party-treasure-add-form-save">➕ Add Item</button>
           </div>
         </div>
         <div class="inventory-table-wrap">
@@ -280,9 +280,9 @@
     <div id="inventory-panel" class="conditions-modal hidden" aria-hidden="true">
       <div class="dialog-shell inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="inventory-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="inventory-dialog-title">Inventory</h2>
+          <h2 id="inventory-dialog-title">🎒 Inventory</h2>
           <div class="conditions-dialog-actions">
-            <button type="button" id="inventory-close" class="secondary">Close</button>
+            <button type="button" id="inventory-close" class="secondary">✖️ Close</button>
           </div>
         </div>
         <div class="party-treasure-actions-row party-treasure-actions-row-top inventory-actions-row">
@@ -332,7 +332,7 @@
             </label>
           </div>
           <div class="party-treasure-inline-actions">
-            <button type="button" id="inventory-add-form-cancel" class="secondary">Cancel</button>
+            <button type="button" id="inventory-add-form-cancel" class="secondary">✖️ Cancel</button>
             <button type="button" id="inventory-add-form-save">🗡 Add Item</button>
           </div>
         </div>
@@ -360,10 +360,10 @@
     <div id="add-character-form" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="add-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="add-dialog-title">Add Character</h2>
+          <h2 id="add-dialog-title">👤 Add Character</h2>
           <div class="conditions-dialog-actions">
-            <button type="button" id="add-cancel" class="secondary">Cancel</button>
-            <button type="button" id="add-save">Save</button>
+            <button type="button" id="add-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="add-save">💾 Save</button>
           </div>
         </div>
         <div class="form-section-title">New Character Name</div>

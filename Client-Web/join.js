@@ -123,7 +123,7 @@ window.addEventListener('DOMContentLoaded', () => {
       form.classList.toggle('hidden', !editingPlayerName && Boolean(currentPlayerName));
     }
     if (continueBtn) {
-      continueBtn.textContent = currentPlayerName ? 'Save' : 'Join';
+      continueBtn.textContent = currentPlayerName ? '💾 Save' : '👋 Join';
     }
     if (!currentPlayerName) {
       setCampaignPanelVisible(false);

@@ -1739,7 +1739,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function updateConditionsDialogTitle(name = '') {
     if (!conditionsDialogTitle) return;
     const trimmedName = typeof name === 'string' ? name.trim() : '';
-    conditionsDialogTitle.textContent = `Conditions - ${trimmedName || 'this character'}`;
+    conditionsDialogTitle.textContent = `🩸 Conditions - ${trimmedName || 'this character'}`;
   }
 
   /**
@@ -2985,7 +2985,7 @@ window.addEventListener('DOMContentLoaded', () => {
   async function openPartyTreasureEditor() {
     if (!partyTreasureFields) return;
     if (partyTreasureDialogTitle) {
-      partyTreasureDialogTitle.textContent = 'Party Treasure';
+      partyTreasureDialogTitle.textContent = '💰 Party Treasure';
     }
     if (partyTreasureContext) {
       partyTreasureContext.classList.add('hidden');
@@ -3007,7 +3007,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function closePartyTreasureEditor() {
     partyTreasureSelectedRow = null;
     if (partyTreasureDialogTitle) {
-      partyTreasureDialogTitle.textContent = 'Party Treasure';
+      partyTreasureDialogTitle.textContent = '💰 Party Treasure';
     }
     if (partyTreasureContext) {
       partyTreasureContext.classList.add('hidden');
@@ -3247,7 +3247,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function closeCurrencyViewer() {
     currencyViewerCharacterId = null;
     if (currencyDialogTitle) {
-      currencyDialogTitle.textContent = 'Money';
+      currencyDialogTitle.textContent = '🪙 Money';
     }
     if (currencySummary) {
       currencySummary.textContent = 'Money for —';
@@ -3262,7 +3262,7 @@ window.addEventListener('DOMContentLoaded', () => {
     inventoryViewerCharacterId = null;
     currentInventory = [];
     if (inventoryDialogTitle) {
-      inventoryDialogTitle.textContent = 'Inventory';
+      inventoryDialogTitle.textContent = '🎒 Inventory';
     }
     if (inventorySummary) {
       inventorySummary.textContent = 'Inventory for —';
@@ -3404,7 +3404,7 @@ window.addEventListener('DOMContentLoaded', () => {
       : [];
     currentInventory = inventoryItems;
     if (inventoryDialogTitle) {
-      inventoryDialogTitle.textContent = `Inventory - ${character?.name || 'Character'}`;
+      inventoryDialogTitle.textContent = `🎒 Inventory - ${character?.name || 'Character'}`;
     }
     if (inventorySummary) {
       inventorySummary.textContent = `Inventory for ${character?.name || 'Character'}`;
@@ -3448,7 +3448,7 @@ window.addEventListener('DOMContentLoaded', () => {
     closeInventoryViewer();
     currencyViewerCharacterId = player.id;
     if (currencyDialogTitle) {
-      currencyDialogTitle.textContent = `Money - ${player.name || 'Character'}`;
+      currencyDialogTitle.textContent = `🪙 Money - ${player.name || 'Character'}`;
     }
     if (currencySummary) {
       currencySummary.textContent = `Money for ${player.name || 'Character'}`;
@@ -3835,7 +3835,7 @@ window.addEventListener('DOMContentLoaded', () => {
     closeExpandedOrderStats();
     initiativeEditorCharacterId = player.id;
     if (initiativeModalTitle) {
-      initiativeModalTitle.textContent = 'Edit Initiative';
+      initiativeModalTitle.textContent = '🎲 Edit Initiative';
     }
     if (initiativeModalCharacter) {
       initiativeModalCharacter.textContent = player.name || 'Character';
@@ -4089,7 +4089,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const menuGroups = [
       [
         {
-          label: 'Act Now',
+          label: '⚡ Act Now',
           handler: () => {
             setTurnNow(player.id);
           },
@@ -4120,14 +4120,14 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         })),
         {
-          label: 'Open Reference',
+          label: '📖 Open Reference',
           handler: () => openCharacterReference(player),
           options: {
             hidden: !player.referenceUrl
           }
         },
         {
-          label: currencyTotal ? `Money: ${currencyTotal}` : 'Money',
+          label: currencyTotal ? `🪙 Money: ${currencyTotal}` : '🪙 Money',
           handler: async () => {
             await openCurrencyViewer(player);
           },
@@ -4136,7 +4136,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         },
         {
-          label: 'Inventory',
+          label: '🎒 Inventory',
           handler: async () => {
             await openInventoryViewer(player);
           },
@@ -4147,7 +4147,7 @@ window.addEventListener('DOMContentLoaded', () => {
       ],
       [
         {
-          label: 'Edit Character',
+          label: '✏️ Edit Character',
           handler: async () => {
             if (detailsDirty) {
               const discard = await confirmDiscardUnsavedDetails();
@@ -4163,7 +4163,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         },
         {
-          label: 'Claim Character',
+          label: '🏷️ Claim Character',
           handler: async () => {
             await claimCharacter(player);
           },
@@ -4172,7 +4172,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         },
         {
-          label: player.isReferee ? 'Release to Pool' : 'Release Character',
+          label: player.isReferee ? '↩️ Release to Pool' : '↩️ Release Character',
           handler: async () => {
             if (player.isReferee) {
               await releaseCharacterToPool(player);
@@ -4185,7 +4185,7 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         },
         {
-          label: 'Remove Character',
+          label: '🗑️ Remove Character',
           handler: async () => {
             const confirmed = await showConfirmDialog({
               title: 'Remove Character?',

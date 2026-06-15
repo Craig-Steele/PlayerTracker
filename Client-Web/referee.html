@@ -28,7 +28,7 @@
           <div id="ref-referee-player-name" class="player-campaign-meta referee-card-player-name">—</div>
         </div>
         <div class="player-campaign-player-row">
-          <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✎</button>
+          <button type="button" id="edit-player-name" class="icon-button" aria-label="Edit player name">✏️</button>
         </div>
       </div>
     </div>
@@ -37,11 +37,11 @@
   <div id="player-name-edit" class="player-name-edit" aria-hidden="true">
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="player-name-dialog-title">
       <div class="conditions-dialog-header">
-        <h2 id="player-name-dialog-title">Player Name</h2>
+        <h2 id="player-name-dialog-title">✏️ Player Name</h2>
         <div class="conditions-dialog-actions">
-          <button type="button" id="player-name-logout" class="danger">Change User</button>
-          <button type="button" id="player-name-cancel" class="secondary">Cancel</button>
-          <button type="button" id="player-name-save">Save</button>
+          <button type="button" id="player-name-logout" class="danger">🚪 Change User</button>
+          <button type="button" id="player-name-cancel" class="secondary">✖️ Cancel</button>
+          <button type="button" id="player-name-save">💾 Save</button>
         </div>
       </div>
       <div class="form-section-block property-group">
@@ -87,13 +87,13 @@
   <!-- Add a new character to the referee roster, either manually or from the library. -->
   <form id="ref-add-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-add-dialog-title">
-      <div class="conditions-dialog-header">
-        <h2 id="ref-add-dialog-title">Add Character</h2>
-        <div class="conditions-dialog-actions">
-          <button type="submit">Save</button>
-          <button type="button" id="ref-add-cancel" class="secondary">Cancel</button>
+        <div class="conditions-dialog-header">
+          <h2 id="ref-add-dialog-title">👤 Add Character</h2>
+          <div class="conditions-dialog-actions">
+            <button type="submit">💾 Save</button>
+            <button type="button" id="ref-add-cancel" class="secondary">✖️ Cancel</button>
+          </div>
         </div>
-      </div>
       <label class="property-row">
         <span class="property-label">Character name</span>
         <span class="property-control">
@@ -161,10 +161,10 @@
     <div id="ref-details-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-details-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="ref-details-dialog-title">Details</h2>
+          <h2 id="ref-details-dialog-title">✏️ Details</h2>
           <div class="conditions-dialog-actions">
-            <button type="button" id="ref-details-cancel" class="secondary">Cancel</button>
-            <button type="button" id="ref-details-save">Save</button>
+            <button type="button" id="ref-details-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="ref-details-save">💾 Save</button>
           </div>
         </div>
         <div class="form-section-block property-group">
@@ -190,10 +190,10 @@
     <div id="ref-conditions-panel" class="conditions-panel-collapsed hidden" aria-hidden="true">
       <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-conditions-dialog-title">
         <div class="conditions-dialog-header">
-          <h2 id="ref-conditions-dialog-title">Conditions - this character</h2>
+          <h2 id="ref-conditions-dialog-title">🩸 Conditions - this character</h2>
           <div class="conditions-dialog-actions">
-            <button type="button" id="ref-conditions-cancel" class="secondary">Cancel</button>
-            <button type="button" id="ref-conditions-save">Save</button>
+            <button type="button" id="ref-conditions-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="ref-conditions-save">💾 Save</button>
           </div>
         </div>
         <input type="search" id="ref-condition-filter" placeholder="Filter list…" />
@@ -208,13 +208,13 @@
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-initiative-dialog-title">
         <div class="conditions-dialog-header">
           <div>
-            <h2 id="ref-initiative-dialog-title">Edit Initiative</h2>
+            <h2 id="ref-initiative-dialog-title">🎲 Edit Initiative</h2>
             <div id="ref-initiative-character" class="subtitle"></div>
           </div>
           <div>
             <div class="conditions-dialog-actions">
-              <button type="button" id="ref-initiative-cancel" class="secondary">Cancel</button>
-              <button type="button" id="ref-initiative-save">Save</button>
+              <button type="button" id="ref-initiative-cancel" class="secondary">✖️ Cancel</button>
+              <button type="button" id="ref-initiative-save">💾 Save</button>
             </div>
             <div class="initiative-roll-row">
               <button type="button" id="ref-initiative-roll" class="secondary hidden" aria-hidden="true">🎲 Roll for Initiative</button>
@@ -235,15 +235,15 @@
   <div id="ref-party-treasure-panel" class="conditions-modal hidden" aria-hidden="true">
     <div class="dialog-shell inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="ref-party-treasure-dialog-title">
       <div class="conditions-dialog-header">
-        <h2 id="ref-party-treasure-dialog-title">Party Treasure</h2>
+        <h2 id="ref-party-treasure-dialog-title">💰 Party Treasure</h2>
         <div class="conditions-dialog-actions party-treasure-actions">
-          <button type="button" id="ref-party-treasure-cancel" class="secondary">Close</button>
+          <button type="button" id="ref-party-treasure-cancel" class="secondary">✖️ Close</button>
         </div>
       </div>
       <div class="party-treasure-actions-row party-treasure-actions-row-top">
-        <button type="button" id="ref-party-treasure-add" class="secondary">Add</button>
-        <button type="button" id="ref-party-treasure-edit" class="secondary">Edit</button>
-        <button type="button" id="ref-party-treasure-remove" class="secondary">Remove</button>
+        <button type="button" id="ref-party-treasure-add" class="secondary">➕ Add</button>
+        <button type="button" id="ref-party-treasure-edit" class="secondary">✏️ Edit</button>
+        <button type="button" id="ref-party-treasure-remove" class="secondary">🗑️ Remove</button>
       </div>
       <div id="ref-party-treasure-context" class="inventory-summary">Party treasure for —</div>
       <div id="ref-party-treasure-add-form" class="inventory-inline-form hidden" aria-hidden="true">
@@ -281,8 +281,8 @@
           </label>
         </div>
         <div class="party-treasure-inline-actions">
-          <button type="button" id="ref-party-treasure-add-form-cancel" class="secondary">Cancel</button>
-          <button type="button" id="ref-party-treasure-add-form-save">Add Item</button>
+          <button type="button" id="ref-party-treasure-add-form-cancel" class="secondary">✖️ Cancel</button>
+          <button type="button" id="ref-party-treasure-add-form-save">➕ Add Item</button>
         </div>
       </div>
       <div class="inventory-table-wrap">
@@ -305,10 +305,10 @@
   <div id="ref-campaign-settings-modal" class="conditions-modal hidden" aria-hidden="true">
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="ref-campaign-settings-dialog-title">
       <div class="conditions-dialog-header">
-        <h2 id="ref-campaign-settings-dialog-title">Campaign Settings</h2>
+        <h2 id="ref-campaign-settings-dialog-title">⚙ Campaign Settings</h2>
         <div class="conditions-dialog-actions">
-          <button type="button" id="ref-campaign-settings-cancel" class="secondary">Cancel</button>
-          <button type="button" id="ref-campaign-settings-save" disabled>Save</button>
+          <button type="button" id="ref-campaign-settings-cancel" class="secondary">✖️ Cancel</button>
+          <button type="button" id="ref-campaign-settings-save" disabled>💾 Save</button>
         </div>
       </div>
       <div id="ref-campaign-settings-modal-summary" class="subtitle"></div>
@@ -360,7 +360,7 @@
             </span>
           </div>
           <div class="campaign-settings-info-actions">
-            <button type="button" id="ref-invite-player" class="secondary">Invite Player</button>
+            <button type="button" id="ref-invite-player" class="secondary">✉️ Invite Player</button>
           </div>
         </div>
       </div>
@@ -370,7 +370,7 @@
           <div class="creature-library-header">
             <div class="creature-library-header-row">
               <div id="ref-campaign-library-summary" class="creature-library-summary"></div>
-              <button type="button" id="ref-campaign-library-import" class="secondary">Import JSON</button>
+              <button type="button" id="ref-campaign-library-import" class="secondary">📥 Import JSON</button>
             </div>
             <div id="ref-campaign-library-import-status" class="creature-library-summary creature-library-import-status"></div>
           </div>
@@ -378,9 +378,9 @@
               <div class="creature-library-header-row creature-library-userdata-header">
                 <div id="ref-campaign-userdata-summary" class="creature-library-summary"></div>
                 <div class="creature-library-userdata-actions">
-                  <button type="button" id="ref-campaign-userdata-open-folders" class="secondary hidden">Open Folders</button>
-                  <button type="button" id="ref-campaign-userdata-refresh" class="secondary">Refresh</button>
-                  <button type="button" id="ref-campaign-userdata-save" class="secondary">Save Selection</button>
+                  <button type="button" id="ref-campaign-userdata-open-folders" class="secondary hidden">📂 Open Folders</button>
+                  <button type="button" id="ref-campaign-userdata-refresh" class="secondary">🔄 Refresh</button>
+                  <button type="button" id="ref-campaign-userdata-save" class="secondary">💾 Save Selection</button>
                 </div>
               </div>
             <div id="ref-campaign-userdata-status" class="creature-library-summary creature-library-import-status"></div>
@@ -397,9 +397,9 @@
   <div id="currency-panel" class="conditions-modal hidden" aria-hidden="true">
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="currency-dialog-title">
       <div class="conditions-dialog-header">
-        <h2 id="currency-dialog-title">Money</h2>
+        <h2 id="currency-dialog-title">🪙 Money</h2>
         <div class="conditions-dialog-actions">
-          <button type="button" id="currency-cancel" class="secondary">Close</button>
+          <button type="button" id="currency-cancel" class="secondary">✖️ Close</button>
         </div>
       </div>
       <div id="currency-summary" class="currency-summary inventory-summary">Money for —</div>
@@ -411,9 +411,9 @@
   <div id="inventory-panel" class="conditions-modal hidden" aria-hidden="true">
     <div class="dialog-shell inventory-dialog" role="dialog" aria-modal="true" aria-labelledby="inventory-dialog-title">
       <div class="conditions-dialog-header">
-        <h2 id="inventory-dialog-title">Inventory</h2>
+        <h2 id="inventory-dialog-title">🎒 Inventory</h2>
         <div class="conditions-dialog-actions">
-          <button type="button" id="inventory-close" class="secondary">Close</button>
+          <button type="button" id="inventory-close" class="secondary">✖️ Close</button>
         </div>
       </div>
       <p id="inventory-total-weight" class="inventory-summary">Total weight carried: 0</p>
