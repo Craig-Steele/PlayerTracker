@@ -3982,17 +3982,12 @@ window.addEventListener('DOMContentLoaded', () => {
     return popover;
   }
 
-  function createStatsActionButton(character) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'icon-button stats-edit-button';
-    button.textContent = '❤️';
-    button.setAttribute('aria-label', `Edit health for ${character?.name || 'character'}`);
-    button.addEventListener('click', (event) => {
-      event.stopPropagation();
-      toggleExpandedOrderStats(character?.id);
-    });
-    return button;
+  function createEncounterIcon(emoji, className) {
+    const icon = document.createElement('span');
+    icon.className = `encounter-icon ${className || ''}`.trim();
+    icon.textContent = emoji;
+    icon.setAttribute('aria-hidden', 'true');
+    return icon;
   }
 
   /**
@@ -4309,13 +4304,13 @@ window.addEventListener('DOMContentLoaded', () => {
       const statusInfo = encounterStatusInfo(stats, statKeys);
       if (statusInfo) {
         applyEncounterHealthClasses(hpTd, statusInfo);
-        hpTd.classList.add('player-row-stats-cell', 'stats-cell-with-action');
+        hpTd.classList.add('player-row-stats-cell');
         const statsContent = document.createElement('div');
         statsContent.className = 'stats-cell-content';
         const statsInner = document.createElement('div');
         statsInner.className = 'stats-cell-text';
         const statItems = formatEncounterStatsItems(orderedStats, statKeys);
-        statsContent.appendChild(createStatsActionButton(p));
+        statsContent.appendChild(createEncounterIcon('❤️', 'encounter-icon-health'));
         statItems.forEach((stat) => {
           const valueLine = document.createElement('div');
           valueLine.textContent = formatEncounterStatLine(stat);
@@ -4332,7 +4327,17 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       if (statusInfo) {
         hpTd.style.cursor = 'pointer';
+        hpTd.setAttribute('role', 'button');
+        hpTd.setAttribute('tabindex', '0');
+        hpTd.setAttribute('aria-label', `Edit health for ${p.name || 'character'}`);
         hpTd.addEventListener('click', (event) => {
+          event.stopPropagation();
+          closeRefereeRowOverflowMenus();
+          toggleExpandedOrderStats(p.id);
+        });
+        hpTd.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
           event.stopPropagation();
           closeRefereeRowOverflowMenus();
           toggleExpandedOrderStats(p.id);
@@ -4349,18 +4354,10 @@ window.addEventListener('DOMContentLoaded', () => {
       const list = buildEncounterConditionsList(p.conditions, conditionLookup);
       const conditionsContent = document.createElement('div');
       conditionsContent.className = 'conditions-cell-content';
-      const conditionButton = document.createElement('button');
-      conditionButton.type = 'button';
-      conditionButton.className = 'icon-button condition-edit-button';
-      conditionButton.textContent = '🩸';
-      conditionButton.setAttribute('aria-label', `Edit conditions for ${p.name || 'character'}`);
-      conditionButton.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        await openConditionsEditorForCharacter(p);
-      });
+      const conditionIcon = createEncounterIcon('🩸', 'encounter-icon-conditions');
       const conditionsInner = document.createElement('div');
       conditionsInner.className = 'conditions-cell-text';
-      conditionsContent.appendChild(conditionButton);
+      conditionsContent.appendChild(conditionIcon);
       if (list) {
         conditionsInner.appendChild(list);
       } else {
@@ -4369,9 +4366,18 @@ window.addEventListener('DOMContentLoaded', () => {
       conditionsContent.appendChild(conditionsInner);
       conditionsTd.appendChild(conditionsContent);
       conditionsTd.style.cursor = 'pointer';
+      conditionsTd.setAttribute('role', 'button');
+      conditionsTd.setAttribute('tabindex', '0');
+      conditionsTd.setAttribute('aria-label', `Edit conditions for ${p.name || 'character'}`);
       conditionsTd.addEventListener('click', (event) => {
         if (!(event.target instanceof Element)) return;
         if (event.target.closest('a')) return;
+        event.stopPropagation();
+        void openConditionsEditorForCharacter(p);
+      });
+      conditionsTd.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
         event.stopPropagation();
         void openConditionsEditorForCharacter(p);
       });

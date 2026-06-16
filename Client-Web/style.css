@@ -3101,9 +3101,7 @@ body.referee-page .referee-panel {
   text-align: right;
 }
 
-.encounter-icon-button,
-.condition-edit-button,
-.stats-edit-button {
+.encounter-icon {
   position: relative;
   width: auto !important;
   min-width: 0;
@@ -3119,40 +3117,26 @@ body.referee-page .referee-panel {
   z-index: 1;
 }
 
-.condition-edit-button {
-  font-size: 0.95rem;
-}
-
-.stats-edit-button {
+.encounter-icon-health {
+  width: 1.35rem !important;
+  flex: 0 0 1.35rem;
   font-size: 1rem;
 }
 
-.encounter-placeholder-icon {
-  width: auto !important;
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
+.encounter-icon-conditions {
+  width: 1.35rem !important;
+  flex: 0 0 1.35rem;
+  font-size: 0.95rem;
+}
+
+.encounter-icon-placeholder {
   color: var(--text-placeholder);
   cursor: default;
   filter: grayscale(1) opacity(0.65);
-  pointer-events: none;
 }
 
-.encounter-placeholder-icon.condition-edit-placeholder {
-  font-size: 0.95rem;
-}
-
-.encounter-placeholder-icon.stats-edit-placeholder {
-  font-size: 1rem;
-}
-
-.encounter-placeholder-icon:disabled {
-  background: transparent;
-  border-color: transparent;
-  border-radius: 0;
-  box-shadow: none;
+.encounter-icon-placeholder.encounter-icon-health,
+.encounter-icon-placeholder.encounter-icon-conditions {
   opacity: 0.65;
 }
 
@@ -3914,19 +3898,6 @@ body.admin-page .admin-owner-card .admin-owner-group {
   min-width: 0;
   width: 100%;
   flex: 1 1 auto;
-}
-
-.condition-edit-button {
-  position: relative;
-  flex: 0 0 auto;
-  align-self: center;
-  padding: 0;
-  font-size: 0.95rem;
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  color: inherit;
-  z-index: 1;
 }
 
 .hp-cell {

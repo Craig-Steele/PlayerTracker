@@ -4231,60 +4231,11 @@ function getOwnerName() {
     return popover;
   }
 
-  function createEncounterIconButton({ emoji, className, ariaLabel, onClick, disabled = false, hidden = false }) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `icon-button encounter-icon-button ${className || ''}`.trim();
-    button.textContent = emoji;
-    button.disabled = disabled;
-    if (disabled) {
-      button.tabIndex = -1;
-    }
-    if (hidden) {
-      button.setAttribute('aria-hidden', 'true');
-    }
-    if (ariaLabel) {
-      button.setAttribute('aria-label', ariaLabel);
-    }
-    if (onClick && !disabled) {
-      button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        onClick(event);
-      });
-    }
-    return button;
-  }
-
-  function createConditionEditButton(character) {
-    return createEncounterIconButton({
-      emoji: '🩸',
-      className: 'condition-edit-button',
-      ariaLabel: `Edit conditions for ${character?.name || 'character'}`,
-      onClick: () => {
-        void openConditionsEditorForCharacter(character);
-      }
-    });
-  }
-
-  function createStatsActionButton(character) {
-    return createEncounterIconButton({
-      emoji: '❤️',
-      className: 'stats-edit-button',
-      ariaLabel: `Edit health for ${character?.name || 'character'}`,
-      onClick: () => {
-        toggleExpandedOrderStats(character?.id);
-      }
-    });
-  }
-
-  function createEncounterPlaceholderIcon(emoji, className, label) {
+  function createEncounterIcon(emoji, className, placeholder = false) {
     const icon = document.createElement('span');
-    icon.className = `encounter-placeholder-icon ${className || ''}`.trim();
+    icon.className = `encounter-icon ${className || ''} ${placeholder ? 'encounter-icon-placeholder' : ''}`.trim();
     icon.textContent = emoji;
     icon.setAttribute('aria-hidden', 'true');
-    if (label) {
-      icon.title = label;
-    }
     return icon;
   }
 
@@ -4388,11 +4339,8 @@ function getOwnerName() {
         statsInner.className = 'stats-cell-text';
         const canReveal = isMine || p.revealStats;
         const statItems = formatEncounterStatsItems(orderedStats, displayStatKeys);
-        if (isMine) {
-          hpTd.classList.add('stats-cell-with-action');
-          statsContent.appendChild(createStatsActionButton(p));
-        } else {
-          statsContent.appendChild(createEncounterPlaceholderIcon('❤️', 'stats-edit-placeholder', 'Stats editing unavailable'));
+        if (!displayOnly) {
+          statsContent.appendChild(createEncounterIcon('❤️', 'encounter-icon-health', !isMine));
         }
         if (!canReveal) {
           hpTd.classList.add('stats-cell-status-only');
@@ -4416,6 +4364,17 @@ function getOwnerName() {
         }
         statsContent.appendChild(statsInner);
         hpTd.appendChild(statsContent);
+        if (isMine) {
+          hpTd.setAttribute('role', 'button');
+          hpTd.setAttribute('tabindex', '0');
+          hpTd.setAttribute('aria-label', `Edit health for ${p.name || 'character'}`);
+          hpTd.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            event.stopPropagation();
+            toggleExpandedOrderStats(p.id);
+          });
+        }
         if (isMine && p.id === expandedOrderStatsCharacterId) {
           const statsPopover = buildOrderStatsPopover(p, displayStatKeys);
           hpTd.appendChild(statsPopover);
@@ -4435,12 +4394,12 @@ function getOwnerName() {
       const list = buildEncounterConditionsList(p.conditions, conditionLookup);
       const conditionsContent = document.createElement('div');
       conditionsContent.className = 'conditions-cell-content';
-      const conditionButton = isMine
-        ? createConditionEditButton(p)
-        : createEncounterPlaceholderIcon('🩸', 'condition-edit-placeholder', 'Conditions editing unavailable');
       const conditionsInner = document.createElement('div');
       conditionsInner.className = 'conditions-cell-text';
-      conditionsContent.appendChild(conditionButton);
+      if (!displayOnly) {
+        const conditionIcon = createEncounterIcon('🩸', 'encounter-icon-conditions', !isMine);
+        conditionsContent.appendChild(conditionIcon);
+      }
       if (list) {
         conditionsInner.appendChild(list);
       } else {
@@ -4450,9 +4409,18 @@ function getOwnerName() {
       conditionsTd.appendChild(conditionsContent);
       if (isMine) {
         conditionsTd.style.cursor = 'pointer';
+        conditionsTd.setAttribute('role', 'button');
+        conditionsTd.setAttribute('tabindex', '0');
+        conditionsTd.setAttribute('aria-label', `Edit conditions for ${p.name || 'character'}`);
         conditionsTd.addEventListener('click', (event) => {
           if (!(event.target instanceof Element)) return;
           if (event.target.closest('a')) return;
+          event.stopPropagation();
+          void openConditionsEditorForCharacter(p);
+        });
+        conditionsTd.addEventListener('keydown', (event) => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault();
           event.stopPropagation();
           void openConditionsEditorForCharacter(p);
         });
