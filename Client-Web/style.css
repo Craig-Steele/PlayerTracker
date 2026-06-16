@@ -3140,6 +3140,14 @@ body.referee-page .referee-panel {
   pointer-events: none;
 }
 
+.encounter-placeholder-icon.condition-edit-placeholder {
+  font-size: 0.95rem;
+}
+
+.encounter-placeholder-icon.stats-edit-placeholder {
+  font-size: 1rem;
+}
+
 .encounter-placeholder-icon:disabled {
   background: transparent;
   border-color: transparent;

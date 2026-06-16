@@ -4278,13 +4278,14 @@ function getOwnerName() {
   }
 
   function createEncounterPlaceholderIcon(emoji, className, label) {
-    return createEncounterIconButton({
-      emoji,
-      className: `encounter-placeholder-icon ${className || ''}`.trim(),
-      ariaLabel: label,
-      disabled: true,
-      hidden: true
-    });
+    const icon = document.createElement('span');
+    icon.className = `encounter-placeholder-icon ${className || ''}`.trim();
+    icon.textContent = emoji;
+    icon.setAttribute('aria-hidden', 'true');
+    if (label) {
+      icon.title = label;
+    }
+    return icon;
   }
 
   function renderEncounterRows(snapshot) {
