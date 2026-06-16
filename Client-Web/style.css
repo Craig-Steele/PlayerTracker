@@ -2584,17 +2584,6 @@ body.referee-page .referee-panel {
     flex-shrink: 0;
   }
 
-  .condition-edit-button {
-    width: auto !important;
-    display: inline-flex;
-    padding: 0;
-    min-width: 0;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    color: inherit;
-  }
-
   .stats-cell-with-action {
     padding: 0;
   }
@@ -2606,16 +2595,6 @@ body.referee-page .referee-panel {
 
   .conditions-cell-content {
     padding: 0.15rem 0.2rem 0.15rem 0.3rem;
-  }
-
-  .stats-edit-button {
-    width: auto !important;
-    display: inline-flex;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    color: inherit;
   }
 
   .character-force-release {
@@ -3122,18 +3101,51 @@ body.referee-page .referee-panel {
   text-align: right;
 }
 
+.encounter-icon-button,
+.condition-edit-button,
 .stats-edit-button {
   position: relative;
   width: auto !important;
   min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  font-size: 1rem;
   line-height: 1;
   background: transparent;
   border: 0;
   box-shadow: none;
   color: inherit;
   z-index: 1;
+}
+
+.condition-edit-button {
+  font-size: 0.95rem;
+}
+
+.stats-edit-button {
+  font-size: 1rem;
+}
+
+.encounter-placeholder-icon {
+  width: auto !important;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--text-placeholder);
+  cursor: default;
+  filter: grayscale(1) opacity(0.65);
+  pointer-events: none;
+}
+
+.encounter-placeholder-icon:disabled {
+  background: transparent;
+  border-color: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  opacity: 0.65;
 }
 
 .player-row-stats-popover {
@@ -3233,10 +3245,14 @@ body.referee-page .referee-panel {
   white-space: normal;
 }
 
-body.display-only .stats-cell-text,
-.stats-cell-status-only .stats-cell-text {
+body.display-only .stats-cell-text {
   align-items: center;
   text-align: center;
+}
+
+.stats-cell-status-only .stats-cell-text {
+  align-items: flex-end;
+  text-align: right;
 }
 
 /* HP column */

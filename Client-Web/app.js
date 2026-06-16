@@ -4231,30 +4231,60 @@ function getOwnerName() {
     return popover;
   }
 
-  function createConditionEditButton(character) {
+  function createEncounterIconButton({ emoji, className, ariaLabel, onClick, disabled = false, hidden = false }) {
     const button = document.createElement('button');
     button.type = 'button';
-    button.className = 'icon-button condition-edit-button';
-    button.textContent = '🩸';
-    button.setAttribute('aria-label', `Edit conditions for ${character?.name || 'character'}`);
-    button.addEventListener('click', (event) => {
-      event.stopPropagation();
-      void openConditionsEditorForCharacter(character);
-    });
+    button.className = `icon-button encounter-icon-button ${className || ''}`.trim();
+    button.textContent = emoji;
+    button.disabled = disabled;
+    if (disabled) {
+      button.tabIndex = -1;
+    }
+    if (hidden) {
+      button.setAttribute('aria-hidden', 'true');
+    }
+    if (ariaLabel) {
+      button.setAttribute('aria-label', ariaLabel);
+    }
+    if (onClick && !disabled) {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        onClick(event);
+      });
+    }
     return button;
   }
 
-  function createStatsActionButton(character) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'icon-button stats-edit-button';
-    button.textContent = '❤️';
-    button.setAttribute('aria-label', `Edit health for ${character?.name || 'character'}`);
-    button.addEventListener('click', (event) => {
-      event.stopPropagation();
-      toggleExpandedOrderStats(character?.id);
+  function createConditionEditButton(character) {
+    return createEncounterIconButton({
+      emoji: '🩸',
+      className: 'condition-edit-button',
+      ariaLabel: `Edit conditions for ${character?.name || 'character'}`,
+      onClick: () => {
+        void openConditionsEditorForCharacter(character);
+      }
     });
-    return button;
+  }
+
+  function createStatsActionButton(character) {
+    return createEncounterIconButton({
+      emoji: '❤️',
+      className: 'stats-edit-button',
+      ariaLabel: `Edit health for ${character?.name || 'character'}`,
+      onClick: () => {
+        toggleExpandedOrderStats(character?.id);
+      }
+    });
+  }
+
+  function createEncounterPlaceholderIcon(emoji, className, label) {
+    return createEncounterIconButton({
+      emoji,
+      className: `encounter-placeholder-icon ${className || ''}`.trim(),
+      ariaLabel: label,
+      disabled: true,
+      hidden: true
+    });
   }
 
   function renderEncounterRows(snapshot) {
@@ -4360,6 +4390,8 @@ function getOwnerName() {
         if (isMine) {
           hpTd.classList.add('stats-cell-with-action');
           statsContent.appendChild(createStatsActionButton(p));
+        } else {
+          statsContent.appendChild(createEncounterPlaceholderIcon('❤️', 'stats-edit-placeholder', 'Stats editing unavailable'));
         }
         if (!canReveal) {
           hpTd.classList.add('stats-cell-status-only');
@@ -4402,12 +4434,12 @@ function getOwnerName() {
       const list = buildEncounterConditionsList(p.conditions, conditionLookup);
       const conditionsContent = document.createElement('div');
       conditionsContent.className = 'conditions-cell-content';
-      const conditionButton = isMine ? createConditionEditButton(p) : null;
+      const conditionButton = isMine
+        ? createConditionEditButton(p)
+        : createEncounterPlaceholderIcon('🩸', 'condition-edit-placeholder', 'Conditions editing unavailable');
       const conditionsInner = document.createElement('div');
       conditionsInner.className = 'conditions-cell-text';
-      if (conditionButton) {
-        conditionsContent.appendChild(conditionButton);
-      }
+      conditionsContent.appendChild(conditionButton);
       if (list) {
         conditionsInner.appendChild(list);
       } else {
