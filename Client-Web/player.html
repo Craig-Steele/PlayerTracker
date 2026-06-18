@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=103">
+  <link rel="stylesheet" href="style.css?v=107">
 </head>
 <body class="player-page">
   <!-- Campaign header -->
@@ -212,60 +212,18 @@
         <div class="conditions-dialog-header">
           <h2 id="party-treasure-dialog-title">💰 Party Treasure</h2>
           <div class="conditions-dialog-actions party-treasure-actions">
+            <button type="button" id="party-treasure-add" class="secondary">➕ Add</button>
             <button type="button" id="party-treasure-cancel" class="secondary">✖️ Close</button>
           </div>
         </div>
-        <div class="party-treasure-actions-row party-treasure-actions-row-top">
-          <button type="button" id="party-treasure-add" class="secondary">➕ Add</button>
-          <button type="button" id="party-treasure-edit" class="secondary">✏️ Edit</button>
-          <button type="button" id="party-treasure-remove" class="secondary">🗑️ Remove</button>
-          <button type="button" id="party-treasure-claim" class="secondary party-treasure-claim">🏷️ Claim</button>
-        </div>
         <div id="party-treasure-context" class="inventory-summary">Party treasure for —</div>
-        <div id="party-treasure-add-form" class="inventory-inline-form hidden" aria-hidden="true">
-          <div id="party-treasure-add-form-title" class="inventory-inline-form-title">Add Item</div>
-          <div class="inventory-inline-form-grid">
-            <label class="property-row">
-              <span class="property-label">Item</span>
-              <span class="property-control">
-                <input type="text" id="party-treasure-add-name" list="party-treasure-item-options" placeholder="Item name" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Qty</span>
-              <span class="property-control">
-                <input type="number" id="party-treasure-add-quantity" min="1" value="1" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Value</span>
-              <span class="property-control">
-                <input type="number" id="party-treasure-add-value" step="0.01" value="0" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Weight</span>
-              <span class="property-control">
-                <input type="number" id="party-treasure-add-weight" step="any" value="0" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Link</span>
-              <span class="property-control">
-                <input type="url" id="party-treasure-add-url" placeholder="Optional link" />
-              </span>
-            </label>
-          </div>
-          <div class="party-treasure-inline-actions">
-            <button type="button" id="party-treasure-add-form-cancel" class="secondary">✖️ Cancel</button>
-            <button type="button" id="party-treasure-add-form-save">➕ Add Item</button>
-          </div>
-        </div>
+        <div id="party-treasure-add-form-host" data-add-form-type="party-treasure"></div>
         <div class="inventory-scroll">
           <div class="inventory-table-wrap">
             <table class="inventory-table">
               <thead>
                 <tr>
+                  <th>⋮</th>
                   <th>Item</th>
                   <th>Qty</th>
                   <th>Value</th>
@@ -284,60 +242,12 @@
         <div class="conditions-dialog-header">
           <h2 id="inventory-dialog-title">🎒 Inventory</h2>
           <div class="conditions-dialog-actions">
+            <button type="button" id="inventory-add" class="secondary">➕ Add</button>
             <button type="button" id="inventory-close" class="secondary">✖️ Close</button>
           </div>
         </div>
-        <div class="party-treasure-actions-row party-treasure-actions-row-top inventory-actions-row">
-          <button type="button" id="inventory-add" class="secondary">🗡 Add Item</button>
-          <button type="button" id="inventory-add-container" class="secondary">🧳 Add Container</button>
-        </div>
         <p id="inventory-total-weight" class="inventory-summary">Total equipped weight: 0</p>
-        <div id="inventory-add-form" class="inventory-inline-form hidden" aria-hidden="true">
-          <div id="inventory-add-form-title" class="inventory-inline-form-title">Add Item</div>
-          <div class="inventory-inline-form-grid">
-            <label class="property-row">
-              <span class="property-label">Item</span>
-              <span class="property-control">
-                <input type="text" id="inventory-add-name" list="inventory-item-options" placeholder="Item name" />
-              </span>
-            </label>
-            <label class="property-row" id="inventory-add-container-row">
-              <span class="property-label">Container</span>
-              <span class="property-control">
-                <select id="inventory-add-container-id">
-                </select>
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Qty</span>
-              <span class="property-control">
-                <input type="number" id="inventory-add-quantity" min="1" value="1" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Value</span>
-              <span class="property-control">
-                <input type="number" id="inventory-add-value" step="0.01" value="0" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Weight</span>
-              <span class="property-control">
-                <input type="number" id="inventory-add-weight" step="any" value="0" />
-              </span>
-            </label>
-            <label class="property-row">
-              <span class="property-label">Link</span>
-              <span class="property-control">
-                <input type="url" id="inventory-add-url" placeholder="Optional link" />
-              </span>
-            </label>
-          </div>
-          <div class="party-treasure-inline-actions">
-            <button type="button" id="inventory-add-form-cancel" class="secondary">✖️ Cancel</button>
-            <button type="button" id="inventory-add-form-save">🗡 Add Item</button>
-          </div>
-        </div>
+        <div id="inventory-add-form-host" data-add-form-type="inventory"></div>
         <div class="inventory-scroll">
           <div class="inventory-table-wrap">
             <table class="inventory-table">
@@ -416,7 +326,10 @@
 
   <script src="shared.js?v=5"></script>
   <script src="live-stream.js?v=5"></script>
-  <script src="party-treasure.js?v=13"></script>
+  <script src="add-form.js?v=3"></script>
+  <script src="equipment-preset.js?v=1"></script>
+  <script src="inventory-transfer.js?v=1"></script>
+  <script src="party-treasure.js?v=15"></script>
   <script src="inventory-view.js?v=5"></script>
   <script src="inventory-id.js?v=2"></script>
   <script src="player-name.js?v=2"></script>
@@ -427,6 +340,6 @@
   <script src="claimable-characters.js?v=2"></script>
   <script src="ruleset.js?v=3"></script>
   <script src="encounter.js?v=3"></script>
-  <script src="app.js?v=125"></script>
+  <script src="app.js?v=130"></script>
 </body>
 </html>

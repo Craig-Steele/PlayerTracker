@@ -1907,23 +1907,6 @@ body.referee-page .referee-panel {
   font-size: 0.95rem;
 }
 
-#inventory-panel .inventory-actions-row {
-  position: static;
-  top: auto;
-  z-index: auto;
-  margin-top: 0.1rem;
-  padding: 0.1rem 0 0;
-  background: var(--bg-page);
-  flex-wrap: nowrap;
-  overflow: visible;
-}
-
-#inventory-panel .inventory-actions-row button {
-  flex: 1 1 0;
-  min-width: 0;
-  white-space: nowrap;
-}
-
 .inventory-inline-form {
   margin-top: 0.85rem;
   padding: 0.75rem;
@@ -1955,7 +1938,7 @@ body.referee-page .referee-panel {
 #party-treasure-panel .inventory-table td:nth-child(1),
 #ref-party-treasure-panel .inventory-table th:nth-child(1),
 #ref-party-treasure-panel .inventory-table td:nth-child(1) {
-  width: 68%;
+  width: 3rem;
 }
 
 .party-treasure-compact .inventory-table th:nth-child(2),
@@ -1964,7 +1947,7 @@ body.referee-page .referee-panel {
 #party-treasure-panel .inventory-table td:nth-child(2),
 #ref-party-treasure-panel .inventory-table th:nth-child(2),
 #ref-party-treasure-panel .inventory-table td:nth-child(2) {
-  width: 16%;
+  width: 63%;
 }
 
 .party-treasure-compact .inventory-table th:nth-child(3),
@@ -1973,7 +1956,16 @@ body.referee-page .referee-panel {
 #party-treasure-panel .inventory-table td:nth-child(3),
 #ref-party-treasure-panel .inventory-table th:nth-child(3),
 #ref-party-treasure-panel .inventory-table td:nth-child(3) {
-  width: 16%;
+  width: 12%;
+}
+
+.party-treasure-compact .inventory-table th:nth-child(4),
+.party-treasure-compact .inventory-table td:nth-child(4),
+#party-treasure-panel .inventory-table th:nth-child(4),
+#party-treasure-panel .inventory-table td:nth-child(4),
+#ref-party-treasure-panel .inventory-table th:nth-child(4),
+#ref-party-treasure-panel .inventory-table td:nth-child(4) {
+  width: 22%;
 }
 
 .party-treasure-inline-actions {
@@ -2128,12 +2120,30 @@ body.referee-page .referee-panel {
   padding-right: 0.25rem;
 }
 
+#party-treasure-panel .inventory-entry-menu-cell,
+#ref-party-treasure-panel .inventory-entry-menu-cell {
+  text-align: center;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
 #inventory-panel .inventory-entry-menu-cell .character-overflow {
   display: inline-flex;
   margin: 0 auto;
 }
 
+#party-treasure-panel .inventory-entry-menu-cell .character-overflow,
+#ref-party-treasure-panel .inventory-entry-menu-cell .character-overflow {
+  display: inline-flex;
+  margin: 0 auto;
+}
+
 #inventory-panel .inventory-row-overflow .character-overflow-toggle {
+  min-width: 1rem;
+}
+
+#party-treasure-panel .inventory-row-overflow .character-overflow-toggle,
+#ref-party-treasure-panel .inventory-row-overflow .character-overflow-toggle {
   min-width: 1rem;
 }
 
@@ -2263,17 +2273,12 @@ body.referee-page .referee-panel {
     display: inline-flex;
   }
 
-  .party-treasure-compact .party-treasure-actions-row-top,
-  #party-treasure-panel .party-treasure-actions-row-top,
-  #ref-party-treasure-panel .party-treasure-actions-row-top {
-    justify-content: flex-start;
-  }
-
   .party-treasure-compact .inventory-table,
   #party-treasure-panel .inventory-table,
   #ref-party-treasure-panel .inventory-table {
     min-width: 0;
     width: 100%;
+    table-layout: auto !important;
   }
 
   .party-treasure-compact .inventory-table th,
@@ -2291,7 +2296,7 @@ body.referee-page .referee-panel {
   #party-treasure-panel .inventory-table td:nth-child(1),
   #ref-party-treasure-panel .inventory-table th:nth-child(1),
   #ref-party-treasure-panel .inventory-table td:nth-child(1) {
-    width: 54%;
+    width: 2.75rem;
   }
 
   .party-treasure-compact .inventory-table th:nth-child(2),
@@ -2300,60 +2305,18 @@ body.referee-page .referee-panel {
   #party-treasure-panel .inventory-table td:nth-child(2),
   #ref-party-treasure-panel .inventory-table th:nth-child(2),
   #ref-party-treasure-panel .inventory-table td:nth-child(2) {
-    width: 12%;
-  }
-
-  .party-treasure-compact .inventory-table th:nth-child(3),
-  .party-treasure-compact .inventory-table td:nth-child(3),
-  #party-treasure-panel .inventory-table th:nth-child(3),
-  #party-treasure-panel .inventory-table td:nth-child(3),
-  #ref-party-treasure-panel .inventory-table th:nth-child(3),
-  #ref-party-treasure-panel .inventory-table td:nth-child(3) {
-    width: 15%;
-  }
-
-  .party-treasure-compact .inventory-entry-display,
-  #party-treasure-panel .inventory-entry-display,
-  #ref-party-treasure-panel .inventory-entry-display {
-    background: var(--bg-panel);
-  }
-
-  .party-treasure-compact .inventory-table,
-  #party-treasure-panel .inventory-table,
-  #ref-party-treasure-panel .inventory-table {
-    table-layout: auto !important;
-    min-width: 0 !important;
-    width: 100%;
-  }
-
-  .party-treasure-compact .inventory-table th:nth-child(1),
-  .party-treasure-compact .inventory-table td:nth-child(1),
-  #party-treasure-panel .inventory-table th:nth-child(1),
-  #party-treasure-panel .inventory-table td:nth-child(1),
-  #ref-party-treasure-panel .inventory-table th:nth-child(1),
-  #ref-party-treasure-panel .inventory-table td:nth-child(1) {
-    width: 44%;
+    width: 56%;
     white-space: normal;
     word-break: break-word;
   }
 
-  .party-treasure-compact .inventory-table th:nth-child(2),
-  .party-treasure-compact .inventory-table td:nth-child(2),
-  #party-treasure-panel .inventory-table th:nth-child(2),
-  #party-treasure-panel .inventory-table td:nth-child(2),
-  #ref-party-treasure-panel .inventory-table th:nth-child(2),
-  #ref-party-treasure-panel .inventory-table td:nth-child(2) {
-    width: 14%;
-    white-space: nowrap;
-  }
-
   .party-treasure-compact .inventory-table th:nth-child(3),
   .party-treasure-compact .inventory-table td:nth-child(3),
   #party-treasure-panel .inventory-table th:nth-child(3),
   #party-treasure-panel .inventory-table td:nth-child(3),
   #ref-party-treasure-panel .inventory-table th:nth-child(3),
   #ref-party-treasure-panel .inventory-table td:nth-child(3) {
-    width: 18%;
+    width: 14%;
     white-space: nowrap;
   }
 
@@ -2363,7 +2326,7 @@ body.referee-page .referee-panel {
   #party-treasure-panel .inventory-table td:nth-child(4),
   #ref-party-treasure-panel .inventory-table th:nth-child(4),
   #ref-party-treasure-panel .inventory-table td:nth-child(4) {
-    width: 24%;
+    width: 18%;
     white-space: nowrap;
   }
 }

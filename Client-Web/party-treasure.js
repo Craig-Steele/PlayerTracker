@@ -1,4 +1,12 @@
-(function () {
+(function (root, factory) {
+  const api = factory();
+  if (typeof module === 'object' && module.exports) {
+    module.exports = api;
+  }
+  if (root) {
+    root.PlayerTrackerPartyTreasure = api;
+  }
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   /**
    * Create a new inventory entry id.
    * @returns {string}
@@ -202,22 +210,36 @@
    */
   function applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems = []) {
     if (!row || !itemName) return;
-    const preset = equipmentLibraryItems.find(
-      (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
-    );
+    const preset = window.PlayerTrackerEquipmentPreset?.findEquipmentPreset
+      ? window.PlayerTrackerEquipmentPreset.findEquipmentPreset(itemName, equipmentLibraryItems)
+      : equipmentLibraryItems.find(
+          (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
+        );
     if (!preset) return;
-    const valueInput = row.querySelector('input[data-inventory-field="value"]');
-    const weightInput = row.querySelector('input[data-inventory-field="weight"]');
-    if (valueInput && Number.isFinite(preset.value)) {
-      valueInput.value = String(preset.value);
-    }
-    if (weightInput && Number.isFinite(preset.weight)) {
-      weightInput.value = String(preset.weight);
-    }
-    const urlInput = row.querySelector('input[data-inventory-field="url"]');
-    if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
-      urlInput.value = preset.url.trim();
-    }
+    window.PlayerTrackerEquipmentPreset?.applyEquipmentPresetToInputs
+      ? window.PlayerTrackerEquipmentPreset.applyEquipmentPresetToInputs(
+          {
+            valueInput: row.querySelector('input[data-inventory-field="value"]'),
+            weightInput: row.querySelector('input[data-inventory-field="weight"]'),
+            urlInput: row.querySelector('input[data-inventory-field="url"]')
+          },
+          itemName,
+          equipmentLibraryItems
+        )
+      : (() => {
+          const valueInput = row.querySelector('input[data-inventory-field="value"]');
+          const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+          if (valueInput && Number.isFinite(preset.value)) {
+            valueInput.value = String(preset.value);
+          }
+          if (weightInput && Number.isFinite(preset.weight)) {
+            weightInput.value = String(preset.weight);
+          }
+          const urlInput = row.querySelector('input[data-inventory-field="url"]');
+          if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
+            urlInput.value = preset.url.trim();
+          }
+        })();
   }
 
   /**
@@ -237,7 +259,8 @@
     onDirty = null,
     onSelect = null,
     applyPreset = null,
-    readOnly = true
+    readOnly = true,
+    firstColumnRenderer = null
   } = {}) {
     const normalized = normalizeInventoryEntry(entry, null, false);
     const row = document.createElement('tr');
@@ -253,6 +276,23 @@
         onSelect(row);
       }
     });
+
+    const menuCell = document.createElement('td');
+    menuCell.className = 'inventory-entry-menu-cell';
+    const firstColumnContent = typeof firstColumnRenderer === 'function'
+      ? firstColumnRenderer({ row, entry: normalized, options: { itemOptionsId, onDirty, onSelect, applyPreset, readOnly } })
+      : null;
+    if (typeof firstColumnContent === 'string') {
+      menuCell.textContent = firstColumnContent;
+    } else if (firstColumnContent) {
+      menuCell.appendChild(firstColumnContent);
+    } else {
+      const icon = document.createElement('span');
+      icon.className = 'inventory-display-value inventory-display-icon';
+      icon.textContent = '⋮';
+      menuCell.appendChild(icon);
+    }
+    row.appendChild(menuCell);
 
     const fields = [
       {
@@ -370,7 +410,8 @@
       onDirty = null,
       onSelect = null,
       applyPreset = null,
-      readOnly = true
+      readOnly = true,
+      firstColumnRenderer = null
     } = options;
     fieldsEl.innerHTML = '';
     const normalizedEntries = Array.isArray(items)
@@ -386,7 +427,8 @@
         onDirty,
         onSelect,
         applyPreset,
-        readOnly
+        readOnly,
+        firstColumnRenderer
       }));
     });
     const firstRow = fieldsEl.querySelector('tr.inventory-entry');
@@ -436,7 +478,7 @@
       : [];
   }
 
-  window.PlayerTrackerPartyTreasure = {
+  return {
     createInventoryEntryId,
     normalizeInventoryEntry,
     normalizeEquipmentItem,
@@ -452,4 +494,4 @@
     upsertPartyTreasureEntry,
     removePartyTreasureEntry
   };
-})();
+});

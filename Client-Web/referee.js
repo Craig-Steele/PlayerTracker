@@ -352,6 +352,33 @@ window.addEventListener('DOMContentLoaded', () => {
   let equipmentLibraryItems = [];
   let equipmentLibraryLoaded = false;
   let equipmentLibraryLoading = false;
+  const equipmentPresetHelpers = window.PlayerTrackerEquipmentPreset || {
+    findEquipmentPreset: (itemName, items = []) => {
+      const normalizedName = typeof itemName === 'string' ? itemName.trim().toLowerCase() : '';
+      if (!normalizedName || !Array.isArray(items)) {
+        return null;
+      }
+      return items.find(
+        (item) => typeof item?.name === 'string' && item.name.trim().toLowerCase() === normalizedName
+      ) || null;
+    },
+    applyEquipmentPresetToInputs: (inputs = {}, itemName, items = []) => {
+      const preset = equipmentPresetHelpers.findEquipmentPreset(itemName, items);
+      if (!preset) {
+        return false;
+      }
+      if (inputs.valueInput && Number.isFinite(preset.value)) {
+        inputs.valueInput.value = String(preset.value);
+      }
+      if (inputs.weightInput && Number.isFinite(preset.weight)) {
+        inputs.weightInput.value = String(preset.weight);
+      }
+      if (inputs.urlInput && typeof preset.url === 'string' && preset.url.trim()) {
+        inputs.urlInput.value = preset.url.trim();
+      }
+      return true;
+    }
+  };
   const allowLocalFolderAccess = isAdminHost();
   const narrowPopupQuery = typeof window.matchMedia === 'function'
     ? window.matchMedia('(max-width: 760px)')
@@ -569,6 +596,62 @@ window.addEventListener('DOMContentLoaded', () => {
       return firstRow;
     },
   };
+  const inventoryTransferHelpers = window.PlayerTrackerInventoryTransfer || {
+    normalizeTransferEntry: (entry = {}) => ({
+      id: typeof entry.id === 'string' ? entry.id.trim() : '',
+      name: typeof entry.name === 'string' ? entry.name : '',
+      quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
+      value: Number.isFinite(entry.value) ? entry.value : 0,
+      weight: Number.isFinite(entry.weight) ? entry.weight : 0,
+      url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : null,
+      isContainer: Boolean(entry.isContainer)
+    }),
+    transferEntry: ({ sourceItems = [], destinationItems = [], entryId, mapTransferredEntry = (entry) => entry, removeFromSource = true } = {}) => {
+      const normalizedSourceItems = Array.isArray(sourceItems)
+        ? sourceItems.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item))
+        : [];
+      const normalizedDestinationItems = Array.isArray(destinationItems)
+        ? destinationItems.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item))
+        : [];
+      const normalizedEntryId = typeof entryId === 'string' ? entryId.trim() : '';
+      if (!normalizedEntryId) {
+        return {
+          sourceItems: normalizedSourceItems,
+          destinationItems: normalizedDestinationItems,
+          transferredEntry: null
+        };
+      }
+      const sourceIndex = normalizedSourceItems.findIndex((item) => item.id === normalizedEntryId);
+      if (sourceIndex < 0) {
+        return {
+          sourceItems: normalizedSourceItems,
+          destinationItems: normalizedDestinationItems,
+          transferredEntry: null
+        };
+      }
+      const sourceEntry = normalizedSourceItems[sourceIndex];
+      const transferredEntry = inventoryTransferHelpers.normalizeTransferEntry(mapTransferredEntry({ ...sourceEntry }));
+      const nextSourceItems = removeFromSource
+        ? normalizedSourceItems.filter((item) => item.id !== normalizedEntryId)
+        : normalizedSourceItems.map((item) => (item.id === normalizedEntryId ? transferredEntry : item));
+      const nextDestinationItems = (() => {
+        const normalizedItems = normalizedDestinationItems.slice();
+        const destIndex = normalizedItems.findIndex((item) => item.id === transferredEntry.id);
+        if (destIndex >= 0) {
+          normalizedItems[destIndex] = transferredEntry;
+        } else {
+          normalizedItems.push(transferredEntry);
+        }
+        return normalizedItems;
+      })();
+      return {
+        sourceItems: nextSourceItems,
+        destinationItems: nextDestinationItems,
+        transferredEntry
+      };
+    }
+  };
   const refereeHeaderNameTargets = [refereeCampaignName];
   const refereeHeaderIconTargets = [refereeRulesetIcon];
   const refereeHeaderLinkTargets = [refereeRulesetLink];
@@ -714,6 +797,14 @@ window.addEventListener('DOMContentLoaded', () => {
   if (partyTreasureAddFormCancelBtn) {
     partyTreasureAddFormCancelBtn.addEventListener('click', () => {
       setPartyTreasureAddFormOpen(false);
+    });
+  }
+  if (partyTreasureAddFormName) {
+    partyTreasureAddFormName.addEventListener('input', () => {
+      applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
+    });
+    partyTreasureAddFormName.addEventListener('change', () => {
+      applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
     });
   }
   if (partyTreasureRemoveBtn) {
@@ -2758,6 +2849,18 @@ window.addEventListener('DOMContentLoaded', () => {
     if (partyTreasureAddFormUrl) partyTreasureAddFormUrl.value = normalized.url || '';
   }
 
+  function applyPartyTreasurePresetToForm(itemName) {
+    equipmentPresetHelpers.applyEquipmentPresetToInputs(
+      {
+        valueInput: partyTreasureAddFormValue,
+        weightInput: partyTreasureAddFormWeight,
+        urlInput: partyTreasureAddFormUrl
+      },
+      itemName,
+      equipmentLibraryItems
+    );
+  }
+
   function updatePartyTreasureActionButtons() {
     const isAddFormOpen = Boolean(partyTreasureAddForm && !partyTreasureAddForm.classList.contains('hidden'));
     const hasSelection = Boolean(partyTreasureSelectedRow);
@@ -2795,6 +2898,9 @@ window.addEventListener('DOMContentLoaded', () => {
       partyTreasureAddFormSaveBtn.textContent = open && entry ? 'Save Changes' : 'Add Item';
     }
     populatePartyTreasureAddForm(open ? entry : null);
+    if (open) {
+      applyPartyTreasurePresetToForm(partyTreasureAddFormName?.value || '');
+    }
     updatePartyTreasureActionButtons();
   }
 
@@ -2858,6 +2964,151 @@ window.addEventListener('DOMContentLoaded', () => {
     updatePartyTreasureActionButtons();
   }
 
+  function buildPartyTreasureRowOverflowControls(entry, row) {
+    const overflow = document.createElement('div');
+    overflow.className = 'character-overflow inventory-row-overflow party-treasure-row-overflow';
+
+    const overflowToggle = document.createElement('button');
+    overflowToggle.type = 'button';
+    overflowToggle.className = 'character-overflow-toggle';
+    overflowToggle.setAttribute('aria-label', `Manage ${entry.name || 'item'}`);
+    overflowToggle.setAttribute('aria-haspopup', 'menu');
+    overflowToggle.setAttribute('aria-expanded', 'false');
+    overflowToggle.textContent = '⋮';
+
+    const overflowMenu = document.createElement('div');
+    overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu party-treasure-row-menu';
+    overflowMenu.setAttribute('role', 'menu');
+    overflowMenu.setAttribute('aria-hidden', 'true');
+    overflowMenu.style.position = 'fixed';
+    overflowMenu.style.zIndex = '10000';
+    overflowMenu._overflowToggle = overflowToggle;
+    document.body.appendChild(overflowMenu);
+
+    const overflowTitle = document.createElement('div');
+    overflowTitle.className = 'character-overflow-title';
+    overflowTitle.textContent = entry.name || 'Item';
+    overflowMenu.appendChild(overflowTitle);
+
+    const menuSummary = document.createElement('div');
+    menuSummary.className = 'inventory-row-menu-summary';
+
+    const quantityLine = document.createElement('div');
+    quantityLine.className = 'inventory-row-menu-summary-line';
+    const quantityLabel = document.createElement('span');
+    quantityLabel.className = 'inventory-row-menu-summary-label';
+    quantityLabel.textContent = 'Qty';
+    const quantityAmount = document.createElement('span');
+    quantityAmount.className = 'inventory-row-menu-summary-value';
+    quantityAmount.textContent = String(entry.quantity ?? 1);
+    quantityLine.appendChild(quantityLabel);
+    quantityLine.appendChild(quantityAmount);
+    menuSummary.appendChild(quantityLine);
+
+    const valueLine = document.createElement('div');
+    valueLine.className = 'inventory-row-menu-summary-line';
+    const valueLabel = document.createElement('span');
+    valueLabel.className = 'inventory-row-menu-summary-label';
+    valueLabel.textContent = 'Value';
+    const valueAmount = document.createElement('span');
+    valueAmount.className = 'inventory-row-menu-summary-value';
+    valueAmount.textContent = String(Math.round(Number(entry.value ?? 0) * 100) / 100);
+    valueLine.appendChild(valueLabel);
+    valueLine.appendChild(valueAmount);
+    menuSummary.appendChild(valueLine);
+
+    overflowMenu.appendChild(menuSummary);
+
+    const appendMenuButton = (label, handler, options = {}) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className || 'secondary';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
+      if (options.hidden) {
+        button.classList.add('hidden');
+      }
+      button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeRefereeRowOverflowMenus(overflowMenu);
+        await handler();
+      });
+      overflowMenu.appendChild(button);
+      return button;
+    };
+
+    appendMenuButton('✏️ Edit', async () => {
+      setSelectedPartyTreasureRow(row);
+      editSelectedPartyTreasureItem();
+    });
+    appendMenuButton('🗑️ Remove', async () => {
+      setSelectedPartyTreasureRow(row);
+      await removeSelectedPartyTreasureItem();
+    }, {
+      className: 'secondary danger'
+    });
+
+    const openOverflowMenu = () => {
+      closeRefereeRowOverflowMenus(overflowMenu);
+      overflowMenu.classList.remove('hidden');
+      overflowMenu.setAttribute('aria-hidden', 'false');
+      overflowToggle.setAttribute('aria-expanded', 'true');
+      const centered = isNarrowPopupViewport();
+      overflowMenu.classList.toggle('popup-centered', centered);
+      const toggleRect = row?.getBoundingClientRect?.() || overflowToggle.getBoundingClientRect();
+      if (centered) {
+        overflowMenu.style.top = '';
+        overflowMenu.style.left = '';
+        overflowMenu.style.right = '';
+        overflowMenu.style.bottom = '';
+        overflowMenu.style.transform = '';
+      } else {
+        overflowMenu.style.top = `${toggleRect.bottom + 6}px`;
+        overflowMenu.style.left = `${toggleRect.left}px`;
+        overflowMenu.style.right = 'auto';
+        overflowMenu.style.bottom = '';
+        overflowMenu.style.transform = '';
+        window.requestAnimationFrame(() => {
+          const menuRect = overflowMenu.getBoundingClientRect();
+          const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+          const overflowRight = menuRect.right > viewportWidth - 8;
+          const overflowLeft = menuRect.left < 8;
+          if (overflowRight && !overflowLeft) {
+            overflowMenu.style.left = `${Math.max(8, viewportWidth - menuRect.width - 8)}px`;
+          }
+        });
+      }
+    };
+
+    overflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeRefereeRowOverflowMenus();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowToggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeRefereeRowOverflowMenus();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    overflow.appendChild(overflowToggle);
+    return overflow;
+  }
+
   /**
    * Render the party treasure editor rows from the current item list.
    * @param {Array<object>} items Items to render.
@@ -2872,7 +3123,8 @@ window.addEventListener('DOMContentLoaded', () => {
       },
       applyPreset: (row, itemName) => {
         partyTreasureHelpers.applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems);
-      }
+      },
+      firstColumnRenderer: ({ row, entry: normalized }) => buildPartyTreasureRowOverflowControls(normalized, row)
     });
   }
 
@@ -3338,6 +3590,38 @@ window.addEventListener('DOMContentLoaded', () => {
     menuSummary.appendChild(weightLine);
     overflowMenu.appendChild(menuSummary);
 
+    const appendMenuButton = (label, handler, options = {}) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className || 'secondary';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
+      if (options.hidden) {
+        button.classList.add('hidden');
+      }
+      button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeRefereeRowOverflowMenus(overflowMenu);
+        await handler();
+      });
+      overflowMenu.appendChild(button);
+      return button;
+    };
+
+    appendMenuButton('📦 Send to Party Treasure', async () => {
+      await sendSelectedInventoryEntryToPartyTreasure();
+    }, {
+      hidden: entry.isContainer || !inventoryViewerCharacterId
+    });
+    appendMenuButton('🗑️ Remove', async () => {
+      await removeSelectedInventoryEntry();
+    }, {
+      className: 'secondary danger',
+      hidden: !inventoryViewerCharacterId
+    });
+
     const openOverflowMenu = () => {
       closeRefereeRowOverflowMenus(overflowMenu);
       overflowMenu.classList.remove('hidden');
@@ -3439,6 +3723,104 @@ window.addEventListener('DOMContentLoaded', () => {
         ? String(totalWeight)
         : String(Math.round(totalWeight * 1000) / 1000);
       inventoryTotalWeight.textContent = `Total weight carried: ${formattedTotal}`;
+    }
+  }
+
+  function getInventoryViewerCharacter() {
+    if (!inventoryViewerCharacterId) return null;
+    return currentPlayers.find((player) => player.id === inventoryViewerCharacterId) || null;
+  }
+
+  async function removeSelectedInventoryEntry() {
+    if (!inventoryViewerCharacterId || !inventorySelectedRow) return;
+    const player = getInventoryViewerCharacter();
+    if (!player) return;
+    const rowData = getInventoryRowData(inventorySelectedRow) || {};
+    const entry = currentInventory.find((item) => item && item.id === rowData.id) || null;
+    const rowName = (entry?.name || inventorySelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
+    const items = inventoryRemovalHelpers.removeInventoryEntry(currentInventory, rowData.id || '', {
+      moveContainedItems: false
+    });
+    try {
+      const nextPlayer = {
+        ...player,
+        inventory: items
+      };
+      const savedPlayer = await saveCharacterEntry(nextPlayer);
+      if (!savedPlayer) return;
+      currentInventory = Array.isArray(savedPlayer.inventory) ? savedPlayer.inventory : items;
+      buildInventoryFields(savedPlayer);
+      if (statusDiv) {
+        statusDiv.textContent = `Removed ${rowName}.`;
+      }
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = `Inventory remove failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
+  }
+
+  async function sendSelectedInventoryEntryToPartyTreasure() {
+    if (!inventoryViewerCharacterId || !inventorySelectedRow || !activeCampaignId) return;
+    const player = getInventoryViewerCharacter();
+    if (!player) return;
+    const rowData = getInventoryRowData(inventorySelectedRow) || {};
+    const entry = currentInventory.find((item) => item && item.id === rowData.id) || null;
+    if (!rowData.id || !entry) return;
+    if (entry.isContainer) {
+      if (statusDiv) {
+        statusDiv.textContent = 'Send to Party Treasure only works for items, not containers.';
+      }
+      return;
+    }
+    const originalInventory = currentInventory.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item));
+    const originalPartyTreasure = currentPartyTreasure.map((item) => partyTreasureHelpers.normalizeInventoryEntry(item));
+    const transfer = inventoryTransferHelpers.transferEntry({
+      sourceItems: currentInventory,
+      destinationItems: currentPartyTreasure,
+      entryId: rowData.id,
+      mapTransferredEntry: (item) => ({
+        ...item,
+        containerId: null,
+        isContainer: false
+      }),
+      removeFromSource: true
+    });
+    if (!transfer.transferredEntry) {
+      return;
+    }
+    try {
+      const updatedCampaign = await savePartyTreasureItems(transfer.destinationItems);
+      if (!updatedCampaign) {
+        return;
+      }
+      const nextPlayer = {
+        ...player,
+        inventory: transfer.sourceItems
+      };
+      const savedPlayer = await saveCharacterEntry(nextPlayer);
+      if (!savedPlayer) {
+        currentPartyTreasure = originalPartyTreasure;
+        await savePartyTreasureItems(originalPartyTreasure);
+        await loadState();
+        return;
+      }
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : transfer.destinationItems;
+      currentInventory = Array.isArray(savedPlayer.inventory) ? savedPlayer.inventory : transfer.sourceItems;
+      buildPartyTreasureFields(currentPartyTreasure);
+      buildInventoryFields(savedPlayer);
+      if (statusDiv) {
+        statusDiv.textContent = `Sent ${entry.name || 'Item'} to party treasure.`;
+      }
+    } catch (err) {
+      currentPartyTreasure = originalPartyTreasure;
+      await savePartyTreasureItems(originalPartyTreasure);
+      await loadState();
+      if (statusDiv) {
+        statusDiv.textContent = `Send to party treasure failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
     }
   }
 

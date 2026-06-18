@@ -255,6 +255,62 @@ const inventoryRemovalHelpers = window.PlayerTrackerInventoryRemoval || {
     return normalizedItems.filter((item) => !removedIds.has(item.id));
   }
 };
+const inventoryTransferHelpers = window.PlayerTrackerInventoryTransfer || {
+  normalizeTransferEntry: (entry = {}) => ({
+    id: typeof entry.id === 'string' ? entry.id.trim() : '',
+    name: typeof entry.name === 'string' ? entry.name : '',
+    quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
+    value: Number.isFinite(entry.value) ? entry.value : 0,
+    weight: Number.isFinite(entry.weight) ? entry.weight : 0,
+    url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+    containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : null,
+    isContainer: Boolean(entry.isContainer)
+  }),
+  transferEntry: ({ sourceItems = [], destinationItems = [], entryId, mapTransferredEntry = (entry) => entry, removeFromSource = true } = {}) => {
+    const normalizedSourceItems = Array.isArray(sourceItems)
+      ? sourceItems.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item))
+      : [];
+    const normalizedDestinationItems = Array.isArray(destinationItems)
+      ? destinationItems.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item))
+      : [];
+    const normalizedEntryId = typeof entryId === 'string' ? entryId.trim() : '';
+    if (!normalizedEntryId) {
+      return {
+        sourceItems: normalizedSourceItems,
+        destinationItems: normalizedDestinationItems,
+        transferredEntry: null
+      };
+    }
+    const sourceIndex = normalizedSourceItems.findIndex((item) => item.id === normalizedEntryId);
+    if (sourceIndex < 0) {
+      return {
+        sourceItems: normalizedSourceItems,
+        destinationItems: normalizedDestinationItems,
+        transferredEntry: null
+      };
+    }
+    const sourceEntry = normalizedSourceItems[sourceIndex];
+    const transferredEntry = inventoryTransferHelpers.normalizeTransferEntry(mapTransferredEntry({ ...sourceEntry }));
+    const nextSourceItems = removeFromSource
+      ? normalizedSourceItems.filter((item) => item.id !== normalizedEntryId)
+      : normalizedSourceItems.map((item) => (item.id === normalizedEntryId ? transferredEntry : item));
+    const nextDestinationItems = (() => {
+      const normalizedItems = normalizedDestinationItems.slice();
+      const destIndex = normalizedItems.findIndex((item) => item.id === transferredEntry.id);
+      if (destIndex >= 0) {
+        normalizedItems[destIndex] = transferredEntry;
+      } else {
+        normalizedItems.push(transferredEntry);
+      }
+      return normalizedItems;
+    })();
+    return {
+      sourceItems: nextSourceItems,
+      destinationItems: nextDestinationItems,
+      transferredEntry
+    };
+  }
+};
 
 function isDisplayPath() {
   const path = window.location.pathname || '';
@@ -457,10 +513,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const inventoryFields = document.getElementById('inventory-fields');
   const inventoryCloseBtn = document.getElementById('inventory-close');
   const inventoryAddBtn = document.getElementById('inventory-add');
-  const inventoryAddContainerBtn = document.getElementById('inventory-add-container');
   const inventoryDialogTitle = document.getElementById('inventory-dialog-title');
   const inventoryTotalWeight = document.getElementById('inventory-total-weight');
   const inventoryAddForm = document.getElementById('inventory-add-form');
+  const inventoryAddFormKindRow = document.getElementById('inventory-add-kind-row');
+  const inventoryAddFormKind = document.getElementById('inventory-add-kind');
   const inventoryAddFormContainerRow = document.getElementById('inventory-add-container-row');
   const inventoryAddFormTitle = document.getElementById('inventory-add-form-title');
   const inventoryAddFormName = document.getElementById('inventory-add-name');
@@ -512,6 +569,33 @@ window.addEventListener('DOMContentLoaded', () => {
   let equipmentLibraryItems = [];
   let equipmentLibraryLoaded = false;
   let equipmentLibraryLoading = false;
+  const equipmentPresetHelpers = window.PlayerTrackerEquipmentPreset || {
+    findEquipmentPreset: (itemName, items = []) => {
+      const normalizedName = typeof itemName === 'string' ? itemName.trim().toLowerCase() : '';
+      if (!normalizedName || !Array.isArray(items)) {
+        return null;
+      }
+      return items.find(
+        (item) => typeof item?.name === 'string' && item.name.trim().toLowerCase() === normalizedName
+      ) || null;
+    },
+    applyEquipmentPresetToInputs: (inputs = {}, itemName, items = []) => {
+      const preset = equipmentPresetHelpers.findEquipmentPreset(itemName, items);
+      if (!preset) {
+        return false;
+      }
+      if (inputs.valueInput && Number.isFinite(preset.value)) {
+        inputs.valueInput.value = String(preset.value);
+      }
+      if (inputs.weightInput && Number.isFinite(preset.weight)) {
+        inputs.weightInput.value = String(preset.weight);
+      }
+      if (inputs.urlInput && typeof preset.url === 'string' && preset.url.trim()) {
+        inputs.urlInput.value = preset.url.trim();
+      }
+      return true;
+    }
+  };
   const partyTreasureHelpers = window.PlayerTrackerPartyTreasure || {
     createInventoryEntryId: () => {
       if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -1346,6 +1430,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (partyTreasureAddFormUrl) partyTreasureAddFormUrl.value = normalized.url || '';
   }
 
+  function applyPartyTreasurePresetToForm(itemName) {
+    equipmentPresetHelpers.applyEquipmentPresetToInputs(
+      {
+        valueInput: partyTreasureAddFormValue,
+        weightInput: partyTreasureAddFormWeight,
+        urlInput: partyTreasureAddFormUrl
+      },
+      itemName,
+      equipmentLibraryItems
+    );
+  }
+
   function setPartyTreasureAddFormOpen(open, entry = null) {
     if (!partyTreasureAddForm) return;
     partyTreasureAddForm.classList.toggle('hidden', !open);
@@ -1360,6 +1456,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     updatePartyTreasureActionButtons();
     if (open) {
       populatePartyTreasureAddForm(entry);
+      applyPartyTreasurePresetToForm(partyTreasureAddFormName?.value || '');
     } else {
       partyTreasureEditingEntryId = null;
       populatePartyTreasureAddForm(null);
@@ -1461,6 +1558,149 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     updatePartyTreasureActionButtons();
   }
 
+  function buildPartyTreasureRowOverflowControls(entry, row) {
+    const overflow = document.createElement('div');
+    overflow.className = 'character-overflow inventory-row-overflow party-treasure-row-overflow';
+
+    const overflowToggle = document.createElement('button');
+    overflowToggle.type = 'button';
+    overflowToggle.className = 'character-overflow-toggle';
+    overflowToggle.setAttribute('aria-label', `Manage ${entry.name || 'item'}`);
+    overflowToggle.setAttribute('aria-haspopup', 'menu');
+    overflowToggle.setAttribute('aria-expanded', 'false');
+    overflowToggle.textContent = '⋮';
+
+    const overflowMenu = document.createElement('div');
+    overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu party-treasure-row-menu';
+    overflowMenu.setAttribute('role', 'menu');
+    overflowMenu.setAttribute('aria-hidden', 'true');
+    overflowMenu._overflowToggle = overflowToggle;
+
+    const overflowTitle = document.createElement('div');
+    overflowTitle.className = 'character-overflow-title';
+    overflowTitle.textContent = entry.name || 'Item';
+    overflowMenu.appendChild(overflowTitle);
+
+    const menuSummary = document.createElement('div');
+    menuSummary.className = 'inventory-row-menu-summary';
+
+    const quantityLine = document.createElement('div');
+    quantityLine.className = 'inventory-row-menu-summary-line';
+    const quantityLabel = document.createElement('span');
+    quantityLabel.className = 'inventory-row-menu-summary-label';
+    quantityLabel.textContent = 'Qty';
+    const quantityAmount = document.createElement('span');
+    quantityAmount.className = 'inventory-row-menu-summary-value';
+    quantityAmount.textContent = String(entry.quantity ?? 1);
+    quantityLine.appendChild(quantityLabel);
+    quantityLine.appendChild(quantityAmount);
+    menuSummary.appendChild(quantityLine);
+
+    const valueLine = document.createElement('div');
+    valueLine.className = 'inventory-row-menu-summary-line';
+    const valueLabel = document.createElement('span');
+    valueLabel.className = 'inventory-row-menu-summary-label';
+    valueLabel.textContent = 'Value';
+    const valueAmount = document.createElement('span');
+    valueAmount.className = 'inventory-row-menu-summary-value';
+    valueAmount.textContent = Math.round(Number(entry.value ?? 0) * 100) / 100;
+    valueLine.appendChild(valueLabel);
+    valueLine.appendChild(valueAmount);
+    menuSummary.appendChild(valueLine);
+
+    overflowMenu.appendChild(menuSummary);
+
+    const addMenuItem = (label, handler, options = {}) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = options.className || 'secondary';
+      button.setAttribute('role', 'menuitem');
+      button.textContent = label;
+      button.disabled = Boolean(options.disabled);
+      button.setAttribute('aria-disabled', Boolean(options.disabled).toString());
+      if (options.hidden) {
+        button.classList.add('hidden');
+      }
+      button.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        closeCharacterOverflowMenu(overflowMenu);
+        await handler();
+      });
+      overflowMenu.appendChild(button);
+      return button;
+    };
+
+    addMenuItem('✏️ Edit', async () => {
+      setSelectedPartyTreasureRow(row);
+      editSelectedPartyTreasureItem();
+    });
+    addMenuItem('🏷️ Claim', async () => {
+      setSelectedPartyTreasureRow(row);
+      await claimSelectedPartyTreasureItem();
+    }, {
+      hidden: Boolean(entry.isContainer)
+    });
+    addMenuItem('🗑️ Remove', async () => {
+      setSelectedPartyTreasureRow(row);
+      await removeSelectedPartyTreasureItem();
+    }, {
+      className: 'secondary danger'
+    });
+
+    const openOverflowMenu = () => {
+      closeCharacterOverflowMenu(overflowMenu);
+      overflowMenu.classList.remove('hidden');
+      overflowMenu.setAttribute('aria-hidden', 'false');
+      const centered = isNarrowPopupViewport();
+      overflowMenu.classList.toggle('popup-centered', centered);
+      overflowMenu.style.left = centered ? '' : '0';
+      overflowMenu.style.right = centered ? '' : 'auto';
+      overflowMenu.style.top = centered ? '' : 'calc(100% + 0.35rem)';
+      overflowMenu.style.bottom = '';
+      overflowMenu.style.transform = '';
+      overflowToggle.setAttribute('aria-expanded', 'true');
+      if (!centered) {
+        window.requestAnimationFrame(() => {
+          const menuRect = overflowMenu.getBoundingClientRect();
+          const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+          const overflowRight = menuRect.right > viewportWidth - 8;
+          const overflowLeft = menuRect.left < 8;
+          if (overflowRight && !overflowLeft) {
+            overflowMenu.style.left = 'auto';
+            overflowMenu.style.right = '0';
+          }
+        });
+      }
+    };
+
+    overflowToggle.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeCharacterOverflowMenu();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowToggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      const isOpen = !overflowMenu.classList.contains('hidden');
+      if (isOpen) {
+        closeCharacterOverflowMenu();
+      } else {
+        openOverflowMenu();
+      }
+    });
+    overflowMenu.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+
+    overflow.appendChild(overflowToggle);
+    overflow.appendChild(overflowMenu);
+    return overflow;
+  }
+
   function createPartyTreasureRow(entry = {}) {
     return partyTreasureHelpers.createPartyTreasureRow({
       entry,
@@ -1470,7 +1710,8 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       },
       applyPreset: (row, itemName) => {
         partyTreasureHelpers.applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems);
-      }
+      },
+      firstColumnRenderer: ({ row, entry: normalized }) => buildPartyTreasureRowOverflowControls(normalized, row)
     });
   }
 
@@ -1483,7 +1724,8 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       },
       applyPreset: (row, itemName) => {
         partyTreasureHelpers.applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems);
-      }
+      },
+      firstColumnRenderer: ({ row, entry: normalized }) => buildPartyTreasureRowOverflowControls(normalized, row)
     });
   }
 
@@ -1746,20 +1988,15 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function applyInventoryPresetToForm(itemName) {
-    if (!itemName) return;
-    const preset = equipmentLibraryItems.find(
-      (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
+    equipmentPresetHelpers.applyEquipmentPresetToInputs(
+      {
+        valueInput: inventoryAddFormValue,
+        weightInput: inventoryAddFormWeight,
+        urlInput: inventoryAddFormUrl
+      },
+      itemName,
+      equipmentLibraryItems
     );
-    if (!preset) return;
-    if (inventoryAddFormValue && Number.isFinite(preset.value)) {
-      inventoryAddFormValue.value = String(preset.value);
-    }
-    if (inventoryAddFormWeight && Number.isFinite(preset.weight)) {
-      inventoryAddFormWeight.value = String(preset.weight);
-    }
-    if (inventoryAddFormUrl && typeof preset.url === 'string' && preset.url.trim()) {
-      inventoryAddFormUrl.value = preset.url.trim();
-    }
   }
 
   function buildInventoryContainerOptions(selectedContainerId = null, disabled = false) {
@@ -1972,6 +2209,12 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       setSelectedInventoryRow(row);
       editSelectedInventoryEntry();
     });
+    addMenuItem('📦 Send to Party Treasure', async () => {
+      setSelectedInventoryRow(row);
+      await sendSelectedInventoryEntryToPartyTreasure();
+    }, {
+      hidden: entry.isContainer
+    });
     addMenuItem(entry.isContainer ? '🗑️ Remove Container' : '🗑️ Remove', () => {
       setSelectedInventoryRow(row);
       removeSelectedInventoryEntry();
@@ -2101,9 +2344,41 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       inventoryAddBtn.disabled = isAddFormOpen;
       inventoryAddBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
     }
-    if (inventoryAddContainerBtn) {
-      inventoryAddContainerBtn.disabled = isAddFormOpen;
-      inventoryAddContainerBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
+  }
+
+  function setInventoryAddFormMode(isContainer, options = {}) {
+    const nextIsContainer = Boolean(isContainer);
+    const preserveContainerSelection = options.preserveContainerSelection !== false;
+    inventoryEditingIsContainer = nextIsContainer;
+    if (inventoryAddFormKind) {
+      inventoryAddFormKind.value = nextIsContainer ? 'container' : 'item';
+    }
+    if (inventoryAddFormKindRow) {
+      inventoryAddFormKindRow.setAttribute('aria-hidden', 'false');
+      inventoryAddFormKindRow.classList.remove('hidden');
+    }
+    if (inventoryAddFormContainerRow) {
+      inventoryAddFormContainerRow.classList.toggle('hidden', nextIsContainer);
+      inventoryAddFormContainerRow.setAttribute('aria-hidden', nextIsContainer.toString());
+    }
+    if (inventoryAddFormTitle) {
+      inventoryAddFormTitle.textContent = nextIsContainer ? 'Add Container' : 'Add Item';
+    }
+    if (inventoryAddFormSaveBtn) {
+      inventoryAddFormSaveBtn.textContent = nextIsContainer ? '🧳 Add Container' : '🗡 Add Item';
+    }
+    if (nextIsContainer) {
+      if (inventoryAddFormContainer) {
+        inventoryAddFormContainer.value = '';
+        inventoryAddFormContainer.disabled = true;
+      }
+    } else if (inventoryAddFormContainer) {
+      buildInventoryContainerOptions(
+        preserveContainerSelection
+          ? (inventoryAddFormContainer.value || inventoryEditingContainerId || '')
+          : '',
+        false
+      );
     }
   }
 
@@ -2112,23 +2387,17 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       ? normalizeInventoryEntry(entry, inventoryEditingContainerId, inventoryEditingIsContainer)
       : normalizeInventoryEntry({}, inventoryEditingContainerId, inventoryEditingIsContainer);
     if (inventoryAddFormName) inventoryAddFormName.value = normalized.name || '';
-    if (inventoryAddFormContainerRow) {
-      inventoryAddFormContainerRow.classList.toggle('hidden', inventoryEditingIsContainer);
-      inventoryAddFormContainerRow.setAttribute('aria-hidden', inventoryEditingIsContainer.toString());
-    }
-    if (inventoryEditingIsContainer) {
-      if (inventoryAddFormContainer) {
-        inventoryAddFormContainer.value = '';
-        inventoryAddFormContainer.disabled = true;
-      }
-    } else {
+    setInventoryAddFormMode(inventoryEditingIsContainer, {
+      preserveContainerSelection: true
+    });
+    if (!inventoryEditingIsContainer && inventoryAddFormContainer) {
       buildInventoryContainerOptions(
         inventoryTargetHelpers.resolveInventoryDraftContainerId({
           selectedRowData: getInventoryRowData(inventorySelectedRow),
           chosenContainerId: inventoryEditingContainerId,
           isContainer: inventoryEditingIsContainer
         }) || '',
-        inventoryEditingIsContainer
+        false
       );
     }
     if (inventoryAddFormQuantity) inventoryAddFormQuantity.value = String(normalized.quantity ?? 1);
@@ -2145,27 +2414,19 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     inventoryEditingEntryId = open && entry ? (entry.id || null) : null;
     inventoryEditingContainerId = open ? (options.containerId ?? null) : null;
     inventoryEditingIsContainer = open ? Boolean(options.isContainer) : false;
-    if (inventoryAddFormContainerRow) {
-      inventoryAddFormContainerRow.classList.toggle('hidden', inventoryEditingIsContainer);
-      inventoryAddFormContainerRow.setAttribute('aria-hidden', inventoryEditingIsContainer.toString());
-    }
-    if (inventoryAddFormTitle) {
-      if (open && entry) {
-        inventoryAddFormTitle.textContent = inventoryEditingIsContainer ? 'Edit Container' : 'Edit Item';
-      } else {
-        inventoryAddFormTitle.textContent = inventoryEditingIsContainer ? 'Add Container' : 'Add Item';
-      }
-    }
-    if (inventoryAddFormSaveBtn) {
-      if (open && entry) {
-        inventoryAddFormSaveBtn.textContent = 'Save Changes';
-      } else {
-        inventoryAddFormSaveBtn.textContent = inventoryEditingIsContainer ? '🧳 Add Container' : '🗡 Add Item';
-      }
+    if (inventoryAddFormKindRow) {
+      inventoryAddFormKindRow.classList.toggle('hidden', false);
+      inventoryAddFormKindRow.setAttribute('aria-hidden', 'false');
     }
     if (open) {
       populateInventoryAddForm(entry);
       applyInventoryPresetToForm(inventoryAddFormName?.value || '');
+      if (inventoryAddFormTitle && entry) {
+        inventoryAddFormTitle.textContent = inventoryEditingIsContainer ? 'Edit Container' : 'Edit Item';
+      }
+      if (inventoryAddFormSaveBtn && entry) {
+        inventoryAddFormSaveBtn.textContent = 'Save Changes';
+      }
     } else {
       inventoryEditingEntryId = null;
       inventoryEditingContainerId = null;
@@ -2390,6 +2651,65 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     }
   }
 
+  async function sendSelectedInventoryEntryToPartyTreasure() {
+    if (!inventorySelectedRow || !currentCampaignId) return;
+    const rowData = getInventoryRowData(inventorySelectedRow) || {};
+    const entry = getInventoryRowEntry(inventorySelectedRow);
+    if (!rowData.id || !entry) return;
+    if (entry.isContainer) {
+      if (statusDiv) {
+        statusDiv.textContent = 'Send to Party Treasure only works for items, not containers.';
+      }
+      return;
+    }
+    const originalInventory = currentInventory.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item));
+    const originalPartyTreasure = currentPartyTreasure.map((item) => partyTreasureHelpers.normalizeInventoryEntry(item));
+    const transfer = inventoryTransferHelpers.transferEntry({
+      sourceItems: currentInventory,
+      destinationItems: currentPartyTreasure,
+      entryId: rowData.id,
+      mapTransferredEntry: (item) => ({
+        ...item,
+        containerId: null,
+        isContainer: false
+      }),
+      removeFromSource: true
+    });
+    if (!transfer.transferredEntry) {
+      return;
+    }
+    try {
+      const updatedCampaign = await savePartyTreasureItems(transfer.destinationItems);
+      if (!updatedCampaign) {
+        return;
+      }
+      const savedCharacter = await saveInventoryItems(transfer.sourceItems);
+      if (!savedCharacter) {
+        currentPartyTreasure = originalPartyTreasure;
+        await savePartyTreasureItems(originalPartyTreasure);
+        await loadState();
+        return;
+      }
+      currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : transfer.sourceItems;
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : transfer.destinationItems;
+      buildInventoryFields(currentInventory);
+      buildPartyTreasureFields(currentPartyTreasure);
+      setSelectedInventoryRow(findInventoryRowById(rowData.id || '') || getInventoryPanelRows()[0] || null);
+      if (statusDiv) {
+        statusDiv.textContent = `Sent ${entry.name || 'Item'} to party treasure.`;
+      }
+    } catch (err) {
+      currentPartyTreasure = originalPartyTreasure;
+      await savePartyTreasureItems(originalPartyTreasure);
+      await loadState();
+      if (statusDiv) {
+        statusDiv.textContent = `Send to party treasure failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
+  }
+
   async function moveInventoryEntryToContainer(entryId, containerId) {
     const normalizedEntryId = typeof entryId === 'string' ? entryId.trim() : '';
     const normalizedContainerId =
@@ -2405,15 +2725,21 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       ? currentInventory.find((item) => item && item.isContainer && item.id === normalizedTargetContainerId)
       : null;
     if (normalizedTargetContainerId && !targetContainer) return;
-    const items = currentInventory.map((item) =>
-      item.id === normalizedEntryId
-        ? { ...item, containerId: normalizedTargetContainerId }
-        : item
-    );
+    const transfer = inventoryTransferHelpers.transferEntry({
+      sourceItems: currentInventory,
+      destinationItems: currentInventory,
+      entryId: normalizedEntryId,
+      mapTransferredEntry: (item) => ({
+        ...item,
+        containerId: normalizedTargetContainerId,
+        isContainer: item.isContainer
+      }),
+      removeFromSource: false
+    });
     try {
-      const savedCharacter = await saveInventoryItems(items);
+      const savedCharacter = await saveInventoryItems(transfer.destinationItems);
       if (!savedCharacter) return;
-      currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : items;
+      currentInventory = Array.isArray(savedCharacter.inventory) ? savedCharacter.inventory : transfer.destinationItems;
       buildInventoryFields(currentInventory);
       setSelectedInventoryRow(findInventoryRowById(normalizedEntryId) || getInventoryPanelRows()[0] || null);
       if (statusDiv) {
@@ -5301,6 +5627,15 @@ function getOwnerName() {
     });
   }
 
+  if (partyTreasureAddFormName) {
+    partyTreasureAddFormName.addEventListener('input', () => {
+      applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
+    });
+    partyTreasureAddFormName.addEventListener('change', () => {
+      applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
+    });
+  }
+
   if (partyTreasureRemoveBtn) {
     partyTreasureRemoveBtn.addEventListener('click', () => {
       removeSelectedPartyTreasureItem();
@@ -5338,12 +5673,6 @@ function getOwnerName() {
     });
   }
 
-  if (inventoryAddContainerBtn) {
-    inventoryAddContainerBtn.addEventListener('click', () => {
-      addInventoryContainer();
-    });
-  }
-
   if (inventoryAddFormSaveBtn) {
     inventoryAddFormSaveBtn.addEventListener('click', async () => {
       await commitInventoryAddFormItem();
@@ -5362,6 +5691,13 @@ function getOwnerName() {
     });
     inventoryAddFormName.addEventListener('change', () => {
       applyInventoryPresetToForm(inventoryAddFormName.value);
+    });
+  }
+
+  if (inventoryAddFormKind) {
+    inventoryAddFormKind.addEventListener('change', () => {
+      const isContainer = inventoryAddFormKind.value === 'container';
+      setInventoryAddFormMode(isContainer, { preserveContainerSelection: false });
     });
   }
 
