@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-  <link rel="stylesheet" href="style.css?v=103">
+  <link rel="stylesheet" href="style.css?v=105">
 </head>
 <body class="referee-page">
   <div class="referee-page-header">
@@ -285,17 +285,19 @@
           <button type="button" id="ref-party-treasure-add-form-save">➕ Add Item</button>
         </div>
       </div>
-      <div class="inventory-table-wrap">
-        <table class="inventory-table">
-          <thead>
-          <tr>
-            <th>Item</th>
-            <th>Qty</th>
-            <th>Value per</th>
-          </tr>
-        </thead>
-        <tbody id="ref-party-treasure-fields"></tbody>
-        </table>
+      <div class="inventory-scroll">
+        <div class="inventory-table-wrap">
+          <table class="inventory-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Value per</th>
+              </tr>
+            </thead>
+            <tbody id="ref-party-treasure-fields"></tbody>
+          </table>
+        </div>
       </div>
       <datalist id="ref-party-treasure-item-options"></datalist>
     </div>
@@ -441,7 +443,7 @@
   <script src="shared.js?v=4"></script>
   <script src="campaign-settings.js?v=1"></script>
   <script src="live-stream.js?v=3"></script>
-  <script src="party-treasure.js?v=11"></script>
+  <script src="party-treasure.js?v=12"></script>
   <script src="inventory-view.js?v=5"></script>
   <script src="ruleset.js?v=2"></script>
   <script src="encounter.js?v=3"></script>

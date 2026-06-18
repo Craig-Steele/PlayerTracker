@@ -1786,11 +1786,33 @@ body.referee-page .referee-panel {
   width: min(58rem, 100%);
 }
 
+#party-treasure-panel .inventory-dialog,
+#ref-party-treasure-panel .inventory-dialog {
+  overflow: hidden;
+}
+
+#party-treasure-panel .party-treasure-actions-row,
+#ref-party-treasure-panel .party-treasure-actions-row,
+#party-treasure-panel .inventory-summary,
+#ref-party-treasure-panel .inventory-summary,
+#party-treasure-panel .inventory-inline-form,
+#ref-party-treasure-panel .inventory-inline-form {
+  flex: 0 0 auto;
+}
+
 #inventory-panel .inventory-dialog {
   overflow: hidden;
 }
 
 #inventory-panel .inventory-dialog > .inventory-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#party-treasure-panel .inventory-dialog > .inventory-scroll,
+#ref-party-treasure-panel .inventory-dialog > .inventory-scroll {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -2221,16 +2243,16 @@ body.referee-page .referee-panel {
   .party-treasure-compact .conditions-dialog-header,
   #party-treasure-panel .conditions-dialog-header,
   #ref-party-treasure-panel .conditions-dialog-header {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
   }
 
   .party-treasure-compact .conditions-dialog-actions,
   #party-treasure-panel .conditions-dialog-actions,
   #ref-party-treasure-panel .conditions-dialog-actions {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
+    width: auto;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
   }
 
   .party-treasure-compact .conditions-dialog-actions button,
