@@ -244,42 +244,166 @@
    */
   function applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems = []) {
     if (!row || !itemName) return;
-    const equipmentPresetApi = typeof window !== 'undefined' ? window.PlayerTrackerEquipmentPreset : null;
-    const preset = equipmentPresetApi?.findEquipmentPreset
-      ? equipmentPresetApi.findEquipmentPreset(itemName, equipmentLibraryItems)
-      : equipmentLibraryItems.find(
-          (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
-        );
+    const preset = findEquipmentPreset(itemName, equipmentLibraryItems);
     if (!preset) return;
-    equipmentPresetApi?.applyEquipmentPresetToInputs
-      ? equipmentPresetApi.applyEquipmentPresetToInputs(
-          {
-            valueInput: row.querySelector('input[data-inventory-field="value"]'),
-            weightInput: row.querySelector('input[data-inventory-field="weight"]'),
-            urlInput: row.querySelector('input[data-inventory-field="url"]'),
-            categoryInput: row.querySelector('input[data-inventory-field="category"]')
-          },
-          itemName,
-          equipmentLibraryItems
-        )
-      : (() => {
-          const valueInput = row.querySelector('input[data-inventory-field="value"]');
-          const weightInput = row.querySelector('input[data-inventory-field="weight"]');
-          const categoryInput = row.querySelector('input[data-inventory-field="category"]');
-          if (valueInput && Number.isFinite(preset.value)) {
-            valueInput.value = String(preset.value);
-          }
-          if (weightInput && Number.isFinite(preset.weight)) {
-            weightInput.value = String(preset.weight);
-          }
-          const urlInput = row.querySelector('input[data-inventory-field="url"]');
-          if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
-            urlInput.value = preset.url.trim();
-          }
-          if (categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
-            categoryInput.value = preset.category.trim();
-          }
-          })();
+    applyEquipmentPresetToInputs(
+      {
+        valueInput: row.querySelector('input[data-inventory-field="value"]'),
+        weightInput: row.querySelector('input[data-inventory-field="weight"]'),
+        urlInput: row.querySelector('input[data-inventory-field="url"]'),
+        categoryInput: row.querySelector('input[data-inventory-field="category"]')
+      },
+      preset
+    );
+  }
+
+  function findEquipmentPreset(itemName, equipmentLibraryItems = [], equipmentPresetApi = null) {
+    const normalizedName = typeof itemName === 'string' ? itemName.trim().toLowerCase() : '';
+    if (!normalizedName || !Array.isArray(equipmentLibraryItems)) {
+      return null;
+    }
+    if (equipmentPresetApi?.findEquipmentPreset) {
+      return equipmentPresetApi.findEquipmentPreset(itemName, equipmentLibraryItems);
+    }
+    return equipmentLibraryItems.find(
+      (item) => typeof item?.name === 'string' && item.name.trim().toLowerCase() === normalizedName
+    ) || null;
+  }
+
+  function applyEquipmentPresetToInputs(inputs = {}, preset = {}) {
+    if (inputs.valueInput && Number.isFinite(preset.value)) {
+      inputs.valueInput.value = String(preset.value);
+    }
+    if (inputs.weightInput && Number.isFinite(preset.weight)) {
+      inputs.weightInput.value = String(preset.weight);
+    }
+    if (inputs.urlInput && typeof preset.url === 'string' && preset.url.trim()) {
+      inputs.urlInput.value = preset.url.trim();
+    }
+    if (inputs.categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+      inputs.categoryInput.value = preset.category.trim();
+    }
+  }
+
+  /**
+   * Populate the party treasure add/edit form from an entry.
+   * @param {object} inputs Form input refs.
+   * @param {object|null} entry Entry to load.
+   * @param {Function} normalizeEntry Normalizer callback.
+   * @returns {object}
+   */
+  function populatePartyTreasureAddForm(inputs = {}, entry = null, normalizeEntry = normalizeInventoryEntry) {
+    const normalized = entry
+      ? normalizeEntry(entry)
+      : normalizeEntry({}, null, false);
+    if (inputs.nameInput) inputs.nameInput.value = normalized.name || '';
+    if (inputs.categoryInput) inputs.categoryInput.value = normalized.category || '';
+    if (inputs.quantityInput) inputs.quantityInput.value = String(normalized.quantity ?? 1);
+    if (inputs.valueInput) inputs.valueInput.value = String(normalized.value ?? 0);
+    if (inputs.weightInput) inputs.weightInput.value = String(normalized.weight ?? 0);
+    if (inputs.urlInput) inputs.urlInput.value = normalized.url || '';
+    return normalized;
+  }
+
+  /**
+   * Apply an equipment preset to the party treasure add/edit form.
+   * @param {object} inputs Form input refs.
+   * @param {string} itemName Preset item name.
+   * @param {Array<object>} equipmentLibraryItems Normalized equipment items.
+   * @returns {boolean}
+   */
+  function applyPartyTreasurePresetToForm(inputs = {}, itemName, equipmentLibraryItems = []) {
+    const equipmentPresetApi = typeof window !== 'undefined' ? window.PlayerTrackerEquipmentPreset : null;
+    const preset = findEquipmentPreset(itemName, equipmentLibraryItems, equipmentPresetApi);
+    if (!preset) return false;
+    if (equipmentPresetApi?.applyEquipmentPresetToInputs) {
+      equipmentPresetApi.applyEquipmentPresetToInputs(inputs, itemName, equipmentLibraryItems);
+      return true;
+    }
+    applyEquipmentPresetToInputs(inputs, preset);
+    return true;
+  }
+
+  /**
+   * Open or close the party treasure add/edit form.
+   * @param {object} options Form state.
+   * @returns {string|null} Entry id while editing, otherwise null.
+   */
+  function setPartyTreasureAddFormOpen({
+    open,
+    entry = null,
+    formEl,
+    titleEl,
+    saveButtonEl,
+    inputs = {},
+    equipmentLibraryItems = [],
+    normalizeEntry = normalizeInventoryEntry,
+    updateActionButtons = null,
+    refreshSelectedRowIcon = null
+  } = {}) {
+    if (!formEl) return null;
+    formEl.classList.toggle('hidden', !open);
+    formEl.setAttribute('aria-hidden', (!open).toString());
+    const editingEntryId = open && entry ? (entry.id || null) : null;
+    if (titleEl) {
+      titleEl.textContent = open && entry ? 'Edit Item' : 'Add Item';
+    }
+    if (saveButtonEl) {
+      saveButtonEl.textContent = open && entry ? 'Save Changes' : 'Add Item';
+    }
+    populatePartyTreasureAddForm(inputs, open ? entry : null, normalizeEntry);
+    if (open) {
+      applyPartyTreasurePresetToForm(inputs, inputs.nameInput?.value || '', equipmentLibraryItems);
+      if (typeof refreshSelectedRowIcon === 'function') {
+        refreshSelectedRowIcon();
+      }
+    }
+    if (typeof updateActionButtons === 'function') {
+      updateActionButtons();
+    }
+    return editingEntryId;
+  }
+
+  /**
+   * Read the party treasure add/edit form into a draft item.
+   * @param {object} inputs Form input refs.
+   * @param {string|null} editingEntryId Current entry id when editing.
+   * @param {Function} createEntryIdIdFn Entry id generator.
+   * @returns {object}
+   */
+  function collectPartyTreasureDraftFromForm(inputs = {}, editingEntryId = null, createEntryIdFn = createInventoryEntryId) {
+    const name = (inputs.nameInput?.value || '').trim();
+    const category = (inputs.categoryInput?.value || '').trim();
+    const quantityRaw = (inputs.quantityInput?.value || '').trim();
+    const valueRaw = (inputs.valueInput?.value || '').trim();
+    const weightRaw = (inputs.weightInput?.value || '').trim();
+    const url = (inputs.urlInput?.value || '').trim();
+    if (!name) {
+      throw new Error('Item name is required.');
+    }
+    const quantity = quantityRaw === '' ? 1 : Number(quantityRaw);
+    const value = valueRaw === '' ? 0 : Math.round(Number(valueRaw) * 100) / 100;
+    const weight = weightRaw === '' ? 0 : Number(weightRaw);
+    if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
+      throw new Error(`Quantity for ${name} must be a whole number of at least 1.`);
+    }
+    if (!Number.isFinite(value)) {
+      throw new Error(`Value for ${name} must be a valid number.`);
+    }
+    if (!Number.isFinite(weight)) {
+      throw new Error(`Weight for ${name} must be a valid number.`);
+    }
+    return {
+      id: editingEntryId || createEntryIdFn(),
+      name,
+      quantity,
+      value,
+      weight,
+      url: url || null,
+      category: category || null,
+      containerId: null,
+      isContainer: false
+    };
   }
 
   function getEquipmentItemCategory(itemName, equipmentLibraryItems = []) {
@@ -563,6 +687,10 @@
     focusInventoryRow,
     updateEquipmentItemOptions,
     applyPartyTreasurePresetToRow,
+    populatePartyTreasureAddForm,
+    applyPartyTreasurePresetToForm,
+    setPartyTreasureAddFormOpen,
+    collectPartyTreasureDraftFromForm,
     getEquipmentItemCategory,
     resolveCategoryGlyph,
     resolveEquipmentOverflowGlyph,

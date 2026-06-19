@@ -729,6 +729,104 @@ window.addEventListener('DOMContentLoaded', () => {
         categoryInput.value = preset.category.trim();
       }
     },
+    populatePartyTreasureAddForm: (inputs = {}, entry = null) => {
+      const normalized = entry
+        ? partyTreasureHelpers.normalizeInventoryEntry(entry, null, false)
+        : partyTreasureHelpers.normalizeInventoryEntry({}, null, false);
+      if (inputs.nameInput) inputs.nameInput.value = normalized.name || '';
+      if (inputs.categoryInput) inputs.categoryInput.value = normalized.category || '';
+      if (inputs.quantityInput) inputs.quantityInput.value = String(normalized.quantity ?? 1);
+      if (inputs.valueInput) inputs.valueInput.value = String(normalized.value ?? 0);
+      if (inputs.weightInput) inputs.weightInput.value = String(normalized.weight ?? 0);
+      if (inputs.urlInput) inputs.urlInput.value = normalized.url || '';
+      return normalized;
+    },
+    applyPartyTreasurePresetToForm: (inputs = {}, itemName, equipmentLibraryItems = []) => {
+      const preset = equipmentLibraryItems.find(
+        (item) => (item.name || '').trim().toLowerCase() === String(itemName || '').trim().toLowerCase()
+      );
+      if (!preset) return false;
+      if (inputs.valueInput && Number.isFinite(preset.value)) {
+        inputs.valueInput.value = String(preset.value);
+      }
+      if (inputs.weightInput && Number.isFinite(preset.weight)) {
+        inputs.weightInput.value = String(preset.weight);
+      }
+      if (inputs.urlInput && typeof preset.url === 'string' && preset.url.trim()) {
+        inputs.urlInput.value = preset.url.trim();
+      }
+      if (inputs.categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+        inputs.categoryInput.value = preset.category.trim();
+      }
+      return true;
+    },
+    setPartyTreasureAddFormOpen: ({
+      open,
+      entry = null,
+      formEl,
+      titleEl,
+      saveButtonEl,
+      inputs = {},
+      equipmentLibraryItems = [],
+      updateActionButtons = null,
+      refreshSelectedRowIcon = null
+    } = {}) => {
+      if (!formEl) return null;
+      formEl.classList.toggle('hidden', !open);
+      formEl.setAttribute('aria-hidden', (!open).toString());
+      const editingEntryId = open && entry ? (entry.id || null) : null;
+      if (titleEl) {
+        titleEl.textContent = open && entry ? 'Edit Item' : 'Add Item';
+      }
+      if (saveButtonEl) {
+        saveButtonEl.textContent = open && entry ? 'Save Changes' : 'Add Item';
+      }
+      partyTreasureHelpers.populatePartyTreasureAddForm(inputs, open ? entry : null);
+      if (open) {
+        partyTreasureHelpers.applyPartyTreasurePresetToForm(inputs, inputs.nameInput?.value || '', equipmentLibraryItems);
+        if (typeof refreshSelectedRowIcon === 'function') {
+          refreshSelectedRowIcon();
+        }
+      }
+      if (typeof updateActionButtons === 'function') {
+        updateActionButtons();
+      }
+      return editingEntryId;
+    },
+    collectPartyTreasureDraftFromForm: (inputs = {}, editingEntryId = null) => {
+      const name = (inputs.nameInput?.value || '').trim();
+      const category = (inputs.categoryInput?.value || '').trim();
+      const quantityRaw = (inputs.quantityInput?.value || '').trim();
+      const valueRaw = (inputs.valueInput?.value || '').trim();
+      const weightRaw = (inputs.weightInput?.value || '').trim();
+      const url = (inputs.urlInput?.value || '').trim();
+      if (!name) {
+        throw new Error('Item name is required.');
+      }
+      const quantity = quantityRaw === '' ? 1 : Number(quantityRaw);
+      const value = valueRaw === '' ? 0 : Math.round(Number(valueRaw) * 100) / 100;
+      const weight = weightRaw === '' ? 0 : Number(weightRaw);
+      if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
+        throw new Error(`Quantity for ${name} must be a whole number of at least 1.`);
+      }
+      if (!Number.isFinite(value)) {
+        throw new Error(`Value for ${name} must be a valid number.`);
+      }
+      if (!Number.isFinite(weight)) {
+        throw new Error(`Weight for ${name} must be a valid number.`);
+      }
+      return {
+        id: editingEntryId || partyTreasureHelpers.createInventoryEntryId(),
+        name,
+        quantity,
+        value,
+        weight,
+        url: url || null,
+        category: category || null,
+        containerId: null,
+        isContainer: false
+      };
+    },
     getPartyTreasureRows: (fieldsEl) => (fieldsEl ? Array.from(fieldsEl.querySelectorAll('tr.inventory-entry')) : []),
     getPartyTreasureRowEntry: (row) => {
       if (!row) return null;
@@ -1465,19 +1563,21 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function populatePartyTreasureAddForm(entry = null) {
-    const normalized = entry
-      ? partyTreasureHelpers.normalizeInventoryEntry(entry)
-      : partyTreasureHelpers.normalizeInventoryEntry({}, null, false);
-    if (partyTreasureAddFormName) partyTreasureAddFormName.value = normalized.name || '';
-    if (partyTreasureAddFormCategory) partyTreasureAddFormCategory.value = normalized.category || '';
-    if (partyTreasureAddFormQuantity) partyTreasureAddFormQuantity.value = String(normalized.quantity ?? 1);
-    if (partyTreasureAddFormValue) partyTreasureAddFormValue.value = String(normalized.value ?? 0);
-    if (partyTreasureAddFormWeight) partyTreasureAddFormWeight.value = String(normalized.weight ?? 0);
-    if (partyTreasureAddFormUrl) partyTreasureAddFormUrl.value = normalized.url || '';
+    return partyTreasureHelpers.populatePartyTreasureAddForm(
+      {
+        nameInput: partyTreasureAddFormName,
+        categoryInput: partyTreasureAddFormCategory,
+        quantityInput: partyTreasureAddFormQuantity,
+        valueInput: partyTreasureAddFormValue,
+        weightInput: partyTreasureAddFormWeight,
+        urlInput: partyTreasureAddFormUrl
+      },
+      entry
+    );
   }
 
   function applyPartyTreasurePresetToForm(itemName) {
-    equipmentPresetHelpers.applyEquipmentPresetToInputs(
+    return partyTreasureHelpers.applyPartyTreasurePresetToForm(
       {
         valueInput: partyTreasureAddFormValue,
         weightInput: partyTreasureAddFormWeight,
@@ -1503,25 +1603,24 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function setPartyTreasureAddFormOpen(open, entry = null) {
-    if (!partyTreasureAddForm) return;
-    partyTreasureAddForm.classList.toggle('hidden', !open);
-    partyTreasureAddForm.setAttribute('aria-hidden', (!open).toString());
-    partyTreasureEditingEntryId = open && entry ? (entry.id || null) : null;
-    if (partyTreasureAddFormTitle) {
-      partyTreasureAddFormTitle.textContent = open && entry ? 'Edit Item' : 'Add Item';
-    }
-    if (partyTreasureAddFormSaveBtn) {
-      partyTreasureAddFormSaveBtn.textContent = open && entry ? 'Save Changes' : 'Add Item';
-    }
-    updatePartyTreasureActionButtons();
-    if (open) {
-      populatePartyTreasureAddForm(entry);
-      applyPartyTreasurePresetToForm(partyTreasureAddFormName?.value || '');
-      refreshPartyTreasureSelectedRowIcon();
-    } else {
-      partyTreasureEditingEntryId = null;
-      populatePartyTreasureAddForm(null);
-    }
+    partyTreasureEditingEntryId = partyTreasureHelpers.setPartyTreasureAddFormOpen({
+      open,
+      entry,
+      formEl: partyTreasureAddForm,
+      titleEl: partyTreasureAddFormTitle,
+      saveButtonEl: partyTreasureAddFormSaveBtn,
+      inputs: {
+        nameInput: partyTreasureAddFormName,
+        categoryInput: partyTreasureAddFormCategory,
+        quantityInput: partyTreasureAddFormQuantity,
+        valueInput: partyTreasureAddFormValue,
+        weightInput: partyTreasureAddFormWeight,
+        urlInput: partyTreasureAddFormUrl
+      },
+      equipmentLibraryItems,
+      updateActionButtons: updatePartyTreasureActionButtons,
+      refreshSelectedRowIcon: refreshPartyTreasureSelectedRowIcon
+    });
   }
 
   function getCharacterCurrencyTotal(character) {
@@ -1573,38 +1672,17 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function collectPartyTreasureDraftFromForm() {
-    const name = (partyTreasureAddFormName?.value || '').trim();
-    const category = (partyTreasureAddFormCategory?.value || '').trim();
-    const quantityRaw = (partyTreasureAddFormQuantity?.value || '').trim();
-    const valueRaw = (partyTreasureAddFormValue?.value || '').trim();
-    const weightRaw = (partyTreasureAddFormWeight?.value || '').trim();
-    const url = (partyTreasureAddFormUrl?.value || '').trim();
-    if (!name) {
-      throw new Error('Item name is required.');
-    }
-    const quantity = quantityRaw === '' ? 1 : Number(quantityRaw);
-    const value = valueRaw === '' ? 0 : Math.round(Number(valueRaw) * 100) / 100;
-    const weight = weightRaw === '' ? 0 : Number(weightRaw);
-    if (!Number.isFinite(quantity) || !Number.isInteger(quantity) || quantity < 1) {
-      throw new Error(`Quantity for ${name} must be a whole number of at least 1.`);
-    }
-    if (!Number.isFinite(value)) {
-      throw new Error(`Value for ${name} must be a valid number.`);
-    }
-    if (!Number.isFinite(weight)) {
-      throw new Error(`Weight for ${name} must be a valid number.`);
-    }
-    return {
-      id: partyTreasureEditingEntryId || partyTreasureHelpers.createInventoryEntryId(),
-      name,
-      quantity,
-      value,
-      weight,
-      url: url || null,
-      category: category || null,
-      containerId: null,
-      isContainer: false
-    };
+    return partyTreasureHelpers.collectPartyTreasureDraftFromForm(
+      {
+        nameInput: partyTreasureAddFormName,
+        categoryInput: partyTreasureAddFormCategory,
+        quantityInput: partyTreasureAddFormQuantity,
+        valueInput: partyTreasureAddFormValue,
+        weightInput: partyTreasureAddFormWeight,
+        urlInput: partyTreasureAddFormUrl
+      },
+      partyTreasureEditingEntryId
+    );
   }
 
   function getPartyTreasureRows() {
@@ -1693,7 +1771,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       }
       button.addEventListener('click', async (event) => {
         event.stopPropagation();
-        closeCharacterOverflowMenu(overflowMenu);
+        closeCharacterOverflowMenu();
         await handler();
       });
       overflowMenu.appendChild(button);

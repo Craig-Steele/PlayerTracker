@@ -4,9 +4,12 @@ const test = require('node:test');
 const {
   CATEGORY_FALLBACK_GLYPH,
   CONTAINER_GLYPH,
+  collectPartyTreasureDraftFromForm,
+  populatePartyTreasureAddForm,
   resolveEquipmentOverflowGlyph,
   normalizeInventoryEntry,
   removePartyTreasureEntry,
+  setPartyTreasureAddFormOpen,
   upsertPartyTreasureEntry
 } = require('./party-treasure.js');
 
@@ -37,6 +40,147 @@ test('normalizeInventoryEntry preserves category for manual items', () => {
   });
 
   assert.equal(entry.category, 'Adventuring Gear');
+});
+
+test('shared PT form helpers populate and collect editor state', () => {
+  const inputs = {
+    nameInput: { value: '' },
+    categoryInput: { value: '' },
+    quantityInput: { value: '' },
+    valueInput: { value: '' },
+    weightInput: { value: '' },
+    urlInput: { value: '' }
+  };
+
+  const populated = populatePartyTreasureAddForm(inputs, {
+    id: '11111111-1111-4111-8111-111111111111',
+    name: 'Potion',
+    quantity: 2,
+    value: 5,
+    weight: 1,
+    url: 'https://example.test/potion',
+    category: 'Potions'
+  });
+
+  assert.equal(populated.name, 'Potion');
+  assert.equal(inputs.nameInput.value, 'Potion');
+  assert.equal(inputs.quantityInput.value, '2');
+  assert.equal(inputs.valueInput.value, '5');
+  assert.equal(inputs.weightInput.value, '1');
+  assert.equal(inputs.urlInput.value, 'https://example.test/potion');
+  assert.equal(inputs.categoryInput.value, 'Potions');
+
+  assert.deepEqual(
+    collectPartyTreasureDraftFromForm(inputs, '11111111-1111-4111-8111-111111111111'),
+    {
+      id: '11111111-1111-4111-8111-111111111111',
+      name: 'Potion',
+      quantity: 2,
+      value: 5,
+      weight: 1,
+      url: 'https://example.test/potion',
+      category: 'Potions',
+      containerId: null,
+      isContainer: false
+    }
+  );
+});
+
+test('setPartyTreasureAddFormOpen wires shared form open and close behavior', () => {
+  const classes = new Set(['hidden']);
+  const formEl = {
+    classList: {
+      toggle(className, force) {
+        const shouldAdd = force === undefined ? !classes.has(className) : Boolean(force);
+        if (shouldAdd) {
+          classes.add(className);
+        } else {
+          classes.delete(className);
+        }
+        return shouldAdd;
+      },
+      contains(className) {
+        return classes.has(className);
+      }
+    },
+    setAttribute() {}
+  };
+  const titleEl = { textContent: '' };
+  const saveButtonEl = { textContent: '' };
+  const inputs = {
+    nameInput: { value: '' },
+    categoryInput: { value: '' },
+    quantityInput: { value: '' },
+    valueInput: { value: '' },
+    weightInput: { value: '' },
+    urlInput: { value: '' }
+  };
+  let refreshCalls = 0;
+  let updateCalls = 0;
+
+  const editingEntryId = setPartyTreasureAddFormOpen({
+    open: true,
+    entry: {
+      id: '22222222-2222-4222-8222-222222222222',
+      name: 'Potion',
+      quantity: 3,
+      value: 5,
+      weight: 1,
+      url: 'https://example.test/potion',
+      category: 'Potions'
+    },
+    formEl,
+    titleEl,
+    saveButtonEl,
+    inputs,
+    equipmentLibraryItems: [
+      {
+        name: 'Potion',
+        value: 10,
+        weight: 0.5,
+        url: 'https://example.test/preset',
+        category: 'Potions'
+      }
+    ],
+    refreshSelectedRowIcon: () => {
+      refreshCalls += 1;
+    },
+    updateActionButtons: () => {
+      updateCalls += 1;
+    }
+  });
+
+  assert.equal(editingEntryId, '22222222-2222-4222-8222-222222222222');
+  assert.equal(classes.has('hidden'), false);
+  assert.equal(titleEl.textContent, 'Edit Item');
+  assert.equal(saveButtonEl.textContent, 'Save Changes');
+  assert.equal(inputs.nameInput.value, 'Potion');
+  assert.equal(inputs.valueInput.value, '10');
+  assert.equal(inputs.weightInput.value, '0.5');
+  assert.equal(inputs.urlInput.value, 'https://example.test/preset');
+  assert.equal(inputs.categoryInput.value, 'Potions');
+  assert.equal(refreshCalls, 1);
+  assert.equal(updateCalls, 1);
+
+  const closedEntryId = setPartyTreasureAddFormOpen({
+    open: false,
+    formEl,
+    titleEl,
+    saveButtonEl,
+    inputs,
+    updateActionButtons: () => {
+      updateCalls += 1;
+    }
+  });
+
+  assert.equal(closedEntryId, null);
+  assert.equal(classes.has('hidden'), true);
+  assert.equal(titleEl.textContent, 'Add Item');
+  assert.equal(saveButtonEl.textContent, 'Add Item');
+  assert.equal(inputs.nameInput.value, '');
+  assert.equal(inputs.quantityInput.value, '1');
+  assert.equal(inputs.valueInput.value, '0');
+  assert.equal(inputs.weightInput.value, '0');
 });
 
 test('upsertPartyTreasureEntry replaces an existing item by id', () => {
