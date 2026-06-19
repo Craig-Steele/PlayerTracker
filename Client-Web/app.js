@@ -1983,25 +1983,16 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       return;
     }
     try {
-      const claimantCharacter = myCharacters.find((entry) => entry.id === partyTreasureEditorCharacterId) || null;
-      const claimValue = Number(partyTreasureSelectedRow.querySelector('input[data-inventory-field="value"]')?.value ?? '0');
-      const claimantTotal = getCharacterCurrencyTotal(claimantCharacter);
-      if (
-        Number.isFinite(claimValue) &&
-        claimantTotal != null &&
-        claimantTotal < claimValue
-      ) {
-        const confirmed = await showConfirmDialog({
-          title: 'Claim Item?',
-          header: itemName || 'This item',
-          message: `Claim this item for ${claimValue.toFixed(2)}? This will put ${claimantCharacter?.name || 'this character'} into debt.`,
-          confirmLabel: 'Claim Item',
-          cancelLabel: 'Keep Item',
-          confirmButtonClass: 'danger',
-          initialFocus: 'cancel'
-        });
-        if (!confirmed) return;
-      }
+      const confirmed = await showConfirmDialog({
+        title: 'Claim Item?',
+        header: itemName || 'This item',
+        message: 'Claim this item and add it to your inventory?',
+        confirmLabel: 'Claim Item',
+        cancelLabel: 'Keep Item',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      });
+      if (!confirmed) return;
       const res = await fetch('/campaign/party-treasure/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

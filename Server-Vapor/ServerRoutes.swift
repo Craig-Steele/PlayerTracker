@@ -1411,7 +1411,6 @@ func routes(
         guard claimant.ownerId == session.id || claimant.claimedSessionId == session.id else {
             throw Abort(.forbidden, reason: "Claim access required.")
         }
-        let library = await campaignStore.library()
         let treasure = await campaignStore.partyTreasure()
         guard let itemIndex = treasure.firstIndex(where: { $0.id == input.itemId }) else {
             throw Abort(.notFound, reason: "Party treasure item not found.")
@@ -1434,15 +1433,6 @@ func routes(
         } else {
             updatedTreasure.remove(at: itemIndex)
         }
-        let partyMembers = await userStore.all(campaignName: campaign.name).values
-            .filter { !$0.isReferee }
-        let partyCount = max(1, partyMembers.count)
-        let shareValue = floor(claimedItem.value / Double(partyCount))
-        let canAfford = adjustCurrencyAmounts(
-            claimant.currency,
-            commonDelta: -claimedItem.value,
-            system: library.currency
-        ) != nil
 
         let claimedInventoryItem = InventoryEntry(
             id: UUID(),
@@ -1457,58 +1447,6 @@ func routes(
         )
 
         claimant.inventory.append(claimedInventoryItem)
-
-        if canAfford {
-            if let updatedCurrency = adjustCurrencyAmountsPreferCommonUnit(
-                claimant.currency,
-                commonDelta: -claimedItem.value + shareValue,
-                system: library.currency
-            ) {
-                claimant.currency = updatedCurrency
-            }
-            let debtRemainder = claimedItem.value - shareValue * Double(partyCount)
-            if debtRemainder > 0 {
-                updatedTreasure.append(
-                    InventoryEntry(
-                        id: UUID(),
-                        name: "Remainder from \(claimedItem.name)",
-                        quantity: 1,
-                        value: debtRemainder,
-                        weight: 0,
-                        url: nil,
-                        containerId: nil,
-                        isContainer: false
-                    )
-                )
-            }
-
-            if shareValue > 0 {
-                for var member in partyMembers {
-                    guard member.id != claimant.id else { continue }
-                    if let updatedCurrency = adjustCurrencyAmountsPreferCommonUnit(
-                        member.currency,
-                        commonDelta: shareValue,
-                        system: library.currency
-                    ) {
-                        member.currency = updatedCurrency
-                        _ = try await userStore.replaceCharacterState(member)
-                    }
-                }
-            }
-        } else {
-            updatedTreasure.append(
-                InventoryEntry(
-                    id: UUID(),
-                    name: "Debt from \(claimant.characterName) for \(claimedItem.name)",
-                    quantity: 1,
-                    value: claimedItem.value,
-                    weight: 0,
-                    url: nil,
-                    containerId: nil,
-                    isContainer: false
-                )
-            )
-        }
 
         _ = try await userStore.replaceCharacterState(claimant)
         let updatedCampaign = try await campaignStore.updatePartyTreasure(updatedTreasure)

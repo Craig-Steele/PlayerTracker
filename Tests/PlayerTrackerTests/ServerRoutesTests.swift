@@ -480,7 +480,7 @@ struct ServerRoutesTests {
     }
 
     @Test
-    func testPartyTreasureClaimCreatesDebtWhenCharacterCannotAffordIt() async throws {
+    func testPartyTreasureClaimOnlyMovesTheItem() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
         let playerSession = try await join(displayName: "Player", in: tester)
@@ -532,8 +532,7 @@ struct ServerRoutesTests {
         )
         XCTAssertEqual(claimResponse.status, .ok)
         let claimedCampaign = try claimResponse.content.decode(CampaignState.self)
-        XCTAssertEqual(claimedCampaign.partyTreasure.count, 1)
-        XCTAssertTrue(claimedCampaign.partyTreasure.first?.name == "Debt from Broke Hero for Expensive Crown")
+        XCTAssertEqual(claimedCampaign.partyTreasure.count, 0)
 
         let charactersResponse = try await tester.sendRequest(
             .GET,
@@ -544,7 +543,10 @@ struct ServerRoutesTests {
         let characters = try charactersResponse.content.decode([PlayerView].self)
         let updatedCharacter = try XCTUnwrap(characters.first(where: { $0.id == character.id }))
         XCTAssertEqual(updatedCharacter.currency.first(where: { $0.unitId == "gp" })?.amount, 0)
-        XCTAssertTrue(updatedCharacter.inventory.contains(where: { $0.name == "Expensive Crown" }))
+        XCTAssertEqual(updatedCharacter.inventory.count, 1)
+        XCTAssertEqual(updatedCharacter.inventory.first?.name, "Expensive Crown")
+        XCTAssertEqual(updatedCharacter.inventory.first?.quantity, 1)
+        XCTAssertEqual(updatedCharacter.inventory.first?.category, "Treasure")
     }
 
     @Test
