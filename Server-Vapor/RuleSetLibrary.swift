@@ -30,6 +30,7 @@ struct CurrencySystem: Content {
 
 struct EquipmentLibraryReference: Content {
     let file: String
+    let categoryIcons: [String: String]?
 }
 
 struct CurrencyUnit: Content {

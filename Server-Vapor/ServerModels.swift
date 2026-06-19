@@ -155,6 +155,7 @@ struct CreatureLibraryResponse: Content {
 struct EquipmentLibraryItem: Content {
     let id: String
     let name: String
+    let category: String?
     let value: Double?
     let weight: Double?
     let url: String?

@@ -121,6 +121,7 @@ actor EquipmentLibraryStore {
         return EquipmentLibraryItem(
             id: trimmedId ?? "\(rulesetId)-\(fallbackIDSeed.slugified())",
             name: trimmedNonEmpty(item.name) ?? item.name,
+            category: trimmedNonEmpty(item.category),
             value: item.value,
             weight: item.weight,
             url: trimmedNonEmpty(item.url),
@@ -147,6 +148,7 @@ private struct BuiltinEquipmentLibraryFile: Content {
 private struct BuiltinEquipmentLibraryItem: Content {
     let id: String?
     let name: String
+    let category: String?
     let value: Double?
     let weight: Double?
     let url: String?

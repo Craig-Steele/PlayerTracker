@@ -54,7 +54,16 @@
     "file": "pathfinder-bestiary"
   },
   "equipmentLibrary": {
-    "file": "pathfinder-equipment"
+    "file": "pathfinder-equipment",
+    "categoryIcons": {
+      "Armor": "🛡️",
+      "Containers": "🎒",
+      "Food and Drink": "🍗",
+      "Goods and Services": "📜",
+      "Livestock": "🐴",
+      "Vehicles": "🛒",
+      "Weapons": "⚔️"
+    }
   },
   "conditions": [
     {

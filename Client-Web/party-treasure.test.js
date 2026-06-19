@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
+  resolveEquipmentOverflowGlyph,
   normalizeInventoryEntry,
   removePartyTreasureEntry,
   upsertPartyTreasureEntry
@@ -51,4 +52,21 @@ test('removePartyTreasureEntry removes a matching item id', () => {
   ], '11111111-1111-4111-8111-111111111111');
 
   assert.deepEqual(items.map((item) => item.id), ['22222222-2222-4222-8222-222222222222']);
+});
+
+test('resolveEquipmentOverflowGlyph uses Pathfinder category icons and falls back to the sword glyph', () => {
+  const glyph = resolveEquipmentOverflowGlyph({
+    entry: { name: 'Abacus' },
+    equipmentLibraryItems: [
+      { name: 'Abacus', category: 'Food and Drink' }
+    ],
+    categoryIcons: {
+      'Food and Drink': '🍗',
+      'Goods and Services': '📜'
+    }
+  });
+
+  assert.equal(glyph, '🍗');
+  assert.equal(resolveEquipmentOverflowGlyph({ entry: { name: 'Unknown Widget' } }), '🗡');
+  assert.equal(resolveEquipmentOverflowGlyph({ entry: { name: 'Cart', isContainer: true } }), '🧳');
 });

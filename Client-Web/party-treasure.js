@@ -101,6 +101,7 @@
         ? entry.id.trim()
         : name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
       name,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
       value: Number.isFinite(entry.value) ? entry.value : null,
       weight: Number.isFinite(entry.weight) ? entry.weight : null,
       url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
@@ -210,14 +211,15 @@
    */
   function applyPartyTreasurePresetToRow(row, itemName, equipmentLibraryItems = []) {
     if (!row || !itemName) return;
-    const preset = window.PlayerTrackerEquipmentPreset?.findEquipmentPreset
-      ? window.PlayerTrackerEquipmentPreset.findEquipmentPreset(itemName, equipmentLibraryItems)
+    const equipmentPresetApi = typeof window !== 'undefined' ? window.PlayerTrackerEquipmentPreset : null;
+    const preset = equipmentPresetApi?.findEquipmentPreset
+      ? equipmentPresetApi.findEquipmentPreset(itemName, equipmentLibraryItems)
       : equipmentLibraryItems.find(
           (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
         );
     if (!preset) return;
-    window.PlayerTrackerEquipmentPreset?.applyEquipmentPresetToInputs
-      ? window.PlayerTrackerEquipmentPreset.applyEquipmentPresetToInputs(
+    equipmentPresetApi?.applyEquipmentPresetToInputs
+      ? equipmentPresetApi.applyEquipmentPresetToInputs(
           {
             valueInput: row.querySelector('input[data-inventory-field="value"]'),
             weightInput: row.querySelector('input[data-inventory-field="weight"]'),
@@ -239,7 +241,45 @@
           if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
             urlInput.value = preset.url.trim();
           }
-        })();
+          })();
+  }
+
+  function getEquipmentItemCategory(itemName, equipmentLibraryItems = []) {
+    if (!itemName || !Array.isArray(equipmentLibraryItems)) {
+      return null;
+    }
+    const equipmentPresetApi = typeof window !== 'undefined' ? window.PlayerTrackerEquipmentPreset : null;
+    const preset = equipmentPresetApi?.findEquipmentPreset
+      ? equipmentPresetApi.findEquipmentPreset(itemName, equipmentLibraryItems)
+      : equipmentLibraryItems.find(
+          (item) => (item.name || '').trim().toLowerCase() === itemName.trim().toLowerCase()
+        );
+    if (!preset) {
+      return null;
+    }
+    return typeof preset.category === 'string' && preset.category.trim() ? preset.category.trim() : null;
+  }
+
+  function resolveEquipmentOverflowGlyph({
+    entry = {},
+    equipmentLibraryItems = [],
+    categoryIcons = {},
+    fallbackGlyph = '🗡'
+  } = {}) {
+    if (entry.isContainer) {
+      return '🧳';
+    }
+    const category =
+      typeof entry.category === 'string' && entry.category.trim()
+        ? entry.category.trim()
+        : getEquipmentItemCategory(entry.name || '', equipmentLibraryItems);
+    if (category && categoryIcons && typeof categoryIcons === 'object') {
+      const glyph = categoryIcons[category];
+      if (typeof glyph === 'string' && glyph.trim()) {
+        return glyph.trim();
+      }
+    }
+    return fallbackGlyph;
   }
 
   /**
@@ -286,11 +326,6 @@
       menuCell.textContent = firstColumnContent;
     } else if (firstColumnContent) {
       menuCell.appendChild(firstColumnContent);
-    } else {
-      const icon = document.createElement('span');
-      icon.className = 'inventory-display-value inventory-display-icon';
-      icon.textContent = '⋮';
-      menuCell.appendChild(icon);
     }
     row.appendChild(menuCell);
 
@@ -489,6 +524,8 @@
     focusInventoryRow,
     updateEquipmentItemOptions,
     applyPartyTreasurePresetToRow,
+    getEquipmentItemCategory,
+    resolveEquipmentOverflowGlyph,
     createPartyTreasureRow,
     buildPartyTreasureFields,
     upsertPartyTreasureEntry,

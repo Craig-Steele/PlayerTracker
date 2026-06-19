@@ -566,6 +566,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let statAliases = new Map();
   let currencySystem = null;
   let equipmentLibraryReference = null;
+  let equipmentCategoryIcons = {};
   let equipmentLibraryItems = [];
   let equipmentLibraryLoaded = false;
   let equipmentLibraryLoading = false;
@@ -645,12 +646,34 @@ window.addEventListener('DOMContentLoaded', () => {
                   ? item.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
                   : ''),
             name: typeof item?.name === 'string' ? item.name.trim() : '',
+            category: typeof item?.category === 'string' && item.category.trim() ? item.category.trim() : null,
             value: Number.isFinite(item?.value) ? item.value : null,
             weight: Number.isFinite(item?.weight) ? item.weight : null,
             url: typeof item?.url === 'string' && item.url.trim() ? item.url.trim() : null,
             source: typeof item?.source === 'string' && item.source.trim() ? item.source.trim() : null
           })).filter((item) => Boolean(item.name))
         : [],
+    resolveEquipmentOverflowGlyph: (options = {}) => {
+      const {
+        entry = {},
+        equipmentLibraryItems = [],
+        categoryIcons = {},
+        fallbackGlyph = '🗡'
+      } = options;
+      if (entry.isContainer) {
+        return '🧳';
+      }
+      const normalizedEntryName = typeof entry.name === 'string' ? entry.name.trim().toLowerCase() : '';
+      const preset = equipmentLibraryItems.find(
+        (item) => typeof item?.name === 'string' && item.name.trim().toLowerCase() === normalizedEntryName
+      );
+      const category =
+        typeof entry.category === 'string' && entry.category.trim()
+          ? entry.category.trim()
+          : (preset && typeof preset.category === 'string' && preset.category.trim() ? preset.category.trim() : null);
+      const glyph = category && typeof categoryIcons === 'object' ? categoryIcons[category] : null;
+      return typeof glyph === 'string' && glyph.trim() ? glyph.trim() : fallbackGlyph;
+    },
     getInventoryRowData: (row) => {
       if (!row) return null;
       return {
@@ -1568,7 +1591,14 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     overflowToggle.setAttribute('aria-label', `Manage ${entry.name || 'item'}`);
     overflowToggle.setAttribute('aria-haspopup', 'menu');
     overflowToggle.setAttribute('aria-expanded', 'false');
-    overflowToggle.textContent = '⋮';
+    overflowToggle.textContent = partyTreasureHelpers.resolveEquipmentOverflowGlyph
+      ? partyTreasureHelpers.resolveEquipmentOverflowGlyph({
+          entry,
+          equipmentLibraryItems,
+          categoryIcons: equipmentCategoryIcons,
+          fallbackGlyph: '🗡'
+        })
+      : (entry.isContainer ? '🧳' : '🗡');
 
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu party-treasure-row-menu';
@@ -3757,8 +3787,17 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     statBlockLookup = new Map(statBlockDefinitions.map((block) => [block.id, block]));
     equipmentLibraryReference =
       conditionSet && conditionSet.equipmentLibrary && typeof conditionSet.equipmentLibrary.file === 'string'
-        ? { file: conditionSet.equipmentLibrary.file.trim() }
+        ? {
+            file: conditionSet.equipmentLibrary.file.trim(),
+            categoryIcons: typeof conditionSet.equipmentLibrary.categoryIcons === 'object'
+              ? conditionSet.equipmentLibrary.categoryIcons
+              : {}
+          }
         : null;
+    equipmentCategoryIcons =
+      equipmentLibraryReference && typeof equipmentLibraryReference.categoryIcons === 'object'
+        ? equipmentLibraryReference.categoryIcons
+        : {};
     equipmentLibraryLoaded = false;
     equipmentLibraryItems = [];
     updateInventoryItemOptions();
@@ -3935,21 +3974,15 @@ function getOwnerName() {
   }
 
   function buildCharacterOverflowControls(character, options = {}) {
-    const plainTrigger = Boolean(options.plainTrigger);
     const overflow = document.createElement('div');
     overflow.className = 'character-overflow';
-    const overflowToggle = plainTrigger ? document.createElement('span') : document.createElement('button');
-    if (!plainTrigger) {
-      overflowToggle.type = 'button';
-    } else {
-      overflowToggle.setAttribute('role', 'button');
-      overflowToggle.tabIndex = 0;
-    }
+    const overflowToggle = document.createElement('button');
+    overflowToggle.type = 'button';
     overflowToggle.className = 'character-overflow-toggle';
     overflowToggle.setAttribute('aria-label', `Manage ${character.name || 'character'}`);
     overflowToggle.setAttribute('aria-haspopup', 'menu');
     overflowToggle.setAttribute('aria-expanded', 'false');
-    overflowToggle.textContent = plainTrigger ? `⋮ ${character.name || 'character'}` : '⋮';
+    overflowToggle.textContent = 'MENU';
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu hidden';
     overflowMenu.setAttribute('role', 'menu');
@@ -4089,18 +4122,6 @@ function getOwnerName() {
         openOverflowMenu();
       }
     });
-    if (plainTrigger) {
-      overflowToggle.addEventListener('keydown', (event) => {
-        if (event.key !== 'Enter' && event.key !== ' ') return;
-        event.preventDefault();
-        const isOpen = !overflowMenu.classList.contains('hidden');
-        if (isOpen) {
-          closeCharacterOverflowMenu();
-        } else {
-          openOverflowMenu();
-        }
-      });
-    }
     overflowMenu.addEventListener('click', (event) => {
       event.stopPropagation();
     });

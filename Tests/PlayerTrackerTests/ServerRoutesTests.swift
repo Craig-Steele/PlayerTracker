@@ -838,6 +838,31 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testPathfinderRulesetIncludesEquipmentCategoryIcons() throws {
+        let library = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
+        XCTAssertEqual(library.equipmentLibrary?.file, "pathfinder-equipment")
+        XCTAssertEqual(library.equipmentLibrary?.categoryIcons?["Weapons"], "⚔️")
+        XCTAssertEqual(library.equipmentLibrary?.categoryIcons?["Goods and Services"], "📜")
+    }
+
+    @Test
+    func testEquipmentLibraryReturnsItemCategoriesForPathfinder() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "pathfinder")
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/equipment-library?query=Abacus&limit=5"
+        )
+        XCTAssertEqual(response.status, .ok)
+        let library = try response.content.decode(EquipmentLibraryResponse.self)
+        XCTAssertEqual(library.rulesetId, "pathfinder")
+        XCTAssertGreaterThanOrEqual(library.totalMatches, 1)
+        XCTAssertEqual(library.items.first?.name, "Abacus")
+        XCTAssertEqual(library.items.first?.category, "Food and Drink")
+    }
+
+    @Test
     func testTraveller2CreatureLibraryReturnsSampleBestiary() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")

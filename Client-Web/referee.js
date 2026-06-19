@@ -349,6 +349,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let currencySystem = null;
   let currencyViewerCharacterId = null;
   let inventoryViewerCharacterId = null;
+  let equipmentCategoryIcons = {};
   let equipmentLibraryItems = [];
   let equipmentLibraryLoaded = false;
   let equipmentLibraryLoading = false;
@@ -426,12 +427,34 @@ window.addEventListener('DOMContentLoaded', () => {
                   ? item.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
                   : ''),
             name: typeof item?.name === 'string' ? item.name.trim() : '',
+            category: typeof item?.category === 'string' && item.category.trim() ? item.category.trim() : null,
             value: Number.isFinite(item?.value) ? item.value : null,
             weight: Number.isFinite(item?.weight) ? item.weight : null,
             url: typeof item?.url === 'string' && item.url.trim() ? item.url.trim() : null,
             source: typeof item?.source === 'string' && item.source.trim() ? item.source.trim() : null
           })).filter((item) => Boolean(item.name))
         : [],
+    resolveEquipmentOverflowGlyph: (options = {}) => {
+      const {
+        entry = {},
+        equipmentLibraryItems = [],
+        categoryIcons = {},
+        fallbackGlyph = '🗡'
+      } = options;
+      if (entry.isContainer) {
+        return '🧳';
+      }
+      const normalizedEntryName = typeof entry.name === 'string' ? entry.name.trim().toLowerCase() : '';
+      const preset = equipmentLibraryItems.find(
+        (item) => typeof item?.name === 'string' && item.name.trim().toLowerCase() === normalizedEntryName
+      );
+      const category =
+        typeof entry.category === 'string' && entry.category.trim()
+          ? entry.category.trim()
+          : (preset && typeof preset.category === 'string' && preset.category.trim() ? preset.category.trim() : null);
+      const glyph = category && typeof categoryIcons === 'object' ? categoryIcons[category] : null;
+      return typeof glyph === 'string' && glyph.trim() ? glyph.trim() : fallbackGlyph;
+    },
     getInventoryRowData: (row) => {
       if (!row) return null;
       return {
@@ -2974,7 +2997,7 @@ window.addEventListener('DOMContentLoaded', () => {
     overflowToggle.setAttribute('aria-label', `Manage ${entry.name || 'item'}`);
     overflowToggle.setAttribute('aria-haspopup', 'menu');
     overflowToggle.setAttribute('aria-expanded', 'false');
-    overflowToggle.textContent = '⋮';
+    overflowToggle.textContent = 'MENU';
 
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu party-treasure-row-menu';
@@ -3321,6 +3344,10 @@ window.addEventListener('DOMContentLoaded', () => {
       selectedAddStatBlockId = getDefaultAddStatBlockId();
       syncAddStatBlockSelector();
       setAddStatBlockId(selectedAddStatBlockId, { preserveValues: false });
+      equipmentCategoryIcons =
+        json?.equipmentLibrary && typeof json.equipmentLibrary.categoryIcons === 'object'
+          ? json.equipmentLibrary.categoryIcons
+          : {};
 
       const baseUrl =
         typeof json?.rulesBaseUrl === 'string' && json.rulesBaseUrl.trim()
@@ -3391,6 +3418,7 @@ window.addEventListener('DOMContentLoaded', () => {
       supportsTempHp = false;
       currentStandardDie = null;
       currencySystem = null;
+      equipmentCategoryIcons = {};
       closeCurrencyViewer();
       closeInventoryViewer();
       statKeys = ['HP'];
@@ -3546,7 +3574,14 @@ window.addEventListener('DOMContentLoaded', () => {
     overflowToggle.setAttribute('aria-label', `Show info for ${entry.name || 'item'}`);
     overflowToggle.setAttribute('aria-haspopup', 'menu');
     overflowToggle.setAttribute('aria-expanded', 'false');
-    overflowToggle.textContent = entry.isContainer ? '🧳' : '🗡';
+    overflowToggle.textContent = partyTreasureHelpers.resolveEquipmentOverflowGlyph
+      ? partyTreasureHelpers.resolveEquipmentOverflowGlyph({
+          entry,
+          equipmentLibraryItems,
+          categoryIcons: equipmentCategoryIcons,
+          fallbackGlyph: '🗡'
+        })
+      : (entry.isContainer ? '🧳' : '🗡');
 
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu referee-row-menu inventory-row-info-menu hidden';

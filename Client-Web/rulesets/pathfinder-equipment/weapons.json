@@ -37,7 +37,7 @@
       "category": "Weapons"
     },
     {
-      "id": "alchemical-cartridge-dragons-breath",
+      "id": "alchemical-cartridge-dragon-s-breath",
       "name": "Alchemical cartridge, dragon’s breath",
       "value": 40,
       "weight": 0,
@@ -85,194 +85,210 @@
       "category": "Weapons"
     },
     {
-      "id": "arrow-s-whistling-20",
-      "name": "Arrow(s), whistling (20)",
-      "value": 2,
-      "weight": 3,
-      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-whistling/",
-      "category": "Weapons"
-    },
-    {
-      "id": "arrow-bamboo-shaft-10",
-      "name": "Arrow, Bamboo shaft (10)",
-      "value": 1,
-      "weight": 0.5,
+      "id": "arrow-bamboo-shaft",
+      "name": "Arrow, Bamboo shaft",
+      "value": 0.1,
+      "weight": 0.05,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bamboo-shaft-arrow/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-bleeding-1",
-      "name": "Arrow, bleeding (1)",
+      "id": "arrow-bleeding",
+      "name": "Arrow, bleeding",
       "value": 360,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-bleeding/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-distance-iron-tipped-20",
-      "name": "Arrow, distance (iron-tipped) (20)",
-      "value": 1,
-      "weight": 4,
+      "id": "arrow-distance-iron-tipped",
+      "name": "Arrow, distance (iron-tipped)",
+      "value": 0.05,
+      "weight": 0.2,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/iron-tipped-distance-arrow/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-durable-1",
-      "name": "Arrow, durable (1)",
+      "id": "arrow-durable",
+      "name": "Arrow, durable",
       "value": 1,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-durable/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-dye-1",
-      "name": "Arrow, dye (1)",
+      "id": "arrow-dye",
+      "name": "Arrow, dye",
       "value": 1,
       "weight": 4,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-dye/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-iron-tipped-distance-20",
-      "name": "Arrow, iron-tipped distance (20)",
-      "value": 1,
-      "weight": 4,
+      "id": "arrow-iron-tipped-distance",
+      "name": "Arrow, iron-tipped distance",
+      "value": 0.05,
+      "weight": 0.2,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/iron-tipped-distance-arrow/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-lodestone-1",
-      "name": "Arrow, lodestone (1)",
+      "id": "arrow-lodestone",
+      "name": "Arrow, lodestone",
       "value": 10,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-lodestone/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-pheromone-1",
-      "name": "Arrow, pheromone (1)",
+      "id": "arrow-pheromone",
+      "name": "Arrow, pheromone",
       "value": 15,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrow-pheromone/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-raining-1",
-      "name": "Arrow, raining (1)",
+      "id": "arrow-raining",
+      "name": "Arrow, raining",
       "value": 30,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-raining/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-slow-burn-1",
-      "name": "Arrow, slow burn (1)",
+      "id": "arrow-slow-burn",
+      "name": "Arrow, slow burn",
       "value": 150,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-slow-burn/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-smoke-1",
-      "name": "Arrow, smoke (1)",
+      "id": "arrow-smoke",
+      "name": "Arrow, smoke",
       "value": 10,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-smokescreen/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-splintercloud-1",
-      "name": "Arrow, splintercloud (1)",
+      "id": "arrow-splintercloud",
+      "name": "Arrow, splintercloud",
       "value": 25,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-splintercloud/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-tanglefoot-1",
-      "name": "Arrow, tanglefoot (1)",
+      "id": "arrow-tanglefoot",
+      "name": "Arrow, tanglefoot",
       "value": 20,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-tanglefoot/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-thistle-1",
-      "name": "Arrow, thistle (1)",
+      "id": "arrow-thistle",
+      "name": "Arrow, thistle",
       "value": 1,
       "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-thistle/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-throwing-1",
-      "name": "Arrow, throwing (1)",
+      "id": "arrow-throwing",
+      "name": "Arrow, throwing",
       "value": 0.5,
       "weight": 0.5,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/arrow-throwing/",
       "category": "Weapons"
     },
     {
-      "id": "arrow-trip-1",
-      "name": "Arrow, trip (1)",
+      "id": "arrow-trip",
+      "name": "Arrow, trip",
       "value": 25,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-trip/",
       "category": "Weapons"
     },
     {
-      "id": "arrows-blunt-20",
-      "name": "Arrows, blunt (20)",
-      "value": 2,
-      "weight": 3,
+      "id": "arrow-blunt",
+      "name": "Arrow, blunt",
+      "value": 0.1,
+      "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrow-blunt/",
       "category": "Weapons"
     },
     {
-      "id": "arrows-common-20",
-      "name": "Arrows, common (20)",
-      "value": 1,
-      "weight": 3,
+      "id": "arrow",
+      "name": "Arrow",
+      "value": 0.05,
+      "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/",
       "category": "Weapons"
     },
     {
-      "id": "arrows-flight-20",
-      "name": "Arrows, flight (20)",
-      "value": 2,
-      "weight": 3,
+      "id": "arrow-flight",
+      "name": "Arrow, flight",
+      "value": 0.1,
+      "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-flight/",
       "category": "Weapons"
     },
     {
-      "id": "arrows-whistling-20",
-      "name": "Arrows, whistling (20)",
-      "value": 2,
-      "weight": 3,
+      "id": "arrow-whistling",
+      "name": "Arrow, whistling",
+      "value": 0.1,
+      "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-arrows-whistling/",
       "category": "Weapons"
     },
     {
-      "id": "arrows-bolts-barbed-20",
-      "name": "Arrows/bolts, barbed (20)",
-      "value": 2,
-      "weight": 3,
+      "id": "arrow-barbed",
+      "name": "Arrow, barbed",
+      "value": 0.1,
+      "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/arrow-barbed/",
       "category": "Weapons"
     },
     {
-      "id": "arrows-bolts-incendiary-20",
-      "name": "Arrows/bolts, incendiary (20)",
-      "value": 10,
-      "weight": 3,
+      "id": "bolt-barbed",
+      "name": "Bolt, barbed",
+      "value": 0.1,
+      "weight": 0.15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/arrow-barbed/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-incendiary",
+      "name": "Arrow, incendiary",
+      "value": 0.5,
+      "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/arrow-incendiary/",
       "category": "Weapons"
     },
     {
-      "id": "arrows-bolts-pronged-20",
-      "name": "Arrows/bolts, pronged (20)",
-      "value": 2,
-      "weight": 3,
+      "id": "bolt-incendiary",
+      "name": "Bolt, incendiary",
+      "value": 0.5,
+      "weight": 0.15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/arrow-incendiary/",
+      "category": "Weapons"
+    },
+    {
+      "id": "arrow-pronged",
+      "name": "Arrow, pronged",
+      "value": 0.1,
+      "weight": 0.15,
+      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/arrow-pronged/",
+      "category": "Weapons"
+    },
+    {
+      "id": "bolt-pronged",
+      "name": "Bolt, pronged",
+      "value": 0.1,
+      "weight": 0.15,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/arrow-pronged/",
       "category": "Weapons"
     },
@@ -421,7 +437,7 @@
       "category": "Weapons"
     },
     {
-      "id": "bichhwa",
+      "id": "bich-hwa",
       "name": "Bich’hwa",
       "value": 5,
       "weight": 2,
@@ -517,32 +533,32 @@
       "category": "Weapons"
     },
     {
-      "id": "bolt-s-acid-1",
-      "name": "Bolt(s), acid (1)",
+      "id": "bolt-acid",
+      "name": "Bolt, acid",
       "value": 40,
       "weight": 0.1,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolt-acid/",
       "category": "Weapons"
     },
     {
-      "id": "bolt-s-crossbow-10",
-      "name": "Bolt(s), crossbow (10)",
-      "value": 1,
-      "weight": 1,
+      "id": "bolt-crossbow",
+      "name": "Bolt, crossbow",
+      "value": 0.1,
+      "weight": 0.1,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolts-or-quarrels/",
       "category": "Weapons"
     },
     {
-      "id": "bolt-s-drow-poison-1",
-      "name": "Bolt(s), Drow poison (1)",
+      "id": "bolt-drow-poison",
+      "name": "Bolt, Drow poison",
       "value": 100,
       "weight": 0.1,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolt-drow-poison/",
       "category": "Weapons"
     },
     {
-      "id": "bolt-s-fire-1",
-      "name": "Bolt(s), fire (1)",
+      "id": "bolt-fire",
+      "name": "Bolt, fire",
       "value": 50,
       "weight": 0.1,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolt-fire/",
@@ -613,26 +629,26 @@
       "category": "Weapons"
     },
     {
-      "id": "bullet-s-groaning-10",
-      "name": "Bullet(s), groaning (10)",
-      "value": 2,
-      "weight": 5,
+      "id": "bullet-groaning",
+      "name": "Bullet, groaning",
+      "value": 0.2,
+      "weight": 0.5,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-sling-bullets-groaning/",
       "category": "Weapons"
     },
     {
-      "id": "bullet-s-sling-10",
-      "name": "Bullet(s), sling (10)",
-      "value": 0.1,
-      "weight": 5,
+      "id": "bullet-sling",
+      "name": "Bullet, sling",
+      "value": 0.01,
+      "weight": 0.5,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-sling-bullets/",
       "category": "Weapons"
     },
     {
-      "id": "bullet-s-smoke-10",
-      "name": "Bullet(s), smoke (10)",
-      "value": 100,
-      "weight": 5,
+      "id": "bullet-smoke",
+      "name": "Bullet, smoke",
+      "value": 10,
+      "weight": 0.5,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-sling-bullet-smoke/",
       "category": "Weapons"
     },
@@ -757,18 +773,10 @@
       "category": "Weapons"
     },
     {
-      "id": "crossbow-bolt-s-heavy-light-hand-10",
-      "name": "Crossbow bolt(s), heavy/light/hand (10)",
-      "value": 1,
-      "weight": 1,
-      "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolts-or-quarrels/",
-      "category": "Weapons"
-    },
-    {
-      "id": "crossbow-bolt-s-repeating-heavy-light-5",
-      "name": "Crossbow bolt(s), repeating, heavy/light (5)",
-      "value": 1,
-      "weight": 1,
+      "id": "bolt-crossbow-repeating",
+      "name": "Bolt, crossbow, repeating",
+      "value": 0.2,
+      "weight": 0.2,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-crossbow-bolts-or-quarrels/",
       "category": "Weapons"
     },
@@ -941,10 +949,10 @@
       "category": "Weapons"
     },
     {
-      "id": "dart-s-blowgun-10",
-      "name": "Dart(s), blowgun (10)",
-      "value": 0.5,
-      "weight": 1,
+      "id": "dart-blowgun",
+      "name": "Dart, blowgun",
+      "value": 0.05,
+      "weight": 0.1,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-blowgun-darts/",
       "category": "Weapons"
     },
@@ -957,9 +965,9 @@
       "category": "Weapons"
     },
     {
-      "id": "darts-featherweight-10",
-      "name": "Darts, featherweight (10)",
-      "value": 1,
+      "id": "dart-featherweight",
+      "name": "Dart, featherweight",
+      "value": 0.1,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/dart-featherweight/",
       "category": "Weapons"
@@ -1085,18 +1093,18 @@
       "category": "Weapons"
     },
     {
-      "id": "firearm-bullet-1",
-      "name": "Firearm bullet (1)",
+      "id": "firearm-bullet",
+      "name": "Firearm bullet",
       "value": 1,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/",
       "category": "Weapons"
     },
     {
-      "id": "firearm-bullet-30",
-      "name": "Firearm bullet (30)",
-      "value": 30,
-      "weight": 0.5,
+      "id": "firearm-bullet-bulk",
+      "name": "Firearm bullet, bulk",
+      "value": 1,
+      "weight": 0.016666666666666666,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/bullet/",
       "category": "Weapons"
     },
@@ -1333,7 +1341,7 @@
       "category": "Weapons"
     },
     {
-      "id": "gunsmiths-kit",
+      "id": "gunsmith-s-kit",
       "name": "Gunsmith’s kit",
       "value": 15,
       "weight": 2,
@@ -1565,10 +1573,10 @@
       "category": "Weapons"
     },
     {
-      "id": "kestros-dart-10",
-      "name": "Kestros dart (10)",
-      "value": 5,
-      "weight": 5,
+      "id": "kestros-dart",
+      "name": "Kestros dart",
+      "value": 0.5,
+      "weight": 0.5,
       "url": null,
       "category": "Weapons"
     },
@@ -1741,10 +1749,10 @@
       "category": "Weapons"
     },
     {
-      "id": "little-starstones-10",
-      "name": "Little starstones (10)",
-      "value": 0.05,
-      "weight": 2,
+      "id": "little-starstone",
+      "name": "Little starstone",
+      "value": 0.005,
+      "weight": 0.2,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/little-starstones/",
       "category": "Weapons"
     },
@@ -1901,7 +1909,7 @@
       "category": "Weapons"
     },
     {
-      "id": "madu-leather-2",
+      "id": "madu-leather",
       "name": "Madu (leather)",
       "value": 40,
       "weight": 5,
@@ -1909,7 +1917,7 @@
       "category": "Weapons"
     },
     {
-      "id": "madu-steel-2",
+      "id": "madu-steel",
       "name": "Madu (steel)",
       "value": 40,
       "weight": 6,
@@ -1973,7 +1981,7 @@
       "category": "Weapons"
     },
     {
-      "id": "monks-spade",
+      "id": "monk-s-spade",
       "name": "Monk’s spade",
       "value": 20,
       "weight": 12,
@@ -2469,7 +2477,7 @@
       "category": "Weapons"
     },
     {
-      "id": "scabbard-false-bottomed-2",
+      "id": "scabbard-false-bottomed",
       "name": "Scabbard, false-bottomed",
       "value": 45,
       "weight": 1,
@@ -2525,15 +2533,15 @@
       "category": "Weapons"
     },
     {
-      "id": "sharpstones-10",
-      "name": "Sharpstones (10)",
-      "value": 1,
-      "weight": 5,
+      "id": "sharpstone",
+      "name": "Sharpstone",
+      "value": 0.1,
+      "weight": 0.5,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/sharpstones/",
       "category": "Weapons"
     },
     {
-      "id": "shield-sconce-2",
+      "id": "shield-sconce",
       "name": "Shield Sconce",
       "value": 1,
       "weight": 0.5,
@@ -2605,10 +2613,10 @@
       "category": "Weapons"
     },
     {
-      "id": "shuriken-5",
-      "name": "Shuriken (5)",
-      "value": 1,
-      "weight": 0.5,
+      "id": "shuriken",
+      "name": "Shuriken",
+      "value": 0.2,
+      "weight": 0.1,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-thrown-shuriken/",
       "category": "Weapons"
     },
@@ -2677,10 +2685,10 @@
       "category": "Weapons"
     },
     {
-      "id": "softstones-10",
-      "name": "Softstones (10)",
-      "value": 0.1,
-      "weight": 4,
+      "id": "softstone",
+      "name": "Softstone",
+      "value": 0.01,
+      "weight": 0.4,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/softstones/",
       "category": "Weapons"
     },
@@ -2765,7 +2773,7 @@
       "category": "Weapons"
     },
     {
-      "id": "spongestones",
+      "id": "spongestone",
       "name": "Spongestone",
       "value": 1,
       "weight": 0.2,
@@ -2821,10 +2829,10 @@
       "category": "Weapons"
     },
     {
-      "id": "sword-butterfly-2",
-      "name": "Sword, butterfly (2)",
-      "value": 20,
-      "weight": 1,
+      "id": "sword-butterfly",
+      "name": "Sword, butterfly",
+      "value": 10,
+      "weight": 0.5,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/butterfly-sword/",
       "category": "Weapons"
     },
@@ -2933,10 +2941,10 @@
       "category": "Weapons"
     },
     {
-      "id": "thorn-20",
-      "name": "Thorn (20)",
-      "value": 1,
-      "weight": 1,
+      "id": "thorn",
+      "name": "Thorn",
+      "value": 0.05,
+      "weight": 0.05,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/ammunition/ammunition-bow-arrows-common/ammunition-bow-thorn/",
       "category": "Weapons"
     },
@@ -3133,9 +3141,9 @@
       "category": "Weapons"
     },
     {
-      "id": "wushu-dart-5",
-      "name": "Wushu dart (5)",
-      "value": 1,
+      "id": "wushu-dart",
+      "name": "Wushu dart",
+      "value": 0.2,
       "weight": 0,
       "url": "https://www.d20pfsrd.com/equipment/weapons/weapon-descriptions/dart-wushu/",
       "category": "Weapons"
