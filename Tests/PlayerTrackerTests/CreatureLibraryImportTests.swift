@@ -49,6 +49,23 @@ struct CreatureLibraryImportTests {
         #expect(response.items.contains { $0.name == "Backpack, common" })
     }
 
+    @Test("pathfinder goods and services includes currency items")
+    func pathfinderGoodsAndServicesIncludesCurrencyItems() async throws {
+        let library = try RuleSetLibraryLoader.loadLibrary(id: "pathfinder")
+        let response = try await EquipmentLibraryStore.shared.library(
+            rulesetId: library.id,
+            rulesetLabel: library.label,
+            query: "Coin",
+            limit: 100
+        )
+
+        #expect(response.rulesetId == "pathfinder")
+        #expect(response.items.contains { $0.name == "Copper Coin" && $0.category == "Coins" && $0.value == 0.01 })
+        #expect(response.items.contains { $0.name == "Silver Coin" && $0.category == "Coins" && $0.value == 0.1 })
+        #expect(response.items.contains { $0.name == "Gold Coin" && $0.category == "Coins" && $0.value == 1 })
+        #expect(response.items.contains { $0.name == "Platinum Coin" && $0.category == "Coins" && $0.value == 10 })
+    }
+
     @Test("pathfinder third party products fixture includes bean sidhe variant")
     func pathfinderThirdPartyProductsFixtureIncludesBeanSidheVariant() throws {
         let fixtureURL = URL(fileURLWithPath: #filePath)

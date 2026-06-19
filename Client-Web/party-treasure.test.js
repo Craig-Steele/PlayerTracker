@@ -73,7 +73,9 @@ test('resolveEquipmentOverflowGlyph uses Pathfinder category icons and falls bac
     entry: { name: 'Abacus', category: 'Food and Drink' },
     categoryIcons: {
       'Food and Drink': '🍗',
-      'Goods and Services': '📃'
+      'Goods and Services': '📃',
+      Coins: '🪙',
+      'Magic Item': '🪄'
     }
   });
 
@@ -85,7 +87,9 @@ test('resolveEquipmentOverflowGlyph uses Pathfinder category icons and falls bac
 test('resolveEquipmentOverflowGlyph resolves potion items from the saved category', () => {
   const categoryIcons = {
     Potions: '🧪',
-    Scrolls: '📜'
+    Scrolls: '📜',
+    Coins: '🪙',
+    'Magic Item': '🪄'
   };
 
   assert.equal(resolveEquipmentOverflowGlyph({
@@ -97,4 +101,14 @@ test('resolveEquipmentOverflowGlyph resolves potion items from the saved categor
     entry: { name: 'Potion: Cure Light Wounds', category: 'potions' },
     categoryIcons
   }), '🧪');
+
+  assert.equal(resolveEquipmentOverflowGlyph({
+    entry: { name: 'Gold Coins', category: 'Coins' },
+    categoryIcons
+  }), '🪙');
+
+  assert.equal(resolveEquipmentOverflowGlyph({
+    entry: { name: 'Wand of Magic Missile', category: 'magic item' },
+    categoryIcons
+  }), '🪄');
 });

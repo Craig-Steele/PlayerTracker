@@ -851,6 +851,8 @@ struct ServerRoutesTests {
         XCTAssertEqual(library.equipmentLibrary?.file, "pathfinder-equipment")
         XCTAssertEqual(library.equipmentLibrary?.categoryIcons?["Weapons"], "⚔️")
         XCTAssertEqual(library.equipmentLibrary?.categoryIcons?["Goods and Services"], "📜")
+        XCTAssertEqual(library.equipmentLibrary?.categoryIcons?["Coins"], "🪙")
+        XCTAssertEqual(library.equipmentLibrary?.categoryIcons?["Magic Item"], "🪄")
     }
 
     @Test

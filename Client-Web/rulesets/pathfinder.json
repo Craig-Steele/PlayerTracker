@@ -53,14 +53,16 @@
   "creatureLibrary": {
     "file": "pathfinder-bestiary"
   },
-  "equipmentLibrary": {
+    "equipmentLibrary": {
     "file": "pathfinder-equipment",
     "categoryIcons": {
       "Armor": "🛡️",
+      "Coins": "🪙",
       "Containers": "🧳",
       "Food and Drink": "🍗",
       "Goods and Services": "📃",
       "Livestock": "🐴",
+      "Magic Item": "🪄",
       "Vehicles": "🛒",
       "Weapons": "⚔️",
       "Potions": "🧪",

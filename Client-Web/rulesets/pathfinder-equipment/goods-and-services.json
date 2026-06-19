@@ -9,7 +9,15 @@
       "name": "Potion",
       "value": 0,
       "weight": 0,
-      "url": null,
+      "url": "https://www.d20pfsrd.com/magic-items/potions/",
+      "category": "Potions"
+    },
+    {
+      "id": "oil-magic",
+      "name": "Oil",
+      "value": 0,
+      "weight": 0,
+      "url": "https://www.d20pfsrd.com/magic-items/potions/",
       "category": "Potions"
     },
     {
@@ -17,8 +25,40 @@
       "name": "Scroll",
       "value": 0,
       "weight": 0,
-      "url": null,
+      "url": "https://www.d20pfsrd.com/magic-items/scrolls/",
       "category": "Scrolls"
+    },
+    {
+      "id": "coin-copper",
+      "name": "Copper Coin",
+      "value": 0.01,
+      "weight": 0.02,
+      "url": "https://www.d20pfsrd.com/EQUIPMENT/#TOC-Coins",
+      "category": "Coins"
+    },
+    {
+      "id": "coin-silver",
+      "name": "Silver Coin",
+      "value": 0.1,
+      "weight": 0.02,
+      "url": "https://www.d20pfsrd.com/EQUIPMENT/#TOC-Coins",
+      "category": "Coins"
+    },
+    {
+      "id": "coin-gold",
+      "name": "Gold Coin",
+      "value": 1,
+      "weight": 0.02,
+      "url": "https://www.d20pfsrd.com/EQUIPMENT/#TOC-Coins",
+      "category": "Coins"
+    },
+    {
+      "id": "coin-platinum",
+      "name": "Platinum Coin",
+      "value": 10,
+      "weight": 0.02,
+      "url": "https://www.d20pfsrd.com/EQUIPMENT/#TOC-Coins",
+      "category": "Coins"
     },
     {
       "id": "access-card-black",
