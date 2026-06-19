@@ -15,6 +15,7 @@
       value: Number.isFinite(entry.value) ? entry.value : 0,
       weight: Number.isFinite(entry.weight) ? entry.weight : 0,
       url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
       containerId: typeof entry.containerId === 'string' && entry.containerId.trim()
         ? entry.containerId.trim()
         : null,

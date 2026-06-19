@@ -5,6 +5,22 @@
   "generatedAt": "2026-06-05T18:42:21Z",
   "items": [
     {
+      "id": "potion-magic",
+      "name": "Potion",
+      "value": 0,
+      "weight": 0,
+      "url": null,
+      "category": "Potions"
+    },
+    {
+      "id": "scroll-magic",
+      "name": "Scroll",
+      "value": 0,
+      "weight": 0,
+      "url": null,
+      "category": "Scrolls"
+    },
+    {
       "id": "access-card-black",
       "name": "Access card (black)",
       "value": 10,

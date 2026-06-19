@@ -256,17 +256,18 @@ const inventoryRemovalHelpers = window.PlayerTrackerInventoryRemoval || {
   }
 };
 const inventoryTransferHelpers = window.PlayerTrackerInventoryTransfer || {
-  normalizeTransferEntry: (entry = {}) => ({
-    id: typeof entry.id === 'string' ? entry.id.trim() : '',
-    name: typeof entry.name === 'string' ? entry.name : '',
-    quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
-    value: Number.isFinite(entry.value) ? entry.value : 0,
-    weight: Number.isFinite(entry.weight) ? entry.weight : 0,
-    url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
-    containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : null,
-    isContainer: Boolean(entry.isContainer)
-  }),
-  transferEntry: ({ sourceItems = [], destinationItems = [], entryId, mapTransferredEntry = (entry) => entry, removeFromSource = true } = {}) => {
+    normalizeTransferEntry: (entry = {}) => ({
+      id: typeof entry.id === 'string' ? entry.id.trim() : '',
+      name: typeof entry.name === 'string' ? entry.name : '',
+      quantity: Number.isFinite(entry.quantity) ? entry.quantity : 1,
+      value: Number.isFinite(entry.value) ? entry.value : 0,
+      weight: Number.isFinite(entry.weight) ? entry.weight : 0,
+      url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
+      containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : null,
+      isContainer: Boolean(entry.isContainer)
+    }),
+    transferEntry: ({ sourceItems = [], destinationItems = [], entryId, mapTransferredEntry = (entry) => entry, removeFromSource = true } = {}) => {
     const normalizedSourceItems = Array.isArray(sourceItems)
       ? sourceItems.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item))
       : [];
@@ -502,6 +503,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const partyTreasureAddForm = document.getElementById('party-treasure-add-form');
   const partyTreasureAddFormTitle = document.getElementById('party-treasure-add-form-title');
   const partyTreasureAddFormName = document.getElementById('party-treasure-add-name');
+  const partyTreasureAddFormCategory = document.getElementById('party-treasure-add-category');
   const partyTreasureAddFormQuantity = document.getElementById('party-treasure-add-quantity');
   const partyTreasureAddFormValue = document.getElementById('party-treasure-add-value');
   const partyTreasureAddFormWeight = document.getElementById('party-treasure-add-weight');
@@ -521,6 +523,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const inventoryAddFormContainerRow = document.getElementById('inventory-add-container-row');
   const inventoryAddFormTitle = document.getElementById('inventory-add-form-title');
   const inventoryAddFormName = document.getElementById('inventory-add-name');
+  const inventoryAddFormCategory = document.getElementById('inventory-add-category');
   const inventoryAddFormContainer = document.getElementById('inventory-add-container-id');
   const inventoryAddFormQuantity = document.getElementById('inventory-add-quantity');
   const inventoryAddFormValue = document.getElementById('inventory-add-value');
@@ -594,6 +597,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (inputs.urlInput && typeof preset.url === 'string' && preset.url.trim()) {
         inputs.urlInput.value = preset.url.trim();
       }
+      if (inputs.categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+        inputs.categoryInput.value = preset.category.trim();
+      }
       return true;
     }
   };
@@ -633,6 +639,7 @@ window.addEventListener('DOMContentLoaded', () => {
         value: Number.isFinite(entry.value) ? entry.value : 0,
         weight: Number.isFinite(entry.weight) ? entry.weight : 0,
         url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+        category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
         containerId: normalizedContainerId,
         isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
       };
@@ -656,23 +663,18 @@ window.addEventListener('DOMContentLoaded', () => {
     resolveEquipmentOverflowGlyph: (options = {}) => {
       const {
         entry = {},
-        equipmentLibraryItems = [],
         categoryIcons = {},
-        fallbackGlyph = '🗡'
+        fallbackGlyph = PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH
       } = options;
       if (entry.isContainer) {
-        return '🧳';
+        return PARTY_TREASURE_CONTAINER_GLYPH;
       }
-      const normalizedEntryName = typeof entry.name === 'string' ? entry.name.trim().toLowerCase() : '';
-      const preset = equipmentLibraryItems.find(
-        (item) => typeof item?.name === 'string' && item.name.trim().toLowerCase() === normalizedEntryName
-      );
-      const category =
-        typeof entry.category === 'string' && entry.category.trim()
-          ? entry.category.trim()
-          : (preset && typeof preset.category === 'string' && preset.category.trim() ? preset.category.trim() : null);
-      const glyph = category && typeof categoryIcons === 'object' ? categoryIcons[category] : null;
-      return typeof glyph === 'string' && glyph.trim() ? glyph.trim() : fallbackGlyph;
+      const category = typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null;
+      return partyTreasureHelpers.resolveCategoryGlyph
+        ? partyTreasureHelpers.resolveCategoryGlyph(category, categoryIcons, fallbackGlyph)
+        : (category && typeof categoryIcons === 'object' && typeof categoryIcons[category] === 'string' && categoryIcons[category].trim()
+            ? categoryIcons[category].trim()
+            : fallbackGlyph);
     },
     getInventoryRowData: (row) => {
       if (!row) return null;
@@ -712,6 +714,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!preset) return;
       const valueInput = row.querySelector('input[data-inventory-field="value"]');
       const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+      const categoryInput = row.querySelector('input[data-inventory-field="category"]');
       if (valueInput && Number.isFinite(preset.value)) {
         valueInput.value = String(preset.value);
       }
@@ -721,6 +724,9 @@ window.addEventListener('DOMContentLoaded', () => {
       const urlInput = row.querySelector('input[data-inventory-field="url"]');
       if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
         urlInput.value = preset.url.trim();
+      }
+      if (categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+        categoryInput.value = preset.category.trim();
       }
     },
     getPartyTreasureRows: (fieldsEl) => (fieldsEl ? Array.from(fieldsEl.querySelectorAll('tr.inventory-entry')) : []),
@@ -732,6 +738,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const valueInput = row.querySelector('input[data-inventory-field="value"]');
       const weightInput = row.querySelector('input[data-inventory-field="weight"]');
       const urlInput = row.querySelector('input[data-inventory-field="url"]');
+      const categoryInput = row.querySelector('input[data-inventory-field="category"]');
       return (window.PlayerTrackerPartyTreasure?.normalizeInventoryEntry || partyTreasureHelpers.normalizeInventoryEntry)({
         id: rowData.id || null,
         name: nameInput ? nameInput.value.trim() : '',
@@ -739,6 +746,7 @@ window.addEventListener('DOMContentLoaded', () => {
         value: valueInput ? Number(valueInput.value) : 0,
         weight: weightInput ? Number(weightInput.value) : 0,
         url: urlInput ? urlInput.value.trim() : '',
+        category: categoryInput ? categoryInput.value.trim() : null,
         containerId: rowData.containerId,
         isContainer: rowData.isContainer
       });
@@ -760,6 +768,7 @@ window.addEventListener('DOMContentLoaded', () => {
       row.addEventListener('click', () => {
         if (typeof onSelect === 'function') onSelect(row);
       });
+      let nameCell = null;
       const fields = [
         { key: 'name', type: 'text', value: normalized.name, placeholder: 'Item name', list: itemOptionsId },
         { key: 'quantity', type: 'number', value: String(normalized.quantity), step: '1' },
@@ -776,6 +785,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if (field.list) input.setAttribute('list', field.list);
         if (field.step) input.step = field.step;
         input.dataset.inventoryField = field.key;
+        if (field.key === 'name') {
+          nameCell = cell;
+        }
         input.addEventListener('input', () => {
           if (typeof onDirty === 'function') onDirty();
           if (field.key === 'name' && typeof applyPreset === 'function') {
@@ -793,6 +805,13 @@ window.addEventListener('DOMContentLoaded', () => {
         cell.appendChild(input);
         row.appendChild(cell);
       });
+      if (nameCell) {
+        const categoryHidden = document.createElement('input');
+        categoryHidden.type = 'hidden';
+        categoryHidden.value = normalized.category || '';
+        categoryHidden.dataset.inventoryField = 'category';
+        nameCell.appendChild(categoryHidden);
+      }
       return row;
     },
     buildPartyTreasureFields: (fieldsEl, items = [], options = {}) => {
@@ -826,6 +845,9 @@ window.addEventListener('DOMContentLoaded', () => {
       return firstRow;
     },
   };
+  const PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH = '❓';
+  const PARTY_TREASURE_CONTAINER_GLYPH =
+    partyTreasureHelpers.CONTAINER_GLYPH || '🧳';
   const inventoryView = window.PlayerTrackerInventoryView || {};
   let playerNameRequired = false;
   let allowNegativeHealth = false;
@@ -1447,6 +1469,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       ? partyTreasureHelpers.normalizeInventoryEntry(entry)
       : partyTreasureHelpers.normalizeInventoryEntry({}, null, false);
     if (partyTreasureAddFormName) partyTreasureAddFormName.value = normalized.name || '';
+    if (partyTreasureAddFormCategory) partyTreasureAddFormCategory.value = normalized.category || '';
     if (partyTreasureAddFormQuantity) partyTreasureAddFormQuantity.value = String(normalized.quantity ?? 1);
     if (partyTreasureAddFormValue) partyTreasureAddFormValue.value = String(normalized.value ?? 0);
     if (partyTreasureAddFormWeight) partyTreasureAddFormWeight.value = String(normalized.weight ?? 0);
@@ -1458,11 +1481,25 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       {
         valueInput: partyTreasureAddFormValue,
         weightInput: partyTreasureAddFormWeight,
-        urlInput: partyTreasureAddFormUrl
+        urlInput: partyTreasureAddFormUrl,
+        categoryInput: partyTreasureAddFormCategory
       },
       itemName,
       equipmentLibraryItems
     );
+  }
+
+  function refreshPartyTreasureSelectedRowIcon() {
+    if (!partyTreasureSelectedRow) return;
+    const overflowToggle = partyTreasureSelectedRow.querySelector('.character-overflow-toggle');
+    if (!overflowToggle) return;
+    const category = (partyTreasureAddFormCategory?.value || '').trim();
+    const isContainer = partyTreasureSelectedRow.dataset.inventoryIsContainer === 'true';
+    overflowToggle.textContent = isContainer
+      ? PARTY_TREASURE_CONTAINER_GLYPH
+      : (category && partyTreasureHelpers.resolveCategoryGlyph
+          ? partyTreasureHelpers.resolveCategoryGlyph(category, equipmentCategoryIcons, PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH)
+          : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH);
   }
 
   function setPartyTreasureAddFormOpen(open, entry = null) {
@@ -1480,6 +1517,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (open) {
       populatePartyTreasureAddForm(entry);
       applyPartyTreasurePresetToForm(partyTreasureAddFormName?.value || '');
+      refreshPartyTreasureSelectedRowIcon();
     } else {
       partyTreasureEditingEntryId = null;
       populatePartyTreasureAddForm(null);
@@ -1536,6 +1574,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function collectPartyTreasureDraftFromForm() {
     const name = (partyTreasureAddFormName?.value || '').trim();
+    const category = (partyTreasureAddFormCategory?.value || '').trim();
     const quantityRaw = (partyTreasureAddFormQuantity?.value || '').trim();
     const valueRaw = (partyTreasureAddFormValue?.value || '').trim();
     const weightRaw = (partyTreasureAddFormWeight?.value || '').trim();
@@ -1562,6 +1601,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       value,
       weight,
       url: url || null,
+      category: category || null,
       containerId: null,
       isContainer: false
     };
@@ -1593,12 +1633,12 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     overflowToggle.setAttribute('aria-expanded', 'false');
     overflowToggle.textContent = partyTreasureHelpers.resolveEquipmentOverflowGlyph
       ? partyTreasureHelpers.resolveEquipmentOverflowGlyph({
-          entry,
-          equipmentLibraryItems,
-          categoryIcons: equipmentCategoryIcons,
-          fallbackGlyph: '🗡'
-        })
-      : (entry.isContainer ? '🧳' : '🗡');
+        entry,
+        equipmentLibraryItems,
+        categoryIcons: equipmentCategoryIcons,
+        fallbackGlyph: PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH
+      })
+      : (entry.isContainer ? PARTY_TREASURE_CONTAINER_GLYPH : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH);
 
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu party-treasure-row-menu';
@@ -1810,6 +1850,16 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   async function removeSelectedPartyTreasureItem() {
     if (!partyTreasureSelectedRow) return;
     const rowName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
+    const confirmed = await showConfirmDialog({
+      title: 'Remove Party Treasure Item?',
+      header: rowName,
+      message: 'Remove this item from party treasure? This cannot be undone.',
+      confirmLabel: 'Remove Item',
+      cancelLabel: 'Keep Item',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!confirmed) return;
     const items = partyTreasureHelpers.removePartyTreasureEntry(
       currentPartyTreasure,
       partyTreasureSelectedRow.dataset.inventoryEntryId || ''
@@ -1861,12 +1911,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       if (
         Number.isFinite(claimValue) &&
         claimantTotal != null &&
-        claimantTotal < claimValue &&
-        !confirm(
-          `Claim ${itemName || 'this item'} for ${claimValue.toFixed(2)}? This will put ${claimantCharacter?.name || 'this character'} into debt.`
-        )
+        claimantTotal < claimValue
       ) {
-        return;
+        const confirmed = await showConfirmDialog({
+          title: 'Claim Item?',
+          header: itemName || 'This item',
+          message: `Claim this item for ${claimValue.toFixed(2)}? This will put ${claimantCharacter?.name || 'this character'} into debt.`,
+          confirmLabel: 'Claim Item',
+          cancelLabel: 'Keep Item',
+          confirmButtonClass: 'danger',
+          initialFocus: 'cancel'
+        });
+        if (!confirmed) return;
       }
       const res = await fetch('/campaign/party-treasure/claim', {
         method: 'POST',
@@ -1897,7 +1953,20 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (!character || !partyTreasureFields) return;
     closeCharacterOverflowMenu();
     closeInventoryEditor();
-    if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+    if (
+      currencyEditorDirty &&
+      !(await showConfirmDialog({
+        title: 'Discard Money Changes?',
+        header: 'Unsaved currency edits',
+        message: 'Discard money changes? This cannot be undone.',
+        confirmLabel: 'Discard Changes',
+        cancelLabel: 'Keep Editing',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      }))
+    ) {
+      return;
+    }
     closeCurrencyEditor();
     partyTreasureEditorCharacterId = character.id;
     if (partyTreasureDialogTitle) {
@@ -1967,6 +2036,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       value: Number.isFinite(entry.value) ? entry.value : 0,
       weight: Number.isFinite(entry.weight) ? entry.weight : 0,
       url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
       containerId: normalizedContainerId,
       isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
     };
@@ -2022,11 +2092,25 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       {
         valueInput: inventoryAddFormValue,
         weightInput: inventoryAddFormWeight,
-        urlInput: inventoryAddFormUrl
+        urlInput: inventoryAddFormUrl,
+        categoryInput: inventoryAddFormCategory
       },
       itemName,
       equipmentLibraryItems
     );
+  }
+
+  function refreshInventorySelectedRowIcon() {
+    if (!inventorySelectedRow) return;
+    const overflowToggle = inventorySelectedRow.querySelector('.character-overflow-toggle');
+    if (!overflowToggle) return;
+    const category = (inventoryAddFormCategory?.value || '').trim();
+    const isContainer = inventorySelectedRow.dataset.inventoryIsContainer === 'true';
+    overflowToggle.textContent = isContainer
+      ? getContainerGlyph()
+      : (category && partyTreasureHelpers.resolveCategoryGlyph
+          ? partyTreasureHelpers.resolveCategoryGlyph(category, equipmentCategoryIcons, PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH)
+          : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH);
   }
 
   function buildInventoryContainerOptions(selectedContainerId = null, disabled = false) {
@@ -2082,7 +2166,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     inventoryTotalWeight.textContent = `Total weight carried: ${formattedTotal}`;
   }
 
-  function createInventorySectionTable(firstColumnLabel = '🧳', secondColumnLabel = 'Item') {
+  function createInventorySectionTable(firstColumnLabel = PARTY_TREASURE_CONTAINER_GLYPH, secondColumnLabel = 'Item') {
     return inventoryView.createInventorySectionTable
       ? inventoryView.createInventorySectionTable(firstColumnLabel, secondColumnLabel)
       : (() => {
@@ -2104,6 +2188,21 @@ const preferPlayerView = viewMode === 'player' || playerPath;
           wrap.appendChild(table);
           return { wrap, tbody };
         })();
+  }
+
+  function getContainerGlyph() {
+    return inventoryView.resolveContainerGlyph
+      ? inventoryView.resolveContainerGlyph(equipmentCategoryIcons, PARTY_TREASURE_CONTAINER_GLYPH)
+      : (typeof equipmentCategoryIcons?.Containers === 'string' && equipmentCategoryIcons.Containers.trim()
+        ? equipmentCategoryIcons.Containers.trim()
+        : PARTY_TREASURE_CONTAINER_GLYPH);
+  }
+
+  function updateInventoryContainerHeadings() {
+    const containerGlyph = getContainerGlyph();
+    document.querySelectorAll('#inventory-panel .inventory-table th:first-child').forEach((th) => {
+      th.textContent = containerGlyph;
+    });
   }
 
   function buildInventoryContainerDisplayLabels(containerEntries = []) {
@@ -2129,7 +2228,14 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     overflowToggle.setAttribute('aria-label', `Manage ${entry.name || 'item'}`);
     overflowToggle.setAttribute('aria-haspopup', 'menu');
     overflowToggle.setAttribute('aria-expanded', 'false');
-    overflowToggle.textContent = entry.isContainer ? '🧳' : '🗡';
+    overflowToggle.textContent = partyTreasureHelpers.resolveEquipmentOverflowGlyph
+      ? partyTreasureHelpers.resolveEquipmentOverflowGlyph({
+        entry,
+        equipmentLibraryItems,
+        categoryIcons: equipmentCategoryIcons,
+        fallbackGlyph: entry.isContainer ? getContainerGlyph() : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH
+      })
+      : (entry.isContainer ? getContainerGlyph() : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH);
 
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu';
@@ -2312,6 +2418,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
         displayLabel: displayLabel || containerEntry.name || 'Container',
         containerLabels,
         containerSectionsEl: inventoryContainerSections,
+        categoryIcons: equipmentCategoryIcons,
         rowClassName: 'inventory-entry-display',
         onRowClick: (selectedRow) => setSelectedInventoryRow(selectedRow),
         firstColumnRenderer: ({ row, entry, options: rowOptions }) => buildInventoryRowOverflowControls(entry, row, rowOptions)
@@ -2343,6 +2450,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     containerEntries.forEach((entry) => {
       buildInventoryContainerSection(entry, currentInventory, containerLabels.get(entry.id) || null, containerLabels);
     });
+    updateInventoryContainerHeadings();
     if (inventoryAddFormContainer) {
       const preservedContainerId = inventoryAddFormContainer.value || inventoryEditingContainerId || '';
       if (inventoryEditingIsContainer) {
@@ -2395,7 +2503,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       inventoryAddFormTitle.textContent = nextIsContainer ? 'Add Container' : 'Add Item';
     }
     if (inventoryAddFormSaveBtn) {
-      inventoryAddFormSaveBtn.textContent = nextIsContainer ? '🧳 Add Container' : '🗡 Add Item';
+      inventoryAddFormSaveBtn.textContent = nextIsContainer
+        ? `${PARTY_TREASURE_CONTAINER_GLYPH} Add Container`
+        : '🗡 Add Item';
     }
     if (nextIsContainer) {
       if (inventoryAddFormContainer) {
@@ -2417,6 +2527,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       ? normalizeInventoryEntry(entry, inventoryEditingContainerId, inventoryEditingIsContainer)
       : normalizeInventoryEntry({}, inventoryEditingContainerId, inventoryEditingIsContainer);
     if (inventoryAddFormName) inventoryAddFormName.value = normalized.name || '';
+    if (inventoryAddFormCategory) inventoryAddFormCategory.value = normalized.category || '';
     setInventoryAddFormMode(inventoryEditingIsContainer, {
       preserveContainerSelection: true
     });
@@ -2451,6 +2562,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (open) {
       populateInventoryAddForm(entry);
       applyInventoryPresetToForm(inventoryAddFormName?.value || '');
+      refreshInventorySelectedRowIcon();
       if (inventoryAddFormTitle && entry) {
         inventoryAddFormTitle.textContent = inventoryEditingIsContainer ? 'Edit Container' : 'Edit Item';
       }
@@ -2468,6 +2580,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function collectInventoryDraftFromForm() {
     const name = (inventoryAddFormName?.value || '').trim();
+    const category = (inventoryAddFormCategory?.value || '').trim();
     const quantityRaw = (inventoryAddFormQuantity?.value || '').trim();
     const valueRaw = (inventoryAddFormValue?.value || '').trim();
     const weightRaw = (inventoryAddFormWeight?.value || '').trim();
@@ -2499,6 +2612,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       value,
       weight,
       url: url || null,
+      category: category || null,
       containerId: inventoryEditingIsContainer ? null : selectedContainerId,
       isContainer: inventoryEditingIsContainer
     };
@@ -2657,6 +2771,17 @@ const preferPlayerView = viewMode === 'player' || playerPath;
         return;
       }
       moveContainedItems = removalChoice === 'keep-contents';
+    } else {
+      const confirmed = await showConfirmDialog({
+        title: 'Remove Inventory Item?',
+        header: rowName,
+        message: 'Remove this item from inventory? This cannot be undone.',
+        confirmLabel: 'Remove Item',
+        cancelLabel: 'Keep Item',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      });
+      if (!confirmed) return;
     }
     const items = inventoryRemovalHelpers.removeInventoryEntry(currentInventory, rowData.id || '', {
       moveContainedItems
@@ -2787,7 +2912,20 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   async function openInventoryEditor(character) {
     if (!character || !inventoryFields) return;
     closeCharacterOverflowMenu();
-    if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+    if (
+      currencyEditorDirty &&
+      !(await showConfirmDialog({
+        title: 'Discard Money Changes?',
+        header: 'Unsaved currency edits',
+        message: 'Discard money changes? This cannot be undone.',
+        confirmLabel: 'Discard Changes',
+        cancelLabel: 'Keep Editing',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      }))
+    ) {
+      return;
+    }
     closeCurrencyEditor();
     inventoryEditorCharacterId = character.id;
     if (inventoryDialogTitle) {
@@ -3704,6 +3842,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   async function deleteMyCharacter(character) {
     if (!character?.id) return;
+    const confirmed = await showConfirmDialog({
+      title: 'Delete Character?',
+      header: character.name || 'This character',
+      message: 'Remove this character from the tracker? This cannot be undone.',
+      confirmLabel: 'Delete Character',
+      cancelLabel: 'Keep Character',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!confirmed) {
+      return;
+    }
     try {
       if (!currentCampaignId) {
         throw new Error('No active campaign selected.');
@@ -3801,6 +3951,13 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     equipmentLibraryLoaded = false;
     equipmentLibraryItems = [];
     updateInventoryItemOptions();
+    if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
+      buildPartyTreasureFields(currentPartyTreasure);
+    }
+    if (inventoryPanel && !inventoryPanel.classList.contains('hidden')) {
+      buildInventoryFields(currentInventory);
+      updateInventoryContainerHeadings();
+    }
     if (equipmentLibraryReference) {
       void loadEquipmentLibrary();
     }
@@ -4089,8 +4246,6 @@ function getOwnerName() {
         {
           label: '🗑️ Remove Character',
           handler: async () => {
-            const confirmed = confirm(`Remove ${character.name || 'this character'} from the tracker?`);
-            if (!confirmed) return;
             await deleteMyCharacter(character);
           },
           options: {
@@ -5397,7 +5552,15 @@ function getOwnerName() {
   }
 
   async function logoutPlayerSession() {
-    const confirmed = window.confirm('Log out and return to the join page?');
+    const confirmed = await showConfirmDialog({
+      title: 'Log Out?',
+      header: 'Return to the join page',
+      message: 'Log out and return to the join page?',
+      confirmLabel: 'Log Out',
+      cancelLabel: 'Stay Signed In',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
     if (!confirmed) return;
     try {
       await fetch('/player/logout', { method: 'POST' });
@@ -5550,8 +5713,6 @@ function getOwnerName() {
         closeCharacterOverflowMenu();
         const selected = myCharacters.find((character) => character.id === selectedCharacterId);
         if (!selected) return;
-        const confirmed = confirm(`Remove ${selected.name} from the tracker?`);
-        if (!confirmed) return;
         deleteMyCharacter(selected);
       });
     } else {
@@ -5611,16 +5772,42 @@ function getOwnerName() {
   }
 
   if (currencyCancelBtn) {
-    currencyCancelBtn.addEventListener('click', () => {
-      if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+    currencyCancelBtn.addEventListener('click', async () => {
+      if (
+        currencyEditorDirty &&
+        !(await showConfirmDialog({
+          title: 'Discard Money Changes?',
+          header: 'Unsaved currency edits',
+          message: 'Discard money changes? This cannot be undone.',
+          confirmLabel: 'Discard Changes',
+          cancelLabel: 'Keep Editing',
+          confirmButtonClass: 'danger',
+          initialFocus: 'cancel'
+        }))
+      ) {
+        return;
+      }
       closeCurrencyEditor();
     });
   }
 
   if (currencyPanel) {
-    currencyPanel.addEventListener('click', (event) => {
+    currencyPanel.addEventListener('click', async (event) => {
       if (event.target !== currencyPanel) return;
-      if (currencyEditorDirty && !confirm('Discard money changes?')) return;
+      if (
+        currencyEditorDirty &&
+        !(await showConfirmDialog({
+          title: 'Discard Money Changes?',
+          header: 'Unsaved currency edits',
+          message: 'Discard money changes? This cannot be undone.',
+          confirmLabel: 'Discard Changes',
+          cancelLabel: 'Keep Editing',
+          confirmButtonClass: 'danger',
+          initialFocus: 'cancel'
+        }))
+      ) {
+        return;
+      }
       closeCurrencyEditor();
     });
   }
@@ -5651,9 +5838,19 @@ function getOwnerName() {
   if (partyTreasureAddFormName) {
     partyTreasureAddFormName.addEventListener('input', () => {
       applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
+      refreshPartyTreasureSelectedRowIcon();
     });
     partyTreasureAddFormName.addEventListener('change', () => {
       applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
+      refreshPartyTreasureSelectedRowIcon();
+    });
+  }
+  if (partyTreasureAddFormCategory) {
+    partyTreasureAddFormCategory.addEventListener('input', () => {
+      refreshPartyTreasureSelectedRowIcon();
+    });
+    partyTreasureAddFormCategory.addEventListener('change', () => {
+      refreshPartyTreasureSelectedRowIcon();
     });
   }
 
@@ -5709,9 +5906,19 @@ function getOwnerName() {
   if (inventoryAddFormName) {
     inventoryAddFormName.addEventListener('input', () => {
       applyInventoryPresetToForm(inventoryAddFormName.value);
+      refreshInventorySelectedRowIcon();
     });
     inventoryAddFormName.addEventListener('change', () => {
       applyInventoryPresetToForm(inventoryAddFormName.value);
+      refreshInventorySelectedRowIcon();
+    });
+  }
+  if (inventoryAddFormCategory) {
+    inventoryAddFormCategory.addEventListener('input', () => {
+      refreshInventorySelectedRowIcon();
+    });
+    inventoryAddFormCategory.addEventListener('change', () => {
+      refreshInventorySelectedRowIcon();
     });
   }
 
@@ -6163,7 +6370,15 @@ function getOwnerName() {
       return;
     }
 
-    const sure = confirm('Really clear the entire player list?');
+    const sure = await showConfirmDialog({
+      title: 'Clear Player List?',
+      header: 'All players will be removed',
+      message: 'Really clear the entire player list? This cannot be undone.',
+      confirmLabel: 'Clear List',
+      cancelLabel: 'Keep Players',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
     if (!sure) return;
 
     try {
@@ -6302,7 +6517,7 @@ function getOwnerName() {
     });
   }
   if (addCancelBtn) {
-    addCancelBtn.addEventListener('click', () => {
+    addCancelBtn.addEventListener('click', async () => {
       const hasAddDraft =
         Boolean(addNameInput?.value.trim()) ||
         Array.from(addStatInputs.values()).some((entry) =>
@@ -6312,7 +6527,20 @@ function getOwnerName() {
         Boolean(addRevealStatsInput?.checked) ||
         Boolean(addAutoSkipTurnInput?.checked) ||
         (addUseAppInitiativeRollInput ? addUseAppInitiativeRollInput.checked === false : false);
-      if (hasAddDraft && !confirm('Discard new character changes?')) return;
+      if (
+        hasAddDraft &&
+        !(await showConfirmDialog({
+          title: 'Discard New Character?',
+          header: 'Unsaved character changes',
+          message: 'Discard new character changes? This cannot be undone.',
+          confirmLabel: 'Discard Changes',
+          cancelLabel: 'Keep Editing',
+          confirmButtonClass: 'danger',
+          initialFocus: 'cancel'
+        }))
+      ) {
+        return;
+      }
       hideAddForm();
     });
   }

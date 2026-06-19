@@ -6,7 +6,7 @@ const { transferEntry } = require('./inventory-transfer.js');
 test('transferEntry moves an item between collections', () => {
   const result = transferEntry({
     sourceItems: [
-      { id: 'rope', name: 'Rope', quantity: 1, value: 2, weight: 5, isContainer: false }
+      { id: 'rope', name: 'Rope', quantity: 1, value: 2, weight: 5, category: 'Adventuring Gear', isContainer: false }
     ],
     destinationItems: [
       { id: 'gem', name: 'Gem', quantity: 1, value: 100, weight: 0 }
@@ -22,6 +22,7 @@ test('transferEntry moves an item between collections', () => {
     ['gem', 'rope']
   );
   assert.equal(result.transferredEntry.name, 'Rope');
+  assert.equal(result.transferredEntry.category, 'Adventuring Gear');
 });
 
 test('transferEntry can update an item in place', () => {

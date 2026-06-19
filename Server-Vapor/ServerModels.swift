@@ -78,6 +78,7 @@ struct InventoryEntry: Content {
     let value: Double
     let weight: Double
     let url: String?
+    let category: String?
     let containerId: UUID?
     let isContainer: Bool
 
@@ -88,6 +89,7 @@ struct InventoryEntry: Content {
         value: Double,
         weight: Double,
         url: String?,
+        category: String? = nil,
         containerId: UUID? = nil,
         isContainer: Bool = false
     ) {
@@ -97,6 +99,7 @@ struct InventoryEntry: Content {
         self.value = value
         self.weight = weight
         self.url = url
+        self.category = category
         self.containerId = containerId
         self.isContainer = isContainer
     }
@@ -114,6 +117,13 @@ struct InventoryEntry: Content {
         value = try container.decode(Double.self, forKey: .value)
         weight = try container.decode(Double.self, forKey: .weight)
         url = try container.decodeIfPresent(String.self, forKey: .url)
+        if let categoryString = try container.decodeIfPresent(String.self, forKey: .category)?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !categoryString.isEmpty {
+            category = categoryString
+        } else {
+            category = nil
+        }
         if let containerIDString = try container.decodeIfPresent(String.self, forKey: .containerId)?.trimmingCharacters(in: .whitespacesAndNewlines),
            let parsedContainerID = UUID(uuidString: containerIDString) {
             containerId = parsedContainerID

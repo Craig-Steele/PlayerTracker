@@ -57,12 +57,14 @@
     "file": "pathfinder-equipment",
     "categoryIcons": {
       "Armor": "🛡️",
-      "Containers": "🎒",
+      "Containers": "🧳",
       "Food and Drink": "🍗",
-      "Goods and Services": "📜",
+      "Goods and Services": "📃",
       "Livestock": "🐴",
       "Vehicles": "🛒",
-      "Weapons": "⚔️"
+      "Weapons": "⚔️",
+      "Potions": "🧪",
+      "Scrolls": "📜"
     }
   },
   "conditions": [

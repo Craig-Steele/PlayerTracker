@@ -9,6 +9,7 @@ test('party treasure form config omits the container selector', () => {
   assert.equal(config.id, 'party-treasure-add-form');
   assert.equal(config.fields.some((field) => field.id === 'party-treasure-add-container-row'), false);
   assert.equal(config.fields.some((field) => field.id === 'party-treasure-add-name'), true);
+  assert.equal(config.fields.some((field) => field.id === 'party-treasure-add-category'), true);
 });
 
 test('inventory form config includes the container selector', () => {
@@ -18,4 +19,5 @@ test('inventory form config includes the container selector', () => {
   assert.equal(config.fields.some((field) => field.id === 'inventory-add-kind-row'), true);
   assert.equal(config.fields.some((field) => field.id === 'inventory-add-container-row'), true);
   assert.equal(config.fields.some((field) => field.id === 'inventory-add-name'), true);
+  assert.equal(config.fields.some((field) => field.id === 'inventory-add-category'), true);
 });

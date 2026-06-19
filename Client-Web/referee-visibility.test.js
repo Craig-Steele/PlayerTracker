@@ -21,12 +21,12 @@ test('finds all members of the same initiative group', () => {
 
 test('exposes the group visibility menu in the expected order', () => {
   assert.deepEqual(getCharacterVisibilityMenuItems(true), [
-    { label: 'Reveal Now', isHidden: false, revealOnTurn: false },
-    { label: 'Reveal on Turn', isHidden: true, revealOnTurn: true }
+    { label: '👁️ Reveal Now', isHidden: false, revealOnTurn: false },
+    { label: '⏳👁️ Reveal on Turn', isHidden: true, revealOnTurn: true }
   ]);
 
   assert.deepEqual(getCharacterVisibilityMenuItems(false), [
-    { label: 'Hide Character', isHidden: true, revealOnTurn: false }
+    { label: '🙈 Hide Character', isHidden: true, revealOnTurn: false }
   ]);
 
   const hiddenGroupItems = getInitiativeGroupVisibilityMenuItems([
@@ -35,8 +35,8 @@ test('exposes the group visibility menu in the expected order', () => {
   ], true);
 
   assert.deepEqual(hiddenGroupItems, [
-    { label: 'Group: Reveal Now', isHidden: false, revealOnTurn: false },
-    { label: 'Group: Reveal On Turn', isHidden: true, revealOnTurn: true }
+    { label: '👥👁️ Group: Reveal Now', isHidden: false, revealOnTurn: false },
+    { label: '👥⏳👁️ Group: Reveal On Turn', isHidden: true, revealOnTurn: true }
   ]);
 
   assert.deepEqual(
@@ -45,7 +45,7 @@ test('exposes the group visibility menu in the expected order', () => {
       { id: 'b', isHidden: false }
     ], false),
     [
-      { label: 'Group: Hide', isHidden: true, revealOnTurn: false }
+      { label: '👥🙈 Group: Hide', isHidden: true, revealOnTurn: false }
     ]
   );
 

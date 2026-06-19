@@ -7,7 +7,11 @@
     root.PlayerTrackerInventoryView = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
-  function createInventorySectionTable(firstColumnLabel = '🧳', secondColumnLabel = 'Item') {
+  const CONTAINER_GLYPH =
+    (typeof window !== 'undefined' && window.PlayerTrackerPartyTreasure && window.PlayerTrackerPartyTreasure.CONTAINER_GLYPH) ||
+    '🧳';
+
+  function createInventorySectionTable(firstColumnLabel = CONTAINER_GLYPH, secondColumnLabel = 'Item') {
     const wrap = document.createElement('div');
     wrap.className = 'inventory-table-wrap';
     const table = document.createElement('table');
@@ -25,6 +29,11 @@
     table.appendChild(tbody);
     wrap.appendChild(table);
     return { wrap, tbody };
+  }
+
+  function resolveContainerGlyph(categoryIcons = {}, fallbackGlyph = CONTAINER_GLYPH) {
+    const glyph = categoryIcons && typeof categoryIcons === 'object' ? categoryIcons.Containers : null;
+    return typeof glyph === 'string' && glyph.trim() ? glyph.trim() : fallbackGlyph;
   }
 
   function buildInventoryContainerDisplayLabels(containerEntries = [], fallbackLabel = 'Container') {
@@ -109,7 +118,7 @@
     } else {
       const icon = document.createElement('span');
       icon.className = 'inventory-display-value inventory-display-icon';
-      icon.textContent = normalized.isContainer ? '🧳' : '🗡';
+      icon.textContent = normalized.isContainer ? CONTAINER_GLYPH : '🗡';
       menuCell.appendChild(icon);
     }
     row.appendChild(menuCell);
@@ -168,8 +177,9 @@
     section.className = 'inventory-section inventory-container-section';
     section.dataset.containerId = containerEntry.id;
     const displayLabel = options.displayLabel || containerEntry.name || 'Container';
+    const containerGlyph = options.containerFirstColumnLabel || resolveContainerGlyph(options.categoryIcons, CONTAINER_GLYPH);
     const { wrap, tbody } = createInventorySectionTable(
-      options.containerFirstColumnLabel || '🧳',
+      containerGlyph,
       displayLabel
     );
     appendInventoryDisplayRow(tbody, containerEntry, {
@@ -314,6 +324,7 @@
   }
 
   return {
+    CONTAINER_GLYPH,
     calculateCurrencyTotal,
     buildCurrencyFields,
     buildInventoryContainerDisplayLabels,
@@ -323,6 +334,7 @@
     createInventorySectionTable,
     appendInventoryDisplayRow,
     formatCurrencyTotal,
+    resolveContainerGlyph,
     normalizeCurrencySystem
   };
 });

@@ -83,6 +83,7 @@
             ]
           },
           { kind: 'input', id: 'inventory-add-name', label: 'Item', type: 'text', list: 'inventory-item-options', placeholder: 'Item name' },
+          { kind: 'input', id: 'inventory-add-category', label: 'Category', type: 'text', placeholder: 'Optional category' },
           { kind: 'select', id: 'inventory-add-container-row', label: 'Container', controlId: 'inventory-add-container-id' },
           { kind: 'input', id: 'inventory-add-quantity', label: 'Qty', type: 'number', min: 1, value: '1' },
           { kind: 'input', id: 'inventory-add-value', label: 'Value', type: 'number', step: '0.01', value: '0' },
@@ -104,6 +105,7 @@
       cancelId: 'party-treasure-add-form-cancel',
       fields: [
         { kind: 'input', id: 'party-treasure-add-name', label: 'Item', type: 'text', list: 'party-treasure-item-options', placeholder: 'Item name' },
+        { kind: 'input', id: 'party-treasure-add-category', label: 'Category', type: 'text', placeholder: 'Optional category' },
         { kind: 'input', id: 'party-treasure-add-quantity', label: 'Qty', type: 'number', min: 1, value: '1' },
         { kind: 'input', id: 'party-treasure-add-value', label: 'Value', type: 'number', step: '0.01', value: '0' },
         { kind: 'input', id: 'party-treasure-add-weight', label: 'Weight', type: 'number', step: 'any', value: '0' },

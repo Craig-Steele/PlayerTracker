@@ -117,6 +117,9 @@ const refereeVisibilityHelpers = window.PlayerTrackerRefereeVisibility || {
       : []
   )
 };
+const PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH = '❓';
+const PARTY_TREASURE_CONTAINER_GLYPH =
+  (window.PlayerTrackerPartyTreasure && window.PlayerTrackerPartyTreasure.CONTAINER_GLYPH) || '🧳';
 const inventoryView = window.PlayerTrackerInventoryView || {};
 const {
   normalizeConditionEntry,
@@ -199,16 +202,17 @@ window.addEventListener('DOMContentLoaded', () => {
   const partyTreasureRemoveBtn = document.getElementById('ref-party-treasure-remove');
   const partyTreasureDialogTitle = document.getElementById('ref-party-treasure-dialog-title');
   const partyTreasureContext = document.getElementById('ref-party-treasure-context');
-  const partyTreasureAddForm = document.getElementById('ref-party-treasure-add-form');
-  const partyTreasureAddFormTitle = document.getElementById('ref-party-treasure-add-form-title');
-  const partyTreasureAddFormName = document.getElementById('ref-party-treasure-add-name');
-  const partyTreasureAddFormQuantity = document.getElementById('ref-party-treasure-add-quantity');
-  const partyTreasureAddFormValue = document.getElementById('ref-party-treasure-add-value');
-  const partyTreasureAddFormWeight = document.getElementById('ref-party-treasure-add-weight');
-  const partyTreasureAddFormUrl = document.getElementById('ref-party-treasure-add-url');
-  const partyTreasureAddFormSaveBtn = document.getElementById('ref-party-treasure-add-form-save');
-  const partyTreasureAddFormCancelBtn = document.getElementById('ref-party-treasure-add-form-cancel');
-  const partyTreasureItemOptions = document.getElementById('ref-party-treasure-item-options');
+  const partyTreasureAddForm = document.getElementById('party-treasure-add-form');
+  const partyTreasureAddFormTitle = document.getElementById('party-treasure-add-form-title');
+  const partyTreasureAddFormName = document.getElementById('party-treasure-add-name');
+  const partyTreasureAddFormCategory = document.getElementById('party-treasure-add-category');
+  const partyTreasureAddFormQuantity = document.getElementById('party-treasure-add-quantity');
+  const partyTreasureAddFormValue = document.getElementById('party-treasure-add-value');
+  const partyTreasureAddFormWeight = document.getElementById('party-treasure-add-weight');
+  const partyTreasureAddFormUrl = document.getElementById('party-treasure-add-url');
+  const partyTreasureAddFormSaveBtn = document.getElementById('party-treasure-add-form-save');
+  const partyTreasureAddFormCancelBtn = document.getElementById('party-treasure-add-form-cancel');
+  const partyTreasureItemOptions = document.getElementById('party-treasure-item-options');
   const currencyPanel = document.getElementById('currency-panel');
   const currencyCloseBtn = document.getElementById('currency-cancel');
   const currencyDialogTitle = document.getElementById('currency-dialog-title');
@@ -377,6 +381,9 @@ window.addEventListener('DOMContentLoaded', () => {
       if (inputs.urlInput && typeof preset.url === 'string' && preset.url.trim()) {
         inputs.urlInput.value = preset.url.trim();
       }
+      if (inputs.categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+        inputs.categoryInput.value = preset.category.trim();
+      }
       return true;
     }
   };
@@ -415,6 +422,7 @@ window.addEventListener('DOMContentLoaded', () => {
       value: Number.isFinite(entry.value) ? entry.value : 0,
       weight: Number.isFinite(entry.weight) ? entry.weight : 0,
       url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
       containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : containerId,
       isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
     }),
@@ -437,23 +445,18 @@ window.addEventListener('DOMContentLoaded', () => {
     resolveEquipmentOverflowGlyph: (options = {}) => {
       const {
         entry = {},
-        equipmentLibraryItems = [],
         categoryIcons = {},
-        fallbackGlyph = '🗡'
+        fallbackGlyph = PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH
       } = options;
       if (entry.isContainer) {
-        return '🧳';
+        return PARTY_TREASURE_CONTAINER_GLYPH;
       }
-      const normalizedEntryName = typeof entry.name === 'string' ? entry.name.trim().toLowerCase() : '';
-      const preset = equipmentLibraryItems.find(
-        (item) => typeof item?.name === 'string' && item.name.trim().toLowerCase() === normalizedEntryName
-      );
-      const category =
-        typeof entry.category === 'string' && entry.category.trim()
-          ? entry.category.trim()
-          : (preset && typeof preset.category === 'string' && preset.category.trim() ? preset.category.trim() : null);
-      const glyph = category && typeof categoryIcons === 'object' ? categoryIcons[category] : null;
-      return typeof glyph === 'string' && glyph.trim() ? glyph.trim() : fallbackGlyph;
+      const category = typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null;
+      return partyTreasureHelpers.resolveCategoryGlyph
+        ? partyTreasureHelpers.resolveCategoryGlyph(category, categoryIcons, fallbackGlyph)
+        : (category && typeof categoryIcons === 'object' && typeof categoryIcons[category] === 'string' && categoryIcons[category].trim()
+            ? categoryIcons[category].trim()
+            : fallbackGlyph);
     },
     getInventoryRowData: (row) => {
       if (!row) return null;
@@ -493,6 +496,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!preset) return;
       const valueInput = row.querySelector('input[data-inventory-field="value"]');
       const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+      const categoryInput = row.querySelector('input[data-inventory-field="category"]');
       if (valueInput && Number.isFinite(preset.value)) {
         valueInput.value = String(preset.value);
       }
@@ -502,6 +506,9 @@ window.addEventListener('DOMContentLoaded', () => {
       const urlInput = row.querySelector('input[data-inventory-field="url"]');
       if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
         urlInput.value = preset.url.trim();
+      }
+      if (categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+        categoryInput.value = preset.category.trim();
       }
     },
     getPartyTreasureRows: (fieldsEl) => (fieldsEl ? Array.from(fieldsEl.querySelectorAll('tr.inventory-entry')) : []),
@@ -513,6 +520,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const valueInput = row.querySelector('input[data-inventory-field="value"]');
       const weightInput = row.querySelector('input[data-inventory-field="weight"]');
       const urlInput = row.querySelector('input[data-inventory-field="url"]');
+      const categoryInput = row.querySelector('input[data-inventory-field="category"]');
       return (window.PlayerTrackerPartyTreasure?.normalizeInventoryEntry || partyTreasureHelpers.normalizeInventoryEntry)({
         id: rowData.id || null,
         name: nameInput ? nameInput.value.trim() : '',
@@ -520,6 +528,7 @@ window.addEventListener('DOMContentLoaded', () => {
         value: valueInput ? Number(valueInput.value) : 0,
         weight: weightInput ? Number(weightInput.value) : 0,
         url: urlInput ? urlInput.value.trim() : '',
+        category: categoryInput ? categoryInput.value.trim() : null,
         containerId: rowData.containerId,
         isContainer: rowData.isContainer
       });
@@ -527,7 +536,7 @@ window.addEventListener('DOMContentLoaded', () => {
     createPartyTreasureRow: (options = {}) => {
       const {
         entry = {},
-        itemOptionsId = 'ref-party-treasure-item-options',
+        itemOptionsId = 'party-treasure-item-options',
         onDirty = null,
         onSelect = null,
         applyPreset = null
@@ -541,6 +550,7 @@ window.addEventListener('DOMContentLoaded', () => {
       row.addEventListener('click', () => {
         if (typeof onSelect === 'function') onSelect(row);
       });
+      let nameCell = null;
       const fields = [
         { key: 'name', type: 'text', value: normalized.name, placeholder: 'Item name', list: itemOptionsId },
         { key: 'quantity', type: 'number', value: String(normalized.quantity), step: '1' },
@@ -555,6 +565,9 @@ window.addEventListener('DOMContentLoaded', () => {
         if (field.list) input.setAttribute('list', field.list);
         if (field.step) input.step = field.step;
         input.dataset.inventoryField = field.key;
+        if (field.key === 'name') {
+          nameCell = cell;
+        }
         input.addEventListener('input', () => {
           if (typeof onDirty === 'function') onDirty();
           if (field.key === 'name' && typeof applyPreset === 'function') {
@@ -572,7 +585,6 @@ window.addEventListener('DOMContentLoaded', () => {
         cell.appendChild(input);
         row.appendChild(cell);
       });
-      const nameCell = row.querySelector('td[data-inventory-field-cell="name"]');
       if (nameCell) {
         const weightHidden = document.createElement('input');
         weightHidden.type = 'hidden';
@@ -585,13 +597,19 @@ window.addEventListener('DOMContentLoaded', () => {
         urlHidden.value = normalized.url || '';
         urlHidden.dataset.inventoryField = 'url';
         nameCell.appendChild(urlHidden);
+
+        const categoryHidden = document.createElement('input');
+        categoryHidden.type = 'hidden';
+        categoryHidden.value = normalized.category || '';
+        categoryHidden.dataset.inventoryField = 'category';
+        nameCell.appendChild(categoryHidden);
       }
       return row;
     },
     buildPartyTreasureFields: (fieldsEl, items = [], options = {}) => {
       if (!fieldsEl) return null;
       const {
-        itemOptionsId = 'ref-party-treasure-item-options',
+        itemOptionsId = 'party-treasure-item-options',
         onDirty = null,
         onSelect = null,
         applyPreset = null
@@ -627,6 +645,7 @@ window.addEventListener('DOMContentLoaded', () => {
       value: Number.isFinite(entry.value) ? entry.value : 0,
       weight: Number.isFinite(entry.weight) ? entry.weight : 0,
       url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
       containerId: typeof entry.containerId === 'string' && entry.containerId.trim() ? entry.containerId.trim() : null,
       isContainer: Boolean(entry.isContainer)
     }),
@@ -807,6 +826,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (partyTreasureEditBtn) {
     partyTreasureEditBtn.addEventListener('click', () => {
+      closeRefereeRowOverflowMenus();
       editSelectedPartyTreasureItem();
     });
   }
@@ -825,9 +845,19 @@ window.addEventListener('DOMContentLoaded', () => {
   if (partyTreasureAddFormName) {
     partyTreasureAddFormName.addEventListener('input', () => {
       applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
+      refreshPartyTreasureSelectedRowIcon();
     });
     partyTreasureAddFormName.addEventListener('change', () => {
       applyPartyTreasurePresetToForm(partyTreasureAddFormName.value);
+      refreshPartyTreasureSelectedRowIcon();
+    });
+  }
+  if (partyTreasureAddFormCategory) {
+    partyTreasureAddFormCategory.addEventListener('input', () => {
+      refreshPartyTreasureSelectedRowIcon();
+    });
+    partyTreasureAddFormCategory.addEventListener('change', () => {
+      refreshPartyTreasureSelectedRowIcon();
     });
   }
   if (partyTreasureRemoveBtn) {
@@ -979,7 +1009,15 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function logoutPlayerSession() {
-    const confirmed = window.confirm('Log out and return to the join page?');
+    const confirmed = await showConfirmDialog({
+      title: 'Log Out?',
+      header: 'Return to the join page',
+      message: 'Log out and return to the join page?',
+      confirmLabel: 'Log Out',
+      cancelLabel: 'Stay Signed In',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
     if (!confirmed) return;
     try {
       await fetch('/player/logout', { method: 'POST' });
@@ -2866,6 +2904,7 @@ window.addEventListener('DOMContentLoaded', () => {
       ? partyTreasureHelpers.normalizeInventoryEntry(entry)
       : partyTreasureHelpers.normalizeInventoryEntry({}, null, false);
     if (partyTreasureAddFormName) partyTreasureAddFormName.value = normalized.name || '';
+    if (partyTreasureAddFormCategory) partyTreasureAddFormCategory.value = normalized.category || '';
     if (partyTreasureAddFormQuantity) partyTreasureAddFormQuantity.value = String(normalized.quantity ?? 1);
     if (partyTreasureAddFormValue) partyTreasureAddFormValue.value = String(normalized.value ?? 0);
     if (partyTreasureAddFormWeight) partyTreasureAddFormWeight.value = String(normalized.weight ?? 0);
@@ -2877,11 +2916,24 @@ window.addEventListener('DOMContentLoaded', () => {
       {
         valueInput: partyTreasureAddFormValue,
         weightInput: partyTreasureAddFormWeight,
-        urlInput: partyTreasureAddFormUrl
+        urlInput: partyTreasureAddFormUrl,
+        categoryInput: partyTreasureAddFormCategory
       },
       itemName,
       equipmentLibraryItems
     );
+  }
+
+  function refreshPartyTreasureSelectedRowIcon() {
+    if (!partyTreasureSelectedRow) return;
+    const overflowToggle = partyTreasureSelectedRow.querySelector('.character-overflow-toggle');
+    if (!overflowToggle) return;
+    const category = (partyTreasureAddFormCategory?.value || '').trim();
+    overflowToggle.textContent = partyTreasureSelectedRow.dataset.inventoryIsContainer === 'true'
+      ? PARTY_TREASURE_CONTAINER_GLYPH
+      : (category && partyTreasureHelpers.resolveCategoryGlyph
+          ? partyTreasureHelpers.resolveCategoryGlyph(category, equipmentCategoryIcons, PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH)
+          : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH);
   }
 
   function updatePartyTreasureActionButtons() {
@@ -2923,6 +2975,7 @@ window.addEventListener('DOMContentLoaded', () => {
     populatePartyTreasureAddForm(open ? entry : null);
     if (open) {
       applyPartyTreasurePresetToForm(partyTreasureAddFormName?.value || '');
+      refreshPartyTreasureSelectedRowIcon();
     }
     updatePartyTreasureActionButtons();
   }
@@ -2933,6 +2986,7 @@ window.addEventListener('DOMContentLoaded', () => {
    */
   function collectPartyTreasureDraftFromForm() {
     const name = (partyTreasureAddFormName?.value || '').trim();
+    const category = (partyTreasureAddFormCategory?.value || '').trim();
     const quantityRaw = (partyTreasureAddFormQuantity?.value || '').trim();
     const valueRaw = (partyTreasureAddFormValue?.value || '').trim();
     const weightRaw = (partyTreasureAddFormWeight?.value || '').trim();
@@ -2959,6 +3013,7 @@ window.addEventListener('DOMContentLoaded', () => {
       value,
       weight,
       url: url || null,
+      category: category || null,
       containerId: null,
       isContainer: false
     };
@@ -2997,7 +3052,14 @@ window.addEventListener('DOMContentLoaded', () => {
     overflowToggle.setAttribute('aria-label', `Manage ${entry.name || 'item'}`);
     overflowToggle.setAttribute('aria-haspopup', 'menu');
     overflowToggle.setAttribute('aria-expanded', 'false');
-    overflowToggle.textContent = 'MENU';
+    overflowToggle.textContent = partyTreasureHelpers.resolveEquipmentOverflowGlyph
+      ? partyTreasureHelpers.resolveEquipmentOverflowGlyph({
+        entry,
+        equipmentLibraryItems,
+        categoryIcons: equipmentCategoryIcons,
+        fallbackGlyph: PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH
+      })
+      : (entry.isContainer ? PARTY_TREASURE_CONTAINER_GLYPH : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH);
 
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu hidden inventory-row-menu party-treasure-row-menu';
@@ -3129,6 +3191,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     overflow.appendChild(overflowToggle);
+    overflow.appendChild(overflowMenu);
     return overflow;
   }
 
@@ -3140,7 +3203,7 @@ window.addEventListener('DOMContentLoaded', () => {
   function buildPartyTreasureFields(items = []) {
     if (!partyTreasureFields) return;
     partyTreasureHelpers.buildPartyTreasureFields(partyTreasureFields, items, {
-      itemOptionsId: 'ref-party-treasure-item-options',
+      itemOptionsId: 'party-treasure-item-options',
       onSelect: (row) => {
         setSelectedPartyTreasureRow(row);
       },
@@ -3161,6 +3224,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function editSelectedPartyTreasureItem() {
     if (!partyTreasureSelectedRow) return;
+    closeRefereeRowOverflowMenus();
     const entry = partyTreasureHelpers.getPartyTreasureRowEntry(partyTreasureSelectedRow);
     if (!entry) return;
     setPartyTreasureAddFormOpen(true, entry);
@@ -3182,6 +3246,16 @@ window.addEventListener('DOMContentLoaded', () => {
   async function removeSelectedPartyTreasureItem() {
     if (!partyTreasureSelectedRow) return;
     const rowName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
+    const confirmed = await showConfirmDialog({
+      title: 'Remove Party Treasure Item?',
+      header: rowName,
+      message: 'Remove this item from party treasure? This cannot be undone.',
+      confirmLabel: 'Remove Item',
+      cancelLabel: 'Keep Item',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!confirmed) return;
     const items = partyTreasureHelpers.removePartyTreasureEntry(
       currentPartyTreasure,
       partyTreasureSelectedRow.dataset.inventoryEntryId || ''
@@ -3348,6 +3422,9 @@ window.addEventListener('DOMContentLoaded', () => {
         json?.equipmentLibrary && typeof json.equipmentLibrary.categoryIcons === 'object'
           ? json.equipmentLibrary.categoryIcons
           : {};
+      if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
+        buildPartyTreasureFields(currentPartyTreasure);
+      }
 
       const baseUrl =
         typeof json?.rulesBaseUrl === 'string' && json.rulesBaseUrl.trim()
@@ -3505,9 +3582,15 @@ window.addEventListener('DOMContentLoaded', () => {
       value: Number.isFinite(entry.value) ? entry.value : 0,
       weight: Number.isFinite(entry.weight) ? entry.weight : 0,
       url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
       containerId: normalizedContainerId,
       isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
     };
+  }
+
+  function getContainerGlyph() {
+    const glyph = equipmentCategoryIcons?.Containers;
+    return typeof glyph === 'string' && glyph.trim() ? glyph.trim() : PARTY_TREASURE_CONTAINER_GLYPH;
   }
 
   function buildCurrencyFields(character) {
@@ -3579,9 +3662,9 @@ window.addEventListener('DOMContentLoaded', () => {
           entry,
           equipmentLibraryItems,
           categoryIcons: equipmentCategoryIcons,
-          fallbackGlyph: '🗡'
+          fallbackGlyph: PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH
         })
-      : (entry.isContainer ? '🧳' : '🗡');
+      : (entry.isContainer ? getContainerGlyph() : PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH);
 
     const overflowMenu = document.createElement('div');
     overflowMenu.className = 'character-overflow-menu referee-row-menu inventory-row-info-menu hidden';
@@ -3747,8 +3830,12 @@ window.addEventListener('DOMContentLoaded', () => {
         displayLabel: containerLabels.get(entry.id) || entry.name || 'Container',
         containerLabels,
         containerSectionsEl: inventoryContainerSections,
+        categoryIcons: equipmentCategoryIcons,
         firstColumnRenderer
       });
+    });
+    document.querySelectorAll('#inventory-panel .inventory-table th:first-child').forEach((th) => {
+      th.textContent = getContainerGlyph();
     });
     if (inventoryTotalWeight) {
       const totalWeight = inventoryView.calculateInventoryTotalWeight
@@ -3773,6 +3860,16 @@ window.addEventListener('DOMContentLoaded', () => {
     const rowData = getInventoryRowData(inventorySelectedRow) || {};
     const entry = currentInventory.find((item) => item && item.id === rowData.id) || null;
     const rowName = (entry?.name || inventorySelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim() || 'Item';
+    const confirmed = await showConfirmDialog({
+      title: 'Remove Inventory Item?',
+      header: rowName,
+      message: 'Remove this item from inventory? This cannot be undone.',
+      confirmLabel: 'Remove Item',
+      cancelLabel: 'Keep Item',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!confirmed) return;
     const items = inventoryRemovalHelpers.removeInventoryEntry(currentInventory, rowData.id || '', {
       moveContainedItems: false
     });
@@ -4061,7 +4158,7 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function closeRefereeRowOverflowMenus(exceptMenu = null) {
-    document.querySelectorAll('.referee-row-menu').forEach((menu) => {
+    document.querySelectorAll('.referee-row-menu, .party-treasure-row-menu').forEach((menu) => {
       if (menu === exceptMenu) return;
       menu.classList.add('hidden');
       menu.setAttribute('aria-hidden', 'true');
@@ -4599,16 +4696,6 @@ window.addEventListener('DOMContentLoaded', () => {
         {
           label: '🗑️ Remove Character',
           handler: async () => {
-            const confirmed = await showConfirmDialog({
-              title: 'Remove Character?',
-              header: player.name || 'This character',
-              message: 'Remove this character from the tracker?',
-              confirmLabel: 'Remove Character',
-              cancelLabel: 'Keep Character',
-              confirmButtonClass: 'danger',
-              initialFocus: 'cancel'
-            });
-            if (!confirmed) return;
             await deleteCharacter(player.id);
           },
           options: {
@@ -5628,6 +5715,19 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!activeCampaignId) {
         throw new Error('No active campaign selected.');
       }
+      const current = currentPlayers.find((player) => player.id === id);
+      const confirmed = await showConfirmDialog({
+        title: 'Delete Character?',
+        header: current?.name || 'This character',
+        message: 'Remove this character from the tracker? This cannot be undone.',
+        confirmLabel: 'Delete Character',
+        cancelLabel: 'Keep Character',
+        confirmButtonClass: 'danger',
+        initialFocus: 'cancel'
+      });
+      if (!confirmed) {
+        return;
+      }
       const res = await fetch(
         `/campaigns/${encodeURIComponent(activeCampaignId)}/me/characters/${encodeURIComponent(id)}`,
         { method: 'DELETE' }
@@ -5920,19 +6020,7 @@ window.addEventListener('DOMContentLoaded', () => {
     deleteCharacterBtn.addEventListener('click', async () => {
       closeOverflowMenu();
       if (!selectedCharacterId) return;
-      const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-      if (!current) return;
-      const confirmDelete = await showConfirmDialog({
-        title: 'Delete Character?',
-        header: current.name || 'This character',
-        message: 'Remove this character from the tracker?',
-        confirmLabel: 'Delete Character',
-        cancelLabel: 'Keep Character',
-        confirmButtonClass: 'danger',
-        initialFocus: 'cancel'
-      });
-      if (!confirmDelete) return;
-      deleteCharacter(current.id);
+      deleteCharacter(selectedCharacterId);
     });
   }
   if (addCancelBtn) {

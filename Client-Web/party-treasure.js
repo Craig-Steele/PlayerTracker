@@ -7,6 +7,9 @@
     root.PlayerTrackerPartyTreasure = api;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  const CATEGORY_FALLBACK_GLYPH = '❓';
+  const CONTAINER_GLYPH = '🧳';
+
   /**
    * Create a new inventory entry id.
    * @returns {string}
@@ -81,6 +84,7 @@
       value: normalizeMoneyValue(entry.value),
       weight: Number.isFinite(entry.weight) ? entry.weight : 0,
       url: typeof entry.url === 'string' && entry.url.trim() ? entry.url.trim() : null,
+      category: typeof entry.category === 'string' && entry.category.trim() ? entry.category.trim() : null,
       containerId: normalizedContainerId,
       isContainer: typeof entry.isContainer === 'boolean' ? entry.isContainer : isContainer
     };
@@ -116,6 +120,27 @@
    */
   function normalizeEquipmentItems(items) {
     return Array.isArray(items) ? items.map((item) => normalizeEquipmentItem(item)).filter(Boolean) : [];
+  }
+
+  function normalizeLookupKey(value) {
+    return typeof value === 'string' ? value.trim().toLowerCase() : '';
+  }
+
+  function resolveCategoryGlyph(category, categoryIcons = {}, fallbackGlyph = CATEGORY_FALLBACK_GLYPH) {
+    const normalizedCategory = normalizeLookupKey(category);
+    if (!normalizedCategory || !categoryIcons || typeof categoryIcons !== 'object') {
+      return fallbackGlyph;
+    }
+    const directGlyph = categoryIcons[category];
+    if (typeof directGlyph === 'string' && directGlyph.trim()) {
+      return directGlyph.trim();
+    }
+    const matchedKey = Object.keys(categoryIcons).find((key) => normalizeLookupKey(key) === normalizedCategory);
+    if (!matchedKey) {
+      return fallbackGlyph;
+    }
+    const glyph = categoryIcons[matchedKey];
+    return typeof glyph === 'string' && glyph.trim() ? glyph.trim() : fallbackGlyph;
   }
 
   /**
@@ -157,6 +182,13 @@
     const valueInput = row.querySelector('input[data-inventory-field="value"]');
     const weightInput = row.querySelector('input[data-inventory-field="weight"]');
     const urlInput = row.querySelector('input[data-inventory-field="url"]');
+    const categoryInput = row.querySelector('input[data-inventory-field="category"]');
+    let rawEntry = {};
+    try {
+      rawEntry = row.dataset.inventoryEntry ? JSON.parse(row.dataset.inventoryEntry) : {};
+    } catch {
+      rawEntry = {};
+    }
     return normalizeInventoryEntry({
       id: rowData.id || null,
       name: nameInput ? nameInput.value.trim() : '',
@@ -164,6 +196,7 @@
       value: valueInput ? Number(valueInput.value) : 0,
       weight: weightInput ? Number(weightInput.value) : 0,
       url: urlInput ? urlInput.value.trim() : '',
+      category: categoryInput ? categoryInput.value.trim() : (typeof rawEntry.category === 'string' ? rawEntry.category : null),
       containerId: rowData.containerId,
       isContainer: rowData.isContainer
     });
@@ -223,7 +256,8 @@
           {
             valueInput: row.querySelector('input[data-inventory-field="value"]'),
             weightInput: row.querySelector('input[data-inventory-field="weight"]'),
-            urlInput: row.querySelector('input[data-inventory-field="url"]')
+            urlInput: row.querySelector('input[data-inventory-field="url"]'),
+            categoryInput: row.querySelector('input[data-inventory-field="category"]')
           },
           itemName,
           equipmentLibraryItems
@@ -231,6 +265,7 @@
       : (() => {
           const valueInput = row.querySelector('input[data-inventory-field="value"]');
           const weightInput = row.querySelector('input[data-inventory-field="weight"]');
+          const categoryInput = row.querySelector('input[data-inventory-field="category"]');
           if (valueInput && Number.isFinite(preset.value)) {
             valueInput.value = String(preset.value);
           }
@@ -240,6 +275,9 @@
           const urlInput = row.querySelector('input[data-inventory-field="url"]');
           if (urlInput && typeof preset.url === 'string' && preset.url.trim()) {
             urlInput.value = preset.url.trim();
+          }
+          if (categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+            categoryInput.value = preset.category.trim();
           }
           })();
   }
@@ -264,22 +302,15 @@
     entry = {},
     equipmentLibraryItems = [],
     categoryIcons = {},
-    fallbackGlyph = '🗡'
+    fallbackGlyph = CATEGORY_FALLBACK_GLYPH
   } = {}) {
     if (entry.isContainer) {
-      return '🧳';
+      return CONTAINER_GLYPH;
     }
-    const category =
-      typeof entry.category === 'string' && entry.category.trim()
-        ? entry.category.trim()
-        : getEquipmentItemCategory(entry.name || '', equipmentLibraryItems);
-    if (category && categoryIcons && typeof categoryIcons === 'object') {
-      const glyph = categoryIcons[category];
-      if (typeof glyph === 'string' && glyph.trim()) {
-        return glyph.trim();
-      }
-    }
-    return fallbackGlyph;
+    const category = typeof entry.category === 'string' && entry.category.trim()
+      ? entry.category.trim()
+      : null;
+    return resolveCategoryGlyph(category, categoryIcons, fallbackGlyph);
   }
 
   /**
@@ -426,6 +457,12 @@
       urlHidden.value = normalized.url || '';
       urlHidden.dataset.inventoryField = 'url';
       nameCell.appendChild(urlHidden);
+
+      const categoryHidden = document.createElement('input');
+      categoryHidden.type = 'hidden';
+      categoryHidden.value = normalized.category || '';
+      categoryHidden.dataset.inventoryField = 'category';
+      nameCell.appendChild(categoryHidden);
     }
 
     return row;
@@ -514,6 +551,8 @@
   }
 
   return {
+    CATEGORY_FALLBACK_GLYPH,
+    CONTAINER_GLYPH,
     createInventoryEntryId,
     normalizeInventoryEntry,
     normalizeEquipmentItem,
@@ -525,6 +564,7 @@
     updateEquipmentItemOptions,
     applyPartyTreasurePresetToRow,
     getEquipmentItemCategory,
+    resolveCategoryGlyph,
     resolveEquipmentOverflowGlyph,
     createPartyTreasureRow,
     buildPartyTreasureFields,

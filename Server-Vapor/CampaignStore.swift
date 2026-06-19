@@ -329,6 +329,7 @@ actor CampaignStore {
             let name = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !name.isEmpty else { return nil }
             let url = item.url?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let category = item.category?.trimmingCharacters(in: .whitespacesAndNewlines)
             return InventoryEntry(
                 id: item.id,
                 name: name,
@@ -336,6 +337,7 @@ actor CampaignStore {
                 value: item.value,
                 weight: item.weight,
                 url: url?.isEmpty == false ? url : nil,
+                category: category?.isEmpty == false ? category : nil,
                 containerId: nil,
                 isContainer: false
             )

@@ -312,6 +312,7 @@ private func normalizeTreasureEntry(_ entry: InventoryEntry) -> InventoryEntry? 
     let name = entry.name.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !name.isEmpty else { return nil }
     let url = entry.url?.trimmingCharacters(in: .whitespacesAndNewlines)
+    let category = entry.category?.trimmingCharacters(in: .whitespacesAndNewlines)
     let cappedValue = (entry.value * 100).rounded() / 100
     return InventoryEntry(
         id: entry.id ?? UUID(),
@@ -320,6 +321,7 @@ private func normalizeTreasureEntry(_ entry: InventoryEntry) -> InventoryEntry? 
         value: cappedValue,
         weight: entry.weight,
         url: url?.isEmpty == false ? url : nil,
+        category: category?.isEmpty == false ? category : nil,
         containerId: nil,
         isContainer: false
     )
@@ -1425,6 +1427,7 @@ func routes(
                 value: claimedItem.value,
                 weight: claimedItem.weight,
                 url: claimedItem.url,
+                category: claimedItem.category,
                 containerId: claimedItem.containerId,
                 isContainer: claimedItem.isContainer
             )
@@ -1448,6 +1451,7 @@ func routes(
             value: claimedItem.value,
             weight: claimedItem.weight,
             url: claimedItem.url,
+            category: claimedItem.category,
             containerId: nil,
             isContainer: false
         )

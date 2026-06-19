@@ -35,6 +35,9 @@
     if (inputs.urlInput && typeof preset.url === 'string' && preset.url.trim()) {
       inputs.urlInput.value = preset.url.trim();
     }
+    if (inputs.categoryInput && typeof preset.category === 'string' && preset.category.trim()) {
+      inputs.categoryInput.value = preset.category.trim();
+    }
     return true;
   }
 

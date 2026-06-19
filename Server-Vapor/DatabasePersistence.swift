@@ -691,6 +691,12 @@ enum DatabasePersistence {
                         }
                         return raw.isEmpty ? nil : raw
                     }(),
+                    category: {
+                        guard let raw = entry.category?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+                            return nil
+                        }
+                        return raw.isEmpty ? nil : raw
+                    }(),
                     containerId: entry.containerId,
                     isContainer: entry.isContainer
                 )

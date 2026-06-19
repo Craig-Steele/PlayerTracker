@@ -423,7 +423,8 @@ struct ServerRoutesTests {
                     quantity: 2,
                     value: 10,
                     weight: 2,
-                    url: "https://example.com/relic"
+                    url: "https://example.com/relic",
+                    category: "Treasure"
                 )
             ]
         )
@@ -441,6 +442,7 @@ struct ServerRoutesTests {
         XCTAssertEqual(updatedCampaign.partyTreasure.count, 1)
         XCTAssertEqual(updatedCampaign.partyTreasure.first?.id, treasureItemID)
         XCTAssertEqual(updatedCampaign.partyTreasure.first?.quantity, 2)
+        XCTAssertEqual(updatedCampaign.partyTreasure.first?.category, "Treasure")
 
         let claimResponse = try await tester.sendRequest(
             .POST,
@@ -458,6 +460,7 @@ struct ServerRoutesTests {
         XCTAssertEqual(claimedCampaign.partyTreasure.count, 1)
         XCTAssertEqual(claimedCampaign.partyTreasure.first?.id, treasureItemID)
         XCTAssertEqual(claimedCampaign.partyTreasure.first?.quantity, 1)
+        XCTAssertEqual(claimedCampaign.partyTreasure.first?.category, "Treasure")
 
         let charactersResponse = try await tester.sendRequest(
             .GET,
@@ -473,7 +476,7 @@ struct ServerRoutesTests {
         XCTAssertEqual(claimant.currency.first(where: { $0.unitId == "sp" })?.amount, 50)
         XCTAssertEqual(companion.currency.first(where: { $0.unitId == "gp" })?.amount, 5)
         XCTAssertEqual(companion.currency.first(where: { $0.unitId == "sp" })?.amount, 25)
-        XCTAssertTrue(claimant.inventory.contains(where: { $0.name == "Ancient Relic" && $0.quantity == 1 }))
+        XCTAssertTrue(claimant.inventory.contains(where: { $0.name == "Ancient Relic" && $0.quantity == 1 && $0.category == "Treasure" }))
     }
 
     @Test
@@ -559,6 +562,7 @@ struct ServerRoutesTests {
               "quantity": 1,
               "value": 3,
               "weight": 10,
+              "category": "Treasure",
               "url": null
             }
           ]
@@ -578,6 +582,7 @@ struct ServerRoutesTests {
         let updatedCampaign = try updateResponse.content.decode(CampaignState.self)
         XCTAssertEqual(updatedCampaign.partyTreasure.count, 1)
         XCTAssertEqual(updatedCampaign.partyTreasure.first?.name, "Recovered Chest")
+        XCTAssertEqual(updatedCampaign.partyTreasure.first?.category, "Treasure")
         XCTAssertNotNil(updatedCampaign.partyTreasure.first?.id)
     }
 
@@ -616,6 +621,7 @@ struct ServerRoutesTests {
                     value: 0.5,
                     weight: 1.5,
                     url: "https://example.com/rations",
+                    category: "Food and Drink",
                     containerId: backpackID,
                     isContainer: false
                 )
@@ -640,6 +646,7 @@ struct ServerRoutesTests {
         XCTAssertTrue(createdBackpack.isContainer)
         let createdRations = try XCTUnwrap(created.inventory.first(where: { $0.name == "Rations" }))
         XCTAssertEqual(createdRations.containerId, backpackID)
+        XCTAssertEqual(createdRations.category, "Food and Drink")
 
         let charactersResponse = try await tester.sendRequest(
             .GET,
@@ -651,6 +658,7 @@ struct ServerRoutesTests {
         let reloaded = try XCTUnwrap(characters.first(where: { $0.id == created.id }))
         XCTAssertEqual(reloaded.inventory.count, 2)
         XCTAssertEqual(reloaded.inventory.first(where: { $0.name == "Rations" })?.containerId, backpackID)
+        XCTAssertEqual(reloaded.inventory.first(where: { $0.name == "Rations" })?.category, "Food and Drink")
     }
 
     @Test

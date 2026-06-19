@@ -19,12 +19,13 @@ test('applyEquipmentPresetToInputs fills value weight and url inputs', () => {
   const valueInput = { value: '' };
   const weightInput = { value: '' };
   const urlInput = { value: '' };
+  const categoryInput = { value: '' };
 
   const applied = applyEquipmentPresetToInputs(
-    { valueInput, weightInput, urlInput },
+    { valueInput, weightInput, urlInput, categoryInput },
     'Potion',
     [
-      { name: 'Potion', value: 25, weight: 0.5, url: 'https://example.test/potion' }
+      { name: 'Potion', value: 25, weight: 0.5, url: 'https://example.test/potion', category: 'Potions' }
     ]
   );
 
@@ -32,6 +33,7 @@ test('applyEquipmentPresetToInputs fills value weight and url inputs', () => {
   assert.equal(valueInput.value, '25');
   assert.equal(weightInput.value, '0.5');
   assert.equal(urlInput.value, 'https://example.test/potion');
+  assert.equal(categoryInput.value, 'Potions');
 });
 
 test('applyEquipmentPresetToInputs leaves fields untouched when no preset exists', () => {
