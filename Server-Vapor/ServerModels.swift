@@ -215,6 +215,7 @@ struct CampaignState: Content {
     let isInviteOnly: Bool
     let userdataFiles: [String]
     let partyTreasure: [InventoryEntry]
+    let currency: [CurrencyAmount]
 }
 
 struct CampaignUpdateInput: Content {
@@ -294,6 +295,12 @@ struct UserData: Content {
 
 struct PartyTreasureUpdateInput: Content {
     let items: [InventoryEntry]
+    let currency: [CurrencyAmount]?
+
+    init(items: [InventoryEntry], currency: [CurrencyAmount]? = nil) {
+        self.items = items
+        self.currency = currency
+    }
 }
 
 struct PartyTreasureClaimInput: Content {

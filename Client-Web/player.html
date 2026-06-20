@@ -212,11 +212,13 @@
         <div class="conditions-dialog-header">
           <h2 id="party-treasure-dialog-title">💰 Party Treasure</h2>
           <div class="conditions-dialog-actions party-treasure-actions">
+            <button type="button" id="party-treasure-money" class="secondary">🪙 Money</button>
             <button type="button" id="party-treasure-add" class="secondary">➕ Add</button>
             <button type="button" id="party-treasure-cancel" class="secondary">✖️ Close</button>
           </div>
         </div>
         <div id="party-treasure-context" class="inventory-summary">Party treasure for —</div>
+        <div id="party-treasure-money-summary" class="inventory-summary">Party treasure money: —</div>
         <div id="party-treasure-add-form-host" data-add-form-type="party-treasure"></div>
         <div class="inventory-scroll">
           <div class="inventory-table-wrap">
@@ -234,6 +236,19 @@
           </div>
         </div>
         <datalist id="party-treasure-item-options"></datalist>
+      </div>
+    </div>
+    <div id="party-treasure-money-panel" class="conditions-modal hidden" aria-hidden="true">
+      <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="party-treasure-money-dialog-title">
+        <div class="conditions-dialog-header">
+          <h2 id="party-treasure-money-dialog-title">🪙 Party Treasure Money</h2>
+          <div class="conditions-dialog-actions">
+            <button type="button" id="party-treasure-money-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="party-treasure-money-save">💾 Save</button>
+          </div>
+        </div>
+        <div id="party-treasure-money-editor-summary" class="inventory-summary">Money for party treasure: —</div>
+        <div id="party-treasure-money-fields" class="property-group currency-fields"></div>
       </div>
     </div>
     <!-- Inventory modal -->
@@ -329,7 +344,7 @@
   <script src="add-form.js?v=3"></script>
   <script src="equipment-preset.js?v=1"></script>
   <script src="inventory-transfer.js?v=1"></script>
-  <script src="party-treasure.js?v=21"></script>
+  <script src="party-treasure.js?v=23"></script>
   <script src="inventory-view.js?v=7"></script>
   <script src="inventory-id.js?v=2"></script>
   <script src="player-name.js?v=2"></script>
@@ -340,6 +355,6 @@
   <script src="claimable-characters.js?v=2"></script>
   <script src="ruleset.js?v=3"></script>
   <script src="encounter.js?v=3"></script>
-  <script src="app.js?v=146"></script>
+  <script src="app.js?v=149"></script>
 </body>
 </html>

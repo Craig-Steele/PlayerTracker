@@ -51,8 +51,17 @@ actor UserStore {
             guard let database, let campaignID = currentCampaignID, let campaignName = currentCampaignName else {
                 return
             }
-            try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
-            for state in storage.values where state.campaignName == campaignName {
+            let desiredCharacters = storage.values.filter { $0.campaignName == campaignName }
+            let desiredIDs = Set(desiredCharacters.map(\.id))
+            let existingCharacters = try await DatabasePersistence.loadCharacters(
+                campaignID: campaignID,
+                campaignName: campaignName,
+                on: database
+            )
+            for existing in existingCharacters where desiredIDs.contains(existing.id) == false {
+                try await DatabasePersistence.deleteCharacter(id: existing.id, on: database)
+            }
+            for state in desiredCharacters {
                 try await DatabasePersistence.persistCharacter(
                     state,
                     campaignID: campaignID,
@@ -87,6 +96,7 @@ actor UserStore {
     }
 
     private func performDatabaseAction<T>(_ action: () async throws -> T) async rethrows -> T {
+        await waitForDatabaseActions()
         beginDatabaseAction()
         defer { endDatabaseAction() }
         return try await action()
@@ -113,6 +123,10 @@ actor UserStore {
         await withCheckedContinuation { continuation in
             databaseActionWaiters.append(continuation)
         }
+    }
+
+    func performDatabaseActionForTesting<T>(_ action: () async throws -> T) async rethrows -> T {
+        try await performDatabaseAction(action)
     }
 
     func configure(

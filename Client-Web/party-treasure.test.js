@@ -5,6 +5,11 @@ const {
   CATEGORY_FALLBACK_GLYPH,
   CONTAINER_GLYPH,
   collectPartyTreasureDraftFromForm,
+  applyCurrencyDelta,
+  calculatePartyTreasureVendorProceeds,
+  convertCommonCurrencyToLowestUnitAmount,
+  convertLowestUnitAmountToCurrencyBreakdown,
+  getLowestCurrencyUnitLabel,
   populatePartyTreasureAddForm,
   resolveEquipmentOverflowGlyph,
   normalizeInventoryEntry,
@@ -210,6 +215,47 @@ test('removePartyTreasureEntry removes a matching item id', () => {
   ], '11111111-1111-4111-8111-111111111111');
 
   assert.deepEqual(items.map((item) => item.id), ['22222222-2222-4222-8222-222222222222']);
+});
+
+test('vendor helpers calculate proceeds and normalize currency into highest denominations', () => {
+  const currencySystem = {
+    commonCurrencyId: 'gp',
+    units: [
+      { id: 'cp', label: 'Copper', symbol: 'cp', valueInCommonCurrency: 0.01 },
+      { id: 'sp', label: 'Silver', symbol: 'sp', valueInCommonCurrency: 0.1 },
+      { id: 'gp', label: 'Gold', symbol: 'gp', valueInCommonCurrency: 1 }
+    ]
+  };
+
+  assert.equal(
+    calculatePartyTreasureVendorProceeds({ quantity: 2, value: 12.5 }, 0.5),
+    12.5
+  );
+  assert.equal(getLowestCurrencyUnitLabel(currencySystem), 'copper');
+  assert.equal(convertCommonCurrencyToLowestUnitAmount(12.5, currencySystem), 1250);
+  assert.deepEqual(
+    convertLowestUnitAmountToCurrencyBreakdown(1355, currencySystem),
+    [
+      { unitId: 'gp', amount: 13 },
+      { unitId: 'sp', amount: 5 },
+      { unitId: 'cp', amount: 5 }
+    ]
+  );
+  assert.deepEqual(
+    applyCurrencyDelta(
+      [
+        { unitId: 'sp', amount: 10 },
+        { unitId: 'cp', amount: 5 }
+      ],
+      currencySystem,
+      12.5
+    ),
+    [
+      { unitId: 'gp', amount: 13 },
+      { unitId: 'sp', amount: 5 },
+      { unitId: 'cp', amount: 5 }
+    ]
+  );
 });
 
 test('resolveEquipmentOverflowGlyph uses Pathfinder category icons and falls back to the shared glyph', () => {

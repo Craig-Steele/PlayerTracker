@@ -16,7 +16,8 @@ struct ActiveCampaignEventHubTests {
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
             userdataFiles: [],
-            partyTreasure: []
+            partyTreasure: [],
+            currency: []
         )
         let stream = await hub.subscribe()
         var iterator = stream.makeAsyncIterator()

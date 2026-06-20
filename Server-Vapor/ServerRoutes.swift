@@ -1388,7 +1388,7 @@ func routes(
         _ = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(PartyTreasureUpdateInput.self)
         let normalized = input.items.compactMap { normalizeTreasureEntry($0) }
-        let updated = try await campaignStore.updatePartyTreasure(normalized)
+        let updated = try await campaignStore.updatePartyTreasure(normalized, currency: input.currency)
         await publishCampaignUpdate(
             campaign: updated,
             userStore: userStore,

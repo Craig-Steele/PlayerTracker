@@ -465,6 +465,41 @@ struct UserStoreTests {
         #expect(expired?.claimedAt == nil)
     }
 
+    @Test("database actions are serialized")
+    func databaseActionsAreSerialized() async throws {
+        let store = UserStore()
+        actor Recorder {
+            var order: [String] = []
+            func append(_ value: String) {
+                order.append(value)
+            }
+            func snapshot() -> [String] {
+                order
+            }
+        }
+        let recorder = Recorder()
+
+        async let first: Void = store.performDatabaseActionForTesting {
+            await recorder.append("first-start")
+            try await Task.sleep(nanoseconds: 50_000_000)
+            await recorder.append("first-end")
+        }
+
+        async let second: Void = store.performDatabaseActionForTesting {
+            await recorder.append("second-start")
+            await recorder.append("second-end")
+        }
+
+        _ = try await (first, second)
+
+        #expect(await recorder.snapshot() == [
+            "first-start",
+            "first-end",
+            "second-start",
+            "second-end"
+        ])
+    }
+
     @discardableResult
     private func addCharacter(
         to store: UserStore,

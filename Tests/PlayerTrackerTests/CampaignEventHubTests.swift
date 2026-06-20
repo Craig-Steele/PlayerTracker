@@ -16,7 +16,8 @@ struct CampaignEventHubTests {
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
             userdataFiles: [],
-            partyTreasure: []
+            partyTreasure: [],
+            currency: []
         )
         let snapshot = CampaignStreamSnapshot(
             campaign: campaign,
@@ -54,7 +55,8 @@ struct CampaignEventHubTests {
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
             userdataFiles: [],
-            partyTreasure: []
+            partyTreasure: [],
+            currency: []
         )
         let snapshot = CampaignStreamSnapshot(
             campaign: campaign,
@@ -93,7 +95,8 @@ struct CampaignEventHubTests {
             claimTimeoutMinutes: 5,
             isInviteOnly: false,
             userdataFiles: [],
-            partyTreasure: []
+            partyTreasure: [],
+            currency: []
         )
         let stream = await hub.subscribe(campaignID: campaign.id)
         var iterator = stream.makeAsyncIterator()

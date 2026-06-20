@@ -493,6 +493,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const currencyCancelBtn = document.getElementById('currency-cancel');
   const partyTreasurePanel = document.getElementById('party-treasure-panel');
   const partyTreasureFields = document.getElementById('party-treasure-fields');
+  const partyTreasureMoneyBtn = document.getElementById('party-treasure-money');
+  const partyTreasureMoneyPanel = document.getElementById('party-treasure-money-panel');
+  const partyTreasureMoneyFields = document.getElementById('party-treasure-money-fields');
+  const partyTreasureMoneySaveBtn = document.getElementById('party-treasure-money-save');
+  const partyTreasureMoneyCancelBtn = document.getElementById('party-treasure-money-cancel');
+  const partyTreasureMoneyDialogTitle = document.getElementById('party-treasure-money-dialog-title');
+  const partyTreasureMoneySummary = document.getElementById('party-treasure-money-summary');
+  const partyTreasureMoneyEditorSummary = document.getElementById('party-treasure-money-editor-summary');
   const partyTreasureCancelBtn = document.getElementById('party-treasure-cancel');
   const partyTreasureAddBtn = document.getElementById('party-treasure-add');
   const partyTreasureEditBtn = document.getElementById('party-treasure-edit');
@@ -568,6 +576,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let statKeys = ['HP'];
   let statAliases = new Map();
   let currencySystem = null;
+  let currentPartyTreasureCurrency = [];
   let equipmentLibraryReference = null;
   let equipmentCategoryIcons = {};
   let equipmentLibraryItems = [];
@@ -1195,6 +1204,14 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       }
       return true;
     }
+    if (partyTreasureMoneyPanel && !partyTreasureMoneyPanel.classList.contains('hidden')) {
+      if (partyTreasureMoneyCancelBtn) {
+        partyTreasureMoneyCancelBtn.click();
+      } else {
+        closePartyTreasureMoneyEditor();
+      }
+      return true;
+    }
     if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
       if (partyTreasureCancelBtn) {
         partyTreasureCancelBtn.click();
@@ -1554,6 +1571,100 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     }
   }
 
+  function setPartyTreasureMoneyPanelOpen(open) {
+    if (!partyTreasureMoneyPanel) return;
+    partyTreasureMoneyPanel.classList.toggle('hidden', !open);
+    partyTreasureMoneyPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function updatePartyTreasureMoneySummary() {
+    if (!partyTreasureMoneySummary) return;
+    const summary = inventoryView.formatCurrencyTotal
+      ? inventoryView.formatCurrencyTotal({ currency: currentPartyTreasureCurrency }, currencySystem)
+      : null;
+    partyTreasureMoneySummary.textContent = summary ? `Party treasure money: ${summary}` : 'Party treasure money: —';
+    if (partyTreasureMoneyEditorSummary) {
+      partyTreasureMoneyEditorSummary.textContent = summary ? `Money for party treasure: ${summary}` : 'Money for party treasure: —';
+    }
+  }
+
+  function buildPartyTreasureMoneyFields() {
+    if (!partyTreasureMoneyFields || !inventoryView.buildCurrencyFields) return;
+    inventoryView.buildCurrencyFields(partyTreasureMoneyFields, { currency: currentPartyTreasureCurrency }, currencySystem, {
+      inputIdPrefix: 'party-treasure-money'
+    });
+  }
+
+  function collectPartyTreasureMoneyPayloadFromEditor() {
+    if (!partyTreasureMoneyFields) return null;
+    const inputs = Array.from(partyTreasureMoneyFields.querySelectorAll('input[data-currency-unit-id]'));
+    if (inputs.length === 0) return null;
+    const payload = [];
+    for (const input of inputs) {
+      const unitId = input.dataset.currencyUnitId || '';
+      const raw = (input.value || '').trim();
+      const amount = raw === '' ? 0 : Number(raw);
+      if (!Number.isFinite(amount) || !Number.isInteger(amount)) {
+        throw new Error(`Currency amount for ${unitId} must be a whole number.`);
+      }
+      payload.push({ unitId, amount });
+    }
+    return payload;
+  }
+
+  function openPartyTreasureMoneyEditor() {
+    if (!currencySystem || !partyTreasureMoneyFields) return;
+    closeCharacterOverflowMenu();
+    setPartyTreasureAddFormOpen(false);
+    buildPartyTreasureMoneyFields();
+    updatePartyTreasureMoneySummary();
+    if (partyTreasureMoneyDialogTitle) {
+      partyTreasureMoneyDialogTitle.textContent = '🪙 Party Treasure Money';
+    }
+    setPartyTreasureMoneyPanelOpen(true);
+    window.requestAnimationFrame(() => {
+      const firstInput = partyTreasureMoneyFields.querySelector('input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    });
+  }
+
+  function closePartyTreasureMoneyEditor() {
+    if (partyTreasureMoneyFields) {
+      partyTreasureMoneyFields.innerHTML = '';
+    }
+    if (partyTreasureMoneyDialogTitle) {
+      partyTreasureMoneyDialogTitle.textContent = '🪙 Party Treasure Money';
+    }
+    setPartyTreasureMoneyPanelOpen(false);
+  }
+
+  async function savePartyTreasureMoneyFromEditor() {
+    let currency;
+    try {
+      currency = collectPartyTreasureMoneyPayloadFromEditor();
+    } catch (err) {
+      statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      return;
+    }
+    try {
+      const updatedCampaign = await savePartyTreasureItems(currentPartyTreasure, currency);
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : currentPartyTreasure;
+      currentPartyTreasureCurrency = Array.isArray(updatedCampaign?.currency)
+        ? updatedCampaign.currency
+        : (currency || currentPartyTreasureCurrency);
+      updatePartyTreasureMoneySummary();
+      closePartyTreasureMoneyEditor();
+      statusDiv.textContent = 'Saved party treasure money.';
+    } catch (err) {
+      statusDiv.textContent = `Party treasure money save failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
   function updatePartyTreasureItemOptions() {
     partyTreasureHelpers.updateEquipmentItemOptions(partyTreasureItemOptions, equipmentLibraryItems);
   }
@@ -1629,18 +1740,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       : null;
   }
 
-  function getCommonCurrencyUnitLabel() {
-    if (!currencySystem || !Array.isArray(currencySystem.units) || currencySystem.units.length === 0) {
-      return '';
-    }
-    const commonUnit =
-      currencySystem.units.find((unit) => unit.id === currencySystem.commonCurrencyId) ||
-      currencySystem.units[0];
-    return commonUnit && typeof commonUnit.label === 'string'
-      ? commonUnit.label.trim().toLowerCase()
-      : '';
-  }
-
   function formatCharacterCurrencyTotal(character) {
     return inventoryView.formatCurrencyTotal
       ? inventoryView.formatCurrencyTotal(character, currencySystem)
@@ -1653,6 +1752,11 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const canClaim = hasSelection && !isAddFormOpen;
     const canEdit = hasSelection && !isAddFormOpen;
     const canRemove = hasSelection && !isAddFormOpen;
+    const canEditMoney = Boolean(currencySystem && Array.isArray(currencySystem.units) && currencySystem.units.length > 0);
+    if (partyTreasureMoneyBtn) {
+      partyTreasureMoneyBtn.disabled = !canEditMoney;
+      partyTreasureMoneyBtn.setAttribute('aria-disabled', (!canEditMoney).toString());
+    }
     if (partyTreasureAddBtn) {
       partyTreasureAddBtn.disabled = isAddFormOpen;
       partyTreasureAddBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
@@ -1787,6 +1891,14 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       await claimSelectedPartyTreasureItem();
     }, {
       hidden: Boolean(entry.isContainer)
+    });
+    addMenuItem('Vendor 50%', async () => {
+      setSelectedPartyTreasureRow(row);
+      await vendorSelectedPartyTreasureItem(0.5);
+    });
+    addMenuItem('Vendor 100%', async () => {
+      setSelectedPartyTreasureRow(row);
+      await vendorSelectedPartyTreasureItem(1);
     });
     addMenuItem('🗑️ Remove', async () => {
       setSelectedPartyTreasureRow(row);
@@ -1955,12 +2067,65 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     }
   }
 
-  async function savePartyTreasureItems(items) {
+  async function vendorSelectedPartyTreasureItem(percent) {
+    if (!partyTreasureSelectedRow) return;
+    const entry = partyTreasureHelpers.getPartyTreasureRowEntry(partyTreasureSelectedRow);
+    if (!entry) return;
+    const proceeds = partyTreasureHelpers.calculatePartyTreasureVendorProceeds
+      ? partyTreasureHelpers.calculatePartyTreasureVendorProceeds(entry, percent)
+      : Math.max(0, Math.round(Math.max(1, Number(entry.quantity) || 1) * (Number(entry.value) || 0) * percent));
+    const rowName = (entry.name || 'Item').trim() || 'Item';
+    const percentLabel = percent >= 1 ? '100%' : '50%';
+    const lowestUnitLabel = partyTreasureHelpers.getLowestCurrencyUnitLabel
+      ? partyTreasureHelpers.getLowestCurrencyUnitLabel(currencySystem)
+      : '';
+    const proceedsInLowestUnits = partyTreasureHelpers.convertCommonCurrencyToLowestUnitAmount
+      ? partyTreasureHelpers.convertCommonCurrencyToLowestUnitAmount(proceeds, currencySystem)
+      : Math.max(0, Math.round(proceeds));
+    const unitLabel = lowestUnitLabel || 'money';
+    const confirmed = await showConfirmDialog({
+      title: `Vendor ${percentLabel}?`,
+      header: rowName,
+      message: `Remove this item from party treasure and add ${proceedsInLowestUnits} ${unitLabel} to party treasure money?`,
+      confirmLabel: `Vendor ${percentLabel}`,
+      cancelLabel: 'Keep Item',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!confirmed) return;
+    const items = partyTreasureHelpers.removePartyTreasureEntry(
+      currentPartyTreasure,
+      partyTreasureSelectedRow.dataset.inventoryEntryId || ''
+    );
+    const updatedCurrency = partyTreasureHelpers.applyCurrencyDelta
+      ? partyTreasureHelpers.applyCurrencyDelta(currentPartyTreasureCurrency, currencySystem, proceeds)
+      : currentPartyTreasureCurrency;
+    try {
+      const updatedCampaign = await savePartyTreasureItems(items, updatedCurrency);
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : items;
+      currentPartyTreasureCurrency = Array.isArray(updatedCampaign?.currency)
+        ? updatedCampaign.currency
+        : updatedCurrency;
+      buildPartyTreasureFields(currentPartyTreasure);
+      setSelectedPartyTreasureRow(getPartyTreasureRows()[0] || null);
+      statusDiv.textContent = `Vended ${rowName} for ${proceedsInLowestUnits} ${unitLabel}.`;
+    } catch (err) {
+      statusDiv.textContent = `Party treasure vendor failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  }
+
+  async function savePartyTreasureItems(items, currency = undefined) {
     if (!currentCampaignId) return null;
+    const payload = { items };
+    if (currency !== undefined) {
+      payload.currency = currency;
+    }
     const res = await fetch('/campaign/party-treasure', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items })
+      body: JSON.stringify(payload)
     });
     if (!res.ok) {
       throw new Error(await responseErrorMessage(res));
@@ -1969,6 +2134,10 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
       ? updatedCampaign.partyTreasure
       : items;
+    currentPartyTreasureCurrency = Array.isArray(updatedCampaign?.currency)
+      ? updatedCampaign.currency
+      : currentPartyTreasureCurrency;
+    updatePartyTreasureMoneySummary();
     updatePartyTreasureActionButtons();
     return updatedCampaign;
   }
@@ -2022,6 +2191,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (!character || !partyTreasureFields) return;
     closeCharacterOverflowMenu();
     closeInventoryEditor();
+    closePartyTreasureMoneyEditor();
     if (
       currencyEditorDirty &&
       !(await showConfirmDialog({
@@ -2048,6 +2218,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     await loadEquipmentLibrary();
     setPartyTreasureAddFormOpen(false);
     buildPartyTreasureFields(currentPartyTreasure);
+    updatePartyTreasureMoneySummary();
     updatePartyTreasureActionButtons();
     setPartyTreasurePanelOpen(true);
     window.requestAnimationFrame(() => {
@@ -2056,6 +2227,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function closePartyTreasureEditor() {
+    closePartyTreasureMoneyEditor();
     partyTreasureEditorCharacterId = null;
     partyTreasureSelectedRow = null;
     if (partyTreasureDialogTitle) {
@@ -4034,6 +4206,8 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (!currencySystem) {
       closeCurrencyEditor();
     }
+    updatePartyTreasureActionButtons();
+    updatePartyTreasureMoneySummary();
     if (moneyCharacterBtn) {
       moneyCharacterBtn.classList.add('hidden');
       moneyCharacterBtn.disabled = true;
@@ -5344,6 +5518,8 @@ function getOwnerName() {
           currentCampaignId = '';
           currentRulesetId = '';
           currentPartyTreasure = [];
+          currentPartyTreasureCurrency = [];
+          updatePartyTreasureMoneySummary();
           updateCampaignHeader(
             {
               nameTargets: campaignHeaderNameTargets,
@@ -5372,9 +5548,11 @@ function getOwnerName() {
       currentCampaignName = campaign.name || '';
       currentRulesetId = campaign.rulesetId || '';
       currentPartyTreasure = Array.isArray(campaign.partyTreasure) ? campaign.partyTreasure : [];
+      currentPartyTreasureCurrency = Array.isArray(campaign.currency) ? campaign.currency : [];
       if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
         buildPartyTreasureFields(currentPartyTreasure);
       }
+      updatePartyTreasureMoneySummary();
       updateCampaignHeader(
         {
           nameTargets: campaignHeaderNameTargets,
@@ -5405,6 +5583,8 @@ function getOwnerName() {
       currentCampaignId = '';
       currentCampaignName = '';
       currentPartyTreasure = [];
+      currentPartyTreasureCurrency = [];
+      updatePartyTreasureMoneySummary();
       updateCampaignHeader(
         {
           nameTargets: campaignHeaderNameTargets,
@@ -5886,6 +6066,11 @@ function getOwnerName() {
       addPartyTreasureItem();
     });
   }
+  if (partyTreasureMoneyBtn) {
+    partyTreasureMoneyBtn.addEventListener('click', () => {
+      openPartyTreasureMoneyEditor();
+    });
+  }
   if (partyTreasureEditBtn) {
     partyTreasureEditBtn.addEventListener('click', () => {
       editSelectedPartyTreasureItem();
@@ -5935,9 +6120,28 @@ function getOwnerName() {
     });
   }
 
+  if (partyTreasureMoneySaveBtn) {
+    partyTreasureMoneySaveBtn.addEventListener('click', async () => {
+      await savePartyTreasureMoneyFromEditor();
+    });
+  }
+
+  if (partyTreasureMoneyCancelBtn) {
+    partyTreasureMoneyCancelBtn.addEventListener('click', () => {
+      closePartyTreasureMoneyEditor();
+    });
+  }
+
   if (partyTreasureCancelBtn) {
     partyTreasureCancelBtn.addEventListener('click', () => {
       closePartyTreasureEditor();
+    });
+  }
+
+  if (partyTreasureMoneyPanel) {
+    partyTreasureMoneyPanel.addEventListener('click', (event) => {
+      if (event.target !== partyTreasureMoneyPanel) return;
+      closePartyTreasureMoneyEditor();
     });
   }
 

@@ -528,6 +528,32 @@ struct AddPartyTreasureToCampaigns: AsyncMigration {
     }
 }
 
+struct AddCurrencyToCampaigns: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaigns)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "currency_json" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE campaigns ADD COLUMN currency_json TEXT")
+                .run()
+            connection.logger.notice("Patched campaigns with currency_json.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct DatabaseShapeVerification {
     static func verify(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -602,7 +628,8 @@ struct DatabaseShapeVerification {
                 "claim_timeout_minutes",
                 "is_invite_only",
                 "userdata_files_json",
-                "party_treasure_json"
+                "party_treasure_json",
+                "currency_json"
             ]
             let missingCampaignColumns = requiredCampaignColumns.filter { required in
                 campaignColumns.contains(where: { $0.name == required }) == false
@@ -649,6 +676,7 @@ struct CreateCampaigns: AsyncMigration {
             .field("is_invite_only", .bool, .required, .sql(.default(false)))
             .field("userdata_files_json", .string)
             .field("party_treasure_json", .string)
+            .field("currency_json", .string)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
             .create()
@@ -822,6 +850,7 @@ enum DatabaseMigrations {
         app.migrations.add(AddInviteOnlyToCampaigns())
         app.migrations.add(AddUserDataFilesToCampaigns())
         app.migrations.add(AddPartyTreasureToCampaigns())
+        app.migrations.add(AddCurrencyToCampaigns())
         app.migrations.add(CreateCampaignMemberships())
         app.migrations.add(CreateCampaignInvites())
         app.migrations.add(AddInviteTargetNameToCampaignInvites())

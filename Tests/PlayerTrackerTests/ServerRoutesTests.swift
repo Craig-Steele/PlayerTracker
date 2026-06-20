@@ -589,6 +589,53 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testPartyTreasureUpdatePersistsCurrency() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
+        let playerSession = try await join(displayName: "Player", in: tester)
+
+        let treasurePayload = PartyTreasureUpdateInput(
+            items: [
+                InventoryEntry(
+                    id: UUID(),
+                    name: "Coin Chest",
+                    quantity: 1,
+                    value: 0,
+                    weight: 15,
+                    url: nil
+                )
+            ],
+            currency: [
+                CurrencyAmount(unitId: "gp", amount: 123),
+                CurrencyAmount(unitId: "sp", amount: 45)
+            ]
+        )
+        let updateResponse = try await tester.sendRequest(
+            .PUT,
+            "/campaign/party-treasure",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(treasurePayload))
+        )
+        XCTAssertEqual(updateResponse.status, .ok)
+        let updatedCampaign = try updateResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(updatedCampaign.currency.first(where: { $0.unitId == "gp" })?.amount, 123)
+        XCTAssertEqual(updatedCampaign.currency.first(where: { $0.unitId == "sp" })?.amount, 45)
+
+        let campaignResponse = try await tester.sendRequest(
+            .GET,
+            "/campaign",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+        XCTAssertEqual(campaignResponse.status, .ok)
+        let campaign = try campaignResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(campaign.currency.first(where: { $0.unitId == "gp" })?.amount, 123)
+        XCTAssertEqual(campaign.currency.first(where: { $0.unitId == "sp" })?.amount, 45)
+    }
+
+    @Test
     func testCharacterInventoryRoutesPreserveNestedContainerReferences() async throws {
         let tester = try await makeTester()
         let playerSession = try await join(displayName: "Player", in: tester)

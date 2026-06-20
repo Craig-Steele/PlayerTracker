@@ -11,6 +11,7 @@ actor CampaignStore {
     private var currentIsInviteOnly: Bool
     private var currentUserdataFiles: [String]
     private var currentPartyTreasure: [InventoryEntry]
+    private var currentCurrency: [CurrencyAmount]
     private var currentCampaignID: UUID?
     private var database: (any Database)?
     private let restorePersistedState: Bool
@@ -32,6 +33,7 @@ actor CampaignStore {
         self.currentIsInviteOnly = false
         self.currentUserdataFiles = []
         self.currentPartyTreasure = []
+        self.currentCurrency = []
         self.currentCampaignID = nil
     }
 
@@ -47,6 +49,7 @@ actor CampaignStore {
             currentIsInviteOnly = loaded.isInviteOnly
             currentUserdataFiles = loaded.userdataFiles
             currentPartyTreasure = loaded.partyTreasure
+            currentCurrency = loaded.currency
             currentCampaignID = nil
         }
     }
@@ -64,7 +67,8 @@ actor CampaignStore {
             claimTimeoutMinutes: currentClaimTimeoutMinutes,
             isInviteOnly: currentIsInviteOnly,
             userdataFiles: currentUserdataFiles,
-            partyTreasure: currentPartyTreasure
+            partyTreasure: currentPartyTreasure,
+            currency: currentCurrency
         )
     }
 
@@ -171,6 +175,7 @@ actor CampaignStore {
             currentIsInviteOnly = updated.isInviteOnly
             currentUserdataFiles = updated.userdataFiles
             currentPartyTreasure = updated.partyTreasure
+            currentCurrency = updated.currency
         }
         return CampaignSummary(
             id: updated.id,
@@ -206,6 +211,7 @@ actor CampaignStore {
         currentIsInviteOnly = loaded.isInviteOnly
         currentUserdataFiles = loaded.userdataFiles
         currentPartyTreasure = loaded.partyTreasure
+        currentCurrency = loaded.currency
         return state()!
     }
 
@@ -236,6 +242,9 @@ actor CampaignStore {
             currentEncounterState = updated.encounterState
             currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
             currentIsInviteOnly = updated.isInviteOnly
+            currentUserdataFiles = updated.userdataFiles
+            currentPartyTreasure = updated.partyTreasure
+            currentCurrency = updated.currency
             return state()!
         }
 
@@ -248,6 +257,7 @@ actor CampaignStore {
         currentIsInviteOnly = isInviteOnly ?? false
         currentUserdataFiles = []
         currentPartyTreasure = []
+        currentCurrency = []
         await savePersistedStateIfNeeded()
         return state()!
     }
@@ -271,6 +281,7 @@ actor CampaignStore {
                 try await DatabasePersistence.updateCampaignPartyTreasure(
                     campaignID: currentCampaignID,
                     items: currentPartyTreasure,
+                    currency: currentCurrency,
                     on: database
                 )
             }
@@ -300,14 +311,22 @@ actor CampaignStore {
         currentPartyTreasure
     }
 
-    func updatePartyTreasure(_ items: [InventoryEntry]) async throws -> CampaignState {
+    func currency() -> [CurrencyAmount] {
+        currentCurrency
+    }
+
+    func updatePartyTreasure(_ items: [InventoryEntry], currency: [CurrencyAmount]? = nil) async throws -> CampaignState {
         guard let database, let currentCampaignID else {
             throw Abort(.internalServerError, reason: "Database is not configured.")
         }
         currentPartyTreasure = normalizePartyTreasure(items)
+        if let currency {
+            currentCurrency = normalizeCurrency(currency)
+        }
         try await DatabasePersistence.updateCampaignPartyTreasure(
             campaignID: currentCampaignID,
             items: currentPartyTreasure,
+            currency: currency != nil ? currentCurrency : nil,
             on: database
         )
         return state()!
@@ -341,6 +360,15 @@ actor CampaignStore {
                 containerId: nil,
                 isContainer: false
             )
+        }
+    }
+
+    private func normalizeCurrency(_ currency: [CurrencyAmount]) -> [CurrencyAmount] {
+        var seen = Set<String>()
+        return currency.compactMap { amount in
+            let unitId = amount.unitId.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !unitId.isEmpty, seen.insert(unitId).inserted else { return nil }
+            return CurrencyAmount(unitId: unitId, amount: amount.amount)
         }
     }
 }

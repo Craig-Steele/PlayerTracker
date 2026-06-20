@@ -196,6 +196,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const partyTreasureButton = document.getElementById('ref-party-treasure-button');
   const partyTreasurePanel = document.getElementById('ref-party-treasure-panel');
   const partyTreasureFields = document.getElementById('ref-party-treasure-fields');
+  const partyTreasureMoneyBtn = document.getElementById('ref-party-treasure-money');
+  const partyTreasureMoneyPanel = document.getElementById('ref-party-treasure-money-panel');
+  const partyTreasureMoneyFields = document.getElementById('ref-party-treasure-money-fields');
+  const partyTreasureMoneySaveBtn = document.getElementById('ref-party-treasure-money-save');
+  const partyTreasureMoneyCancelBtn = document.getElementById('ref-party-treasure-money-cancel');
+  const partyTreasureMoneyDialogTitle = document.getElementById('ref-party-treasure-money-dialog-title');
+  const partyTreasureMoneySummary = document.getElementById('ref-party-treasure-money-summary');
+  const partyTreasureMoneyEditorSummary = document.getElementById('ref-party-treasure-money-editor-summary');
   const partyTreasureCancelBtn = document.getElementById('ref-party-treasure-cancel');
   const partyTreasureAddBtn = document.getElementById('ref-party-treasure-add');
   const partyTreasureEditBtn = document.getElementById('ref-party-treasure-edit');
@@ -300,6 +308,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentCampaignClaimTimeoutMinutes = 5;
   let currentCampaignInviteOnly = false;
   let currentPartyTreasure = [];
+  let currentPartyTreasureCurrency = [];
   let currentInventory = [];
   let availableRulesets = [];
   let currentHealthLabel = 'HP';
@@ -922,6 +931,11 @@ window.addEventListener('DOMContentLoaded', () => {
       addPartyTreasureItem();
     });
   }
+  if (partyTreasureMoneyBtn) {
+    partyTreasureMoneyBtn.addEventListener('click', () => {
+      openPartyTreasureMoneyEditor();
+    });
+  }
   if (partyTreasureEditBtn) {
     partyTreasureEditBtn.addEventListener('click', () => {
       closeRefereeRowOverflowMenus();
@@ -963,9 +977,25 @@ window.addEventListener('DOMContentLoaded', () => {
       removeSelectedPartyTreasureItem();
     });
   }
+  if (partyTreasureMoneySaveBtn) {
+    partyTreasureMoneySaveBtn.addEventListener('click', async () => {
+      await savePartyTreasureMoneyFromEditor();
+    });
+  }
+  if (partyTreasureMoneyCancelBtn) {
+    partyTreasureMoneyCancelBtn.addEventListener('click', () => {
+      closePartyTreasureMoneyEditor();
+    });
+  }
   if (partyTreasureCancelBtn) {
     partyTreasureCancelBtn.addEventListener('click', async () => {
       closePartyTreasureEditor();
+    });
+  }
+  if (partyTreasureMoneyPanel) {
+    partyTreasureMoneyPanel.addEventListener('click', async (event) => {
+      if (event.target !== partyTreasureMoneyPanel) return;
+      closePartyTreasureMoneyEditor();
     });
   }
   if (partyTreasurePanel) {
@@ -2867,8 +2897,10 @@ window.addEventListener('DOMContentLoaded', () => {
           currentRulesetId = '';
           currentCampaignClaimTimeoutMinutes = 5;
           currentCampaignInviteOnly = false;
+          currentPartyTreasureCurrency = [];
           resetCampaignUserDataState();
           resetCreatureLibraryState();
+          updatePartyTreasureMoneySummary();
           closeCampaignSettingsModal();
           updateCampaignHeader(
             {
@@ -2906,10 +2938,12 @@ window.addEventListener('DOMContentLoaded', () => {
         : 5;
       currentCampaignInviteOnly = Boolean(campaign.isInviteOnly);
       currentPartyTreasure = Array.isArray(campaign.partyTreasure) ? campaign.partyTreasure : [];
+      currentPartyTreasureCurrency = Array.isArray(campaign.currency) ? campaign.currency : [];
       campaignUserdataSelection = Array.isArray(campaign?.userdataFiles)
         ? campaign.userdataFiles.map((name) => normalizeUserdataFileName(name)).filter(Boolean).sort((lhs, rhs) => lhs.localeCompare(rhs))
         : [];
       campaignUserdataDirty = false;
+      updatePartyTreasureMoneySummary();
       updateCampaignHeader(
         {
           nameTargets: refereeHeaderNameTargets,
@@ -2959,6 +2993,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!activeCampaignId) {
         resetCampaignUserDataState();
       }
+      currentPartyTreasureCurrency = [];
+      updatePartyTreasureMoneySummary();
       updateCampaignUserDataFolderButtonState();
       campaignLiveStream.close();
       document.title = currentCampaignName ? `${currentCampaignName} - Referee` : APP_NAME;
@@ -3041,6 +3077,11 @@ window.addEventListener('DOMContentLoaded', () => {
     const hasSelection = Boolean(partyTreasureSelectedRow);
     const canEdit = hasSelection && !isAddFormOpen;
     const canRemove = hasSelection && !isAddFormOpen;
+    const canEditMoney = Boolean(currencySystem && Array.isArray(currencySystem.units) && currencySystem.units.length > 0);
+    if (partyTreasureMoneyBtn) {
+      partyTreasureMoneyBtn.disabled = !canEditMoney;
+      partyTreasureMoneyBtn.setAttribute('aria-disabled', (!canEditMoney).toString());
+    }
     if (partyTreasureAddBtn) {
       partyTreasureAddBtn.disabled = isAddFormOpen;
       partyTreasureAddBtn.setAttribute('aria-disabled', isAddFormOpen.toString());
@@ -3209,6 +3250,14 @@ window.addEventListener('DOMContentLoaded', () => {
       setSelectedPartyTreasureRow(row);
       editSelectedPartyTreasureItem();
     });
+    appendMenuButton('Vendor 50%', async () => {
+      setSelectedPartyTreasureRow(row);
+      await vendorSelectedPartyTreasureItem(0.5);
+    });
+    appendMenuButton('Vendor 100%', async () => {
+      setSelectedPartyTreasureRow(row);
+      await vendorSelectedPartyTreasureItem(1);
+    });
     appendMenuButton('🗑️ Remove', async () => {
       setSelectedPartyTreasureRow(row);
       await removeSelectedPartyTreasureItem();
@@ -3295,6 +3344,106 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function setPartyTreasureMoneyPanelOpen(open) {
+    if (!partyTreasureMoneyPanel) return;
+    partyTreasureMoneyPanel.classList.toggle('hidden', !open);
+    partyTreasureMoneyPanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function updatePartyTreasureMoneySummary() {
+    if (!partyTreasureMoneySummary) return;
+    const summary = inventoryView.formatCurrencyTotal
+      ? inventoryView.formatCurrencyTotal({ currency: currentPartyTreasureCurrency }, currencySystem)
+      : null;
+    partyTreasureMoneySummary.textContent = summary ? `Party treasure money: ${summary}` : 'Party treasure money: —';
+    if (partyTreasureMoneyEditorSummary) {
+      partyTreasureMoneyEditorSummary.textContent = summary ? `Money for party treasure: ${summary}` : 'Money for party treasure: —';
+    }
+  }
+
+  function buildPartyTreasureMoneyFields() {
+    if (!partyTreasureMoneyFields || !inventoryView.buildCurrencyFields) return;
+    inventoryView.buildCurrencyFields(partyTreasureMoneyFields, { currency: currentPartyTreasureCurrency }, currencySystem, {
+      inputIdPrefix: 'ref-party-treasure-money'
+    });
+  }
+
+  function collectPartyTreasureMoneyPayloadFromEditor() {
+    if (!partyTreasureMoneyFields) return null;
+    const inputs = Array.from(partyTreasureMoneyFields.querySelectorAll('input[data-currency-unit-id]'));
+    if (inputs.length === 0) return null;
+    const payload = [];
+    for (const input of inputs) {
+      const unitId = input.dataset.currencyUnitId || '';
+      const raw = (input.value || '').trim();
+      const amount = raw === '' ? 0 : Number(raw);
+      if (!Number.isFinite(amount) || !Number.isInteger(amount)) {
+        throw new Error(`Currency amount for ${unitId} must be a whole number.`);
+      }
+      payload.push({ unitId, amount });
+    }
+    return payload;
+  }
+
+  function openPartyTreasureMoneyEditor() {
+    if (!currencySystem || !partyTreasureMoneyFields) return;
+    closeRefereeRowOverflowMenus();
+    setPartyTreasureAddFormOpen(false);
+    buildPartyTreasureMoneyFields();
+    updatePartyTreasureMoneySummary();
+    if (partyTreasureMoneyDialogTitle) {
+      partyTreasureMoneyDialogTitle.textContent = '🪙 Party Treasure Money';
+    }
+    setPartyTreasureMoneyPanelOpen(true);
+    window.requestAnimationFrame(() => {
+      const firstInput = partyTreasureMoneyFields.querySelector('input');
+      if (firstInput) {
+        firstInput.focus();
+        firstInput.select();
+      }
+    });
+  }
+
+  function closePartyTreasureMoneyEditor() {
+    if (partyTreasureMoneyFields) {
+      partyTreasureMoneyFields.innerHTML = '';
+    }
+    if (partyTreasureMoneyDialogTitle) {
+      partyTreasureMoneyDialogTitle.textContent = '🪙 Party Treasure Money';
+    }
+    setPartyTreasureMoneyPanelOpen(false);
+  }
+
+  async function savePartyTreasureMoneyFromEditor() {
+    let currency;
+    try {
+      currency = collectPartyTreasureMoneyPayloadFromEditor();
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = err instanceof Error ? err.message : String(err);
+      }
+      return;
+    }
+    try {
+      const updatedCampaign = await savePartyTreasureItems(currentPartyTreasure, currency);
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : currentPartyTreasure;
+      currentPartyTreasureCurrency = Array.isArray(updatedCampaign?.currency)
+        ? updatedCampaign.currency
+        : (currency || currentPartyTreasureCurrency);
+      updatePartyTreasureMoneySummary();
+      closePartyTreasureMoneyEditor();
+      if (statusDiv) {
+        statusDiv.textContent = 'Saved party treasure money.';
+      }
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = `Party treasure money save failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
+  }
+
   function addPartyTreasureItem() {
     setPartyTreasureAddFormOpen(true, null);
     window.requestAnimationFrame(() => {
@@ -3355,6 +3504,59 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function vendorSelectedPartyTreasureItem(percent) {
+    if (!partyTreasureSelectedRow) return;
+    const entry = partyTreasureHelpers.getPartyTreasureRowEntry(partyTreasureSelectedRow);
+    if (!entry) return;
+    const proceeds = partyTreasureHelpers.calculatePartyTreasureVendorProceeds
+      ? partyTreasureHelpers.calculatePartyTreasureVendorProceeds(entry, percent)
+      : Math.max(0, Math.round(Math.max(1, Number(entry.quantity) || 1) * (Number(entry.value) || 0) * percent));
+    const rowName = (entry.name || 'Item').trim() || 'Item';
+    const percentLabel = percent >= 1 ? '100%' : '50%';
+    const lowestUnitLabel = partyTreasureHelpers.getLowestCurrencyUnitLabel
+      ? partyTreasureHelpers.getLowestCurrencyUnitLabel(currencySystem)
+      : '';
+    const proceedsInLowestUnits = partyTreasureHelpers.convertCommonCurrencyToLowestUnitAmount
+      ? partyTreasureHelpers.convertCommonCurrencyToLowestUnitAmount(proceeds, currencySystem)
+      : Math.max(0, Math.round(proceeds));
+    const unitLabel = lowestUnitLabel || 'money';
+    const confirmed = await showConfirmDialog({
+      title: `Vendor ${percentLabel}?`,
+      header: rowName,
+      message: `Remove this item from party treasure and add ${proceedsInLowestUnits} ${unitLabel} to party treasure money?`,
+      confirmLabel: `Vendor ${percentLabel}`,
+      cancelLabel: 'Keep Item',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+    if (!confirmed) return;
+    const items = partyTreasureHelpers.removePartyTreasureEntry(
+      currentPartyTreasure,
+      partyTreasureSelectedRow.dataset.inventoryEntryId || ''
+    );
+    const updatedCurrency = partyTreasureHelpers.applyCurrencyDelta
+      ? partyTreasureHelpers.applyCurrencyDelta(currentPartyTreasureCurrency, currencySystem, proceeds)
+      : currentPartyTreasureCurrency;
+    try {
+      const updatedCampaign = await savePartyTreasureItems(items, updatedCurrency);
+      currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
+        ? updatedCampaign.partyTreasure
+        : items;
+      currentPartyTreasureCurrency = Array.isArray(updatedCampaign?.currency)
+        ? updatedCampaign.currency
+        : updatedCurrency;
+      buildPartyTreasureFields(currentPartyTreasure);
+      setSelectedPartyTreasureRow(getPartyTreasureRows()[0] || null);
+      if (statusDiv) {
+        statusDiv.textContent = `Vended ${rowName} for ${proceedsInLowestUnits} ${unitLabel}.`;
+      }
+    } catch (err) {
+      if (statusDiv) {
+        statusDiv.textContent = `Party treasure vendor failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
+  }
+
   /**
    * Commit the add-form draft item into the party treasure list.
    * @returns {void}
@@ -3391,12 +3593,16 @@ window.addEventListener('DOMContentLoaded', () => {
    * Save the party treasure editor contents back to the server.
    * @returns {Promise<void>}
    */
-  async function savePartyTreasureItems(items) {
+  async function savePartyTreasureItems(items, currency = undefined) {
     if (!activeCampaignId) return null;
+    const payload = { items };
+    if (currency !== undefined) {
+      payload.currency = currency;
+    }
     const res = await fetch('/campaign/party-treasure', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items })
+      body: JSON.stringify(payload)
     });
     if (!res.ok) {
       throw new Error(await responseErrorMessage(res));
@@ -3405,6 +3611,11 @@ window.addEventListener('DOMContentLoaded', () => {
     currentPartyTreasure = Array.isArray(updatedCampaign?.partyTreasure)
       ? updatedCampaign.partyTreasure
       : items;
+    currentPartyTreasureCurrency = Array.isArray(updatedCampaign?.currency)
+      ? updatedCampaign.currency
+      : currentPartyTreasureCurrency;
+    updatePartyTreasureMoneySummary();
+    updatePartyTreasureActionButtons();
     return updatedCampaign;
   }
 
@@ -3414,6 +3625,7 @@ window.addEventListener('DOMContentLoaded', () => {
    */
   async function openPartyTreasureEditor() {
     if (!partyTreasureFields) return;
+    closePartyTreasureMoneyEditor();
     if (partyTreasureDialogTitle) {
       partyTreasureDialogTitle.textContent = '💰 Party Treasure';
     }
@@ -3424,6 +3636,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await loadEquipmentLibrary();
     setPartyTreasureAddFormOpen(false);
     buildPartyTreasureFields(currentPartyTreasure);
+    updatePartyTreasureMoneySummary();
     setPartyTreasurePanelOpen(true);
     window.requestAnimationFrame(() => {
       partyTreasureAddBtn?.focus();
@@ -3435,6 +3648,7 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function closePartyTreasureEditor() {
+    closePartyTreasureMoneyEditor();
     partyTreasureSelectedRow = null;
     if (partyTreasureDialogTitle) {
       partyTreasureDialogTitle.textContent = '💰 Party Treasure';
@@ -3554,6 +3768,8 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!currencySystem) {
         closeCurrencyViewer();
       }
+      updatePartyTreasureActionButtons();
+      updatePartyTreasureMoneySummary();
       renderEditorConditions(editorConditionFilter ? editorConditionFilter.value : '');
     } catch (err) {
       console.warn('Unable to load condition library:', err);
@@ -3579,6 +3795,8 @@ window.addEventListener('DOMContentLoaded', () => {
       equipmentCategoryIcons = {};
       closeCurrencyViewer();
       closeInventoryViewer();
+      updatePartyTreasureActionButtons();
+      updatePartyTreasureMoneySummary();
       statKeys = ['HP'];
       setStatAliases(null);
       statBlockDefinitions = [];
@@ -4309,6 +4527,14 @@ window.addEventListener('DOMContentLoaded', () => {
         initiativeModalCancelBtn.click();
       } else {
         closeInitiativeEditor();
+      }
+      return true;
+    }
+    if (partyTreasureMoneyPanel && !partyTreasureMoneyPanel.classList.contains('hidden')) {
+      if (partyTreasureMoneyCancelBtn) {
+        partyTreasureMoneyCancelBtn.click();
+      } else {
+        closePartyTreasureMoneyEditor();
       }
       return true;
     }

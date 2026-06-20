@@ -406,6 +406,133 @@
     };
   }
 
+  function calculatePartyTreasureVendorProceeds(entry = {}, percent = 1) {
+    const quantity = Number.isFinite(entry.quantity) ? Math.max(1, entry.quantity) : 1;
+    const value = Number.isFinite(entry.value) ? entry.value : 0;
+    const multiplier = Number.isFinite(percent) ? percent : 0;
+    return Math.max(0, normalizeMoneyValue(quantity * value * multiplier));
+  }
+
+  function getLowestCurrencyUnit(currencySystem = null) {
+    if (!currencySystem || !Array.isArray(currencySystem.units) || currencySystem.units.length === 0) {
+      return null;
+    }
+    return currencySystem.units.reduce((lowest, unit) => {
+      if (!lowest) return unit;
+      const currentValue = Number(unit?.valueInCommonCurrency);
+      const lowestValue = Number(lowest?.valueInCommonCurrency);
+      if (!Number.isFinite(currentValue)) return lowest;
+      if (!Number.isFinite(lowestValue)) return unit;
+      return currentValue < lowestValue ? unit : lowest;
+    }, null);
+  }
+
+  function getLowestCurrencyUnitLabel(currencySystem = null) {
+    const lowestUnit = getLowestCurrencyUnit(currencySystem);
+    if (!lowestUnit) {
+      return '';
+    }
+    if (typeof lowestUnit.label === 'string' && lowestUnit.label.trim()) {
+      return lowestUnit.label.trim().toLowerCase();
+    }
+    if (typeof lowestUnit.symbol === 'string' && lowestUnit.symbol.trim()) {
+      return lowestUnit.symbol.trim().toLowerCase();
+    }
+    return typeof lowestUnit.id === 'string' ? lowestUnit.id.trim().toLowerCase() : '';
+  }
+
+  function convertCommonCurrencyToLowestUnitAmount(amount, currencySystem = null) {
+    const normalizedAmount = normalizeMoneyValue(Number(amount));
+    const lowestUnit = getLowestCurrencyUnit(currencySystem);
+    const lowestUnitValue = Number(lowestUnit?.valueInCommonCurrency);
+    if (!Number.isFinite(lowestUnitValue) || lowestUnitValue <= 0) {
+      return Math.max(0, Math.round(normalizedAmount));
+    }
+    return Math.max(0, Math.round(normalizedAmount / lowestUnitValue));
+  }
+
+  function convertLowestUnitAmountToCurrencyBreakdown(lowestUnitAmount = 0, currencySystem = null) {
+    if (!currencySystem || !Array.isArray(currencySystem.units) || currencySystem.units.length === 0) {
+      return [];
+    }
+    const lowestUnit = getLowestCurrencyUnit(currencySystem);
+    const lowestUnitValue = Number(lowestUnit?.valueInCommonCurrency);
+    if (!Number.isFinite(lowestUnitValue) || lowestUnitValue <= 0) {
+      return [];
+    }
+    let remainingLowestUnits = Math.max(0, Math.round(Number(lowestUnitAmount)));
+    if (remainingLowestUnits === 0) {
+      return [];
+    }
+    const units = [...currencySystem.units].sort((left, right) => {
+      const leftValue = Number(left?.valueInCommonCurrency);
+      const rightValue = Number(right?.valueInCommonCurrency);
+      if (!Number.isFinite(leftValue) && !Number.isFinite(rightValue)) return 0;
+      if (!Number.isFinite(leftValue)) return 1;
+      if (!Number.isFinite(rightValue)) return -1;
+      return rightValue - leftValue;
+    });
+    const breakdown = [];
+    units.forEach((unit) => {
+      const unitId = typeof unit?.id === 'string' ? unit.id.trim() : '';
+      const unitValue = Number(unit?.valueInCommonCurrency);
+      if (!unitId || !Number.isFinite(unitValue) || unitValue <= 0) {
+        return;
+      }
+      const unitLowestUnits = Math.max(1, Math.round(unitValue / lowestUnitValue));
+      const amount = Math.floor(remainingLowestUnits / unitLowestUnits);
+      if (amount > 0) {
+        breakdown.push({ unitId, amount });
+        remainingLowestUnits -= amount * unitLowestUnits;
+      }
+    });
+    return breakdown;
+  }
+
+  function applyCurrencyDelta(currencyAmounts = [], currencySystem = null, delta = 0) {
+    const normalizedAmounts = Array.isArray(currencyAmounts)
+      ? currencyAmounts
+          .filter((amount) => amount && typeof amount.unitId === 'string')
+          .map((amount) => ({
+            unitId: amount.unitId.trim(),
+            amount: Number.isFinite(amount.amount) ? amount.amount : 0
+          }))
+          .filter((amount) => amount.unitId)
+      : [];
+    if (!currencySystem || !Array.isArray(currencySystem.units) || currencySystem.units.length === 0) {
+      return normalizedAmounts;
+    }
+    const lowestUnit = getLowestCurrencyUnit(currencySystem);
+    const lowestUnitValue = Number(lowestUnit?.valueInCommonCurrency);
+    if (!Number.isFinite(lowestUnitValue) || lowestUnitValue <= 0) {
+      return normalizedAmounts;
+    }
+    const unitValueById = new Map(
+      currencySystem.units
+        .map((unit) => {
+          const unitId = typeof unit?.id === 'string' ? unit.id.trim() : '';
+          const unitValue = Number(unit?.valueInCommonCurrency);
+          return unitId && Number.isFinite(unitValue) && unitValue > 0
+            ? [unitId, unitValue]
+            : null;
+        })
+        .filter(Boolean)
+    );
+    let totalLowestUnits = 0;
+    normalizedAmounts.forEach((amount) => {
+      const unitValue = unitValueById.get(amount.unitId);
+      if (!Number.isFinite(unitValue) || unitValue <= 0) {
+        return;
+      }
+      totalLowestUnits += Math.round(amount.amount * (unitValue / lowestUnitValue));
+    });
+    totalLowestUnits += convertCommonCurrencyToLowestUnitAmount(delta, currencySystem);
+    if (totalLowestUnits <= 0) {
+      return [];
+    }
+    return convertLowestUnitAmountToCurrencyBreakdown(totalLowestUnits, currencySystem);
+  }
+
   function getEquipmentItemCategory(itemName, equipmentLibraryItems = []) {
     if (!itemName || !Array.isArray(equipmentLibraryItems)) {
       return null;
@@ -691,6 +818,12 @@
     applyPartyTreasurePresetToForm,
     setPartyTreasureAddFormOpen,
     collectPartyTreasureDraftFromForm,
+    calculatePartyTreasureVendorProceeds,
+    getLowestCurrencyUnit,
+    getLowestCurrencyUnitLabel,
+    convertCommonCurrencyToLowestUnitAmount,
+    convertLowestUnitAmountToCurrencyBreakdown,
+    applyCurrencyDelta,
     getEquipmentItemCategory,
     resolveCategoryGlyph,
     resolveEquipmentOverflowGlyph,
