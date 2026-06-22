@@ -17,7 +17,7 @@ actor UserStore {
     private var currentEncounterState: EncounterState = .new
     private var currentRefereeSessionIDs: Set<UUID> = []
     private let immediateDisconnectGraceSeconds: TimeInterval = 6
-    private var inFlightDatabaseActions = 0
+    private var databaseActionIsActive = false
     private var databaseActionWaiters: [CheckedContinuation<Void, Never>] = []
 
     private struct TurnState {
@@ -35,7 +35,7 @@ actor UserStore {
         currentRulesetId = nil
         currentEncounterState = .new
         currentRefereeSessionIDs = []
-        inFlightDatabaseActions = 0
+        databaseActionIsActive = false
         databaseActionWaiters.removeAll()
     }
 
@@ -95,34 +95,31 @@ actor UserStore {
         }
     }
 
-    private func performDatabaseAction<T>(_ action: () async throws -> T) async rethrows -> T {
-        await waitForDatabaseActions()
-        beginDatabaseAction()
-        defer { endDatabaseAction() }
-        return try await action()
-    }
-
-    private func beginDatabaseAction() {
-        inFlightDatabaseActions += 1
-    }
-
-    private func endDatabaseAction() {
-        precondition(inFlightDatabaseActions > 0)
-        inFlightDatabaseActions -= 1
-        if inFlightDatabaseActions == 0 {
-            let waiters = databaseActionWaiters
-            databaseActionWaiters.removeAll()
-            for waiter in waiters {
-                waiter.resume()
-            }
+    private func acquireDatabaseAction() async {
+        if !databaseActionIsActive {
+            databaseActionIsActive = true
+            return
         }
-    }
-
-    private func waitForDatabaseActions() async {
-        guard inFlightDatabaseActions > 0 else { return }
         await withCheckedContinuation { continuation in
             databaseActionWaiters.append(continuation)
         }
+        databaseActionIsActive = true
+    }
+
+    private func releaseDatabaseAction() {
+        precondition(databaseActionIsActive)
+        if databaseActionWaiters.isEmpty {
+            databaseActionIsActive = false
+            return
+        }
+        let waiter = databaseActionWaiters.removeFirst()
+        waiter.resume()
+    }
+
+    private func performDatabaseAction<T>(_ action: () async throws -> T) async rethrows -> T {
+        await acquireDatabaseAction()
+        defer { releaseDatabaseAction() }
+        return try await action()
     }
 
     func performDatabaseActionForTesting<T>(_ action: () async throws -> T) async rethrows -> T {
@@ -501,17 +498,16 @@ actor UserStore {
     }
 
     func clear() async {
-        await waitForDatabaseActions()
-        storage.removeAll()
-        campaignTurns.removeAll()
-        if let database, let campaignID = currentCampaignID {
-            do {
-                try await performDatabaseAction {
+        do {
+            try await performDatabaseAction {
+                storage.removeAll()
+                campaignTurns.removeAll()
+                if let database, let campaignID = currentCampaignID {
                     try await DatabasePersistence.deleteCampaignCharacters(campaignID: campaignID, on: database)
                 }
-            } catch {
-                print("Failed to clear campaign characters:", error)
             }
+        } catch {
+            print("Failed to clear campaign characters:", error)
         }
     }
 
