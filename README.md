@@ -82,5 +82,5 @@ Add `--overwrite` if you want to replace existing local creature files.
 
 - The server serves the checked-in `Client-Web/` directory from this repository.
 - This repository is currently optimized for local-network table play rather than internet-hosted multiplayer.
-- The iOS app is named `Roll For Initiative!`.
+- The iOS app is named `Tactical Table Top: Initiative`.
 - The Android client is not tied to any specific local development environment in this README, because mobile work is currently paused.

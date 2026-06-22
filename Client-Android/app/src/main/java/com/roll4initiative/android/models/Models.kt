@@ -1,4 +1,4 @@
-package com.roll4initiative.android.models
+package com.playertracker.android.models
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable

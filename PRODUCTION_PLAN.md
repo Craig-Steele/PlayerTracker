@@ -1,6 +1,6 @@
 # Production Plan
 
-This document captures the current product and engineering roadmap for taking Roll4Initiative from a local-network encounter tracker to a commercial product.
+This document captures the current product and engineering roadmap for taking PlayerTracker from a local-network encounter tracker to a commercial product.
 
 Commercial launch shape:
 
@@ -61,7 +61,7 @@ Impact:
 - authenticated server-side identity
 - browser/device storage is convenience only
 - ownership must come from authenticated session, not client-generated IDs
-- account identity is scoped to the chosen server, not to a central Roll4Initiative cloud account
+- account identity is scoped to the chosen server, not to a central PlayerTracker cloud account
 
 Launch authentication decision:
 
@@ -313,15 +313,15 @@ Use a per-user application-data root by default.
 
 macOS:
 
-- `~/Library/Application Support/Roll4Initiative`
+- `~/Library/Application Support/TacticalTableTop/Initiative`
 
 Windows:
 
-- `%LOCALAPPDATA%\\Roll4Initiative`
+- `%LOCALAPPDATA%\\TacticalTableTop\\Initiative`
 
 Linux:
 
-- `${XDG_DATA_HOME:-~/.local/share}/Roll4Initiative`
+- `${XDG_DATA_HOME:-~/.local/share}/TacticalTableTop/Initiative`
 
 If a future edition supports multi-user hosting or a system service install, add an explicit configurable data root. The app should still default to the per-user path above.
 
@@ -336,7 +336,8 @@ Current implementation note:
 Suggested layout:
 
 ```text
-Roll4Initiative/
+TacticalTableTop/
+  Initiative/
   data/
     app.sqlite3
     app.sqlite3-wal
@@ -805,7 +806,7 @@ Web auth:
 Mobile auth:
 
 - token or session bootstrap model, but still backed by the same server-side session concept
-- login is against the chosen server, not a global Roll4Initiative identity service
+- login is against the chosen server, not a global PlayerTracker identity service
 
 Acceptance:
 
@@ -814,7 +815,7 @@ Acceptance:
 - renaming a player changes only the visible display name, not the player identity
 - player session identity is stable even when the visible display name changes
 - identity no longer depends on local `ownerId`
-- the initial auth system is explicitly local-server based, not tied to a central Roll4Initiative cloud account
+- the initial auth system is explicitly local-server based, not tied to a central PlayerTracker cloud account
 - auth/session ownership constraints are tightened here, after the M2 persistence foundation is in place
 
 ### M5: Authorization and Ownership Rewrite

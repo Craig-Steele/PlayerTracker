@@ -1,6 +1,6 @@
-package com.roll4initiative.android.api
+package com.playertracker.android.api
 
-import com.roll4initiative.android.models.*
+import com.playertracker.android.models.*
 import retrofit2.http.*
 import java.util.UUID
 

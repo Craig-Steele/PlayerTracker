@@ -31,6 +31,69 @@ struct ServerBootstrapOptions {
 }
 
 enum ServerBootstrap {
+    static func migrateLegacyAppDirectoriesIfNeeded(
+        fileManager: FileManager = .default,
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) throws {
+        let appSupportRoot = appSupportBaseDirectory(environment: environment)
+
+        try migrateDirectoryIfNeeded(
+            newDirectory: AppPaths.appDataDirectory(baseDirectory: appSupportRoot),
+            legacyDirectories: [
+                appSupportRoot.appendingPathComponent("PlayerTracker", isDirectory: true),
+                appSupportRoot.appendingPathComponent("Roll4Initiative", isDirectory: true)
+            ],
+            fileManager: fileManager
+        )
+    }
+
+    static func migrateDirectoryIfNeeded(
+        newDirectory: URL,
+        legacyDirectories: [URL],
+        fileManager: FileManager = .default
+    ) throws {
+        guard !fileManager.fileExists(atPath: newDirectory.path) else {
+            return
+        }
+
+        for legacyDirectory in legacyDirectories {
+            guard fileManager.fileExists(atPath: legacyDirectory.path) else {
+                continue
+            }
+            try fileManager.createDirectory(at: newDirectory.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try fileManager.moveItem(at: legacyDirectory, to: newDirectory)
+            return
+        }
+    }
+
+    private static func appSupportBaseDirectory(environment: [String: String]) -> URL {
+        #if os(macOS)
+        return FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support", isDirectory: true)
+        #elseif os(Windows)
+        return environmentDirectory("LOCALAPPDATA", environment: environment)
+        #else
+        return xdgDirectory(environmentKey: "XDG_DATA_HOME", fallbackPath: ".local/share", environment: environment)
+        #endif
+    }
+
+    private static func environmentDirectory(_ key: String, environment: [String: String]) -> URL {
+        if let rawValue = environment[key],
+           !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return URL(fileURLWithPath: rawValue, isDirectory: true)
+        }
+        return FileManager.default.homeDirectoryForCurrentUser
+    }
+
+    private static func xdgDirectory(environmentKey: String, fallbackPath: String, environment: [String: String]) -> URL {
+        if let rawValue = environment[environmentKey],
+           !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return URL(fileURLWithPath: rawValue, isDirectory: true)
+        }
+        return FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(fallbackPath, isDirectory: true)
+    }
+
     static func configure(
         _ app: Application,
         options: ServerBootstrapOptions = .production,
@@ -39,6 +102,8 @@ enum ServerBootstrap {
         if options.verboseOutput == false {
             app.logger.logLevel = .warning
         }
+
+        try migrateLegacyAppDirectoriesIfNeeded()
 
         let sitesDir = options.webClientDirectory.path + "/"
         let conditionLibrary = try library ?? RuleSetLibraryLoader.loadDefault()

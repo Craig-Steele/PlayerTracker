@@ -14,6 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Roll4InitiativeAndroid"
+rootProject.name = "PlayerTrackerAndroid"
 include(":app")
-

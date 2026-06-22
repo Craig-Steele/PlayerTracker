@@ -1,6 +1,6 @@
 # Client-Android
 
-Native Android player client for the Roll4Initiative/PlayerTracker Vapor server, built with Jetpack Compose and modern Android architecture.
+Native Android player client for the PlayerTracker Vapor server, built with Jetpack Compose and modern Android architecture.
 
 ## Current scope
 

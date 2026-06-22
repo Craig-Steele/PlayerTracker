@@ -1,6 +1,6 @@
 # Hosting Pricing Estimate
 
-This document captures a rough monthly hosting estimate for a commercial Roll4Initiative deployment on AWS, Azure, or Google Cloud.
+This document captures a rough monthly hosting estimate for a commercial PlayerTracker deployment on AWS, Azure, or Google Cloud.
 
 These numbers are directional planning estimates, not quoted prices.
 

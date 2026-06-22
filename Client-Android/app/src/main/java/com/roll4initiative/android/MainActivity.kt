@@ -1,4 +1,4 @@
-package com.roll4initiative.android
+package com.playertracker.android
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -6,9 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import com.roll4initiative.android.ui.MainScreen
-import com.roll4initiative.android.ui.PlayerAppViewModel
-import com.roll4initiative.android.ui.Roll4InitiativeTheme
+import com.playertracker.android.ui.MainScreen
+import com.playertracker.android.ui.PlayerAppViewModel
+import com.playertracker.android.ui.PlayerTrackerTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel: PlayerAppViewModel by viewModels()
@@ -16,7 +16,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Roll4InitiativeTheme {
+            PlayerTrackerTheme {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     MainScreen(viewModel)
                 }

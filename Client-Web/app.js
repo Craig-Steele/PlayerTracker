@@ -18,7 +18,7 @@ let displayRosterLayoutMode = 'single';
     showConfirmDialog,
     showChoiceDialog
   } = window.PlayerTrackerShared || {
-  APP_NAME: 'Roll4Initiative',
+  APP_NAME: 'Tactical Table Top: Initiative',
   APP_ICON_URL: '/favicon-512.png',
   QR_CODE_SIZE: 96,
   isAdminHost: () => false,
@@ -80,7 +80,7 @@ const { collectStatPayloadFromInputs } = window.PlayerTrackerStatInputs || {
 const {
   SESSION_EXPIRED_MESSAGE,
   resolvePlayerNameSaveOutcome
-} = window.Roll4InitiativePlayerNameSave || {
+} = window.TacticalTableTopInitiativePlayerNameSave || {
   SESSION_EXPIRED_MESSAGE: 'Player session expired. Please rejoin from the join page.',
   resolvePlayerNameSaveOutcome: ({ status, responsePayload, enteredName }) => {
     if (status === 401) {

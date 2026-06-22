@@ -1,4 +1,4 @@
-package com.roll4initiative.android.ui
+package com.playertracker.android.ui
 
 import android.app.Application
 import androidx.compose.runtime.getValue
@@ -10,8 +10,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import com.roll4initiative.android.api.ApiService
-import com.roll4initiative.android.models.*
+import com.playertracker.android.api.ApiService
+import com.playertracker.android.models.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map

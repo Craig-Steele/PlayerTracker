@@ -1,5 +1,5 @@
 (function () {
-  const APP_NAME = 'Roll4Initiative';
+  const APP_NAME = 'Tactical Table Top: Initiative';
   const APP_ICON_URL = '/favicon-512.png';
   const QR_CODE_SIZE = 96;
   let confirmDialogState = null;

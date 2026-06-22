@@ -34,6 +34,6 @@
     module.exports = api;
   }
   if (typeof window !== 'undefined') {
-    window.Roll4InitiativePlayerNameSave = api;
+    window.TacticalTableTopInitiativePlayerNameSave = api;
   }
 })();

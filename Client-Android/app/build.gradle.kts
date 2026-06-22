@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.roll4initiative.android"
+    namespace = "com.playertracker.android"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.roll4initiative.android"
+        applicationId = "com.playertracker.android"
         minSdk = 26
         targetSdk = 34
         versionCode = 1

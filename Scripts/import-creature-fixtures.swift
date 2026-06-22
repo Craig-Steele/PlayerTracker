@@ -92,19 +92,21 @@ func parseConfiguration() throws -> ImportConfiguration {
 
 func defaultUserDataDirectory(rulesetId: String) -> URL {
     let environment = ProcessInfo.processInfo.environment
+    let appFamilyDirectoryName = "TacticalTableTop"
+    let appDataDirectoryName = "Initiative"
 
     #if os(macOS)
     let root = FileManager.default.homeDirectoryForCurrentUser
-        .appendingPathComponent("Library/Application Support/Roll4Initiative", isDirectory: true)
+        .appendingPathComponent("Library/Application Support", isDirectory: true)
     #elseif os(Windows)
     let root = environmentDirectory("LOCALAPPDATA", environment: environment)
-        .appendingPathComponent("Roll4Initiative", isDirectory: true)
     #else
     let root = xdgDirectory(environmentKey: "XDG_DATA_HOME", fallbackPath: ".local/share", environment: environment)
-        .appendingPathComponent("Roll4Initiative", isDirectory: true)
     #endif
 
     return root
+        .appendingPathComponent(appFamilyDirectoryName, isDirectory: true)
+        .appendingPathComponent(appDataDirectoryName, isDirectory: true)
         .appendingPathComponent("userdata", isDirectory: true)
         .appendingPathComponent(rulesetId, isDirectory: true)
 }

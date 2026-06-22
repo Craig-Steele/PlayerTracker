@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Roll4Initiative</title>
+  <title>Tactical Table Top: Initiative</title>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -14,7 +14,7 @@
   <div class="player-campaign-card">
     <img id="player-ruleset-icon" class="ruleset-icon" alt="" />
     <div class="player-campaign-text">
-      <div id="player-campaign-name" class="player-campaign-name">Roll4Initiative</div>
+      <div id="player-campaign-name" class="player-campaign-name">Tactical Table Top: Initiative</div>
       <div class="ruleset-meta player-ruleset-meta">
         <a id="player-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
         <span id="player-ruleset-license-wrap" class="ruleset-license-wrap">
@@ -213,6 +213,7 @@
           <h2 id="party-treasure-dialog-title">💰 Party Treasure</h2>
           <div class="conditions-dialog-actions party-treasure-actions">
             <button type="button" id="party-treasure-money" class="secondary">🪙 Money</button>
+            <button type="button" id="party-treasure-disburse" class="secondary">📤 Disburse</button>
             <button type="button" id="party-treasure-add" class="secondary">➕ Add</button>
             <button type="button" id="party-treasure-cancel" class="secondary">✖️ Close</button>
           </div>
@@ -249,6 +250,25 @@
         </div>
         <div id="party-treasure-money-editor-summary" class="inventory-summary">Money for party treasure: —</div>
         <div id="party-treasure-money-fields" class="property-group currency-fields"></div>
+      </div>
+    </div>
+    <div id="party-treasure-disburse-panel" class="conditions-modal hidden" aria-hidden="true">
+      <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="party-treasure-disburse-dialog-title">
+        <div class="conditions-dialog-header">
+          <h2 id="party-treasure-disburse-dialog-title">🪙 Disburse Party Treasure Money</h2>
+          <div class="conditions-dialog-actions">
+            <button type="button" id="party-treasure-disburse-cancel" class="secondary">✖️ Cancel</button>
+            <button type="button" id="party-treasure-disburse-save">💾 Disburse</button>
+          </div>
+        </div>
+        <div id="party-treasure-disburse-summary" class="inventory-summary">Select characters and enter an amount.</div>
+        <label class="property-row" for="party-treasure-disburse-amount">
+          <span class="property-label">Amount</span>
+          <span class="property-control">
+            <input type="number" id="party-treasure-disburse-amount" step="any" min="0" inputmode="decimal" placeholder="Amount to disburse" />
+          </span>
+        </label>
+        <div id="party-treasure-disburse-characters" class="property-group"></div>
       </div>
     </div>
     <!-- Inventory modal -->
@@ -344,7 +364,7 @@
   <script src="add-form.js?v=3"></script>
   <script src="equipment-preset.js?v=1"></script>
   <script src="inventory-transfer.js?v=1"></script>
-  <script src="party-treasure.js?v=23"></script>
+  <script src="party-treasure.js?v=24"></script>
   <script src="inventory-view.js?v=7"></script>
   <script src="inventory-id.js?v=2"></script>
   <script src="player-name.js?v=2"></script>
@@ -355,6 +375,6 @@
   <script src="claimable-characters.js?v=2"></script>
   <script src="ruleset.js?v=3"></script>
   <script src="encounter.js?v=3"></script>
-  <script src="app.js?v=149"></script>
+  <script src="app.js?v=150"></script>
 </body>
 </html>

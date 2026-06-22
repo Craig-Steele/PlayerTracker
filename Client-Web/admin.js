@@ -4,7 +4,7 @@ const {
   isAdminHost,
   updateCampaignHeader
 } = window.PlayerTrackerShared || {
-  APP_NAME: 'Roll4Initiative',
+  APP_NAME: 'Tactical Table Top: Initiative',
   APP_ICON_URL: '/favicon-512.png',
   isAdminHost: () => false,
   updateCampaignHeader: () => {}

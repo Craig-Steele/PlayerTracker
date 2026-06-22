@@ -1,4 +1,4 @@
-package com.roll4initiative.android.ui
+package com.playertracker.android.ui
 
 import android.content.res.Configuration
 import androidx.compose.ui.platform.LocalConfiguration
@@ -77,7 +77,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.set
 import coil.compose.AsyncImage
-import com.roll4initiative.android.models.*
+import com.playertracker.android.models.*
 import java.net.URI
 import java.util.*
 

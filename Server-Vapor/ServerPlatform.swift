@@ -2,17 +2,27 @@ import Foundation
 import Vapor
 
 enum AppPaths {
+    private static let appFamilyDirectoryName = "TacticalTableTop"
+    private static let appDataDirectoryName = "Initiative"
+
     static func appDataDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
         #if os(macOS)
-        return FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/Roll4Initiative", isDirectory: true)
+        let root = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support", isDirectory: true)
+        return appDataDirectory(baseDirectory: root)
         #elseif os(Windows)
-        return environmentDirectory("LOCALAPPDATA", environment: environment)
-            .appendingPathComponent("Roll4Initiative", isDirectory: true)
+        let root = environmentDirectory("LOCALAPPDATA", environment: environment)
+        return appDataDirectory(baseDirectory: root)
         #else
-        return xdgDirectory(environmentKey: "XDG_DATA_HOME", fallbackPath: ".local/share", environment: environment)
-            .appendingPathComponent("Roll4Initiative", isDirectory: true)
+        let root = xdgDirectory(environmentKey: "XDG_DATA_HOME", fallbackPath: ".local/share", environment: environment)
+        return appDataDirectory(baseDirectory: root)
         #endif
+    }
+
+    static func appDataDirectory(baseDirectory: URL) -> URL {
+        baseDirectory
+            .appendingPathComponent(appFamilyDirectoryName, isDirectory: true)
+            .appendingPathComponent(appDataDirectoryName, isDirectory: true)
     }
 
     static func appDataDirectory(
@@ -34,6 +44,15 @@ enum AppPaths {
 
     static func userDataDirectory(
         rulesetId: String,
+        baseDirectory: URL
+    ) -> URL {
+        appDataDirectory(baseDirectory: baseDirectory)
+            .appendingPathComponent("userdata", isDirectory: true)
+            .appendingPathComponent(rulesetId, isDirectory: true)
+    }
+
+    static func userDataDirectory(
+        rulesetId: String,
         application: Application,
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) -> URL {
@@ -44,15 +63,22 @@ enum AppPaths {
 
     static func logsDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
         #if os(macOS)
-        FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Logs/Roll4Initiative", isDirectory: true)
+        let root = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Logs", isDirectory: true)
+        return logsDirectory(baseDirectory: root)
         #elseif os(Windows)
-        environmentDirectory("LOCALAPPDATA", environment: environment)
-            .appendingPathComponent("Roll4Initiative/Logs", isDirectory: true)
+        let root = environmentDirectory("LOCALAPPDATA", environment: environment)
+        return logsDirectory(baseDirectory: root)
         #else
-        xdgDirectory(environmentKey: "XDG_STATE_HOME", fallbackPath: ".local/state", environment: environment)
-            .appendingPathComponent("Roll4Initiative/logs", isDirectory: true)
+        let root = xdgDirectory(environmentKey: "XDG_STATE_HOME", fallbackPath: ".local/state", environment: environment)
+        return logsDirectory(baseDirectory: root)
         #endif
+    }
+
+    static func logsDirectory(baseDirectory: URL) -> URL {
+        baseDirectory
+            .appendingPathComponent(appFamilyDirectoryName, isDirectory: true)
+            .appendingPathComponent("\(appDataDirectoryName)/logs", isDirectory: true)
     }
 
     static func webClientDirectory() -> URL {

@@ -1,8 +1,8 @@
 # Server Workflow
 
-This document covers the local server-owner workflow for Roll4Initiative.
+This document covers the local server-owner workflow for PlayerTracker.
 
-The server owner signs into the server itself, not a central Roll4Initiative account service.
+The server owner signs into the server itself, not a central PlayerTracker account service.
 The web admin page includes the owner sign-up/login/logout/session-restore controls.
 
 ## Sign Up

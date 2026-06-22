@@ -1,4 +1,4 @@
-# Roll4Initiative Test Plan
+# PlayerTracker Test Plan
 
 This plan tracks the practical test coverage needed for the current local-network Vapor server and native/web clients.
 
@@ -37,7 +37,7 @@ swift test
 
 Goal: protect campaign settings and encounter state persistence.
 
-- Verify campaign state writes to `~/Library/Application Support/Roll4Initiative/campaign.json`.
+- Verify campaign state writes to `~/Library/Application Support/TacticalTableTop/Initiative/campaign.json`.
 - Verify the parent directory is created before saving.
 - Verify a newly initialized `CampaignStore` restores persisted campaign name and ruleset.
 - Verify restored encounter state intentionally resets to `.new`.

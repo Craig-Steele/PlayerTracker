@@ -29,5 +29,5 @@ Then set a signing team for the `PlayerTrackeriOS` target before running on devi
 - the server settings sheet supports both QR scanning and QR display for quick sharing
 - the QR scanner supports pinch-to-zoom
 - the app talks to the existing HTTP server on port `8080`
-- the installed iOS app name is `Roll For Initiative!`
+- the installed iOS app name is `Tactical Table Top: Initiative`
 - `Info.plist` currently allows HTTP so it can connect to local-network PlayerTracker hosts during development
