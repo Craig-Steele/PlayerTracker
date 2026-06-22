@@ -501,6 +501,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const partyTreasureMoneyDialogTitle = document.getElementById('party-treasure-money-dialog-title');
   const partyTreasureMoneySummary = document.getElementById('party-treasure-money-summary');
   const partyTreasureMoneyEditorSummary = document.getElementById('party-treasure-money-editor-summary');
+  const partyTreasureDisburseBtn = document.getElementById('party-treasure-disburse');
+  const partyTreasureDisbursePanel = document.getElementById('party-treasure-disburse-panel');
+  const partyTreasureDisburseAmountInput = document.getElementById('party-treasure-disburse-amount');
+  const partyTreasureDisburseCharacters = document.getElementById('party-treasure-disburse-characters');
+  const partyTreasureDisburseSummary = document.getElementById('party-treasure-disburse-summary');
+  const partyTreasureDisburseSaveBtn = document.getElementById('party-treasure-disburse-save');
+  const partyTreasureDisburseCancelBtn = document.getElementById('party-treasure-disburse-cancel');
+  const partyTreasureDisburseDialogTitle = document.getElementById('party-treasure-disburse-dialog-title');
   const partyTreasureCancelBtn = document.getElementById('party-treasure-cancel');
   const partyTreasureAddBtn = document.getElementById('party-treasure-add');
   const partyTreasureEditBtn = document.getElementById('party-treasure-edit');
@@ -577,6 +585,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let statAliases = new Map();
   let currencySystem = null;
   let currentPartyTreasureCurrency = [];
+  let currentPartyTreasureDisburseCharacterIds = [];
   let equipmentLibraryReference = null;
   let equipmentCategoryIcons = {};
   let equipmentLibraryItems = [];
@@ -1212,6 +1221,14 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       }
       return true;
     }
+    if (partyTreasureDisbursePanel && !partyTreasureDisbursePanel.classList.contains('hidden')) {
+      if (partyTreasureDisburseCancelBtn) {
+        partyTreasureDisburseCancelBtn.click();
+      } else {
+        closePartyTreasureDisburseEditor();
+      }
+      return true;
+    }
     if (partyTreasurePanel && !partyTreasurePanel.classList.contains('hidden')) {
       if (partyTreasureCancelBtn) {
         partyTreasureCancelBtn.click();
@@ -1588,6 +1605,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     }
   }
 
+  function formatPartyTreasureCurrencyAmount(amount) {
+    if (!inventoryView.formatCurrencyTotal || !currencySystem) {
+      return String(Math.round(Number(amount) * 100) / 100);
+    }
+    const commonCurrencyId = currencySystem.commonCurrencyId || '';
+    const formatted = inventoryView.formatCurrencyTotal(
+      { currency: [{ unitId: commonCurrencyId, amount: Number(amount) || 0 }] },
+      currencySystem
+    );
+    return formatted || String(Math.round(Number(amount) * 100) / 100);
+  }
+
   function buildPartyTreasureMoneyFields() {
     if (!partyTreasureMoneyFields || !inventoryView.buildCurrencyFields) return;
     inventoryView.buildCurrencyFields(partyTreasureMoneyFields, { currency: currentPartyTreasureCurrency }, currencySystem, {
@@ -1639,6 +1668,192 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       partyTreasureMoneyDialogTitle.textContent = '🪙 Party Treasure Money';
     }
     setPartyTreasureMoneyPanelOpen(false);
+  }
+
+  function getPartyTreasureDisburseCharacters() {
+    return Array.isArray(myCharacters) ? myCharacters.filter((character) => Boolean(character?.id)) : [];
+  }
+
+  function setPartyTreasureDisbursePanelOpen(open) {
+    if (!partyTreasureDisbursePanel) return;
+    partyTreasureDisbursePanel.classList.toggle('hidden', !open);
+    partyTreasureDisbursePanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function updatePartyTreasureDisburseSummary() {
+    if (!partyTreasureDisburseSummary) return;
+    const amount = Number(partyTreasureDisburseAmountInput?.value || 0);
+    const selectedCount = Array.from(partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || []).length;
+    const totalSummary = inventoryView.formatCurrencyTotal
+      ? inventoryView.formatCurrencyTotal({ currency: currentPartyTreasureCurrency }, currencySystem)
+      : null;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      partyTreasureDisburseSummary.textContent = totalSummary
+        ? `Available to disburse: ${totalSummary}. Select characters and enter an amount.`
+        : 'Select characters and enter an amount.';
+      return;
+    }
+    const split = partyTreasureHelpers.splitCommonCurrencyEvenly
+      ? partyTreasureHelpers.splitCommonCurrencyEvenly(amount, selectedCount, currencySystem)
+      : null;
+    if (!split || selectedCount <= 0) {
+      partyTreasureDisburseSummary.textContent = totalSummary
+        ? `Available to disburse: ${totalSummary}. Select at least one character.`
+        : 'Select at least one character.';
+      return;
+    }
+    const shareSummary = formatPartyTreasureCurrencyAmount(split.shareCommonAmount);
+    const remainderSummary = formatPartyTreasureCurrencyAmount(split.remainderCommonAmount);
+    partyTreasureDisburseSummary.textContent = `Each selected character gets ${shareSummary}; ${remainderSummary} remains in party treasure.`;
+  }
+
+  function buildPartyTreasureDisburseFields() {
+    if (!partyTreasureDisburseCharacters) return;
+    partyTreasureDisburseCharacters.innerHTML = '';
+    const characters = getPartyTreasureDisburseCharacters();
+    const defaultSelected = currentPartyTreasureDisburseCharacterIds.length > 0
+      ? new Set(currentPartyTreasureDisburseCharacterIds)
+      : new Set(characters.map((character) => character.id));
+    characters.forEach((character) => {
+      const label = document.createElement('label');
+      label.className = 'property-row party-treasure-disburse-character-row';
+      const labelText = document.createElement('span');
+      labelText.className = 'property-label';
+      labelText.textContent = character.name || 'Character';
+      const control = document.createElement('span');
+      control.className = 'property-control';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = defaultSelected.has(character.id);
+      checkbox.dataset.disburseCharacterId = character.id;
+      checkbox.addEventListener('change', () => {
+        currentPartyTreasureDisburseCharacterIds = Array.from(
+          partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || []
+        ).map((input) => input.dataset.disburseCharacterId || '').filter(Boolean);
+        updatePartyTreasureDisburseSummary();
+      });
+      control.appendChild(checkbox);
+      label.appendChild(labelText);
+      label.appendChild(control);
+      partyTreasureDisburseCharacters.appendChild(label);
+    });
+    currentPartyTreasureDisburseCharacterIds = Array.from(
+      partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || []
+    ).map((input) => input.dataset.disburseCharacterId || '').filter(Boolean);
+    updatePartyTreasureDisburseSummary();
+  }
+
+  function openPartyTreasureDisburseEditor() {
+    if (!currencySystem || !partyTreasureDisbursePanel) return;
+    closeCharacterOverflowMenu();
+    closePartyTreasureMoneyEditor();
+    if (partyTreasureDisburseDialogTitle) {
+      partyTreasureDisburseDialogTitle.textContent = '🪙 Disburse Party Treasure Money';
+    }
+    buildPartyTreasureDisburseFields();
+    if (partyTreasureDisburseAmountInput) {
+      partyTreasureDisburseAmountInput.value = '';
+    }
+    updatePartyTreasureDisburseSummary();
+    setPartyTreasureDisbursePanelOpen(true);
+    window.requestAnimationFrame(() => {
+      partyTreasureDisburseAmountInput?.focus();
+      partyTreasureDisburseAmountInput?.select?.();
+    });
+  }
+
+  function closePartyTreasureDisburseEditor() {
+    if (partyTreasureDisburseCharacters) {
+      partyTreasureDisburseCharacters.innerHTML = '';
+    }
+    if (partyTreasureDisburseAmountInput) {
+      partyTreasureDisburseAmountInput.value = '';
+    }
+    currentPartyTreasureDisburseCharacterIds = [];
+    if (partyTreasureDisburseDialogTitle) {
+      partyTreasureDisburseDialogTitle.textContent = '🪙 Disburse Party Treasure Money';
+    }
+    if (partyTreasureDisburseSummary) {
+      partyTreasureDisburseSummary.textContent = 'Select characters and enter an amount.';
+    }
+    setPartyTreasureDisbursePanelOpen(false);
+  }
+
+  async function savePartyTreasureDisburseFromEditor() {
+    const amount = Number(partyTreasureDisburseAmountInput?.value || 0);
+    const selectedIds = Array.from(partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || [])
+      .map((input) => input.dataset.disburseCharacterId || '')
+      .filter(Boolean);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      statusDiv.textContent = 'Enter an amount to disburse.';
+      return;
+    }
+    if (selectedIds.length === 0) {
+      statusDiv.textContent = 'Select at least one character to receive a share.';
+      return;
+    }
+    const split = partyTreasureHelpers.splitCommonCurrencyEvenly
+      ? partyTreasureHelpers.splitCommonCurrencyEvenly(amount, selectedIds.length, currencySystem)
+      : null;
+    if (!split || split.distributableLowestUnits <= 0 || split.shareLowestUnits <= 0) {
+      statusDiv.textContent = 'The amount is too small to split among the selected characters.';
+      return;
+    }
+    const currentTotal = inventoryView.calculateCurrencyTotal
+      ? inventoryView.calculateCurrencyTotal({ currency: currentPartyTreasureCurrency }, currencySystem)
+      : 0;
+    if (Number.isFinite(currentTotal) && split.distributableCommonAmount > currentTotal + 1e-9) {
+      statusDiv.textContent = 'Party treasure does not have enough money for that disbursement.';
+      return;
+    }
+    const selectedCharacters = selectedIds
+      .map((characterId) => myCharacters.find((character) => character.id === characterId))
+      .filter(Boolean);
+    if (selectedCharacters.length === 0) {
+      statusDiv.textContent = 'Select at least one valid character.';
+      return;
+    }
+    const originalPartyTreasureCurrency = Array.isArray(currentPartyTreasureCurrency)
+      ? currentPartyTreasureCurrency.map((amountEntry) => ({ ...amountEntry }))
+      : [];
+    const originalCharacters = selectedCharacters.map((character) => ({
+      id: character.id,
+      currency: Array.isArray(character.currency) ? character.currency.map((amountEntry) => ({ ...amountEntry })) : []
+    }));
+    const updatedPartyTreasureCurrency = partyTreasureHelpers.applyCurrencyDelta
+      ? partyTreasureHelpers.applyCurrencyDelta(currentPartyTreasureCurrency, currencySystem, -split.distributableCommonAmount)
+      : currentPartyTreasureCurrency;
+    const shareCurrencyDelta = split.shareCommonAmount;
+    try {
+      for (const character of selectedCharacters) {
+        character.currency = partyTreasureHelpers.applyCurrencyDelta
+          ? partyTreasureHelpers.applyCurrencyDelta(character.currency, currencySystem, shareCurrencyDelta)
+          : character.currency;
+        await saveCharacterEntry(character, { reloadState: false });
+      }
+      await savePartyTreasureItems(currentPartyTreasure, updatedPartyTreasureCurrency);
+      currentPartyTreasureCurrency = Array.isArray(updatedPartyTreasureCurrency)
+        ? updatedPartyTreasureCurrency
+        : currentPartyTreasureCurrency;
+      updatePartyTreasureMoneySummary();
+      closePartyTreasureDisburseEditor();
+      await loadState();
+      statusDiv.textContent = `Disbursed ${formatPartyTreasureCurrencyAmount(split.distributableCommonAmount)} across ${selectedCharacters.length} characters.`;
+    } catch (err) {
+      try {
+        for (const original of originalCharacters) {
+          const character = myCharacters.find((entry) => entry.id === original.id);
+          if (!character) continue;
+          character.currency = original.currency;
+          await saveCharacterEntry(character, { reloadState: false });
+        }
+        await savePartyTreasureItems(currentPartyTreasure, originalPartyTreasureCurrency);
+      } catch (rollbackErr) {
+        console.error('Failed to roll back party treasure disbursement:', rollbackErr);
+      }
+      await loadState();
+      statusDiv.textContent = `Party treasure disbursement failed: ${err instanceof Error ? err.message : String(err)}`;
+    }
   }
 
   async function savePartyTreasureMoneyFromEditor() {
@@ -1753,9 +1968,19 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const canEdit = hasSelection && !isAddFormOpen;
     const canRemove = hasSelection && !isAddFormOpen;
     const canEditMoney = Boolean(currencySystem && Array.isArray(currencySystem.units) && currencySystem.units.length > 0);
+    const canDisburse = Boolean(
+      canEditMoney &&
+      Array.isArray(myCharacters) &&
+      myCharacters.length > 0 &&
+      Array.isArray(currentPartyTreasureCurrency)
+    );
     if (partyTreasureMoneyBtn) {
       partyTreasureMoneyBtn.disabled = !canEditMoney;
       partyTreasureMoneyBtn.setAttribute('aria-disabled', (!canEditMoney).toString());
+    }
+    if (partyTreasureDisburseBtn) {
+      partyTreasureDisburseBtn.disabled = !canDisburse;
+      partyTreasureDisburseBtn.setAttribute('aria-disabled', (!canDisburse).toString());
     }
     if (partyTreasureAddBtn) {
       partyTreasureAddBtn.disabled = isAddFormOpen;
@@ -2192,6 +2417,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     closeCharacterOverflowMenu();
     closeInventoryEditor();
     closePartyTreasureMoneyEditor();
+    closePartyTreasureDisburseEditor();
     if (
       currencyEditorDirty &&
       !(await showConfirmDialog({
@@ -2228,6 +2454,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
   function closePartyTreasureEditor() {
     closePartyTreasureMoneyEditor();
+    closePartyTreasureDisburseEditor();
     partyTreasureEditorCharacterId = null;
     partyTreasureSelectedRow = null;
     if (partyTreasureDialogTitle) {
@@ -4020,8 +4247,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     perCharacterSaveTimers.set(timerKey, timer);
   }
 
-  async function saveCharacterEntry(character) {
+  async function saveCharacterEntry(character, options = {}) {
     if (!character) return;
+    const reloadState = options.reloadState !== false;
     try {
       await ensurePlayerSessionId();
       const payload = {
@@ -4068,7 +4296,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       upsertMyCharacter(savedCharacter);
       updateDraftForCharacter(savedCharacter);
       lastStateJson = null;
-      await loadState();
+      if (reloadState) {
+        await loadState();
+      }
       return savedCharacter;
     } catch (err) {
       console.error('Failed to auto-save character:', err);
@@ -6071,6 +6301,11 @@ function getOwnerName() {
       openPartyTreasureMoneyEditor();
     });
   }
+  if (partyTreasureDisburseBtn) {
+    partyTreasureDisburseBtn.addEventListener('click', () => {
+      openPartyTreasureDisburseEditor();
+    });
+  }
   if (partyTreasureEditBtn) {
     partyTreasureEditBtn.addEventListener('click', () => {
       editSelectedPartyTreasureItem();
@@ -6131,6 +6366,16 @@ function getOwnerName() {
       closePartyTreasureMoneyEditor();
     });
   }
+  if (partyTreasureDisburseSaveBtn) {
+    partyTreasureDisburseSaveBtn.addEventListener('click', async () => {
+      await savePartyTreasureDisburseFromEditor();
+    });
+  }
+  if (partyTreasureDisburseCancelBtn) {
+    partyTreasureDisburseCancelBtn.addEventListener('click', () => {
+      closePartyTreasureDisburseEditor();
+    });
+  }
 
   if (partyTreasureCancelBtn) {
     partyTreasureCancelBtn.addEventListener('click', () => {
@@ -6142,6 +6387,17 @@ function getOwnerName() {
     partyTreasureMoneyPanel.addEventListener('click', (event) => {
       if (event.target !== partyTreasureMoneyPanel) return;
       closePartyTreasureMoneyEditor();
+    });
+  }
+  if (partyTreasureDisbursePanel) {
+    partyTreasureDisbursePanel.addEventListener('click', (event) => {
+      if (event.target !== partyTreasureDisbursePanel) return;
+      closePartyTreasureDisburseEditor();
+    });
+  }
+  if (partyTreasureDisburseAmountInput) {
+    partyTreasureDisburseAmountInput.addEventListener('input', () => {
+      updatePartyTreasureDisburseSummary();
     });
   }
 

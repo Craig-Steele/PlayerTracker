@@ -446,9 +446,9 @@
     const lowestUnit = getLowestCurrencyUnit(currencySystem);
     const lowestUnitValue = Number(lowestUnit?.valueInCommonCurrency);
     if (!Number.isFinite(lowestUnitValue) || lowestUnitValue <= 0) {
-      return Math.max(0, Math.round(normalizedAmount));
+      return Math.round(normalizedAmount);
     }
-    return Math.max(0, Math.round(normalizedAmount / lowestUnitValue));
+    return Math.round(normalizedAmount / lowestUnitValue);
   }
 
   function convertLowestUnitAmountToCurrencyBreakdown(lowestUnitAmount = 0, currencySystem = null) {
@@ -487,6 +487,39 @@
       }
     });
     return breakdown;
+  }
+
+  function splitCommonCurrencyEvenly(amount = 0, recipientCount = 0, currencySystem = null) {
+    const normalizedAmount = Math.max(0, convertCommonCurrencyToLowestUnitAmount(amount, currencySystem));
+    const normalizedRecipientCount = Math.max(0, Math.floor(Number(recipientCount)));
+    if (normalizedAmount === 0 || normalizedRecipientCount === 0) {
+      return {
+        totalLowestUnits: normalizedAmount,
+        distributableLowestUnits: 0,
+        shareLowestUnits: 0,
+        remainderLowestUnits: normalizedAmount,
+        totalCommonAmount: normalizedAmount > 0 && currencySystem ? normalizedAmount * Number(getLowestCurrencyUnit(currencySystem)?.valueInCommonCurrency || 0) : 0,
+        distributableCommonAmount: 0,
+        shareCommonAmount: 0,
+        remainderCommonAmount: normalizedAmount > 0 && currencySystem ? normalizedAmount * Number(getLowestCurrencyUnit(currencySystem)?.valueInCommonCurrency || 0) : 0
+      };
+    }
+    const distributableLowestUnits = normalizedAmount - (normalizedAmount % normalizedRecipientCount);
+    const shareLowestUnits = distributableLowestUnits / normalizedRecipientCount;
+    const remainderLowestUnits = normalizedAmount - distributableLowestUnits;
+    const lowestUnit = getLowestCurrencyUnit(currencySystem);
+    const lowestUnitValue = Number(lowestUnit?.valueInCommonCurrency);
+    const lowestUnitValueOrZero = Number.isFinite(lowestUnitValue) && lowestUnitValue > 0 ? lowestUnitValue : 0;
+    return {
+      totalLowestUnits: normalizedAmount,
+      distributableLowestUnits,
+      shareLowestUnits,
+      remainderLowestUnits,
+      totalCommonAmount: normalizeMoneyValue(normalizedAmount * lowestUnitValueOrZero),
+      distributableCommonAmount: normalizeMoneyValue(distributableLowestUnits * lowestUnitValueOrZero),
+      shareCommonAmount: normalizeMoneyValue(shareLowestUnits * lowestUnitValueOrZero),
+      remainderCommonAmount: normalizeMoneyValue(remainderLowestUnits * lowestUnitValueOrZero)
+    };
   }
 
   function applyCurrencyDelta(currencyAmounts = [], currencySystem = null, delta = 0) {
@@ -823,6 +856,7 @@
     getLowestCurrencyUnitLabel,
     convertCommonCurrencyToLowestUnitAmount,
     convertLowestUnitAmountToCurrencyBreakdown,
+    splitCommonCurrencyEvenly,
     applyCurrencyDelta,
     getEquipmentItemCategory,
     resolveCategoryGlyph,

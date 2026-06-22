@@ -204,6 +204,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const partyTreasureMoneyDialogTitle = document.getElementById('ref-party-treasure-money-dialog-title');
   const partyTreasureMoneySummary = document.getElementById('ref-party-treasure-money-summary');
   const partyTreasureMoneyEditorSummary = document.getElementById('ref-party-treasure-money-editor-summary');
+  const partyTreasureDisburseBtn = document.getElementById('ref-party-treasure-disburse');
+  const partyTreasureDisbursePanel = document.getElementById('ref-party-treasure-disburse-panel');
+  const partyTreasureDisburseAmountInput = document.getElementById('ref-party-treasure-disburse-amount');
+  const partyTreasureDisburseCharacters = document.getElementById('ref-party-treasure-disburse-characters');
+  const partyTreasureDisburseSummary = document.getElementById('ref-party-treasure-disburse-summary');
+  const partyTreasureDisburseSaveBtn = document.getElementById('ref-party-treasure-disburse-save');
+  const partyTreasureDisburseCancelBtn = document.getElementById('ref-party-treasure-disburse-cancel');
+  const partyTreasureDisburseDialogTitle = document.getElementById('ref-party-treasure-disburse-dialog-title');
   const partyTreasureCancelBtn = document.getElementById('ref-party-treasure-cancel');
   const partyTreasureAddBtn = document.getElementById('ref-party-treasure-add');
   const partyTreasureEditBtn = document.getElementById('ref-party-treasure-edit');
@@ -309,6 +317,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let currentCampaignInviteOnly = false;
   let currentPartyTreasure = [];
   let currentPartyTreasureCurrency = [];
+  let currentPartyTreasureDisburseCharacterIds = [];
   let currentInventory = [];
   let availableRulesets = [];
   let currentHealthLabel = 'HP';
@@ -936,6 +945,11 @@ window.addEventListener('DOMContentLoaded', () => {
       openPartyTreasureMoneyEditor();
     });
   }
+  if (partyTreasureDisburseBtn) {
+    partyTreasureDisburseBtn.addEventListener('click', () => {
+      openPartyTreasureDisburseEditor();
+    });
+  }
   if (partyTreasureEditBtn) {
     partyTreasureEditBtn.addEventListener('click', () => {
       closeRefereeRowOverflowMenus();
@@ -987,6 +1001,16 @@ window.addEventListener('DOMContentLoaded', () => {
       closePartyTreasureMoneyEditor();
     });
   }
+  if (partyTreasureDisburseSaveBtn) {
+    partyTreasureDisburseSaveBtn.addEventListener('click', async () => {
+      await savePartyTreasureDisburseFromEditor();
+    });
+  }
+  if (partyTreasureDisburseCancelBtn) {
+    partyTreasureDisburseCancelBtn.addEventListener('click', () => {
+      closePartyTreasureDisburseEditor();
+    });
+  }
   if (partyTreasureCancelBtn) {
     partyTreasureCancelBtn.addEventListener('click', async () => {
       closePartyTreasureEditor();
@@ -996,6 +1020,17 @@ window.addEventListener('DOMContentLoaded', () => {
     partyTreasureMoneyPanel.addEventListener('click', async (event) => {
       if (event.target !== partyTreasureMoneyPanel) return;
       closePartyTreasureMoneyEditor();
+    });
+  }
+  if (partyTreasureDisbursePanel) {
+    partyTreasureDisbursePanel.addEventListener('click', async (event) => {
+      if (event.target !== partyTreasureDisbursePanel) return;
+      closePartyTreasureDisburseEditor();
+    });
+  }
+  if (partyTreasureDisburseAmountInput) {
+    partyTreasureDisburseAmountInput.addEventListener('input', () => {
+      updatePartyTreasureDisburseSummary();
     });
   }
   if (partyTreasurePanel) {
@@ -3078,9 +3113,19 @@ window.addEventListener('DOMContentLoaded', () => {
     const canEdit = hasSelection && !isAddFormOpen;
     const canRemove = hasSelection && !isAddFormOpen;
     const canEditMoney = Boolean(currencySystem && Array.isArray(currencySystem.units) && currencySystem.units.length > 0);
+    const canDisburse = Boolean(
+      canEditMoney &&
+      Array.isArray(currentPlayers) &&
+      currentPlayers.length > 0 &&
+      Array.isArray(currentPartyTreasureCurrency)
+    );
     if (partyTreasureMoneyBtn) {
       partyTreasureMoneyBtn.disabled = !canEditMoney;
       partyTreasureMoneyBtn.setAttribute('aria-disabled', (!canEditMoney).toString());
+    }
+    if (partyTreasureDisburseBtn) {
+      partyTreasureDisburseBtn.disabled = !canDisburse;
+      partyTreasureDisburseBtn.setAttribute('aria-disabled', (!canDisburse).toString());
     }
     if (partyTreasureAddBtn) {
       partyTreasureAddBtn.disabled = isAddFormOpen;
@@ -3361,6 +3406,18 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function formatPartyTreasureCurrencyAmount(amount) {
+    if (!inventoryView.formatCurrencyTotal || !currencySystem) {
+      return String(Math.round(Number(amount) * 100) / 100);
+    }
+    const commonCurrencyId = currencySystem.commonCurrencyId || '';
+    const formatted = inventoryView.formatCurrencyTotal(
+      { currency: [{ unitId: commonCurrencyId, amount: Number(amount) || 0 }] },
+      currencySystem
+    );
+    return formatted || String(Math.round(Number(amount) * 100) / 100);
+  }
+
   function buildPartyTreasureMoneyFields() {
     if (!partyTreasureMoneyFields || !inventoryView.buildCurrencyFields) return;
     inventoryView.buildCurrencyFields(partyTreasureMoneyFields, { currency: currentPartyTreasureCurrency }, currencySystem, {
@@ -3412,6 +3469,195 @@ window.addEventListener('DOMContentLoaded', () => {
       partyTreasureMoneyDialogTitle.textContent = '🪙 Party Treasure Money';
     }
     setPartyTreasureMoneyPanelOpen(false);
+  }
+
+  function getPartyTreasureDisburseCharacters() {
+    return Array.isArray(currentPlayers) ? currentPlayers.filter((player) => Boolean(player?.id)) : [];
+  }
+
+  function setPartyTreasureDisbursePanelOpen(open) {
+    if (!partyTreasureDisbursePanel) return;
+    partyTreasureDisbursePanel.classList.toggle('hidden', !open);
+    partyTreasureDisbursePanel.setAttribute('aria-hidden', (!open).toString());
+  }
+
+  function updatePartyTreasureDisburseSummary() {
+    if (!partyTreasureDisburseSummary) return;
+    const amount = Number(partyTreasureDisburseAmountInput?.value || 0);
+    const selectedCount = Array.from(partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || []).length;
+    const totalSummary = inventoryView.formatCurrencyTotal
+      ? inventoryView.formatCurrencyTotal({ currency: currentPartyTreasureCurrency }, currencySystem)
+      : null;
+    if (!Number.isFinite(amount) || amount <= 0) {
+      partyTreasureDisburseSummary.textContent = totalSummary
+        ? `Available to disburse: ${totalSummary}. Select characters and enter an amount.`
+        : 'Select characters and enter an amount.';
+      return;
+    }
+    const split = partyTreasureHelpers.splitCommonCurrencyEvenly
+      ? partyTreasureHelpers.splitCommonCurrencyEvenly(amount, selectedCount, currencySystem)
+      : null;
+    if (!split || selectedCount <= 0) {
+      partyTreasureDisburseSummary.textContent = totalSummary
+        ? `Available to disburse: ${totalSummary}. Select at least one character.`
+        : 'Select at least one character.';
+      return;
+    }
+    const shareSummary = formatPartyTreasureCurrencyAmount(split.shareCommonAmount);
+    const remainderSummary = formatPartyTreasureCurrencyAmount(split.remainderCommonAmount);
+    partyTreasureDisburseSummary.textContent = `Each selected character gets ${shareSummary}; ${remainderSummary} remains in party treasure.`;
+  }
+
+  function buildPartyTreasureDisburseFields() {
+    if (!partyTreasureDisburseCharacters) return;
+    partyTreasureDisburseCharacters.innerHTML = '';
+    const characters = getPartyTreasureDisburseCharacters();
+    const defaultSelected = currentPartyTreasureDisburseCharacterIds.length > 0
+      ? new Set(currentPartyTreasureDisburseCharacterIds)
+      : new Set(characters.map((character) => character.id));
+    characters.forEach((character) => {
+      const label = document.createElement('label');
+      label.className = 'property-row party-treasure-disburse-character-row';
+      const labelText = document.createElement('span');
+      labelText.className = 'property-label';
+      labelText.textContent = character.name || 'Character';
+      const control = document.createElement('span');
+      control.className = 'property-control';
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = defaultSelected.has(character.id);
+      checkbox.dataset.disburseCharacterId = character.id;
+      checkbox.addEventListener('change', () => {
+        currentPartyTreasureDisburseCharacterIds = Array.from(
+          partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || []
+        ).map((input) => input.dataset.disburseCharacterId || '').filter(Boolean);
+        updatePartyTreasureDisburseSummary();
+      });
+      control.appendChild(checkbox);
+      label.appendChild(labelText);
+      label.appendChild(control);
+      partyTreasureDisburseCharacters.appendChild(label);
+    });
+    currentPartyTreasureDisburseCharacterIds = Array.from(
+      partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || []
+    ).map((input) => input.dataset.disburseCharacterId || '').filter(Boolean);
+    updatePartyTreasureDisburseSummary();
+  }
+
+  function openPartyTreasureDisburseEditor() {
+    if (!currencySystem || !partyTreasureDisbursePanel) return;
+    closeRefereeRowOverflowMenus();
+    closePartyTreasureMoneyEditor();
+    if (partyTreasureDisburseDialogTitle) {
+      partyTreasureDisburseDialogTitle.textContent = '🪙 Disburse Party Treasure Money';
+    }
+    buildPartyTreasureDisburseFields();
+    if (partyTreasureDisburseAmountInput) {
+      partyTreasureDisburseAmountInput.value = '';
+    }
+    updatePartyTreasureDisburseSummary();
+    setPartyTreasureDisbursePanelOpen(true);
+    window.requestAnimationFrame(() => {
+      partyTreasureDisburseAmountInput?.focus();
+      partyTreasureDisburseAmountInput?.select?.();
+    });
+  }
+
+  function closePartyTreasureDisburseEditor() {
+    if (partyTreasureDisburseCharacters) {
+      partyTreasureDisburseCharacters.innerHTML = '';
+    }
+    if (partyTreasureDisburseAmountInput) {
+      partyTreasureDisburseAmountInput.value = '';
+    }
+    currentPartyTreasureDisburseCharacterIds = [];
+    if (partyTreasureDisburseDialogTitle) {
+      partyTreasureDisburseDialogTitle.textContent = '🪙 Disburse Party Treasure Money';
+    }
+    if (partyTreasureDisburseSummary) {
+      partyTreasureDisburseSummary.textContent = 'Select characters and enter an amount.';
+    }
+    setPartyTreasureDisbursePanelOpen(false);
+  }
+
+  async function savePartyTreasureDisburseFromEditor() {
+    const amount = Number(partyTreasureDisburseAmountInput?.value || 0);
+    const selectedIds = Array.from(partyTreasureDisbursePanel?.querySelectorAll('input[data-disburse-character-id]:checked') || [])
+      .map((input) => input.dataset.disburseCharacterId || '')
+      .filter(Boolean);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      if (statusDiv) statusDiv.textContent = 'Enter an amount to disburse.';
+      return;
+    }
+    if (selectedIds.length === 0) {
+      if (statusDiv) statusDiv.textContent = 'Select at least one character to receive a share.';
+      return;
+    }
+    const split = partyTreasureHelpers.splitCommonCurrencyEvenly
+      ? partyTreasureHelpers.splitCommonCurrencyEvenly(amount, selectedIds.length, currencySystem)
+      : null;
+    if (!split || split.distributableLowestUnits <= 0 || split.shareLowestUnits <= 0) {
+      if (statusDiv) statusDiv.textContent = 'The amount is too small to split among the selected characters.';
+      return;
+    }
+    const currentTotal = inventoryView.calculateCurrencyTotal
+      ? inventoryView.calculateCurrencyTotal({ currency: currentPartyTreasureCurrency }, currencySystem)
+      : 0;
+    if (Number.isFinite(currentTotal) && split.distributableCommonAmount > currentTotal + 1e-9) {
+      if (statusDiv) statusDiv.textContent = 'Party treasure does not have enough money for that disbursement.';
+      return;
+    }
+    const selectedCharacters = selectedIds
+      .map((characterId) => currentPlayers.find((player) => player.id === characterId))
+      .filter(Boolean);
+    if (selectedCharacters.length === 0) {
+      if (statusDiv) statusDiv.textContent = 'Select at least one valid character.';
+      return;
+    }
+    const originalPartyTreasureCurrency = Array.isArray(currentPartyTreasureCurrency)
+      ? currentPartyTreasureCurrency.map((amountEntry) => ({ ...amountEntry }))
+      : [];
+    const originalCharacters = selectedCharacters.map((character) => ({
+      id: character.id,
+      currency: Array.isArray(character.currency) ? character.currency.map((amountEntry) => ({ ...amountEntry })) : []
+    }));
+    const updatedPartyTreasureCurrency = partyTreasureHelpers.applyCurrencyDelta
+      ? partyTreasureHelpers.applyCurrencyDelta(currentPartyTreasureCurrency, currencySystem, -split.distributableCommonAmount)
+      : currentPartyTreasureCurrency;
+    try {
+      for (const character of selectedCharacters) {
+        character.currency = partyTreasureHelpers.applyCurrencyDelta
+          ? partyTreasureHelpers.applyCurrencyDelta(character.currency, currencySystem, split.shareCommonAmount)
+          : character.currency;
+        await saveCharacterEntry(character, { reloadState: false });
+      }
+      await savePartyTreasureItems(currentPartyTreasure, updatedPartyTreasureCurrency);
+      currentPartyTreasureCurrency = Array.isArray(updatedPartyTreasureCurrency)
+        ? updatedPartyTreasureCurrency
+        : currentPartyTreasureCurrency;
+      updatePartyTreasureMoneySummary();
+      closePartyTreasureDisburseEditor();
+      await loadState();
+      if (statusDiv) {
+        statusDiv.textContent = `Disbursed ${formatPartyTreasureCurrencyAmount(split.distributableCommonAmount)} across ${selectedCharacters.length} characters.`;
+      }
+    } catch (err) {
+      try {
+        for (const original of originalCharacters) {
+          const character = currentPlayers.find((player) => player.id === original.id);
+          if (!character) continue;
+          character.currency = original.currency;
+          await saveCharacterEntry(character, { reloadState: false });
+        }
+        await savePartyTreasureItems(currentPartyTreasure, originalPartyTreasureCurrency);
+      } catch (rollbackErr) {
+        console.error('Failed to roll back party treasure disbursement:', rollbackErr);
+      }
+      await loadState();
+      if (statusDiv) {
+        statusDiv.textContent = `Party treasure disbursement failed: ${err instanceof Error ? err.message : String(err)}`;
+      }
+    }
   }
 
   async function savePartyTreasureMoneyFromEditor() {
@@ -3626,6 +3872,7 @@ window.addEventListener('DOMContentLoaded', () => {
   async function openPartyTreasureEditor() {
     if (!partyTreasureFields) return;
     closePartyTreasureMoneyEditor();
+    closePartyTreasureDisburseEditor();
     if (partyTreasureDialogTitle) {
       partyTreasureDialogTitle.textContent = '💰 Party Treasure';
     }
@@ -3649,6 +3896,7 @@ window.addEventListener('DOMContentLoaded', () => {
    */
   function closePartyTreasureEditor() {
     closePartyTreasureMoneyEditor();
+    closePartyTreasureDisburseEditor();
     partyTreasureSelectedRow = null;
     if (partyTreasureDialogTitle) {
       partyTreasureDialogTitle.textContent = '💰 Party Treasure';
@@ -4535,6 +4783,14 @@ window.addEventListener('DOMContentLoaded', () => {
         partyTreasureMoneyCancelBtn.click();
       } else {
         closePartyTreasureMoneyEditor();
+      }
+      return true;
+    }
+    if (partyTreasureDisbursePanel && !partyTreasureDisbursePanel.classList.contains('hidden')) {
+      if (partyTreasureDisburseCancelBtn) {
+        partyTreasureDisburseCancelBtn.click();
+      } else {
+        closePartyTreasureDisburseEditor();
       }
       return true;
     }
@@ -5969,7 +6225,8 @@ window.addEventListener('DOMContentLoaded', () => {
    * @param {object} player Character record.
    * @returns {Promise<void>}
    */
-  async function saveCharacterEntry(player) {
+  async function saveCharacterEntry(player, options = {}) {
+    const reloadState = options.reloadState !== false;
     try {
       const payload = {
         id: player.id,
@@ -6006,9 +6263,14 @@ window.addEventListener('DOMContentLoaded', () => {
         }
         throw new Error('Server returned ' + res.status);
       }
-      await loadState();
+      const savedCharacter = await res.json();
+      if (reloadState) {
+        await loadState();
+      }
+      return savedCharacter;
     } catch (err) {
       if (statusDiv) statusDiv.textContent = `Failed to update character: ${err.message}`;
+      return null;
     }
   }
 

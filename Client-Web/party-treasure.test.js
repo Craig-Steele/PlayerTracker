@@ -14,6 +14,7 @@ const {
   resolveEquipmentOverflowGlyph,
   normalizeInventoryEntry,
   removePartyTreasureEntry,
+  splitCommonCurrencyEvenly,
   setPartyTreasureAddFormOpen,
   upsertPartyTreasureEntry
 } = require('./party-treasure.js');
@@ -255,6 +256,31 @@ test('vendor helpers calculate proceeds and normalize currency into highest deno
       { unitId: 'sp', amount: 5 },
       { unitId: 'cp', amount: 5 }
     ]
+  );
+});
+
+test('splitCommonCurrencyEvenly splits the lowest unit amount and leaves remainder in party treasure', () => {
+  const currencySystem = {
+    commonCurrencyId: 'gp',
+    units: [
+      { id: 'cp', label: 'Copper', symbol: 'cp', valueInCommonCurrency: 0.01 },
+      { id: 'sp', label: 'Silver', symbol: 'sp', valueInCommonCurrency: 0.1 },
+      { id: 'gp', label: 'Gold', symbol: 'gp', valueInCommonCurrency: 1 }
+    ]
+  };
+
+  assert.deepEqual(
+    splitCommonCurrencyEvenly(1.23, 2, currencySystem),
+    {
+      totalLowestUnits: 123,
+      distributableLowestUnits: 122,
+      shareLowestUnits: 61,
+      remainderLowestUnits: 1,
+      totalCommonAmount: 1.23,
+      distributableCommonAmount: 1.22,
+      shareCommonAmount: 0.61,
+      remainderCommonAmount: 0.01
+    }
   );
 });
 
