@@ -380,7 +380,8 @@ struct ContentView: View {
     }
 
     private func encounterOrderRow(for player: PlayerViewDTO) -> some View {
-        let isMine = player.ownerId == model.currentPlayerID
+        let isMine = player.isClaimed(by: model.currentPlayerID)
+        let canClaim = player.canBeClaimed
         let encounterPresentation = EncounterPresentationState(
             campaignEncounterState: model.campaign?.encounterState,
             gameEncounterState: model.gameState?.encounterState
@@ -389,7 +390,11 @@ struct ContentView: View {
         let isCurrentTurn = encounterState == .active && model.gameState?.currentTurnId == player.id
         let displayedInitiative = encounterPresentation.displayedInitiative(player.initiative)
         let isRefereeOwned = player.controllerDisplayName.caseInsensitiveCompare("Referee") == .orderedSame
-        let nameBadgeTone = encounterPresentation.nameBadgeTone(isMine: isMine, isRefereeOwned: isRefereeOwned)
+        let nameBadgeTone = encounterPresentation.nameBadgeTone(
+            isMine: isMine,
+            isRefereeOwned: isRefereeOwned,
+            isClaimable: player.canBeClaimed
+        )
         let shouldShowControllerName = encounterPresentation.shouldShowControllerName(
             isMine: isMine,
             showPlayerNames: model.showPlayerNames
@@ -430,25 +435,46 @@ struct ContentView: View {
                     }
                 }
 
-                if isMine {
+                if isMine || canClaim {
                     Menu {
-                        Button {
-                            editorDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
-                        } label: {
-                            Label("Edit Character", systemImage: "pencil")
-                        }
-
-                        Button {
-                            healthDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
-                        } label: {
-                            Label("Edit Health", systemImage: "heart.text.square")
-                        }
-
-                        if isCurrentTurn {
+                        if canClaim {
                             Button {
-                                Task { await model.completeTurn() }
+                                Task { await model.claimCharacter(player) }
                             } label: {
-                                Label("Turn Complete", systemImage: "checkmark.circle")
+                                Text("Claim \(player.name)")
+                            }
+                        }
+
+                        if isMine {
+                            Divider()
+
+                            Button {
+                                editorDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
+                            } label: {
+                                Label("Edit Character", systemImage: "pencil")
+                            }
+
+                            Button {
+                                healthDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
+                            } label: {
+                                Label("Edit Health", systemImage: "heart.text.square")
+                            }
+
+                            if isCurrentTurn {
+                                Button {
+                                    Task { await model.completeTurn() }
+                                } label: {
+                                    Label("Turn Complete", systemImage: "checkmark.circle")
+                                }
+                            }
+                        }
+
+                        if isMine {
+                            Divider()
+                            Button {
+                                Task { await model.releaseCharacter(player) }
+                            } label: {
+                                Text("Release \(player.name)")
                             }
                         }
                     } label: {
@@ -555,6 +581,12 @@ struct ContentView: View {
                 Color(red: 0.42, green: 0.12, blue: 0.12),
                 Color(red: 1.0, green: 0.84, blue: 0.84),
                 Color(red: 0.88, green: 0.56, blue: 0.56)
+            )
+        case .unclaimed:
+            return (
+                Color(red: 0.34, green: 0.11, blue: 0.50),
+                Color(red: 0.92, green: 0.84, blue: 0.99),
+                Color(red: 0.68, green: 0.51, blue: 0.87)
             )
         case .other:
             return (

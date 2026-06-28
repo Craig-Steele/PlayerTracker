@@ -65,14 +65,22 @@ const {
   },
   setEncounterHealthLabel: () => {}
 };
-const { filterClaimableCharacters } = window.PlayerTrackerClaimableCharacters || {
-  filterClaimableCharacters: (characters) =>
-    Array.isArray(characters)
-      ? characters.filter(
-        (character) =>
-          !character?.claimedSessionId && (!character?.isReferee || Boolean(character?.isClaimable))
-      )
-      : []
+const {
+  getCharacterControllerName: sharedGetCharacterControllerName,
+  isClaimablePoolCharacter: sharedIsClaimablePoolCharacter
+} = window.PlayerTrackerClaimableCharacters || {
+  getCharacterControllerName: (character) => {
+    if (!character) return '';
+    const claimedDisplayName = typeof character.claimedDisplayName === 'string'
+      ? character.claimedDisplayName.trim()
+      : '';
+    if (claimedDisplayName) return claimedDisplayName;
+    if (character.isReferee && !(character?.claimedSessionId == null && Boolean(character?.isClaimable))) {
+      return 'Referee';
+    }
+    return '';
+  },
+  isClaimablePoolCharacter: (character) => !character?.claimedSessionId && Boolean(character?.isClaimable)
 };
 const { collectStatPayloadFromInputs } = window.PlayerTrackerStatInputs || {
   collectStatPayloadFromInputs: () => []
@@ -455,8 +463,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerRulesetIcon = document.getElementById('player-ruleset-icon');
   const displayRulesetIcon = document.getElementById('display-ruleset-icon');
   const characterList = document.getElementById('character-list');
-  const claimableCharacterPanel = document.getElementById('claimable-character-panel');
-  const claimableCharacterList = document.getElementById('claimable-character-list');
   const addCharacterBtn = document.getElementById('character-add');
   const rollInitiativeAllBtn = document.getElementById('roll-initiative-all');
   const turnCompleteBtn = document.getElementById('turn-complete');
@@ -988,7 +994,6 @@ window.addEventListener('DOMContentLoaded', () => {
   let inventoryAddFormOpen = false;
   let currentInventory = [];
   let currentCampaignId = '';
-  let claimableCharacters = [];
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
     getCampaignId: () => currentCampaignId,
     refresh: async () => {
@@ -4627,13 +4632,7 @@ function getOwnerName() {
   }
 
   function getCharacterControllerName(character) {
-    if (!character) return '';
-    const claimedDisplayName = typeof character.claimedDisplayName === 'string'
-      ? character.claimedDisplayName.trim()
-      : '';
-    if (claimedDisplayName) return claimedDisplayName;
-    if (character.isReferee) return 'Referee';
-    return '';
+    return sharedGetCharacterControllerName(character);
   }
 
   function buildCharacterOverflowControls(character, options = {}) {
@@ -4673,7 +4672,8 @@ function getOwnerName() {
       overflowMenu.style.transform = '';
       overflowToggle.setAttribute('aria-expanded', 'true');
       if (!centered) {
-        const toggleRect = overflowToggle.getBoundingClientRect();
+        const anchorElement = options.anchorElement || overflowToggle;
+        const toggleRect = anchorElement.getBoundingClientRect();
         overflowMenu.style.top = `${toggleRect.bottom + 6}px`;
         overflowMenu.style.left = `${toggleRect.left}px`;
         overflowMenu.style.right = 'auto';
@@ -4710,56 +4710,67 @@ function getOwnerName() {
     };
 
     const currencyTotal = formatCharacterCurrencyTotal(character);
-    const menuGroups = [
-      [
-        {
-          label: '🎒 Inventory',
-          handler: async () => {
-            await openInventoryEditor(character);
-          }
-        },
-        {
-          label: currencyTotal ? `🪙 Money: ${currencyTotal}` : '🪙 Money',
-          handler: () => openCurrencyEditor(character),
-          options: {
-            hidden: !(currencySystem && currencySystem.units.length > 0)
-          }
-        },
-        {
-          label: '💰 Party Treasure',
-          handler: async () => {
-            openPartyTreasureEditor(character);
-          }
-        }
-      ],
-      [
-        {
-          label: '✏️ Edit Character',
-          handler: () => {
-            void openDetailsEditorForCharacter(character);
-          }
-        },
-        {
-          label: '↩️ Release Character',
-          handler: async () => {
-            if (character.claimedSessionId !== currentPlayerSessionId) return;
-            await releaseClaimForCharacter(character);
-          },
-          options: {
-            hidden: character.claimedSessionId !== currentPlayerSessionId
-          }
-        },
-        {
-          label: '🗑️ Remove Character',
-          handler: async () => {
-            await deleteMyCharacter(character);
-          },
-          options: {
-            className: 'secondary character-remove'
-          }
-        }
-      ]
-    ];
+    const menuGroups = options.claimOnly
+      ? [
+          [
+            {
+              label: '🏷️ Claim Character',
+              handler: async () => {
+                await claimCharacter(character);
+              }
+            }
+          ]
+        ]
+      : [
+          [
+            {
+              label: '🎒 Inventory',
+              handler: async () => {
+                await openInventoryEditor(character);
+              }
+            },
+            {
+              label: currencyTotal ? `🪙 Money: ${currencyTotal}` : '🪙 Money',
+              handler: () => openCurrencyEditor(character),
+              options: {
+                hidden: !(currencySystem && currencySystem.units.length > 0)
+              }
+            },
+            {
+              label: '💰 Party Treasure',
+              handler: async () => {
+                openPartyTreasureEditor(character);
+              }
+            }
+          ],
+          [
+            {
+              label: '✏️ Edit Character',
+              handler: () => {
+                void openDetailsEditorForCharacter(character);
+              }
+            },
+            {
+              label: '↩️ Release Character',
+              handler: async () => {
+                if (character.claimedSessionId !== currentPlayerSessionId) return;
+                await releaseClaimForCharacter(character);
+              },
+              options: {
+                hidden: character.claimedSessionId !== currentPlayerSessionId
+              }
+            },
+            {
+              label: '🗑️ Remove Character',
+              handler: async () => {
+                await deleteMyCharacter(character);
+              },
+              options: {
+                className: 'secondary character-remove'
+              }
+            }
+          ]
+        ];
 
     let appendedGroup = false;
     menuGroups.forEach((group) => {
@@ -4917,77 +4928,6 @@ function getOwnerName() {
     updateReleaseButtonState();
     updateTurnCompleteButtonState();
     updateRollInitiativeButtonState();
-
-    renderClaimableCharacterList();
-  }
-
-  function renderClaimableCharacterList() {
-    if (!claimableCharacterList) return;
-    claimableCharacterList.innerHTML = '';
-
-    if (!currentCampaignId) {
-      if (claimableCharacterPanel) {
-        claimableCharacterPanel.classList.add('hidden');
-        claimableCharacterPanel.setAttribute('aria-hidden', 'true');
-      }
-      return;
-    }
-
-    if (claimableCharacterPanel) {
-      claimableCharacterPanel.classList.toggle('hidden', displayOnly);
-      claimableCharacterPanel.setAttribute('aria-hidden', displayOnly.toString());
-    }
-
-    const unclaimedCharacters = filterClaimableCharacters(claimableCharacters);
-
-    if (unclaimedCharacters.length === 0) {
-      if (claimableCharacterPanel) {
-        claimableCharacterPanel.classList.add('hidden');
-        claimableCharacterPanel.setAttribute('aria-hidden', 'true');
-      }
-      return;
-    }
-
-    if (claimableCharacterPanel) {
-      claimableCharacterPanel.classList.remove('hidden');
-      claimableCharacterPanel.setAttribute('aria-hidden', 'false');
-    }
-
-    unclaimedCharacters.forEach((character) => {
-      const item = document.createElement('div');
-      item.className = 'claimable-character-item unclaimed';
-
-      const name = document.createElement('div');
-      name.className = 'claimable-character-name';
-      name.textContent = character.name || 'Unnamed Character';
-      item.appendChild(name);
-
-      const meta = document.createElement('div');
-      meta.className = 'claimable-character-meta';
-      const metaParts = ['Unclaimed'];
-      if (character.ownerName) {
-        metaParts.push(`created by ${character.ownerName}`);
-      }
-      if (character.lastPlayedByName) {
-        metaParts.push(`last played by ${character.lastPlayedByName}`);
-      }
-      meta.textContent = metaParts.join(' • ');
-      item.appendChild(meta);
-
-      const actions = document.createElement('div');
-      actions.className = 'claimable-character-actions';
-      const claimButton = document.createElement('button');
-      claimButton.type = 'button';
-      claimButton.textContent = '🏷️ Claim';
-      claimButton.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        await claimCharacter(character);
-      });
-      actions.appendChild(claimButton);
-      item.appendChild(actions);
-
-      claimableCharacterList.appendChild(item);
-    });
   }
 
   function clearPendingCharacterSaveTimers() {
@@ -5269,7 +5209,11 @@ function getOwnerName() {
       conditionsTd.classList.add('conditions-cell');
 
       initTd.textContent = formatInitiative(p.initiative);
-      if (p.isReferee) {
+      const isClaimablePoolCharacter = sharedIsClaimablePoolCharacter(p);
+      if (isClaimablePoolCharacter) {
+        initTd.classList.add('init-claimable');
+        tr.classList.add('player-row-claimable');
+      } else if (p.isReferee) {
         initTd.classList.add('init-referee');
       }
       const isMine =
@@ -5326,7 +5270,27 @@ function getOwnerName() {
           nameText.appendChild(ownerLine);
         }
         nameWrap.appendChild(nameText);
-        nameTd.appendChild(nameWrap);
+        if (isClaimablePoolCharacter && !displayOnly) {
+          tr.classList.add('player-row-claimable');
+          nameTd.classList.add('player-row-claimable-name-cell');
+          const { openOverflowMenu } = buildCharacterOverflowControls(p, {
+            claimOnly: true,
+            anchorElement: nameTd
+          });
+          const nameButton = document.createElement('button');
+          nameButton.type = 'button';
+          nameButton.className = 'player-row-name-button player-row-claimable-name-button';
+          nameButton.setAttribute('aria-label', `Manage ${p.name || 'character'}`);
+          nameButton.appendChild(nameWrap);
+          nameButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            closeExpandedOrderStats();
+            openOverflowMenu();
+          });
+          nameTd.appendChild(nameButton);
+        } else {
+          nameTd.appendChild(nameWrap);
+        }
       }
 
       const stats = Array.isArray(p.stats) ? p.stats : [];
@@ -5665,39 +5629,8 @@ function getOwnerName() {
     }
   }
 
-  async function loadClaimableCharacters() {
-    if (!currentCampaignId || displayOnly) {
-      claimableCharacters = [];
-      renderClaimableCharacterList();
-      return;
-    }
-
-    try {
-      const res = await fetch(`/campaigns/${encodeURIComponent(currentCampaignId)}/characters`);
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          if (preferPlayerView) {
-            claimableCharacters = [];
-            renderClaimableCharacterList();
-            return;
-          }
-          window.location.replace('/index.html');
-          return;
-        }
-        throw new Error('Server returned ' + res.status);
-      }
-      claimableCharacters = await res.json();
-      renderClaimableCharacterList();
-    } catch (err) {
-      console.error('Failed to load claimable characters:', err);
-      claimableCharacters = [];
-      renderClaimableCharacterList();
-    }
-  }
-
   async function refreshCharacterState(ownerName) {
     await loadCharactersForOwner(ownerName);
-    await loadClaimableCharacters();
   }
 
   async function claimCharacter(character) {
@@ -6770,7 +6703,6 @@ function getOwnerName() {
     } catch (err) {
       statusDiv.textContent = 'Error loading state: ' + err.message;
     } finally {
-      await loadClaimableCharacters();
       loadStateInFlight = false;
       if (loadStateRefreshQueued) {
         loadStateRefreshQueued = false;

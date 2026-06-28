@@ -708,6 +708,7 @@ struct PlayerJoinRoutesTests {
         XCTAssertEqual(released.ownerName, "Referee")
         XCTAssertEqual(released.lastPlayedByName, "Alex")
         XCTAssertNil(released.claimedSessionId)
+        XCTAssertTrue(released.isClaimable)
 
         let bobSession = try await join(displayName: "Bob", tester: tester)
         let bobClaimResponse = try await tester.sendRequest(
@@ -774,6 +775,7 @@ struct PlayerJoinRoutesTests {
         XCTAssertNil(released.claimedSessionId)
         XCTAssertEqual(released.ownerName, "Referee")
         XCTAssertEqual(released.lastPlayedByName, "Alex")
+        XCTAssertTrue(released.isClaimable)
     }
 
     @Test

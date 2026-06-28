@@ -349,6 +349,44 @@ final class PlayerAppModel {
         }
     }
 
+    func claimCharacter(_ character: PlayerViewDTO) async {
+        guard let campaign else {
+            statusMessage = "Connect to a server first."
+            return
+        }
+        guard character.canBeClaimed else {
+            statusMessage = "Character cannot be claimed."
+            return
+        }
+        do {
+            let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
+            _ = try await client.claimCharacter(id: character.id, campaignID: campaign.id)
+            statusMessage = "Character claimed."
+            await refreshAll(showStatus: false)
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
+    func releaseCharacter(_ character: PlayerViewDTO) async {
+        guard let campaign else {
+            statusMessage = "Connect to a server first."
+            return
+        }
+        guard character.isClaimed(by: currentPlayerID) else {
+            statusMessage = "Character is not claimed by you."
+            return
+        }
+        do {
+            let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
+            _ = try await client.releaseCharacter(id: character.id, campaignID: campaign.id)
+            statusMessage = "Character released."
+            await refreshAll(showStatus: false)
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
     func completeTurn() async {
         guard !isCompletingTurn else { return }
         isCompletingTurn = true

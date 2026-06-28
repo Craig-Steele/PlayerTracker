@@ -101,6 +101,22 @@ struct APIClient {
         )
     }
 
+    func claimCharacter(id: UUID, campaignID: UUID) async throws -> PlayerViewDTO {
+        try await send(
+            "campaigns/\(campaignID.uuidString.lowercased())/me/characters/\(id.uuidString.lowercased())/claim",
+            method: "POST",
+            body: Optional<Data>.none
+        )
+    }
+
+    func releaseCharacter(id: UUID, campaignID: UUID) async throws -> PlayerViewDTO {
+        try await send(
+            "campaigns/\(campaignID.uuidString.lowercased())/me/characters/\(id.uuidString.lowercased())/release",
+            method: "POST",
+            body: Optional<Data>.none
+        )
+    }
+
     func completeTurn() async throws -> GameStateDTO {
         try await send("turn-complete", method: "POST", body: Optional<Data>.none)
     }

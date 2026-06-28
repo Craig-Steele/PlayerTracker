@@ -81,6 +81,7 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let id: UUID
     let ownerId: UUID
     let ownerName: String
+    let claimedSessionId: UUID?
     let claimedDisplayName: String?
     let name: String
     let initiative: Double?
@@ -94,6 +95,7 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let revealOnTurn: Bool
     let conditions: [String]
     let isReferee: Bool
+    let isClaimable: Bool
 }
 
 extension PlayerViewDTO {
@@ -106,6 +108,18 @@ extension PlayerViewDTO {
             return "Referee"
         }
         return ownerName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var isUnclaimed: Bool {
+        claimedSessionId == nil
+    }
+
+    var canBeClaimed: Bool {
+        isUnclaimed && (!isReferee || isClaimable)
+    }
+
+    func isClaimed(by playerID: UUID) -> Bool {
+        claimedSessionId == playerID
     }
 }
 

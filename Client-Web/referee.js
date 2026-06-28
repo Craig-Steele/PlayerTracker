@@ -4665,12 +4665,18 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {string}
    */
   function getCharacterControllerName(character) {
+    const sharedHelpers = window.PlayerTrackerClaimableCharacters || {};
+    if (typeof sharedHelpers.getCharacterControllerName === 'function') {
+      return sharedHelpers.getCharacterControllerName(character);
+    }
     if (!character) return '';
     const claimedDisplayName = typeof character.claimedDisplayName === 'string'
       ? character.claimedDisplayName.trim()
       : '';
     if (claimedDisplayName) return claimedDisplayName;
-    if (character.isReferee) return 'Referee';
+    if (character.isReferee && !(character?.claimedSessionId == null && Boolean(character?.isClaimable))) {
+      return 'Referee';
+    }
     return '';
   }
 
@@ -5319,8 +5325,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
       const initTd = document.createElement('td');
       initTd.textContent = formatInitiative(p.initiative);
-      if (!p.isReferee) {
+      const isClaimablePoolCharacter = Boolean(p && p.claimedSessionId == null && p.isClaimable);
+      if (isClaimablePoolCharacter) {
+        tr.classList.add('player-row-claimable');
+        initTd.classList.add('init-claimable');
+      } else if (!p.isReferee) {
         initTd.classList.add('init-mine');
+      } else {
+        initTd.classList.add('init-referee');
       }
 
       const nameTd = document.createElement('td');

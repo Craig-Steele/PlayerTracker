@@ -10,6 +10,7 @@ struct EncounterPresentationState {
     enum NameBadgeTone {
         case mine
         case referee
+        case unclaimed
         case other
     }
 
@@ -55,9 +56,12 @@ struct EncounterPresentationState {
         effectiveEncounterState == .active && isMyTurn && !isCompletingTurn
     }
 
-    func nameBadgeTone(isMine: Bool, isRefereeOwned: Bool) -> NameBadgeTone {
+    func nameBadgeTone(isMine: Bool, isRefereeOwned: Bool, isClaimable: Bool) -> NameBadgeTone {
         if isMine {
             return .mine
+        }
+        if isClaimable {
+            return .unclaimed
         }
         if isRefereeOwned {
             return .referee

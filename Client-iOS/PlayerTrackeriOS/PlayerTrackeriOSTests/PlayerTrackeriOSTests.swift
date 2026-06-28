@@ -85,16 +85,28 @@ final class PlayerTrackeriOSTests: XCTestCase {
         )
 
         XCTAssertEqual(
-            presentation.nameBadgeTone(isMine: true, isRefereeOwned: false),
+            presentation.nameBadgeTone(isMine: true, isRefereeOwned: false, isClaimable: false),
             .mine
         )
         XCTAssertEqual(
-            presentation.nameBadgeTone(isMine: false, isRefereeOwned: true),
+            presentation.nameBadgeTone(isMine: false, isRefereeOwned: true, isClaimable: false),
             .referee
         )
         XCTAssertEqual(
-            presentation.nameBadgeTone(isMine: false, isRefereeOwned: false),
+            presentation.nameBadgeTone(isMine: false, isRefereeOwned: false, isClaimable: false),
             .other
+        )
+    }
+
+    func testClaimableCharactersArePurpleEvenIfRefereeOwned() {
+        let presentation = EncounterPresentationState(
+            campaignEncounterState: nil,
+            gameEncounterState: .active
+        )
+
+        XCTAssertEqual(
+            presentation.nameBadgeTone(isMine: false, isRefereeOwned: true, isClaimable: true),
+            .unclaimed
         )
     }
 
@@ -120,6 +132,7 @@ final class PlayerTrackeriOSTests: XCTestCase {
                 id: UUID(),
                 ownerId: UUID(),
                 ownerName: "Player",
+                claimedSessionId: UUID(),
                 claimedDisplayName: "Controller",
                 name: "Alpha",
                 initiative: nil,
@@ -132,7 +145,8 @@ final class PlayerTrackeriOSTests: XCTestCase {
                 isHidden: false,
                 revealOnTurn: false,
                 conditions: [],
-                isReferee: false
+                isReferee: false,
+                isClaimable: false
             )
         ]
         let currentTurnId = players[0].id
@@ -157,6 +171,7 @@ final class PlayerTrackeriOSTests: XCTestCase {
             id: UUID(),
             ownerId: UUID(),
             ownerName: "Creator",
+            claimedSessionId: UUID(),
             claimedDisplayName: "Chrome",
             name: "Scout",
             initiative: nil,
@@ -169,13 +184,15 @@ final class PlayerTrackeriOSTests: XCTestCase {
             isHidden: false,
             revealOnTurn: false,
             conditions: [],
-            isReferee: false
+            isReferee: false,
+            isClaimable: false
         )
 
         let fallback = PlayerViewDTO(
             id: UUID(),
             ownerId: UUID(),
             ownerName: "Creator",
+            claimedSessionId: nil,
             claimedDisplayName: nil,
             name: "Scout",
             initiative: nil,
@@ -188,7 +205,8 @@ final class PlayerTrackeriOSTests: XCTestCase {
             isHidden: false,
             revealOnTurn: false,
             conditions: [],
-            isReferee: false
+            isReferee: false,
+            isClaimable: false
         )
 
         XCTAssertEqual(controller.controllerDisplayName, "Chrome")
@@ -200,6 +218,7 @@ final class PlayerTrackeriOSTests: XCTestCase {
             id: UUID(),
             ownerId: UUID(),
             ownerName: "Chrome",
+            claimedSessionId: nil,
             claimedDisplayName: nil,
             name: "Scout",
             initiative: nil,
@@ -212,7 +231,8 @@ final class PlayerTrackeriOSTests: XCTestCase {
             isHidden: false,
             revealOnTurn: false,
             conditions: [],
-            isReferee: true
+            isReferee: true,
+            isClaimable: false
         )
 
         XCTAssertEqual(refereeOwned.controllerDisplayName, "Referee")
@@ -223,6 +243,7 @@ final class PlayerTrackeriOSTests: XCTestCase {
             id: UUID(),
             ownerId: UUID(),
             ownerName: "Chrome",
+            claimedSessionId: UUID(),
             claimedDisplayName: "Chrome",
             name: "Scout",
             initiative: nil,
@@ -235,7 +256,8 @@ final class PlayerTrackeriOSTests: XCTestCase {
             isHidden: false,
             revealOnTurn: false,
             conditions: [],
-            isReferee: true
+            isReferee: true,
+            isClaimable: false
         )
 
         let tone = EncounterPresentationState(
@@ -243,10 +265,78 @@ final class PlayerTrackeriOSTests: XCTestCase {
             gameEncounterState: .active
         ).nameBadgeTone(
             isMine: false,
-            isRefereeOwned: playerControlledRefereeFlag.controllerDisplayName.caseInsensitiveCompare("Referee") == .orderedSame
+            isRefereeOwned: playerControlledRefereeFlag.controllerDisplayName.caseInsensitiveCompare("Referee") == .orderedSame,
+            isClaimable: false
         )
 
         XCTAssertEqual(tone, .other)
+    }
+
+    func testNameBadgeToneUsesUnclaimedPurpleState() {
+        let presentation = EncounterPresentationState(
+            campaignEncounterState: nil,
+            gameEncounterState: .active
+        )
+
+        XCTAssertEqual(
+            presentation.nameBadgeTone(
+                isMine: false,
+                isRefereeOwned: false,
+                isClaimable: true
+            ),
+            .unclaimed
+        )
+    }
+
+    func testClaimabilityHelpersReflectClaimState() {
+        let claimedSessionID = UUID()
+        let claimed = PlayerViewDTO(
+            id: UUID(),
+            ownerId: UUID(),
+            ownerName: "Creator",
+            claimedSessionId: claimedSessionID,
+            claimedDisplayName: "Alex",
+            name: "Scout",
+            initiative: nil,
+            stats: [],
+            currency: nil,
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: [],
+            isReferee: false,
+            isClaimable: false
+        )
+
+        let unclaimed = PlayerViewDTO(
+            id: UUID(),
+            ownerId: UUID(),
+            ownerName: "Referee",
+            claimedSessionId: nil,
+            claimedDisplayName: nil,
+            name: "Goblin",
+            initiative: nil,
+            stats: [],
+            currency: nil,
+            revealStats: false,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: [],
+            isReferee: true,
+            isClaimable: true
+        )
+
+        XCTAssertTrue(claimed.isClaimed(by: claimedSessionID))
+        XCTAssertFalse(claimed.isUnclaimed)
+        XCTAssertFalse(claimed.canBeClaimed)
+        XCTAssertTrue(unclaimed.isUnclaimed)
+        XCTAssertTrue(unclaimed.canBeClaimed)
     }
 
     func testControllerNameVisibilityFollowsSettingAndOwnership() {

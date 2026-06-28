@@ -635,6 +635,7 @@ actor UserStore {
         state.claimedSessionId = nil
         state.claimedDisplayName = nil
         state.claimedAt = nil
+        state.isClaimable = true
         storage[id] = state
         if campaignName == currentCampaignName {
             do {
@@ -653,6 +654,7 @@ actor UserStore {
         state.claimedSessionId = nil
         state.claimedDisplayName = nil
         state.claimedAt = nil
+        state.isClaimable = true
         storage[id] = state
         if campaignName == currentCampaignName {
             do {
@@ -693,6 +695,7 @@ actor UserStore {
             state.claimedSessionId = nil
             state.claimedDisplayName = nil
             state.claimedAt = nil
+            state.isClaimable = true
             storage[id] = state
             changed = true
         }

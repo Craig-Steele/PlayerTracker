@@ -12,6 +12,7 @@
   --bg-selected-strong: #cfe1ff;
   --bg-turn-active: #ffeeba;
   --bg-referee: #ffd6d6;
+  --bg-claimable: #e8dbff;
   --bg-mine: #d6ecff;
   --bg-success: #d6f3dc;
   --bg-info: #dfeffd;
@@ -33,6 +34,7 @@
   --text-link: #1d5fbf;
   --text-selected: #0e2a5f;
   --text-referee: #6f0f0f;
+  --text-claimable: #5b2a87;
   --text-encounter-header: var(--text-primary);
   --text-encounter-header-mine: var(--text-referee);
   --text-mine: #0b3b5f;
@@ -63,6 +65,7 @@
     --bg-selected-strong: #27394d;
     --bg-turn-active: #4d4420;
     --bg-referee: #3f2424;
+    --bg-claimable: #31203e;
     --bg-mine: #1d313e;
     --bg-success: #22352a;
     --bg-info: #1f2d3a;
@@ -84,6 +87,7 @@
     --text-link: #87b8ff;
     --text-selected: #d6e7ff;
     --text-referee: #ff9d9d;
+    --text-claimable: #d0b0ff;
     --text-encounter-header: var(--text-primary);
     --text-encounter-header-mine: #ff8e8e;
     --text-mine: #a9d8ff;
@@ -2926,6 +2930,12 @@ body.referee-page .referee-panel {
   color: var(--text-referee);
 }
 
+.character-list td.init-claimable,
+.character-list td.init-claimable + td {
+  background-color: var(--bg-claimable);
+  color: var(--text-claimable);
+}
+
 .character-list td.init-mine,
 .character-list td.init-mine {
   background-color: var(--bg-mine);
@@ -3008,6 +3018,12 @@ body.referee-page .referee-panel {
   min-width: 0;
 }
 
+.player-row-claimable-overflow .character-overflow-toggle {
+  display: none !important;
+  justify-content: flex-start;
+  min-width: 0;
+}
+
 .player-row-name-text {
   display: flex;
   flex-direction: column;
@@ -3029,6 +3045,29 @@ body.referee-page .referee-panel {
 .player-row-owned td.init-referee + td .player-row-name-text,
 .player-row-owned td.init-referee + td .player-owner {
   color: var(--text-referee);
+}
+
+.player-row-claimable td:nth-child(2) .player-row-name-text,
+.player-row-claimable td:nth-child(2) .player-owner {
+  color: var(--text-claimable);
+}
+
+.player-row-claimable td.init-claimable + td .player-row-name-text,
+.player-row-claimable td.init-claimable + td .player-owner {
+  color: var(--text-claimable);
+}
+
+.player-row-claimable-name-cell .player-row-name-wrap {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.player-row-claimable-name-cell .player-row-name-text {
+  flex: 1 1 auto;
+}
+
+.player-row-claimable-overflow {
+  flex: 0 0 auto;
 }
 
 .player-row-owned td.init-mine + td .player-row-name-text,

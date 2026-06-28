@@ -12,12 +12,28 @@
       return [];
     }
     return characters.filter(
-      (character) =>
+        (character) =>
         !character?.claimedSessionId && (!character?.isReferee || Boolean(character?.isClaimable))
     );
   }
 
+  function isClaimablePoolCharacter(character) {
+    return !character?.claimedSessionId && Boolean(character?.isClaimable);
+  }
+
+  function getCharacterControllerName(character) {
+    if (!character) return '';
+    const claimedDisplayName = typeof character.claimedDisplayName === 'string'
+      ? character.claimedDisplayName.trim()
+      : '';
+    if (claimedDisplayName) return claimedDisplayName;
+    if (character.isReferee && !isClaimablePoolCharacter(character)) return 'Referee';
+    return '';
+  }
+
   return {
-    filterClaimableCharacters
+    filterClaimableCharacters,
+    getCharacterControllerName,
+    isClaimablePoolCharacter
   };
 });
