@@ -47,10 +47,12 @@
       };
 
       source.addEventListener('snapshot', requestRefresh);
-      source.addEventListener('encounter-start', (event) => {
+      const handleEncounterStateChange = (event) => {
         onEncounterStart(event);
         requestRefresh();
-      });
+      };
+      source.addEventListener('encounter-start', handleEncounterStateChange);
+      source.addEventListener('encounter-resume', handleEncounterStateChange);
       source.addEventListener('campaign-updated', requestRefresh);
       source.addEventListener('turn-changed', requestRefresh);
       source.addEventListener('update', requestRefresh);

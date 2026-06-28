@@ -68,13 +68,18 @@ test('opens a campaign event stream and refreshes on stream events', async () =>
     assert.equal(refreshCount, 2);
     assert.equal(encounterStartCount, 1);
 
-    instances[0].emit('turn-changed');
+    instances[0].emit('encounter-resume');
     await flushMicrotasks();
     assert.equal(refreshCount, 3);
+    assert.equal(encounterStartCount, 2);
+
+    instances[0].emit('turn-changed');
+    await flushMicrotasks();
+    assert.equal(refreshCount, 4);
 
     instances[0].emit('update');
     await flushMicrotasks();
-    assert.equal(refreshCount, 4);
+    assert.equal(refreshCount, 5);
 
     liveStream.stop();
     assert.equal(instances[0].closed, true);
