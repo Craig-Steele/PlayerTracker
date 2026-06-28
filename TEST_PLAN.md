@@ -224,6 +224,7 @@ Goal: initiative editing must match the encounter state and not break turn contr
 - Opens the initiative editor for the selected character.
 - Saves or clears initiative values correctly.
 - Displays the active-turn character consistently in the modal.
+- Auto-rolls unset grouped referee initiative on `/encounter/start` and preserves already-rolled values.
 - Completes the current turn only when the encounter is active.
 - Rejects turn-complete actions when the encounter is inactive or suspended.
 - Updates the roster and header after an initiative or turn change.

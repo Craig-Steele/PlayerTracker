@@ -1413,6 +1413,162 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testEncounterStartAutoRollsUnsetGroupedRefereeCharacters() async throws {
+        let tester = try await makeTester()
+        let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let groupId = UUID()
+
+        let first = try await createMemberCharacter(
+            in: tester,
+            cookieToken: refereeSession,
+            payload: CharacterInput(
+                id: nil,
+                campaignName: nil,
+                ownerId: UUID(),
+                ownerName: "Referee",
+                name: "Goblin (1)",
+                initiative: nil,
+                stats: [StatEntry(key: "HP", current: 5, max: 5)],
+                revealStats: false,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 2,
+                isHidden: false,
+                revealOnTurn: false,
+                initiativeGroupId: groupId,
+                initiativeGroupIndex: 1,
+                conditions: []
+            )
+        )
+        let second = try await createMemberCharacter(
+            in: tester,
+            cookieToken: refereeSession,
+            payload: CharacterInput(
+                id: nil,
+                campaignName: nil,
+                ownerId: UUID(),
+                ownerName: "Referee",
+                name: "Goblin (2)",
+                initiative: nil,
+                stats: [StatEntry(key: "HP", current: 5, max: 5)],
+                revealStats: false,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 2,
+                isHidden: false,
+                revealOnTurn: false,
+                initiativeGroupId: groupId,
+                initiativeGroupIndex: 2,
+                conditions: []
+            )
+        )
+        let solo = try await createMemberCharacter(
+            in: tester,
+            cookieToken: refereeSession,
+            payload: CharacterInput(
+                id: nil,
+                campaignName: nil,
+                ownerId: UUID(),
+                ownerName: "Referee",
+                name: "Orc",
+                initiative: nil,
+                stats: [StatEntry(key: "HP", current: 10, max: 10)],
+                revealStats: false,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 1,
+                isHidden: false,
+                revealOnTurn: false,
+                conditions: []
+            )
+        )
+
+        let startResponse = try await tester.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeSession)")])
+        )
+        XCTAssertEqual(startResponse.status, .ok)
+        let startedState = try startResponse.content.decode(GameState.self)
+        XCTAssertEqual(startedState.encounterState, .active)
+
+        let rolledFirst = try XCTUnwrap(startedState.players.first(where: { $0.id == first.id }))
+        let rolledSecond = try XCTUnwrap(startedState.players.first(where: { $0.id == second.id }))
+        let rolledSolo = try XCTUnwrap(startedState.players.first(where: { $0.id == solo.id }))
+
+        XCTAssertNotNil(rolledFirst.initiative)
+        XCTAssertNotNil(rolledSecond.initiative)
+        XCTAssertEqual(rolledFirst.initiative, rolledSecond.initiative)
+        XCTAssertNotNil(rolledSolo.initiative)
+    }
+
+    @Test
+    func testEncounterStartDoesNotOverwriteAlreadyRolledGroupMembers() async throws {
+        let tester = try await makeTester()
+        let refereeSession = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let groupId = UUID()
+
+        let rolled = try await createMemberCharacter(
+            in: tester,
+            cookieToken: refereeSession,
+            payload: CharacterInput(
+                id: nil,
+                campaignName: nil,
+                ownerId: UUID(),
+                ownerName: "Referee",
+                name: "Skeleton (1)",
+                initiative: 15,
+                stats: [StatEntry(key: "HP", current: 6, max: 6)],
+                revealStats: false,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 2,
+                isHidden: false,
+                revealOnTurn: false,
+                initiativeGroupId: groupId,
+                initiativeGroupIndex: 1,
+                conditions: []
+            )
+        )
+        let unset = try await createMemberCharacter(
+            in: tester,
+            cookieToken: refereeSession,
+            payload: CharacterInput(
+                id: nil,
+                campaignName: nil,
+                ownerId: UUID(),
+                ownerName: "Referee",
+                name: "Skeleton (2)",
+                initiative: nil,
+                stats: [StatEntry(key: "HP", current: 6, max: 6)],
+                revealStats: false,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: true,
+                initiativeBonus: 2,
+                isHidden: false,
+                revealOnTurn: false,
+                initiativeGroupId: groupId,
+                initiativeGroupIndex: 2,
+                conditions: []
+            )
+        )
+
+        let startResponse = try await tester.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeSession)")])
+        )
+        XCTAssertEqual(startResponse.status, .ok)
+        let startedState = try startResponse.content.decode(GameState.self)
+
+        let rolledCharacter = try XCTUnwrap(startedState.players.first(where: { $0.id == rolled.id }))
+        let unsetCharacter = try XCTUnwrap(startedState.players.first(where: { $0.id == unset.id }))
+
+        XCTAssertEqual(rolledCharacter.initiative, 15)
+        XCTAssertNotNil(unsetCharacter.initiative)
+    }
+
+    @Test
     func testTurnCompleteRejectsInactiveEncounter() async throws {
         let tester = try await makeTester()
         let playerSession = try await join(displayName: "Player", in: tester)

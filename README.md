@@ -1,6 +1,6 @@
 # PlayerTracker
 
-Initiative and condition tracking for tabletop RPG encounters. PlayerTracker is a full-stack client-server tabletop RPG tracker started in March 2026. It combines a Vapor console app, browser-based clients, and native companion apps in a single repository. The most active work is currently in the server and web client; the mobile clients remain in the tree for future reference.
+PlayerTracker is a full-stack client-server tabletop RPG tracker started in March 2026. It combines a Vapor console app, browser-based clients, and native companion apps in a single repository. The server and web client are the active surfaces; the mobile clients remain in the tree while mobile feature work is on hold.
 
 The current working architecture is a Vapor service running on a Mac and serving browser clients over the local network. There are also native iOS and Android player clients that talk to the same HTTP API, but mobile feature work is currently on hold while server and web client feature work continues.
 
@@ -9,7 +9,7 @@ The current working architecture is a Vapor service running on a Mac and serving
 - `Server-Vapor`
   The main Vapor service. This is the primary runtime.
 - `Client-Web`
-  Browser clients for player, referee, admin, display, and campaign selection.
+  Browser clients for player, referee, admin, display, and campaign selection. The referee-page parity work from the M7C plan is complete.
 - `Client-iOS`
   Native iOS and iPadOS player client for the existing server. Feature work is currently on hold.
 - `Client-Android`
@@ -83,4 +83,4 @@ Add `--overwrite` if you want to replace existing local creature files.
 - The server serves the checked-in `Client-Web/` directory from this repository.
 - This repository is currently optimized for local-network table play rather than internet-hosted multiplayer.
 - The iOS app is named `Tactical Table Top: Initiative`.
-- The Android client is not tied to any specific local development environment in this README, because mobile work is currently paused.
+- The Android client is not tied to any specific local development environment in this README because mobile work is currently paused.

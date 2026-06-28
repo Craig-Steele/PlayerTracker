@@ -1010,11 +1010,7 @@ Acceptance:
 - referee-specific controls remain available and clearly separated from player-only behavior
 - the referee page no longer feels like a legacy path compared with the player page
 
-Status: in progress
-
-Remaining:
-
-- let referees roll initiative for groups of creatures of the same type as a single action
+Status: complete
 
 ### M7D: Confirmation Dialogs/Code cleanup
 
