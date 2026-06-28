@@ -490,16 +490,14 @@ struct ContentView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                         .disabled(isShowingModal)
-                        .frame(width: 44, alignment: .leading)
                     }
-
-                    Spacer(minLength: 0)
 
                     Text(conditionSummary(for: player))
                         .font(.caption)
                         .foregroundStyle(.primary)
                         .lineLimit(2)
-                        .frame(maxWidth: .infinity, alignment: .center)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }
