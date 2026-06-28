@@ -2,7 +2,8 @@ const {
   APP_NAME,
   APP_ICON_URL,
   isAdminHost,
-  updateCampaignHeader
+  updateCampaignHeader,
+  showConfirmDialog
 } = window.PlayerTrackerShared || {
   APP_NAME: 'Tactical Table Top: Initiative',
   APP_ICON_URL: '/favicon-512.png',
@@ -988,7 +989,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function shutdownServer() {
     if (!authUser || !allowLocalAdminActions) return;
-    const confirmed = window.confirm('Shut down the server now?');
+    const confirmed = await showConfirmDialog({
+      title: 'Confirm Shutdown',
+      message: 'Shut down the server now?',
+      confirmLabel: 'Shut Down',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
     if (!confirmed) return;
     try {
       await fetchVoid('/admin/shutdown', { method: 'POST' });

@@ -2058,40 +2058,23 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Confirm that unsaved condition edits should be discarded.
-   * @returns {boolean} True if the editor can close, false if the user cancelled.
-   */
-  async function confirmDiscardUnsavedConditions() {
-    if (!conditionsDirty) return true;
-    const discard = await showConfirmDialog({
-      title: 'Discard Changes?',
-      header: 'You have unsaved condition changes.',
-      message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
-      confirmLabel: 'Discard Changes',
-      cancelLabel: 'Return to Conditions',
-      confirmButtonClass: 'danger',
-      initialFocus: 'cancel'
-    });
-    if (!discard) return false;
-    const current = currentPlayers.find((player) => player.id === selectedCharacterId);
-    if (current) {
-      setSelectedCharacter(current);
-    }
-    return true;
-  }
-
-  /**
-   * Confirm that unsaved detail edits should be discarded.
+   * Confirm that unsaved detail or condition edits should be discarded.
+   * @param {object} options Confirmation copy and dirty-state inputs.
    * @returns {Promise<boolean>} True if the editor can close, false if the user cancelled.
    */
-  async function confirmDiscardUnsavedDetails() {
-    if (!detailsDirty) return true;
+  async function confirmDiscardEditedCharacterChanges({
+    dirty,
+    header,
+    message,
+    cancelLabel
+  }) {
+    if (!dirty) return true;
     const discard = await showConfirmDialog({
       title: 'Discard Changes?',
-      header: 'You have unsaved detail changes.',
-      message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+      header,
+      message,
       confirmLabel: 'Discard Changes',
-      cancelLabel: 'Keep Editing',
+      cancelLabel,
       confirmButtonClass: 'danger',
       initialFocus: 'cancel'
     });
@@ -5222,11 +5205,21 @@ window.addEventListener('DOMContentLoaded', () => {
           label: '✏️ Edit Character',
           handler: async () => {
             if (detailsDirty) {
-              const discard = await confirmDiscardUnsavedDetails();
+              const discard = await confirmDiscardEditedCharacterChanges({
+                dirty: detailsDirty,
+                header: 'You have unsaved detail changes.',
+                message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+                cancelLabel: 'Keep Editing'
+              });
               if (!discard) return;
             }
             if (conditionsDirty) {
-              const discard = await confirmDiscardUnsavedConditions();
+              const discard = await confirmDiscardEditedCharacterChanges({
+                dirty: conditionsDirty,
+                header: 'You have unsaved condition changes.',
+                message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+                cancelLabel: 'Return to Conditions'
+              });
               if (!discard) return;
               setConditionsPanelOpen(false);
             }
@@ -5603,11 +5596,21 @@ window.addEventListener('DOMContentLoaded', () => {
   async function openConditionsEditorForCharacter(player) {
     if (!player) return;
     if (detailsDirty) {
-      const discard = await confirmDiscardUnsavedDetails();
+      const discard = await confirmDiscardEditedCharacterChanges({
+        dirty: detailsDirty,
+        header: 'You have unsaved detail changes.',
+        message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+        cancelLabel: 'Keep Editing'
+      });
       if (!discard) return;
     }
     if (conditionsDirty && selectedCharacterId === player.id) {
-      const discard = await confirmDiscardUnsavedConditions();
+      const discard = await confirmDiscardEditedCharacterChanges({
+        dirty: conditionsDirty,
+        header: 'You have unsaved condition changes.',
+        message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+        cancelLabel: 'Return to Conditions'
+      });
       if (!discard) return;
     }
     setSelectedCharacter(player);
@@ -6478,7 +6481,12 @@ window.addEventListener('DOMContentLoaded', () => {
     detailsToggle.addEventListener('click', async () => {
       const isOpen = detailsPanel.classList.contains('details-panel-open');
       if (!isOpen && conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open') && conditionsDirty) {
-        const discard = await confirmDiscardUnsavedConditions();
+        const discard = await confirmDiscardEditedCharacterChanges({
+          dirty: conditionsDirty,
+          header: 'You have unsaved condition changes.',
+          message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+          cancelLabel: 'Return to Conditions'
+        });
         if (!discard) return;
         setConditionsPanelOpen(false);
       }
@@ -6487,7 +6495,12 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (detailsCancelBtn) {
     detailsCancelBtn.addEventListener('click', async () => {
-      if (!(await confirmDiscardUnsavedDetails())) return;
+      if (!(await confirmDiscardEditedCharacterChanges({
+        dirty: detailsDirty,
+        header: 'You have unsaved detail changes.',
+        message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+        cancelLabel: 'Keep Editing'
+      }))) return;
       setDetailsPanelOpen(false);
     });
   }
@@ -6502,13 +6515,23 @@ window.addEventListener('DOMContentLoaded', () => {
   if (detailsPanel) {
     detailsPanel.addEventListener('click', async (event) => {
       if (event.target !== detailsPanel) return;
-      if (!(await confirmDiscardUnsavedDetails())) return;
+      if (!(await confirmDiscardEditedCharacterChanges({
+        dirty: detailsDirty,
+        header: 'You have unsaved detail changes.',
+        message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+        cancelLabel: 'Keep Editing'
+      }))) return;
       setDetailsPanelOpen(false);
     });
   }
   if (conditionsCancelBtn) {
     conditionsCancelBtn.addEventListener('click', async () => {
-      if (!(await confirmDiscardUnsavedConditions())) return;
+      if (!(await confirmDiscardEditedCharacterChanges({
+        dirty: conditionsDirty,
+        header: 'You have unsaved condition changes.',
+        message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+        cancelLabel: 'Return to Conditions'
+      }))) return;
       setConditionsPanelOpen(false);
     });
   }
@@ -6524,7 +6547,12 @@ window.addEventListener('DOMContentLoaded', () => {
     conditionsPanel.addEventListener('click', async (event) => {
       if (event.target !== conditionsPanel) return;
       event.stopPropagation();
-      if (!(await confirmDiscardUnsavedConditions())) return;
+      if (!(await confirmDiscardEditedCharacterChanges({
+        dirty: conditionsDirty,
+        header: 'You have unsaved condition changes.',
+        message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+        cancelLabel: 'Return to Conditions'
+      }))) return;
       setConditionsPanelOpen(false);
     });
   }

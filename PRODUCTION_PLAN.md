@@ -1031,6 +1031,8 @@ Acceptance:
 - the UI can clearly distinguish destructive, discard, and debt-related confirmations
 - the modal styling matches the existing web app instead of browser chrome
 
+Status: complete
+
 ### M8: iOS Migration
 
 Goal: convert iOS from device identity to account identity.

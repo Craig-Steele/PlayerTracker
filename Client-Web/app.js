@@ -1251,11 +1251,23 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   async function openDetailsEditorForCharacter(character) {
     if (!character || !detailsPanel) return;
     if (conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open')) {
-      if (!(await confirmDiscardConditionChanges())) return;
+      if (!(await confirmDiscardChanges({
+        dirty: conditionsDirty,
+        header: 'You have unsaved condition changes.',
+        message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+        cancelLabel: 'Return to Conditions',
+        onDiscard: revertSelectedConditions
+      }))) return;
       setConditionsPanelOpen(false);
     }
     if (selectedCharacterId && selectedCharacterId !== character.id && formDirty) {
-      if (!(await confirmDiscardDetailsChanges())) return;
+      if (!(await confirmDiscardChanges({
+        dirty: formDirty,
+        header: 'You have unsaved detail changes.',
+        message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+        cancelLabel: 'Keep Editing',
+        onDiscard: revertSelectedCharacterDetails
+      }))) return;
     }
     closeCharacterOverflowMenu();
     selectCharacter(character.id);
@@ -1265,11 +1277,23 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   async function openConditionsEditorForCharacter(character) {
     if (!character || !conditionsPanel) return;
     if (detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
-      if (!(await confirmDiscardDetailsChanges())) return;
+      if (!(await confirmDiscardChanges({
+        dirty: formDirty,
+        header: 'You have unsaved detail changes.',
+        message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+        cancelLabel: 'Keep Editing',
+        onDiscard: revertSelectedCharacterDetails
+      }))) return;
       setDetailsPanelOpen(false);
     }
     if (selectedCharacterId && selectedCharacterId !== character.id && conditionsDirty) {
-      if (!(await confirmDiscardConditionChanges())) return;
+      if (!(await confirmDiscardChanges({
+        dirty: conditionsDirty,
+        header: 'You have unsaved condition changes.',
+        message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+        cancelLabel: 'Return to Conditions',
+        onDiscard: revertSelectedConditions
+      }))) return;
     }
     closeCharacterOverflowMenu();
     selectCharacter(character.id);
@@ -1309,36 +1333,19 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     statusDiv.textContent = '';
   }
 
-  async function confirmDiscardDetailsChanges() {
-    if (!formDirty) return true;
+  async function confirmDiscardChanges({ dirty, header, message, cancelLabel, onDiscard }) {
+    if (!dirty) return true;
     const confirmed = await showConfirmDialog({
       title: 'Discard Changes?',
-      header: 'You have unsaved detail changes.',
-      message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+      header,
+      message,
       confirmLabel: 'Discard Changes',
-      cancelLabel: 'Keep Editing',
+      cancelLabel,
       confirmButtonClass: 'danger',
       initialFocus: 'cancel'
     });
-    if (confirmed) {
-      revertSelectedCharacterDetails();
-    }
-    return confirmed;
-  }
-
-  async function confirmDiscardConditionChanges() {
-    if (!conditionsDirty) return true;
-    const confirmed = await showConfirmDialog({
-      title: 'Discard Changes?',
-      header: 'You have unsaved condition changes.',
-      message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
-      confirmLabel: 'Discard Changes',
-      cancelLabel: 'Return to Conditions',
-      confirmButtonClass: 'danger',
-      initialFocus: 'cancel'
-    });
-    if (confirmed) {
-      revertSelectedConditions();
+    if (confirmed && typeof onDiscard === 'function') {
+      onDiscard();
     }
     return confirmed;
   }
@@ -3665,9 +3672,21 @@ const preferPlayerView = viewMode === 'player' || playerPath;
         detailsPanel.classList.contains('details-panel-open') &&
         !detailsPanel.classList.contains('hidden');
       if (isOpen) {
-        if (!(await confirmDiscardDetailsChanges())) return;
+        if (!(await confirmDiscardChanges({
+          dirty: formDirty,
+          header: 'You have unsaved detail changes.',
+          message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+          cancelLabel: 'Keep Editing',
+          onDiscard: revertSelectedCharacterDetails
+        }))) return;
       } else if (conditionsToggle && conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open')) {
-        if (!(await confirmDiscardConditionChanges())) return;
+        if (!(await confirmDiscardChanges({
+          dirty: conditionsDirty,
+          header: 'You have unsaved condition changes.',
+          message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+          cancelLabel: 'Return to Conditions',
+          onDiscard: revertSelectedConditions
+        }))) return;
         setConditionsPanelOpen(false);
       }
       detailsPanel.classList.toggle('hidden', isOpen);
@@ -3685,9 +3704,21 @@ const preferPlayerView = viewMode === 'player' || playerPath;
         conditionsPanel.classList.contains('conditions-panel-open') &&
         !conditionsPanel.classList.contains('hidden');
       if (isOpen) {
-        if (!(await confirmDiscardConditionChanges())) return;
+        if (!(await confirmDiscardChanges({
+          dirty: conditionsDirty,
+          header: 'You have unsaved condition changes.',
+          message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+          cancelLabel: 'Return to Conditions',
+          onDiscard: revertSelectedConditions
+        }))) return;
       } else if (detailsToggle && detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
-        if (!(await confirmDiscardDetailsChanges())) return;
+        if (!(await confirmDiscardChanges({
+          dirty: formDirty,
+          header: 'You have unsaved detail changes.',
+          message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+          cancelLabel: 'Keep Editing',
+          onDiscard: revertSelectedCharacterDetails
+        }))) return;
         detailsPanel.classList.remove('details-panel-open');
         detailsPanel.classList.add('details-panel-collapsed');
         detailsPanel.classList.add('hidden');
@@ -3702,7 +3733,13 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   if (conditionsPanel) {
     conditionsPanel.addEventListener('click', async (event) => {
       if (event.target !== conditionsPanel) return;
-      if (!(await confirmDiscardConditionChanges())) return;
+      if (!(await confirmDiscardChanges({
+        dirty: conditionsDirty,
+        header: 'You have unsaved condition changes.',
+        message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+        cancelLabel: 'Return to Conditions',
+        onDiscard: revertSelectedConditions
+      }))) return;
       setConditionsPanelOpen(false);
     });
   }
@@ -6967,7 +7004,13 @@ function getOwnerName() {
   }
   if (detailsCancelBtn) {
     detailsCancelBtn.addEventListener('click', async () => {
-      if (!(await confirmDiscardDetailsChanges())) return;
+      if (!(await confirmDiscardChanges({
+        dirty: formDirty,
+        header: 'You have unsaved detail changes.',
+        message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
+        cancelLabel: 'Keep Editing',
+        onDiscard: revertSelectedCharacterDetails
+      }))) return;
       setDetailsPanelOpen(false);
     });
   }
@@ -6981,7 +7024,13 @@ function getOwnerName() {
   }
   if (conditionsCancelBtn) {
     conditionsCancelBtn.addEventListener('click', async () => {
-      if (!(await confirmDiscardConditionChanges())) return;
+      if (!(await confirmDiscardChanges({
+        dirty: conditionsDirty,
+        header: 'You have unsaved condition changes.',
+        message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
+        cancelLabel: 'Return to Conditions',
+        onDiscard: revertSelectedConditions
+      }))) return;
       setConditionsPanelOpen(false);
     });
   }
