@@ -7,6 +7,7 @@ struct ConnectionSheetView: View {
     let statusMessage: String
     let errorMessage: String?
     let onConnect: () -> Void
+    var showsCloseButton: Bool = true
 
     @Environment(\.dismiss) private var dismiss
     @State private var showingQRScanner = false
@@ -46,9 +47,11 @@ struct ConnectionSheetView: View {
             }
             .navigationTitle("Connect")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        dismiss()
+                if showsCloseButton {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") {
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -97,35 +100,56 @@ struct ConnectionSheetView: View {
 
 struct PlayerIdentitySheetView: View {
     @Binding var playerName: String
-    let ownerId: UUID
     let onSave: () -> Void
+    let onChangeUser: (() async -> Void)?
+    var title: String = "Player Name"
+    var footerText: String = "This name is shown as the owner of your characters."
+    var confirmButtonTitle: String = "Save"
+    var showsCloseButton: Bool = true
+    var showsChangeUserButton: Bool = true
 
     @Environment(\.dismiss) private var dismiss
+    @FocusState private var playerNameFieldFocused: Bool
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     TextField("Player name", text: $playerName)
-                    Text(ownerId.uuidString)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
+                        .focused($playerNameFieldFocused)
                 } header: {
                     Text("Player")
                 } footer: {
-                    Text("This name is shown as the owner of your characters.")
+                    Text(footerText)
+                }
+
+                if showsChangeUserButton, let onChangeUser {
+                    Section {
+                        Button("Change User", role: .destructive) {
+                            Task {
+                                await onChangeUser()
+                                dismiss()
+                            }
+                        }
+                    } footer: {
+                        Text("Log out and return to the join screen for a different user.")
+                    }
                 }
             }
-            .navigationTitle("Player Identity")
+            .navigationTitle(title)
+            .onAppear {
+                playerNameFieldFocused = true
+            }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        dismiss()
+                if showsCloseButton {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Close") {
+                            dismiss()
+                        }
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
+                    Button(confirmButtonTitle) {
                         onSave()
                         dismiss()
                     }
@@ -140,6 +164,8 @@ struct SettingsView: View {
     let serverURL: String
     let playerName: String
     let ownerId: UUID
+    @Binding var showPlayerNames: Bool
+    @Binding var showCharacterConditions: Bool
     let onChangeConnection: () -> Void
     let onChangePlayer: () -> Void
 
@@ -149,6 +175,11 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Display") {
+                    Toggle("Show player names", isOn: $showPlayerNames)
+                    Toggle("Show character conditions", isOn: $showCharacterConditions)
+                }
+
                 Section("Server") {
                     Text(serverURL.isEmpty ? "Not set" : serverURL)
                         .foregroundStyle(serverURL.isEmpty ? .secondary : .primary)

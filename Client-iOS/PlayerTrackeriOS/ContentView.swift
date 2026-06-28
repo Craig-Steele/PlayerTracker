@@ -5,145 +5,186 @@ struct ContentView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     @State private var editorDraft: CharacterDraft?
+    @State private var healthDraft: CharacterDraft?
     @State private var conditionsDraft: CharacterDraft?
+    @State private var initiativeDraft: InitiativeDraft?
     @State private var showingSettings = false
     @State private var showingConnectionSheet = false
     @State private var showingPlayerIdentitySheet = false
-    @State private var collapsedCharacterIDs: Set<UUID> = []
-    @State private var manualInitiativeCharacter: PlayerViewDTO?
-    @State private var manualInitiativeInput = ""
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    encounterCard
-
-                    if horizontalSizeClass == .regular {
-                        HStack(alignment: .top, spacing: 20) {
-                            myCharactersSection
-                                .frame(maxWidth: .infinity, alignment: .topLeading)
-
-                            initiativeSection
-                                .frame(width: 360, alignment: .topLeading)
-                        }
-                    } else {
-                        myCharactersSection
-                        initiativeSection
-                    }
-                }
-                .frame(maxWidth: 1180, alignment: .leading)
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-            .background(Color(uiColor: .systemGroupedBackground))
-            .sheet(isPresented: $showingSettings) {
-                SettingsView(
-                    serverURL: model.normalizedServerURL,
-                    playerName: model.playerName,
-                    ownerId: model.ownerId,
-                    onChangeConnection: {
-                        showingSettings = false
-                        showingConnectionSheet = true
-                    },
-                    onChangePlayer: {
-                        showingSettings = false
-                        showingPlayerIdentitySheet = true
-                    }
-                )
-            }
-            .sheet(isPresented: $showingConnectionSheet) {
+        Group {
+            switch model.launchPhase {
+            case .connection:
                 ConnectionSheetView(
                     serverURLString: $model.serverURLString,
                     statusMessage: model.statusMessage,
                     errorMessage: model.lastError,
                     onConnect: {
                         Task { await model.connect() }
-                    }
+                    },
+                    showsCloseButton: false
                 )
-            }
-            .sheet(isPresented: $showingPlayerIdentitySheet) {
+            case .playerName:
                 PlayerIdentitySheetView(
                     playerName: $model.playerName,
-                    ownerId: model.ownerId,
                     onSave: {
                         Task { await model.savePlayerName() }
-                    }
+                    },
+                    onChangeUser: nil,
+                    title: "Join Campaign",
+                    footerText: "Enter a player name to join this campaign.",
+                    confirmButtonTitle: "Join",
+                    showsCloseButton: false,
+                    showsChangeUserButton: false
                 )
+            case .campaign:
+                campaignContent
             }
-            .alert(
-                manualInitiativeCharacter.map { "Enter Initiative for \($0.name)" } ?? "Enter Initiative",
-                isPresented: Binding(
-                    get: { manualInitiativeCharacter != nil },
-                    set: { presented in
-                        if !presented {
-                            manualInitiativeCharacter = nil
-                            manualInitiativeInput = ""
-                        }
-                    }
-                )
-            ) {
-                TextField("Initiative", text: $manualInitiativeInput)
-                    .keyboardType(.decimalPad)
-                Button("Cancel", role: .cancel) {
-                    manualInitiativeCharacter = nil
-                    manualInitiativeInput = ""
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(
+                serverURL: model.normalizedServerURL,
+                playerName: model.playerName,
+                ownerId: model.ownerId,
+                showPlayerNames: $model.showPlayerNames,
+                showCharacterConditions: $model.showCharacterConditions,
+                onChangeConnection: {
+                    showingSettings = false
+                    showingConnectionSheet = true
+                },
+                onChangePlayer: {
+                    showingSettings = false
+                    showingPlayerIdentitySheet = true
                 }
-                Button("OK") {
-                    let trimmed = manualInitiativeInput.trimmingCharacters(in: .whitespacesAndNewlines)
-                    guard let character = manualInitiativeCharacter else {
-                        manualInitiativeCharacter = nil
-                        manualInitiativeInput = ""
+            )
+        }
+        .sheet(isPresented: $showingConnectionSheet) {
+            ConnectionSheetView(
+                serverURLString: $model.serverURLString,
+                statusMessage: model.statusMessage,
+                errorMessage: model.lastError,
+                onConnect: {
+                    Task { await model.connect() }
+                }
+            )
+        }
+        .sheet(isPresented: $showingPlayerIdentitySheet) {
+            PlayerIdentitySheetView(
+                playerName: $model.playerName,
+                onSave: {
+                    Task { await model.savePlayerName() }
+                },
+                onChangeUser: {
+                    await model.signOut()
+                }
+            )
+        }
+        .sheet(item: $initiativeDraft) { draft in
+            InitiativeEditorView(
+                draft: binding(for: $initiativeDraft, fallback: draft),
+                ruleSet: model.ruleSet,
+                onSet: { initiative in
+                    guard let character = model.gameState?.players.first(where: { $0.id == draft.id }) else {
+                        initiativeDraft = nil
                         return
                     }
-                    let initiative = trimmed.isEmpty ? nil : Double(trimmed)
-                    guard trimmed.isEmpty || initiative != nil else {
-                        model.statusMessage = "Initiative must be a valid number."
-                        manualInitiativeCharacter = nil
-                        manualInitiativeInput = ""
-                        return
-                    }
-                    manualInitiativeCharacter = nil
-                    manualInitiativeInput = ""
+                    initiativeDraft = nil
                     Task { await model.setInitiative(for: character, initiative: initiative) }
-                }
-            }
-            .sheet(item: $editorDraft) { draft in
-                CharacterEditorView(
-                    draft: binding(for: $editorDraft, fallback: draft),
-                    ruleSet: model.ruleSet,
-                    onManageConditions: {
-                        conditionsDraft = editorDraft ?? draft
-                    },
-                    onSave: {
-                        guard let draftToSave = editorDraft else { return }
-                        editorDraft = nil
-                        Task { await model.saveCharacter(draftToSave) }
-                    },
-                    onDelete: draft.id == nil ? nil : {
-                        guard let id = draft.id else { return }
-                        editorDraft = nil
-                        Task { await model.deleteCharacter(id: id) }
+                },
+                onRoll: {
+                    guard let character = model.gameState?.players.first(where: { $0.id == draft.id }) else {
+                        initiativeDraft = nil
+                        return
                     }
-                )
-            }
-            .sheet(item: $conditionsDraft) { draft in
-                ConditionsEditorView(
-                    draft: binding(for: $conditionsDraft, fallback: draft),
-                    ruleSet: model.ruleSet,
-                    serverURLString: model.normalizedServerURL,
-                    onSave: {
-                        guard let conditionsDraft else { return }
-                        if editorDraft?.id == conditionsDraft.id {
-                            editorDraft = conditionsDraft
+                    initiativeDraft = nil
+                    if let rolled = rollInitiative(standardDie: model.ruleSet?.standardDie, bonus: character.initiativeBonus) {
+                        Task { await model.setInitiative(for: character, initiative: rolled) }
+                    } else {
+                        Task {
+                            model.statusMessage = "Unable to roll initiative."
                         }
-                        Task { await model.saveConditions(for: conditionsDraft) }
                     }
-                )
+                }
+            )
+            .presentationDetents([.height(240)])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $editorDraft) { draft in
+            CharacterEditorView(
+                draft: binding(for: $editorDraft, fallback: draft),
+                ruleSet: model.ruleSet,
+                onManageConditions: {
+                    conditionsDraft = editorDraft ?? draft
+                },
+                onSave: {
+                    guard let draftToSave = editorDraft else { return }
+                    editorDraft = nil
+                    Task { await model.saveCharacter(draftToSave) }
+                },
+                onDelete: draft.id == nil ? nil : {
+                    guard let id = draft.id else { return }
+                    editorDraft = nil
+                    Task { await model.deleteCharacter(id: id) }
+                }
+            )
+        }
+        .sheet(item: $healthDraft) { draft in
+            HealthEditorView(
+                draft: binding(for: $healthDraft, fallback: draft),
+                ruleSet: model.ruleSet,
+                onChange: {
+                    guard let healthDraft else { return }
+                    Task { await model.saveCharacter(healthDraft) }
+                }
+            )
+            .presentationDetents([.height(220)])
+            .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $conditionsDraft) { draft in
+            ConditionsEditorView(
+                draft: binding(for: $conditionsDraft, fallback: draft),
+                ruleSet: model.ruleSet,
+                serverURLString: model.normalizedServerURL,
+                onSave: {
+                    guard let conditionsDraft else { return }
+                    if editorDraft?.id == conditionsDraft.id {
+                        editorDraft = conditionsDraft
+                    }
+                    Task { await model.saveConditions(for: conditionsDraft) }
+                }
+            )
+        }
+        .task {
+            await model.connect()
+        }
+    }
+
+    private var campaignContent: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                encounterCard
+                    .padding(.horizontal)
+                    .padding(.top)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        if horizontalSizeClass == .regular {
+                            HStack(alignment: .top, spacing: 20) {
+                                initiativeSection
+                                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                            }
+                        } else {
+                            initiativeSection
+                        }
+                    }
+                    .frame(maxWidth: 1180, alignment: .leading)
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .task {
-                await model.connect()
-            }
+            .background(Color(uiColor: .systemGroupedBackground))
             .onDisappear {
                 model.stopPolling()
             }
@@ -151,29 +192,21 @@ struct ContentView: View {
     }
 
     private var encounterCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let encounterPresentation = EncounterPresentationState(
+            campaignEncounterState: model.campaign?.encounterState,
+            gameEncounterState: model.gameState?.encounterState
+        )
+        let encounterState = encounterPresentation.effectiveEncounterState
+        let canRollInitiativeAll = encounterState == .active
+            && model.myCharacters.contains(where: { $0.initiative == nil })
+        let canCompleteTurn = encounterPresentation.shouldShowTurnCompleteButton(
+            isMyTurn: model.isMyTurn,
+            isCompletingTurn: model.isCompletingTurn
+        )
+
+        return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(model.campaign?.name ?? "No campaign connected")
-                        .font(.title3.weight(.semibold))
-                    Text("Player: \(playerDisplayName)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    if let round = model.gameState?.round {
-                        Text("Round \(round)")
-                            .font(.subheadline.weight(.semibold))
-                    }
-                    Text(currentTurnSubtitle)
-                        .font(.subheadline)
-                        .foregroundStyle(model.isMyTurn ? .red : .primary)
-                    if let nextTurnSubtitle {
-                        Text(nextTurnSubtitle)
-                            .font(.subheadline)
-                            .foregroundStyle(.primary)
-                    }
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 10) {
+                HStack(alignment: .center, spacing: 12) {
                     if let iconURL = rulesetIconURL {
                         AsyncImage(url: iconURL) { phase in
                             switch phase {
@@ -185,33 +218,97 @@ struct ContentView: View {
                                 EmptyView()
                             }
                         }
-                        .frame(width: 72, height: 72)
+                        .frame(width: 64, height: 64)
                         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
 
-                    HStack(spacing: 10) {
-                        Button {
-                            showingSettings = true
-                        } label: {
-                            Image(systemName: "gearshape.fill")
-                                .foregroundStyle(.primary)
-                                .frame(width: 18, height: 18)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(isShowingModal)
-
-                        Button {
-                            editorDraft = CharacterDraft.new(ruleSet: model.ruleSet)
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundStyle(.primary)
-                                .frame(width: 18, height: 18)
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(isShowingModal)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(model.campaign?.name ?? "No campaign connected")
+                            .font(.title3.weight(.semibold))
+                        Text("Player: \(playerDisplayName)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
+                }
+
+                Spacer()
+
+                Button {
+                    showingSettings = true
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .foregroundStyle(.primary)
+                        .frame(width: 18, height: 18)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .disabled(isShowingModal)
+            }
+
+            ZStack {
+                HStack {
+                    Button {
+                        editorDraft = CharacterDraft.new(ruleSet: model.ruleSet)
+                    } label: {
+                        Image(systemName: "person.badge.plus")
+                            .foregroundStyle(.primary)
+                            .frame(width: 18, height: 18)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .disabled(isShowingModal || model.playerSession == nil)
+
+                    Spacer(minLength: 0)
+
+                    HStack(spacing: 8) {
+                        if canRollInitiativeAll {
+                            Button {
+                                Task { await model.rollInitiativeForMyCharacters() }
+                            } label: {
+                                Label("Init", systemImage: "die.face.5")
+                                    .labelStyle(.titleAndIcon)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .accessibilityLabel("Roll for Initiative")
+                            .disabled(isShowingModal)
+                        }
+
+                        if canCompleteTurn {
+                            Button {
+                                Task { await model.completeTurn() }
+                            } label: {
+                                Label("Done", systemImage: "checkmark")
+                                    .labelStyle(.titleAndIcon)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                            .tint(.green)
+                            .accessibilityLabel("Turn Complete")
+                            .disabled(isShowingModal || model.isCompletingTurn)
+                        }
+                    }
+                }
+
+                HStack {
+                    Spacer(minLength: 0)
+
+                    Text(encounterPresentation.roundIndicatorText(round: model.gameState?.round))
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(roundIndicatorBackground(for: encounterPresentation.roundIndicatorTone()))
+                        )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .strokeBorder(roundIndicatorBorder(for: encounterPresentation.roundIndicatorTone()), lineWidth: 1)
+                        )
+                        .foregroundStyle(roundIndicatorForeground(for: encounterPresentation.roundIndicatorTone()))
+                        .fixedSize(horizontal: true, vertical: false)
+
+                    Spacer(minLength: 0)
                 }
             }
 
@@ -229,63 +326,51 @@ struct ContentView: View {
         )
     }
 
-    private var myCharactersSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if model.myCharacters.isEmpty {
-                emptyCard(message: "No characters yet. Tap + to add one.")
-            } else {
-                ForEach(sortedMyCharacters) { character in
-                    characterCard(character)
-                }
-            }
+    private func roundIndicatorBackground(
+        for tone: EncounterPresentationState.RoundIndicatorTone
+    ) -> Color {
+        switch tone {
+        case .new:
+            return Color(uiColor: .secondarySystemGroupedBackground)
+        case .active:
+            return Color.green.opacity(0.16)
+        case .suspended:
+            return Color.red.opacity(0.16)
+        }
+    }
+
+    private func roundIndicatorBorder(
+        for tone: EncounterPresentationState.RoundIndicatorTone
+    ) -> Color {
+        switch tone {
+        case .new:
+            return Color(uiColor: .systemGray4)
+        case .active:
+            return Color.green.opacity(0.45)
+        case .suspended:
+            return Color.red.opacity(0.45)
+        }
+    }
+
+    private func roundIndicatorForeground(
+        for tone: EncounterPresentationState.RoundIndicatorTone
+    ) -> Color {
+        switch tone {
+        case .new:
+            return .secondary
+        case .active:
+            return .green
+        case .suspended:
+            return .red
         }
     }
 
     private var initiativeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Encounter Order")
-                .font(.headline)
-
             if let players = model.gameState?.players, !players.isEmpty {
                 VStack(spacing: 8) {
                     ForEach(players) { player in
-                        HStack(alignment: .top, spacing: 10) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(player.name)
-                                    .font(.subheadline.weight(player.id == model.gameState?.currentTurnId ? .semibold : .regular))
-                                Text("\(player.ownerName) • Init \(formattedInitiative(player.initiative))")
-                                    .font(.caption.monospacedDigit())
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer(minLength: 8)
-
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(encounterStatsText(for: player))
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(encounterStatsStyle(for: player).foreground)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(
-                                        Capsule()
-                                            .fill(encounterStatsStyle(for: player).background)
-                                    )
-
-                                if !player.conditions.isEmpty {
-                                    Text(conditionSummary(for: player))
-                                        .font(.caption)
-                                        .foregroundStyle(.primary)
-                                        .multilineTextAlignment(.trailing)
-                                        .lineLimit(2)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(encounterRowBackground(for: player))
-                        )
+                        encounterOrderRow(for: player)
                     }
                 }
             } else {
@@ -294,150 +379,192 @@ struct ContentView: View {
         }
     }
 
-    private func characterCard(_ character: PlayerViewDTO) -> some View {
-        let isExpanded = !collapsedCharacterIDs.contains(character.id)
-        let isCurrentTurn = model.isCurrentTurn(for: character)
+    private func encounterOrderRow(for player: PlayerViewDTO) -> some View {
+        let isMine = player.ownerId == model.currentPlayerID
+        let encounterPresentation = EncounterPresentationState(
+            campaignEncounterState: model.campaign?.encounterState,
+            gameEncounterState: model.gameState?.encounterState
+        )
+        let encounterState = encounterPresentation.effectiveEncounterState
+        let isCurrentTurn = encounterState == .active && model.gameState?.currentTurnId == player.id
+        let displayedInitiative = encounterPresentation.displayedInitiative(player.initiative)
+        let isRefereeOwned = player.controllerDisplayName.caseInsensitiveCompare("Referee") == .orderedSame
+        let nameBadgeTone = encounterPresentation.nameBadgeTone(isMine: isMine, isRefereeOwned: isRefereeOwned)
+        let shouldShowControllerName = encounterPresentation.shouldShowControllerName(
+            isMine: isMine,
+            showPlayerNames: model.showPlayerNames
+        )
+        let shouldShowConditions = encounterPresentation.shouldShowConditions(
+            isMine: isMine,
+            hasConditions: !player.conditions.isEmpty,
+            showCharacterConditions: model.showCharacterConditions
+        )
 
-        return VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Button {
-                    toggleExpanded(for: character)
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text(character.name)
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(isCurrentTurn ? .red : .primary)
+        return VStack(alignment: .leading, spacing: 12) {
+            ZStack(alignment: .top) {
+                HStack(alignment: .top, spacing: 12) {
+                    if isMine {
+                        Button {
+                            initiativeDraft = InitiativeDraft(character: player)
+                        } label: {
+                            initiativeBadge(for: player, initiative: displayedInitiative)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isShowingModal)
+                    } else {
+                        initiativeBadge(for: player, initiative: displayedInitiative)
+                    }
+
+                    Spacer(minLength: 0)
+
+                    if isMine {
+                        Button {
+                            healthDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
+                        } label: {
+                            healthBadge(for: player)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isShowingModal)
+                    } else {
+                        healthBadge(for: player)
                     }
                 }
-                .buttonStyle(.plain)
-                Spacer()
-                if isCurrentTurn && !isExpanded {
-                    Button("Turn Complete") {
-                        Task { await model.completeTurn() }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                } else if needsInitiativeRoll(character) && !isExpanded {
-                    Button("Roll for Initiative!") {
-                        handleInitiativeAction(for: character)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
-                } else if isExpanded {
-                    Button {
-                        manualInitiativeCharacter = character
-                        manualInitiativeInput = character.initiative.map(formattedInitiative) ?? ""
+
+                if isMine {
+                    Menu {
+                        Button {
+                            editorDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
+                        } label: {
+                            Label("Edit Character", systemImage: "pencil")
+                        }
+
+                        Button {
+                            healthDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
+                        } label: {
+                            Label("Edit Health", systemImage: "heart.text.square")
+                        }
+
+                        if isCurrentTurn {
+                            Button {
+                                Task { await model.completeTurn() }
+                            } label: {
+                                Label("Turn Complete", systemImage: "checkmark.circle")
+                            }
+                        }
                     } label: {
-                        Text("Init \(formattedInitiative(character.initiative))")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.secondary)
+                        nameBadge(
+                            title: player.name,
+                            tone: nameBadgeTone,
+                            isCurrentTurn: isCurrentTurn
+                        )
                     }
                     .buttonStyle(.plain)
+                } else {
+                    VStack(alignment: .center, spacing: 4) {
+                        nameBadge(
+                            title: player.name,
+                            tone: nameBadgeTone,
+                            isCurrentTurn: isCurrentTurn
+                        )
+
+                        if shouldShowControllerName {
+                            Text(player.controllerDisplayName)
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                        }
+                    }
                 }
             }
 
-            if isExpanded {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(alignment: .top, spacing: 12) {
-                        ForEach(displayStats(for: character)) { stat in
-                            statPod(for: character, stat: stat)
+            if shouldShowConditions {
+                HStack(alignment: .center, spacing: 8) {
+                    if isMine {
+                        Button {
+                            conditionsDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
+                        } label: {
+                            Text("🩸")
+                                .font(.subheadline.weight(.semibold))
                         }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(isShowingModal)
+                        .frame(width: 44, alignment: .leading)
                     }
-                }
 
-                HStack(spacing: 12) {
-                    if character.conditions.isEmpty {
-                        Text("Conditions")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    } else {
-                        Text(conditionSummary(for: character))
-                            .font(.subheadline)
-                            .foregroundStyle(.primary)
-                            .lineLimit(3)
-                    }
-                    Spacer()
-                    Button {
-                        conditionsDraft = CharacterDraft(player: character, ruleSet: model.ruleSet)
-                    } label: {
-                        Image(systemName: "pencil")
-                            .frame(width: 34, height: 34)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                }
-                .padding(.vertical, 10)
-                .padding(.horizontal, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(uiColor: .tertiarySystemGroupedBackground))
-                )
+                    Spacer(minLength: 0)
 
-                HStack {
-                    Button("Edit") {
-                        editorDraft = CharacterDraft(player: character, ruleSet: model.ruleSet)
-                    }
-                    .buttonStyle(.bordered)
-
-                    Spacer()
-
-                    if needsInitiativeRoll(character) {
-                        Button("Roll for Initiative!") {
-                            handleInitiativeAction(for: character)
-                        }
-                        .buttonStyle(.borderedProminent)
-                    } else if isCurrentTurn {
-                        Button("Turn Complete") {
-                            Task { await model.completeTurn() }
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
+                    Text(conditionSummary(for: player))
+                        .font(.caption)
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
             }
         }
-        .padding()
+        .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-        )
-    }
-
-    private func statPod(for character: PlayerViewDTO, stat: StatEntryDTO) -> some View {
-        VStack(spacing: 8) {
-            statAdjustButton(systemName: "plus", character: character, stat: stat, delta: 1)
-            Text(stat.key)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-            Text(statValueText(for: stat))
-                .font(.headline.monospacedDigit())
-            statAdjustButton(systemName: "minus", character: character, stat: stat, delta: -1)
-        }
-        .frame(width: 84)
-        .padding(.vertical, 10)
-        .padding(.horizontal, 8)
-        .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(uiColor: .tertiarySystemGroupedBackground))
+                .fill(encounterRowBackground(for: player))
         )
+        .overlay {
+            if isMine {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color.blue, lineWidth: 2)
+            }
+        }
     }
 
-    private func statAdjustButton(systemName: String, character: PlayerViewDTO, stat: StatEntryDTO, delta: Int) -> some View {
-        Button {
-            Task { await model.adjustStat(for: character, statKey: stat.key, delta: delta) }
-        } label: {
-            Image(systemName: systemName)
-                .font(.headline.weight(.bold))
-                .frame(width: 26, height: 26)
+    private func nameBadge(
+        title: String,
+        tone: EncounterPresentationState.NameBadgeTone,
+        isCurrentTurn: Bool
+    ) -> some View {
+        let colors = nameBadgeStyle(tone: tone)
+
+        return Text(title)
+            .font(.headline.weight(isCurrentTurn ? .semibold : .regular))
+            .foregroundStyle(colors.foreground)
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(colors.background)
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(colors.border, lineWidth: 1)
+            )
+            .frame(maxWidth: 150, alignment: .center)
+    }
+
+    private func nameBadgeStyle(
+        tone: EncounterPresentationState.NameBadgeTone
+    ) -> (foreground: Color, background: Color, border: Color) {
+        switch tone {
+        case .mine:
+            return (
+                Color(red: 0.06, green: 0.23, blue: 0.37),
+                Color(red: 0.81, green: 0.91, blue: 1.0),
+                Color(red: 0.47, green: 0.70, blue: 0.90)
+            )
+        case .referee:
+            return (
+                Color(red: 0.42, green: 0.12, blue: 0.12),
+                Color(red: 1.0, green: 0.84, blue: 0.84),
+                Color(red: 0.88, green: 0.56, blue: 0.56)
+            )
+        case .other:
+            return (
+                .primary,
+                Color(uiColor: .tertiarySystemGroupedBackground),
+                Color.primary.opacity(0.08)
+            )
         }
-        .buttonStyle(.bordered)
-        .controlSize(.small)
     }
 
     private func displayStats(for character: PlayerViewDTO) -> [StatEntryDTO] {
@@ -471,23 +598,6 @@ struct ContentView: View {
 
     private func statValueText(for stat: StatEntryDTO) -> String {
         stat.key == "TempHP" ? "\(stat.current)" : "\(stat.current)/\(stat.max)"
-    }
-
-    private func encounterStatsText(for player: PlayerViewDTO) -> String {
-        let visibleStats = visibleEncounterStats(for: player)
-
-        if player.ownerId == model.ownerId || player.revealStats {
-            return visibleStats
-                .map { stat in
-                    stat.key == "TempHP" ? "\(stat.key) \(stat.current)" : "\(stat.key) \(stat.current)/\(stat.max)"
-                }
-                .joined(separator: " • ")
-        }
-
-        guard let summary = healthSummary(for: visibleStats) else { return "—" }
-        let isDead = summary.current <= 0
-        let ratio = Double(summary.current) / Double(summary.max)
-        return healthStatusLabel(ratio: ratio, isDead: isDead)
     }
 
     private func encounterStatsStyle(for player: PlayerViewDTO) -> (foreground: Color, background: Color) {
@@ -537,9 +647,6 @@ struct ContentView: View {
         if player.id == model.gameState?.currentTurnId {
             return Color.yellow.opacity(0.28)
         }
-        if player.ownerName.caseInsensitiveCompare("Referee") == .orderedSame {
-            return Color.red.opacity(0.16)
-        }
         return Color(uiColor: .secondarySystemGroupedBackground)
     }
 
@@ -561,16 +668,12 @@ struct ContentView: View {
 
     private var isShowingModal: Bool {
         editorDraft != nil
+            || healthDraft != nil
             || conditionsDraft != nil
+            || initiativeDraft != nil
             || showingSettings
             || showingConnectionSheet
             || showingPlayerIdentitySheet
-    }
-
-    private var sortedMyCharacters: [PlayerViewDTO] {
-        model.myCharacters.sorted {
-            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
-        }
     }
 
     private var playerDisplayName: String {
@@ -614,6 +717,10 @@ struct ContentView: View {
     }
 
     private func conditionSummary(for character: PlayerViewDTO) -> AttributedString {
+        guard !character.conditions.isEmpty else {
+            return AttributedString()
+        }
+
         var summary = AttributedString()
 
         for (index, condition) in character.conditions.enumerated() {
@@ -656,25 +763,25 @@ struct ContentView: View {
     }
 
     private var currentTurnSubtitle: String {
-        if model.gameState?.encounterState == .new {
-            return "New Encounter"
-        }
-        if model.gameState?.encounterState == .suspended {
-            return "Encounter Suspended"
-        }
-        if model.isMyTurn, let currentTurnName = model.gameState?.currentTurnName {
-            return "Your turn: \(currentTurnName)"
-        }
-        if let currentTurnName = model.gameState?.currentTurnName {
-            return "Current turn: \(currentTurnName)"
-        }
-        if let rulesetLabel = model.campaign?.rulesetLabel, !rulesetLabel.isEmpty {
-            return rulesetLabel
-        }
-        return "Waiting for encounter state"
+        let encounterPresentation = EncounterPresentationState(
+            campaignEncounterState: model.campaign?.encounterState,
+            gameEncounterState: model.gameState?.encounterState
+        )
+        return encounterPresentation.currentTurnSubtitle(
+            isMyTurn: model.isMyTurn,
+            currentTurnName: model.gameState?.currentTurnName,
+            rulesetLabel: model.campaign?.rulesetLabel
+        )
     }
 
     private var nextTurnSubtitle: String? {
+        let encounterPresentation = EncounterPresentationState(
+            campaignEncounterState: model.campaign?.encounterState,
+            gameEncounterState: model.gameState?.encounterState
+        )
+        guard encounterPresentation.effectiveEncounterState == .active else {
+            return nil
+        }
         guard let players = model.gameState?.players,
               !players.isEmpty,
               let currentTurnId = model.gameState?.currentTurnId,
@@ -686,32 +793,6 @@ struct ContentView: View {
         let wrappedIndex = nextIndex == players.endIndex ? players.startIndex : nextIndex
         let nextPlayer = players[wrappedIndex]
         return "Next turn: \(nextPlayer.name)"
-    }
-
-    private func toggleExpanded(for character: PlayerViewDTO) {
-        if collapsedCharacterIDs.contains(character.id) {
-            collapsedCharacterIDs.remove(character.id)
-        } else {
-            collapsedCharacterIDs.insert(character.id)
-        }
-    }
-
-    private func needsInitiativeRoll(_ character: PlayerViewDTO) -> Bool {
-        model.gameState?.encounterState == .active && character.initiative == nil
-    }
-
-    private func handleInitiativeAction(for character: PlayerViewDTO) {
-        if character.useAppInitiativeRoll {
-            if let rolled = rollInitiative(standardDie: model.ruleSet?.standardDie, bonus: character.initiativeBonus) {
-                Task { await model.setInitiative(for: character, initiative: rolled) }
-            } else {
-                manualInitiativeCharacter = character
-                manualInitiativeInput = ""
-            }
-        } else {
-            manualInitiativeCharacter = character
-            manualInitiativeInput = character.initiative.map(formattedInitiative) ?? ""
-        }
     }
 
     private func rollInitiative(standardDie: String?, bonus: Int) -> Double? {
@@ -731,10 +812,79 @@ struct ContentView: View {
     }
 
     private func formattedInitiative(_ initiative: Double?) -> String {
-        guard let initiative else { return "X" }
-        if initiative.rounded(.towardZero) == initiative {
-            return String(Int(initiative))
-        }
-        return String(initiative)
+        let encounterPresentation = EncounterPresentationState(
+            campaignEncounterState: model.campaign?.encounterState,
+            gameEncounterState: model.gameState?.encounterState
+        )
+        return encounterPresentation.initiativeText(initiative)
     }
+
+    private func initiativeBadge(for character: PlayerViewDTO, initiative: Double?) -> some View {
+        let colors = initiativeBadgeStyle(initiative: initiative)
+
+        return Text(formattedInitiative(initiative))
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(colors.foreground)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(colors.background)
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+            )
+            .accessibilityLabel("Initiative for \(character.name)")
+    }
+
+    private func initiativeBadgeStyle(initiative: Double?) -> (foreground: Color, background: Color) {
+        guard initiative != nil else {
+            return (.secondary, Color(uiColor: .tertiarySystemGroupedBackground))
+        }
+
+        return (Color(red: 0.06, green: 0.23, blue: 0.37), Color(red: 0.81, green: 0.91, blue: 1.0))
+    }
+
+    private func healthBadge(for character: PlayerViewDTO) -> some View {
+        let stats = visibleEncounterStats(for: character)
+        let summary = healthBadgeText(for: character, stats: stats)
+        let colors = encounterStatsStyle(for: character)
+
+        return Text(summary)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(colors.foreground)
+            .lineLimit(2)
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(colors.background)
+            )
+            .overlay(
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+            )
+            .accessibilityLabel("Health for \(character.name)")
+    }
+
+    private func healthBadgeText(for character: PlayerViewDTO, stats: [StatEntryDTO]) -> String {
+        guard let summary = healthSummary(for: stats) else { return "—" }
+
+        let isDead = summary.current <= 0
+        let ratio = Double(summary.current) / Double(summary.max)
+        if character.ownerId != model.currentPlayerID && !character.revealStats {
+            return healthStatusLabel(ratio: ratio, isDead: isDead)
+        }
+
+        let hpLine = "HP \(summary.current)/\(summary.max)"
+        let tempHp = stats.first(where: { $0.key == "TempHP" && $0.current > 0 })
+        if let tempHp {
+            return "\(hpLine)\nTemp HP \(tempHp.current)"
+        }
+        return hpLine
+    }
+
 }

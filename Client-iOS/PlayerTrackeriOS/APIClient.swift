@@ -19,10 +19,11 @@ enum APIClientError: LocalizedError {
 
 struct APIClient {
     let baseURL: URL
+    let playerSessionToken: String?
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
 
-    init(baseURLString: String) throws {
+    init(baseURLString: String, playerSessionToken: String? = nil) throws {
         let trimmed = baseURLString.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalized = trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://")
             ? trimmed
@@ -31,6 +32,7 @@ struct APIClient {
             throw APIClientError.invalidBaseURL
         }
         self.baseURL = url
+        self.playerSessionToken = playerSessionToken
     }
 
     func fetchCampaign() async throws -> CampaignStateDTO {
@@ -43,6 +45,30 @@ struct APIClient {
 
     func fetchState() async throws -> GameStateDTO {
         try await get("state")
+    }
+
+    func fetchPlayerSession() async throws -> PlayerSessionDTO {
+        try await get("player/session")
+    }
+
+    func joinPlayerSession(displayName: String) async throws -> PlayerSessionResult {
+        try await sendPlayerSession(
+            "player/join",
+            method: "POST",
+            body: PlayerJoinInputDTO(displayName: displayName)
+        )
+    }
+
+    func renamePlayerSession(displayName: String) async throws -> PlayerSessionResult {
+        try await sendPlayerSession(
+            "player/session",
+            method: "PATCH",
+            body: PlayerJoinInputDTO(displayName: displayName)
+        )
+    }
+
+    func logoutPlayerSession() async throws {
+        let _: EmptyResponse = try await send("player/logout", method: "POST", body: Optional<Data>.none)
     }
 
     func fetchCharacters(ownerId: UUID, campaignName: String?) async throws -> [PlayerViewDTO] {
@@ -63,12 +89,16 @@ struct APIClient {
         )
     }
 
-    func upsertCharacter(_ input: CharacterInputDTO) async throws -> PlayerViewDTO {
-        try await send("characters", method: "POST", body: input)
+    func upsertCharacter(_ input: CharacterInputDTO, campaignID: UUID) async throws -> PlayerViewDTO {
+        try await send("campaigns/\(campaignID.uuidString.lowercased())/me/characters", method: "POST", body: input)
     }
 
-    func deleteCharacter(id: UUID) async throws {
-        let _: EmptyResponse = try await send("characters/\(id.uuidString.lowercased())", method: "DELETE", body: Optional<Data>.none)
+    func deleteCharacter(id: UUID, campaignID: UUID) async throws {
+        let _: EmptyResponse = try await send(
+            "campaigns/\(campaignID.uuidString.lowercased())/me/characters/\(id.uuidString.lowercased())",
+            method: "DELETE",
+            body: Optional<Data>.none
+        )
     }
 
     func completeTurn() async throws -> GameStateDTO {
@@ -84,13 +114,14 @@ struct APIClient {
 
     private func get<T: Decodable>(_ path: String) async throws -> T {
         let url = try makeURL(path: path)
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let request = makeRequest(url: url)
+        let (data, response) = try await URLSession.shared.data(for: request)
         return try decode(data: data, response: response)
     }
 
     private func send<T: Decodable, Body: Encodable>(_ path: String, method: String, body: Body) async throws -> T {
         let url = try makeURL(path: path)
-        var request = URLRequest(url: url)
+        var request = makeRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try encoder.encode(body)
@@ -100,11 +131,49 @@ struct APIClient {
 
     private func send<T: Decodable>(_ path: String, method: String, body: Data?) async throws -> T {
         let url = try makeURL(path: path)
-        var request = URLRequest(url: url)
+        var request = makeRequest(url: url)
         request.httpMethod = method
         request.httpBody = body
         let (data, response) = try await URLSession.shared.data(for: request)
         return try decode(data: data, response: response)
+    }
+
+    private func sendPlayerSession<Body: Encodable>(
+        _ path: String,
+        method: String,
+        body: Body
+    ) async throws -> PlayerSessionResult {
+        let url = try makeURL(path: path)
+        var request = makeRequest(url: url)
+        request.httpMethod = method
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try encoder.encode(body)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let session: PlayerSessionDTO = try decode(data: data, response: response)
+        let token = extractPlayerSessionToken(from: response) ?? playerSessionToken
+        guard let token, !token.isEmpty else {
+            throw APIClientError.invalidResponse
+        }
+        return PlayerSessionResult(sessionToken: token, session: session)
+    }
+
+    private func makeRequest(url: URL) -> URLRequest {
+        var request = URLRequest(url: url)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        if let playerSessionToken, !playerSessionToken.isEmpty {
+            request.setValue("roll4_player_session=\(playerSessionToken)", forHTTPHeaderField: "Cookie")
+        }
+        return request
+    }
+
+    private func extractPlayerSessionToken(from response: URLResponse) -> String? {
+        guard let httpResponse = response as? HTTPURLResponse else { return nil }
+        let headerFields = httpResponse.allHeaderFields.reduce(into: [String: String]()) { partialResult, element in
+            guard let key = element.key as? String, let value = element.value as? String else { return }
+            partialResult[key] = value
+        }
+        let cookies = HTTPCookie.cookies(withResponseHeaderFields: headerFields, for: baseURL)
+        return cookies.first(where: { $0.name == "roll4_player_session" })?.value
     }
 
     private func decode<T: Decodable>(data: Data, response: URLResponse) throws -> T {

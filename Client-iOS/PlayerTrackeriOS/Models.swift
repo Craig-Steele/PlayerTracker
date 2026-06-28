@@ -1,6 +1,7 @@
 import Foundation
 
 struct CampaignStateDTO: Codable, Equatable {
+    let id: UUID
     let name: String
     let rulesetId: String
     let rulesetLabel: String
@@ -18,6 +19,11 @@ struct PlayerIdentityDTO: Codable, Equatable {
 struct PlayerSessionDTO: Codable, Equatable {
     let player: PlayerIdentityDTO
     let campaign: CampaignStateDTO
+}
+
+struct PlayerSessionResult: Equatable {
+    let sessionToken: String
+    let session: PlayerSessionDTO
 }
 
 enum EncounterStateDTO: String, Codable, Equatable {
@@ -76,6 +82,7 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let id: UUID
     let ownerId: UUID
     let ownerName: String
+    let claimedDisplayName: String?
     let name: String
     let initiative: Double?
     let stats: [StatEntryDTO]
@@ -87,6 +94,20 @@ struct PlayerViewDTO: Codable, Equatable, Identifiable {
     let isHidden: Bool
     let revealOnTurn: Bool
     let conditions: [String]
+    let isReferee: Bool
+}
+
+extension PlayerViewDTO {
+    var controllerDisplayName: String {
+        let claimedName = claimedDisplayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !claimedName.isEmpty {
+            return claimedName
+        }
+        if isReferee {
+            return "Referee"
+        }
+        return ownerName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 }
 
 struct GameStateDTO: Codable, Equatable {
@@ -117,6 +138,16 @@ struct CharacterInputDTO: Codable {
 
 struct CharacterRenameInputDTO: Codable {
     let name: String
+}
+
+struct PlayerJoinInputDTO: Codable {
+    let displayName: String
+    let inviteToken: String?
+
+    init(displayName: String, inviteToken: String? = nil) {
+        self.displayName = displayName
+        self.inviteToken = inviteToken
+    }
 }
 
 struct EditableStat: Identifiable, Equatable {
@@ -257,4 +288,23 @@ struct CharacterDraft: Identifiable, Equatable {
         let nextValue = min(max(currentValue + delta, lowerBound), upperBound)
         stats[index].current = String(nextValue)
     }
+}
+
+func rollInitiative(standardDie: String?, bonus: Int) -> Double? {
+    let sanitizedDie = (standardDie?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()).flatMap { $0.isEmpty ? nil : $0 }
+        ?? "d20"
+    let parts = sanitizedDie.split(separator: "d", omittingEmptySubsequences: false)
+    guard parts.count == 2 else {
+        return nil
+    }
+
+    let count = Int(parts[0]) ?? 1
+    guard let sides = Int(parts[1]), count > 0, sides > 0 else {
+        return nil
+    }
+
+    let rollTotal = (0..<count).reduce(0) { partialResult, _ in
+        partialResult + Int.random(in: 1...sides)
+    }
+    return Double(rollTotal + bonus)
 }

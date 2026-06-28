@@ -5,6 +5,8 @@
 **/.build/
 .swiftpm/
 **/.swiftpm/
+.swiftmodule-cache/
+**/.swiftmodule-cache/
 
 DerivedData/
 **/DerivedData/

@@ -16,6 +16,11 @@
 		4A9A00010000000100000007 /* ConditionsEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A00010000000200000009 /* ConditionsEditorView.swift */; };
 		4A9A00010000000100000008 /* SettingsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000A /* SettingsViews.swift */; };
 		4A9A00010000000100000009 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000B /* Assets.xcassets */; };
+		4A9A0001000000010000000C /* CampaignEventStreamClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000C /* CampaignEventStreamClient.swift */; };
+		4A9A0001000000010000000D /* HealthEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000D /* HealthEditorView.swift */; };
+		4A9A0001000000010000000E /* EncounterPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000E /* EncounterPresentation.swift */; };
+		4A9A0001000000010000000F /* InitiativeEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000F /* InitiativeEditorView.swift */; };
+		4A9A00010000000100000011 /* PlayerTrackeriOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A00010000000200000011 /* PlayerTrackeriOSTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,10 +31,16 @@
 		4A9A00010000000200000005 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		4A9A00010000000200000006 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		4A9A00010000000200000007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		4A9A00010000000200000008 /* PlayerTrackeriOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PlayerTrackeriOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		4A9A00010000000200000008 /* Tactical Table Top: Initiative.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Tactical Table Top: Initiative.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4A9A00010000000200000009 /* ConditionsEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConditionsEditorView.swift; sourceTree = "<group>"; };
 		4A9A0001000000020000000A /* SettingsViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViews.swift; sourceTree = "<group>"; };
 		4A9A0001000000020000000B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		4A9A0001000000020000000C /* CampaignEventStreamClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CampaignEventStreamClient.swift; sourceTree = "<group>"; };
+		4A9A0001000000020000000D /* HealthEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthEditorView.swift; sourceTree = "<group>"; };
+		4A9A0001000000020000000E /* EncounterPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncounterPresentation.swift; sourceTree = "<group>"; };
+		4A9A0001000000020000000F /* InitiativeEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitiativeEditorView.swift; sourceTree = "<group>"; };
+		4A9A00010000000200000011 /* PlayerTrackeriOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerTrackeriOS/PlayerTrackeriOSTests/PlayerTrackeriOSTests.swift; sourceTree = "<group>"; };
+		4A9A00010000000200000012 /* PlayerTrackeriOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PlayerTrackeriOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,7 +71,11 @@
 				4A9A00010000000200000004 /* PlayerAppModel.swift */,
 				4A9A00010000000200000005 /* APIClient.swift */,
 				4A9A00010000000200000006 /* Models.swift */,
+				4A9A0001000000020000000C /* CampaignEventStreamClient.swift */,
+				4A9A0001000000020000000E /* EncounterPresentation.swift */,
+				4A9A0001000000020000000F /* InitiativeEditorView.swift */,
 				4A9A00010000000200000009 /* ConditionsEditorView.swift */,
+				4A9A0001000000020000000D /* HealthEditorView.swift */,
 				4A9A0001000000020000000A /* SettingsViews.swift */,
 				4A9A0001000000020000000B /* Assets.xcassets */,
 				4A9A00010000000200000007 /* Info.plist */,
@@ -68,10 +83,19 @@
 			path = PlayerTrackeriOS;
 			sourceTree = "<group>";
 		};
+		4A9A00010000000400000004 /* PlayerTrackeriOSTests */ = {
+			isa = PBXGroup;
+			children = (
+				4A9A00010000000200000011 /* PlayerTrackeriOSTests.swift */,
+			);
+			path = PlayerTrackeriOS/PlayerTrackeriOSTests;
+			sourceTree = "<group>";
+		};
 		4A9A00010000000400000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				4A9A00010000000200000008 /* PlayerTrackeriOS.app */,
+				4A9A00010000000200000008 /* Tactical Table Top: Initiative.app */,
+				4A9A00010000000200000012 /* PlayerTrackeriOSTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -95,10 +119,48 @@
 			packageProductDependencies = (
 			);
 			productName = PlayerTrackeriOS;
-			productReference = 4A9A00010000000200000008 /* PlayerTrackeriOS.app */;
+			productReference = 4A9A00010000000200000008 /* Tactical Table Top: Initiative.app */;
 			productType = "com.apple.product-type.application";
 		};
+		4A9A00010000000500000002 /* PlayerTrackeriOSTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4A9A00010000000700000003 /* Build configuration list for PBXNativeTarget "PlayerTrackeriOSTests" */;
+			buildPhases = (
+				4A9A00010000000300000004 /* Sources */,
+				4A9A00010000000300000005 /* Frameworks */,
+				4A9A00010000000300000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4A9A00010000000900000002 /* PBXTargetDependency */,
+			);
+			name = PlayerTrackeriOSTests;
+			packageProductDependencies = (
+			);
+			productName = PlayerTrackeriOSTests;
+			productReference = 4A9A00010000000200000012 /* PlayerTrackeriOSTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
+
+/* Begin PBXContainerItemProxy section */
+		4A9A00010000000900000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4A9A00010000000600000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4A9A00010000000500000001 /* PlayerTrackeriOS */;
+			remoteInfo = PlayerTrackeriOS;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		4A9A00010000000900000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4A9A00010000000500000001 /* PlayerTrackeriOS */;
+			targetProxy = 4A9A00010000000900000001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		4A9A00010000000600000001 /* Project object */ = {
@@ -106,10 +168,14 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2640;
-				LastUpgradeCheck = 2640;
+				LastUpgradeCheck = 2660;
 				TargetAttributes = {
 					4A9A00010000000500000001 = {
 						CreatedOnToolsVersion = 26.4;
+					};
+					4A9A00010000000500000002 = {
+						CreatedOnToolsVersion = 26.4;
+						TestTargetID = 4A9A00010000000500000001;
 					};
 				};
 			};
@@ -128,6 +194,7 @@
 			projectRoot = "";
 			targets = (
 				4A9A00010000000500000001 /* PlayerTrackeriOS */,
+				4A9A00010000000500000002 /* PlayerTrackeriOSTests */,
 			);
 		};
 /* End PBXProject section */
@@ -138,6 +205,28 @@
 			buildActionMask = 2147483647;
 			files = (
 				4A9A00010000000100000009 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A9A00010000000300000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4A9A00010000000100000011 /* PlayerTrackeriOSTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A9A00010000000300000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A9A00010000000300000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -153,6 +242,10 @@
 				4A9A00010000000100000007 /* ConditionsEditorView.swift in Sources */,
 				4A9A00010000000100000002 /* ContentView.swift in Sources */,
 				4A9A00010000000100000006 /* Models.swift in Sources */,
+				4A9A0001000000010000000C /* CampaignEventStreamClient.swift in Sources */,
+				4A9A0001000000010000000E /* EncounterPresentation.swift in Sources */,
+				4A9A0001000000010000000F /* InitiativeEditorView.swift in Sources */,
+				4A9A0001000000010000000D /* HealthEditorView.swift in Sources */,
 				4A9A00010000000100000001 /* PlayerTrackeriOSApp.swift in Sources */,
 				4A9A00010000000100000004 /* PlayerAppModel.swift in Sources */,
 				4A9A00010000000100000008 /* SettingsViews.swift in Sources */,
@@ -168,12 +261,42 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = FD29GCKA37;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -185,12 +308,40 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = FD29GCKA37;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 			};
 			name = Release;
@@ -201,7 +352,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = FD29GCKA37;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PlayerTrackeriOS/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tactical Table Top: Initiative";
@@ -228,7 +378,6 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = FD29GCKA37;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = PlayerTrackeriOS/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Tactical Table Top: Initiative";
@@ -249,6 +398,48 @@
 			};
 			name = Release;
 		};
+		4A9A00010000000800000005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.csteele.PlayerTrackeriOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tactical Table Top: Initiative.app/Tactical Table Top: Initiative";
+			};
+			name = Debug;
+		};
+		4A9A00010000000800000006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.csteele.PlayerTrackeriOSTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tactical Table Top: Initiative.app/Tactical Table Top: Initiative";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -266,6 +457,15 @@
 			buildConfigurations = (
 				4A9A00010000000800000003 /* Debug */,
 				4A9A00010000000800000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4A9A00010000000700000003 /* Build configuration list for PBXNativeTarget "PlayerTrackeriOSTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4A9A00010000000800000005 /* Debug */,
+				4A9A00010000000800000006 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

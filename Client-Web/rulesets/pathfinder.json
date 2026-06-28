@@ -72,147 +72,139 @@
   "conditions": [
     {
       "name": "Bleed",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Bleed"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#bleed"
     },
     {
       "name": "Blinded",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Blinded"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#blinded"
     },
     {
-      "name": "Blown Away",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Blown-Away"
-    },
-    {
-      "name": "Checked",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Checked"
+      "name": "Broken",
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#blown-Away"
     },
     {
       "name": "Confused",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Confused"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#confused"
     },
     {
       "name": "Cowering",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Cowering"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#cowering"
     },
     {
       "name": "Dazed",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dazed"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#dazed"
     },
     {
       "name": "Dazzled",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dazzled"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#dazzled"
     },
     {
       "name": "Dead",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dead"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#dead"
     },
     {
       "name": "Deafened",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Deafened"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#deafened"
     },
     {
       "name": "Disabled",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Disabled"
-    },
-    {
-      "name": "Drained",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Drained"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#disabled"
     },
     {
       "name": "Dying",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Dying"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#dying"
     },
     {
       "name": "Energy Drained",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Energy-Drained"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#energy-drained"
     },
     {
       "name": "Entangled",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Entangled"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#entangled"
     },
     {
       "name": "Exhausted",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Exhausted"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#exhausted"
     },
     {
       "name": "Fascinated",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Fascinated"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#fascinated"
     },
     {
       "name": "Fatigued",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Fatigued"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#fatigued"
     },
     {
       "name": "Flat-Footed",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Flat-Footed"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#flat-Footed"
     },
     {
       "name": "Frightened",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Frightened"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#frightened"
     },
     {
       "name": "Grappled",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Grappled"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#grappled"
     },
     {
       "name": "Helpless",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Helpless"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#helpless"
     },
     {
       "name": "Incorporeal",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Incorporeal"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#incorporeal"
     },
     {
       "name": "Invisible",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Invisible"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#invisible"
     },
     {
       "name": "Nauseated",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Nauseated"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#nauseated"
     },
     {
       "name": "Panicked",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Panicked"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#panicked"
     },
     {
       "name": "Paralyzed",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Paralyzed"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#paralyzed"
     },
     {
       "name": "Petrified",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Petrified"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#petrified"
     },
     {
       "name": "Pinned",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Pinned"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#pinned"
     },
     {
       "name": "Prone",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Prone"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#prone"
     },
     {
       "name": "Shaken",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Shaken"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#shaken"
     },
     {
       "name": "Sickened",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Sickened"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#sickened"
     },
     {
       "name": "Stable",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Stable"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#stable"
     },
     {
       "name": "Staggered",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Staggered"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#staggered"
     },
     {
       "name": "Stunned",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Stunned"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#stunned"
     },
     {
       "name": "Unconscious",
-      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#TOC-Unconscious"
+      "description": "https://www.d20pfsrd.com/gamemastering/conditions/#unconscious"
     }
   ]
 }
