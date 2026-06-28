@@ -24,13 +24,9 @@
   }
 
   function resolvePlayerDisplayName(player, fallbackName = '') {
-    const loginName = sanitizePlayerDisplayName(player?.loginName);
     const displayName = sanitizePlayerDisplayName(player?.displayName);
     if (hasRealPlayerName(displayName)) {
       return displayName;
-    }
-    if (hasRealPlayerName(loginName)) {
-      return loginName;
     }
     const fallback = sanitizePlayerDisplayName(fallbackName);
     if (hasRealPlayerName(fallback)) {

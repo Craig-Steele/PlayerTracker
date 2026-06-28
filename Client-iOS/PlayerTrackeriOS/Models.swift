@@ -11,7 +11,6 @@ struct CampaignStateDTO: Codable, Equatable {
 struct PlayerIdentityDTO: Codable, Equatable {
     let id: UUID
     let campaignID: UUID
-    let loginName: String
     let displayName: String
     let isReferee: Bool
 }

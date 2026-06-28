@@ -396,13 +396,10 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       const payload = await res.json();
       const player = payload.player || {};
-      const loginName = sanitizePlayerDisplayName(player.loginName);
       const displayName = sanitizePlayerDisplayName(player.displayName);
       currentPlayerIsReferee = Boolean(player.isReferee);
-      if (loginName) {
-        localStorage.setItem('playerLoginName', loginName);
-      }
       if (displayName) {
+        localStorage.setItem('playerLoginName', displayName);
         localStorage.setItem('ownerName', displayName);
         if (player.id) {
           localStorage.setItem('playerId', player.id);
@@ -410,7 +407,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       playerSessionReady = true;
       accessDenied = false;
-      updatePlayerNameDisplay(displayName || loginName);
+      updatePlayerNameDisplay(displayName);
       await loadPlayerCampaigns();
       const forwardState = await maybeForwardToCurrentView();
       if (forwardState === 'inactive') {
@@ -440,13 +437,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     const payload = await res.json();
     const player = payload.player || {};
-    const loginName = sanitizePlayerDisplayName(player.loginName) || trimmedName;
-    const joinedName = sanitizePlayerDisplayName(player.displayName) || loginName;
+    const joinedName = sanitizePlayerDisplayName(player.displayName) || trimmedName;
     currentPlayerIsReferee = Boolean(player.isReferee);
     if (player.id) {
       localStorage.setItem('playerId', player.id);
     }
-    localStorage.setItem('playerLoginName', loginName);
+    localStorage.setItem('playerLoginName', joinedName);
     localStorage.setItem('ownerName', joinedName);
     playerSessionReady = true;
     updatePlayerNameDisplay(joinedName);
@@ -493,7 +489,7 @@ window.addEventListener('DOMContentLoaded', () => {
           if (player.id) {
             localStorage.setItem('playerId', player.id);
           }
-          localStorage.setItem('playerLoginName', sanitizePlayerDisplayName(player.loginName) || enteredName);
+          localStorage.setItem('playerLoginName', savedName);
           localStorage.setItem('ownerName', savedName);
           currentPlayerName = savedName;
           accessDenied = false;
@@ -528,6 +524,8 @@ window.addEventListener('DOMContentLoaded', () => {
     await fetchCampaign();
     syncCampaignEventStream();
     const savedName =
+      sanitizePlayerDisplayName(localStorage.getItem('ownerName')) ||
+      sanitizePlayerDisplayName(localStorage.getItem('playerDisplayName')) ||
       sanitizePlayerDisplayName(localStorage.getItem('playerLoginName')) ||
       sanitizePlayerDisplayName(localStorage.getItem('playerName'));
     if (savedName && playerNameInput) {

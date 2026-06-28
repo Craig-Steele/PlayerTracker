@@ -14,14 +14,14 @@ test('placeholder player name is not treated as real', () => {
   assert.equal(hasRealPlayerName('Alice'), true);
 });
 
-test('real display and login names are preferred', () => {
+test('real display names are preferred', () => {
   assert.equal(
     resolvePlayerDisplayName({ loginName: 'Alice', displayName: 'Player' }),
-    'Alice'
+    ''
   );
   assert.equal(
     resolvePlayerDisplayName({ loginName: 'Alice', displayName: '' }),
-    'Alice'
+    ''
   );
   assert.equal(
     resolvePlayerDisplayName({ loginName: '', displayName: 'Player' }, 'Bob'),

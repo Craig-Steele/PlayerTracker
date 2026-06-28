@@ -34,7 +34,6 @@ struct PlayerSessionPersistenceState {
     let id: UUID
     let loginName: String
     let displayName: String
-    let previousDisplayNames: [String]
     let token: String
     let expiresAt: Date
 }
@@ -138,9 +137,6 @@ final class PlayerSessionRow: Model, @unchecked Sendable {
     @Field(key: "display_name_normalized")
     var displayNameNormalized: String
 
-    @OptionalField(key: "previous_display_names_json")
-    var previousDisplayNamesJSON: String?
-
     @Field(key: "token_hash")
     var tokenHash: String
 
@@ -164,7 +160,6 @@ final class PlayerSessionRow: Model, @unchecked Sendable {
         loginNameNormalized: String,
         displayName: String,
         displayNameNormalized: String,
-        previousDisplayNamesJSON: String? = nil,
         tokenHash: String,
         expiresAt: Date,
         revokedAt: Date? = nil
@@ -174,7 +169,6 @@ final class PlayerSessionRow: Model, @unchecked Sendable {
         self.loginNameNormalized = loginNameNormalized
         self.displayName = displayName
         self.displayNameNormalized = displayNameNormalized
-        self.previousDisplayNamesJSON = previousDisplayNamesJSON
         self.tokenHash = tokenHash
         self.expiresAt = expiresAt
         self.revokedAt = revokedAt
@@ -608,27 +602,6 @@ enum DatabasePersistence {
         max(-1, campaign.claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
     }
 
-    private static func decodePreviousDisplayNames(_ json: String?) -> [String] {
-        guard let json,
-              let data = json.data(using: .utf8),
-              let names = try? JSONDecoder().decode([String].self, from: data) else {
-            return []
-        }
-        return names
-    }
-
-    private static func encodePreviousDisplayNames(_ names: [String]) throws -> String? {
-        let normalized = names
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        guard !normalized.isEmpty else { return nil }
-        let unique = Array(Set(normalized)).sorted { lhs, rhs in
-            lhs.localizedCaseInsensitiveCompare(rhs) == .orderedAscending
-        }
-        let data = try JSONEncoder().encode(unique)
-        return String(decoding: data, as: UTF8.self)
-    }
-
     private static func decodeUserDataFiles(_ json: String?) -> [String] {
         guard let json,
               let data = json.data(using: .utf8),
@@ -884,7 +857,6 @@ enum DatabasePersistence {
                 id: id,
                 loginName: row.loginName,
                 displayName: row.displayName,
-                previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
                 token: "",
                 expiresAt: row.expiresAt
             )
@@ -906,7 +878,6 @@ enum DatabasePersistence {
                 id: id,
                 loginName: row.loginName,
                 displayName: row.displayName,
-                previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
                 token: "",
                 expiresAt: row.expiresAt
             )
@@ -1106,7 +1077,7 @@ enum DatabasePersistence {
         let normalized = normalizedDisplayName(loginName)
         let sessions = try await loadPlayerSessions(on: database)
         return sessions.first(where: { session in
-            normalizedDisplayName(session.loginName) == normalized
+            normalizedDisplayName(session.displayName) == normalized
         })
     }
 
@@ -1121,11 +1092,8 @@ enum DatabasePersistence {
 
         let rows = try await PlayerSessionRow.query(on: database).all()
         guard let row = rows.first(where: { row in
-            row.loginNameNormalized == normalized
-                || row.displayNameNormalized == normalized
-                || decodePreviousDisplayNames(row.previousDisplayNamesJSON).contains(where: {
-                    normalizedDisplayName($0) == normalized
-                })
+            row.displayNameNormalized == normalized
+                || row.loginNameNormalized == normalized
         }),
         let id = row.id else {
             return nil
@@ -1135,7 +1103,6 @@ enum DatabasePersistence {
             id: id,
             loginName: row.loginName,
             displayName: row.displayName,
-            previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
             token: "",
             expiresAt: row.expiresAt
         )
@@ -1157,7 +1124,6 @@ enum DatabasePersistence {
             loginNameNormalized: normalizedDisplayName(trimmedName),
             displayName: trimmedName,
             displayNameNormalized: normalizedDisplayName(trimmedName),
-            previousDisplayNamesJSON: nil,
             tokenHash: hashSessionToken(token),
             expiresAt: expiresAt
         )
@@ -1169,7 +1135,6 @@ enum DatabasePersistence {
             id: id,
             loginName: row.loginName,
             displayName: row.displayName,
-            previousDisplayNames: [],
             token: token,
             expiresAt: row.expiresAt
         )
@@ -1194,19 +1159,15 @@ enum DatabasePersistence {
             return nil
         }
 
-        var previous = decodePreviousDisplayNames(row.previousDisplayNamesJSON)
-        if row.displayName.caseInsensitiveCompare(trimmedDisplayName) != .orderedSame {
-            previous.append(row.displayName)
-        }
+        row.loginName = trimmedDisplayName
+        row.loginNameNormalized = normalizedDisplayName(trimmedDisplayName)
         row.displayName = trimmedDisplayName
         row.displayNameNormalized = normalizedDisplayName(trimmedDisplayName)
-        row.previousDisplayNamesJSON = try encodePreviousDisplayNames(previous)
         try await row.save(on: database)
         return PlayerSessionPersistenceState(
             id: id,
             loginName: row.loginName,
             displayName: row.displayName,
-            previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
             token: token,
             expiresAt: row.expiresAt
         )
@@ -1228,7 +1189,8 @@ enum DatabasePersistence {
         if let row = try await PlayerSessionRow.query(on: database)
             .all()
             .first(where: { row in
-                row.loginNameNormalized == loginNormalized
+                row.displayNameNormalized == loginNormalized
+                    || row.loginNameNormalized == loginNormalized
             }) {
             let token = randomSessionToken()
             row.tokenHash = hashSessionToken(token)
@@ -1246,7 +1208,6 @@ enum DatabasePersistence {
                 id: id,
                 loginName: row.loginName,
                 displayName: row.displayName,
-                previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
                 token: token,
                 expiresAt: row.expiresAt
             )
@@ -1260,7 +1221,6 @@ enum DatabasePersistence {
             loginNameNormalized: loginNormalized,
             displayName: trimmedDisplayName,
             displayNameNormalized: normalizedDisplayName(trimmedDisplayName),
-            previousDisplayNamesJSON: nil,
             tokenHash: tokenHash,
             expiresAt: expiresAt
         )
@@ -1272,7 +1232,6 @@ enum DatabasePersistence {
             id: id,
             loginName: row.loginName,
             displayName: row.displayName,
-            previousDisplayNames: [],
             token: token,
             expiresAt: row.expiresAt
         )
@@ -1296,7 +1255,6 @@ enum DatabasePersistence {
             id: id,
             loginName: row.loginName,
             displayName: row.displayName,
-            previousDisplayNames: decodePreviousDisplayNames(row.previousDisplayNamesJSON),
             token: token,
             expiresAt: row.expiresAt
         )

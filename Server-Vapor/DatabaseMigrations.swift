@@ -104,13 +104,12 @@ struct CreatePlayers: AsyncMigration {
             .field("login_name_normalized", .string, .required)
             .field("display_name", .string, .required)
             .field("display_name_normalized", .string, .required)
-            .field("previous_display_names_json", .string)
             .field("token_hash", .string, .required)
             .field("expires_at", .datetime, .required)
             .field("revoked_at", .datetime)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
-            .unique(on: "login_name_normalized")
+            .unique(on: "display_name_normalized")
             .unique(on: "token_hash")
             .create()
     }
@@ -138,9 +137,6 @@ struct MigrateLegacyCampaignPlayerSessionsToPlayers: AsyncMigration {
                 return
             }
 
-            let legacyColumnNames = Set(legacyColumns.map(\.name))
-            let hasPreviousDisplayNames = legacyColumnNames.contains("previous_display_names_json")
-
             let playerColumns = try await sqlDatabase
                 .raw("PRAGMA table_info(players)")
                 .all(decoding: SQLiteTableInfoRow.self)
@@ -150,13 +146,82 @@ struct MigrateLegacyCampaignPlayerSessionsToPlayers: AsyncMigration {
 
             try await sqlDatabase
                 .raw("""
-                     INSERT OR IGNORE INTO players (
+INSERT OR IGNORE INTO players (
+    id,
+    login_name,
+    login_name_normalized,
+    display_name,
+    display_name_normalized,
+    token_hash,
+    expires_at,
+    revoked_at,
+    created_at,
+    updated_at
+)
+SELECT
+    id,
+    display_name,
+    display_name_normalized,
+    display_name,
+    display_name_normalized,
+    token_hash,
+    expires_at,
+    revoked_at,
+    created_at,
+    updated_at
+FROM campaign_player_sessions
+""")
+                .run()
+            connection.logger.notice("Patched players from legacy campaign_player_sessions.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
+struct UpdatePlayersDisplayNameConstraint: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(players)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            guard !columns.isEmpty else {
+                return
+            }
+
+            try await sqlDatabase.raw("PRAGMA foreign_keys = OFF").run()
+            try await sqlDatabase.raw("DROP TABLE IF EXISTS players_display_name_canonical").run()
+            try await sqlDatabase
+                .raw("""
+                     CREATE TABLE players_display_name_canonical (
+                         id UUID PRIMARY KEY,
+                         login_name TEXT NOT NULL,
+                         login_name_normalized TEXT NOT NULL,
+                         display_name TEXT NOT NULL,
+                         display_name_normalized TEXT NOT NULL,
+                         token_hash TEXT NOT NULL,
+                         expires_at REAL NOT NULL,
+                         revoked_at REAL,
+                         created_at REAL,
+                         updated_at REAL,
+                         CONSTRAINT "uq:players.display_name_normalized" UNIQUE ("display_name_normalized"),
+                         CONSTRAINT "uq:players.token_hash" UNIQUE ("token_hash")
+                     )
+                     """)
+                .run()
+            try await sqlDatabase
+                .raw("""
+                     INSERT INTO players_display_name_canonical (
                          id,
                          login_name,
                          login_name_normalized,
                          display_name,
                          display_name_normalized,
-                         previous_display_names_json,
                          token_hash,
                          expires_at,
                          revoked_at,
@@ -165,20 +230,22 @@ struct MigrateLegacyCampaignPlayerSessionsToPlayers: AsyncMigration {
                      )
                      SELECT
                          id,
+                         login_name,
+                         login_name_normalized,
                          display_name,
                          display_name_normalized,
-                         display_name,
-                         display_name_normalized,
-                         \(unsafeRaw: hasPreviousDisplayNames ? "previous_display_names_json" : "NULL"),
                          token_hash,
                          expires_at,
                          revoked_at,
                          created_at,
                          updated_at
-                     FROM campaign_player_sessions
+                     FROM players
                      """)
                 .run()
-            connection.logger.notice("Patched players from legacy campaign_player_sessions.")
+            try await sqlDatabase.raw("DROP TABLE players").run()
+            try await sqlDatabase.raw("ALTER TABLE players_display_name_canonical RENAME TO players").run()
+            try await sqlDatabase.raw("PRAGMA foreign_keys = ON").run()
+            connection.logger.notice("Updated players unique constraint to display_name_normalized.")
         }
     }
 
@@ -570,7 +637,6 @@ struct DatabaseShapeVerification {
                 "login_name_normalized",
                 "display_name",
                 "display_name_normalized",
-                "previous_display_names_json",
                 "token_hash",
                 "expires_at"
             ]

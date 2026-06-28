@@ -164,13 +164,9 @@ const {
       const trimmed = sanitize(value);
       return Boolean(trimmed) && trimmed.toLowerCase() !== 'player';
     };
-    const loginName = sanitize(player?.loginName);
     const displayName = sanitize(player?.displayName);
     if (isReal(displayName)) {
       return displayName;
-    }
-    if (isReal(loginName)) {
-      return loginName;
     }
     const fallback = sanitize(fallbackName);
     return isReal(fallback) ? fallback : '';

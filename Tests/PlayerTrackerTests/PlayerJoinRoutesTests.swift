@@ -199,7 +199,7 @@ struct PlayerJoinRoutesTests {
     }
 
     @Test
-    func testRenamingPlayerKeepsTheSameIdentity() async throws {
+    func testRenamingPlayerUpdatesTheActiveSessionName() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }
         let tester = try app.testing()
@@ -244,6 +244,7 @@ struct PlayerJoinRoutesTests {
         XCTAssertEqual(renameResponse.status, .ok)
         let renamed = try renameResponse.content.decode(PlayerSessionResponse.self)
         XCTAssertEqual(renamed.player.id, initialJoin.session.player.id)
+        XCTAssertEqual(renamed.player.loginName, "Ally")
         XCTAssertEqual(renamed.player.displayName, "Ally")
 
         let charactersResponse = try await tester.sendRequest(
@@ -258,8 +259,8 @@ struct PlayerJoinRoutesTests {
         XCTAssertTrue(characters.contains { $0.ownerName == "Ally" && $0.name == "Scout" })
 
         let legacyJoin = try await join(displayName: "Alex", tester: tester)
-        XCTAssertEqual(legacyJoin.session.player.id, initialJoin.session.player.id)
-        XCTAssertEqual(legacyJoin.session.player.displayName, "Ally")
+        XCTAssertNotEqual(legacyJoin.session.player.id, initialJoin.session.player.id)
+        XCTAssertEqual(legacyJoin.session.player.displayName, "Alex")
     }
 
     @Test
