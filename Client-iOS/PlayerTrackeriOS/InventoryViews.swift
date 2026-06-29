@@ -75,14 +75,15 @@ struct CharacterInventorySheetView: View {
                                     commonWeightUnits: commonWeightUnits
                                 )
                             )
-                                .foregroundStyle(.secondary)
                         }
                     }
 
                     ForEach(topLevelContainerEntries) { container in
+                        let containedItems = items(inContainer: container.id)
+                        let weight = Double(container.weight.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+                            + InventoryDraftOperations.totalWeight(for: containedItems)
                         Section {
                             inventoryRow(for: container, containerLabels: containerLabels)
-                            let containedItems = items(inContainer: container.id)
                             if containedItems.isEmpty {
                                 Text("No items in this container.")
                                     .foregroundStyle(.secondary)
@@ -92,12 +93,16 @@ struct CharacterInventorySheetView: View {
                                 }
                             }
                         } header: {
-                            Text(containerSectionTitle(for: container, containerLabels: containerLabels))
+                            HStack {
+                                Text(containerSectionTitle(for: container, containerLabels: containerLabels))
+                                Spacer(minLength: 2)
+                                Text("Wt: " + InventoryDisplayFormatting.formattedWeight(weight, commonWeightUnits: commonWeightUnits))
+                            }
                         }
                     }
                 }
             }
-            .navigationTitle("Inventory")
+            .navigationTitle("Inventory: " + character.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
@@ -708,13 +713,9 @@ struct CharacterMoneySheetView: View {
                             CurrencyAmountEditorRow(draft: $draft)
                         }
                     }
-                } header: {
-                    Text(character.name)
-                } footer: {
-                    Text("Character money.")
-                }
+                } 
             }
-            .navigationTitle("Money")
+            .navigationTitle("Money: " + character.name)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
@@ -1011,8 +1012,16 @@ private struct CurrencyAmountEditorRow: View {
     @Binding var draft: CurrencyAmountDraft
 
     var body: some View {
-        TextField(draft.label, text: $draft.amount)
-            .keyboardType(.numberPad)
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Text(draft.label)
+                .foregroundStyle(.secondary)
+                .frame(width: 120, alignment: .leading)
+            TextField("", text: $draft.amount)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .accessibilityLabel(draft.label)
+        }
     }
 }
 
@@ -1125,7 +1134,7 @@ struct InventoryEntryDraft: Identifiable, Equatable {
     }
 }
 
-private struct CurrencyAmountDraft: Identifiable, Equatable {
+struct CurrencyAmountDraft: Identifiable, Equatable {
     var id: String
     var label: String
     var amount: String

@@ -170,9 +170,6 @@ enum InventoryDraftOperations {
 
     static func totalWeight(for drafts: [InventoryEntryDraft]) -> Double {
         drafts.reduce(0) { partialResult, draft in
-            if draft.isContainer || containerID(for: draft) != nil {
-                return partialResult
-            }
             let quantity = Double(draft.quantity.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
             let weight = Double(draft.weight.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
             return partialResult + (quantity * weight)

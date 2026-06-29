@@ -781,4 +781,24 @@ final class PlayerTrackeriOSTests: XCTestCase {
             "2 kgs"
         )
     }
+
+    func testCurrencyDraftsUseCurrencySystemLabelsWhenPresent() {
+        let currencySystem = CurrencySystemDTO(
+            commonCurrencyId: "gp",
+            units: [
+                CurrencyUnitDTO(id: "cp", label: "Copper", symbol: "cp", valueInCommonCurrency: 0.01),
+                CurrencyUnitDTO(id: "gp", label: "Gold", symbol: "gp", valueInCommonCurrency: 1)
+            ]
+        )
+        let drafts = CurrencyAmountDraft.buildDrafts(
+            from: [
+                CurrencyAmountDTO(unitId: "cp", amount: 12),
+                CurrencyAmountDTO(unitId: "gp", amount: 7)
+            ],
+            currencySystem: currencySystem
+        )
+
+        XCTAssertEqual(drafts.map(\.label), ["Copper", "Gold"])
+        XCTAssertEqual(drafts.map(\.amount), ["12", "7"])
+    }
 }
