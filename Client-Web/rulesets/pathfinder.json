@@ -53,8 +53,9 @@
   "creatureLibrary": {
     "file": "pathfinder-bestiary"
   },
-    "equipmentLibrary": {
+  "equipmentLibrary": {
     "file": "pathfinder-equipment",
+    "commonWeightUnits": ["lb.", "lbs."],
     "categoryIcons": {
       "Armor": "🛡️",
       "Coins": "🪙",

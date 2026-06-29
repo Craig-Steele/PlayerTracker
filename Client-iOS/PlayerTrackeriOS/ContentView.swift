@@ -8,6 +8,9 @@ struct ContentView: View {
     @State private var healthDraft: CharacterDraft?
     @State private var conditionsDraft: CharacterDraft?
     @State private var initiativeDraft: InitiativeDraft?
+    @State private var inventoryCharacter: PlayerViewDTO?
+    @State private var moneyCharacter: PlayerViewDTO?
+    @State private var showingPartyTreasure = false
     @State private var showingSettings = false
     @State private var showingConnectionSheet = false
     @State private var showingPlayerIdentitySheet = false
@@ -154,6 +157,45 @@ struct ContentView: View {
                     Task { await model.saveConditions(for: conditionsDraft) }
                 }
             )
+        }
+        .sheet(item: $inventoryCharacter) { character in
+            CharacterInventorySheetView(
+                character: character,
+                serverURLString: model.normalizedServerURL,
+                equipmentLibraryItems: model.equipmentLibraryItems,
+                categoryIcons: model.ruleSet?.equipmentLibrary?.categoryIcons ?? [:],
+                currencySystem: model.ruleSet?.currency,
+                commonWeightUnits: model.ruleSet?.equipmentLibrary?.commonWeightUnits,
+                onSendToPartyTreasure: { item in
+                    await model.sendInventoryItemToPartyTreasure(item, from: character)
+                    await MainActor.run {
+                        inventoryCharacter = model.myCharacters.first(where: { $0.id == character.id })
+                    }
+                }
+            ) { items in
+                await model.saveCharacterInventory(items, for: character)
+                await MainActor.run {
+                    inventoryCharacter = model.myCharacters.first(where: { $0.id == character.id })
+                }
+            }
+        }
+        .sheet(item: $moneyCharacter) { character in
+            CharacterMoneySheetView(
+                character: character,
+                currencySystem: model.ruleSet?.currency
+            ) { currency in
+                await model.saveCharacterCurrency(currency, for: character)
+            }
+        }
+        .sheet(isPresented: $showingPartyTreasure) {
+            PartyTreasureSheetView(
+                campaignName: model.campaign?.name,
+                currencySystem: model.ruleSet?.currency,
+                partyTreasure: model.campaign?.partyTreasure ?? [],
+                campaignCurrency: model.campaign?.currency ?? []
+            ) { items, currency in
+                await model.savePartyTreasure(items: items, currency: currency)
+            }
         }
         .task {
             await model.connect()
@@ -449,6 +491,26 @@ struct ContentView: View {
                             Divider()
 
                             Button {
+                                inventoryCharacter = player
+                            } label: {
+                                Label("Inventory", systemImage: "backpack")
+                            }
+
+                            if model.ruleSet?.currency != nil {
+                                Button {
+                                    moneyCharacter = player
+                                } label: {
+                                    Label("Money", systemImage: "dollarsign.circle")
+                                }
+                            }
+
+                            Button {
+                                showingPartyTreasure = true
+                            } label: {
+                                Label("Party Treasure", systemImage: "shippingbox")
+                            }
+
+                            Button {
                                 editorDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
                             } label: {
                                 Label("Edit Character", systemImage: "pencil")
@@ -485,6 +547,7 @@ struct ContentView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .disabled(isShowingModal)
                 } else {
                     VStack(alignment: .center, spacing: 4) {
                         nameBadge(
@@ -701,6 +764,9 @@ struct ContentView: View {
             || healthDraft != nil
             || conditionsDraft != nil
             || initiativeDraft != nil
+            || inventoryCharacter != nil
+            || moneyCharacter != nil
+            || showingPartyTreasure
             || showingSettings
             || showingConnectionSheet
             || showingPlayerIdentitySheet

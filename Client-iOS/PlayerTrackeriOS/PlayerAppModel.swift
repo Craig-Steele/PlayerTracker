@@ -31,6 +31,7 @@ final class PlayerAppModel {
 
     var campaign: CampaignStateDTO?
     var ruleSet: RuleSetLibraryDTO?
+    var equipmentLibraryItems: [EquipmentLibraryItemDTO] = []
     var gameState: GameStateDTO?
     var myCharacters: [PlayerViewDTO] = []
     var statusMessage = "Not connected"
@@ -148,6 +149,7 @@ final class PlayerAppModel {
             let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
             var resolvedCampaign: CampaignStateDTO?
             var resolvedRuleSet: RuleSetLibraryDTO?
+            var resolvedEquipmentLibraryItems: [EquipmentLibraryItemDTO] = []
             var resolvedPlayerSession: PlayerSessionDTO?
             var connectionError: Error?
 
@@ -163,6 +165,10 @@ final class PlayerAppModel {
                 hasServerConnection = true
             } catch {
                 connectionError = connectionError ?? error
+            }
+
+            if resolvedCampaign != nil {
+                resolvedEquipmentLibraryItems = (try? await client.fetchEquipmentLibrary(limit: 0).items) ?? []
             }
 
             if !hasServerConnection {
@@ -200,6 +206,7 @@ final class PlayerAppModel {
 
             self.campaign = resolvedCampaign
             self.ruleSet = resolvedRuleSet
+            self.equipmentLibraryItems = resolvedEquipmentLibraryItems
             self.gameState = resolvedState
             self.myCharacters = characters
             self.lastError = nil
@@ -214,6 +221,7 @@ final class PlayerAppModel {
             self.lastError = error.localizedDescription
             self.campaign = nil
             self.ruleSet = nil
+            self.equipmentLibraryItems = []
             self.gameState = nil
             self.myCharacters = []
             if showStatus || self.campaign == nil {
@@ -318,6 +326,7 @@ final class PlayerAppModel {
                 initiative: draft.id.flatMap { existingCharacter(with: $0)?.initiative },
                 stats: draft.buildStatsPayload(allowNegativeHealth: ruleSet?.allowNegativeHealth ?? false),
                 currency: draft.id.flatMap { existingCharacter(with: $0)?.currency },
+                inventory: draft.id.flatMap { existingCharacter(with: $0)?.inventory },
                 revealStats: draft.revealStats,
                 autoSkipTurn: draft.autoSkipTurn,
                 useAppInitiativeRoll: draft.useAppInitiativeRoll,
@@ -472,6 +481,7 @@ final class PlayerAppModel {
                 initiative: initiative,
                 stats: character.stats,
                 currency: character.currency,
+                inventory: character.inventory,
                 revealStats: character.revealStats,
                 autoSkipTurn: character.autoSkipTurn,
                 useAppInitiativeRoll: character.useAppInitiativeRoll,
@@ -484,6 +494,110 @@ final class PlayerAppModel {
             statusMessage = initiative == nil ? "Initiative cleared." : "Initiative set."
             await refreshAll(showStatus: false)
         } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
+    func saveCharacterInventory(_ inventory: [InventoryEntryDTO], for character: PlayerViewDTO) async {
+        await saveCharacterDetails(character, inventory: inventory, currency: character.currency)
+    }
+
+    func saveCharacterCurrency(_ currency: [CurrencyAmountDTO], for character: PlayerViewDTO) async {
+        await saveCharacterDetails(character, inventory: character.inventory, currency: currency)
+    }
+
+    func savePartyTreasure(items: [InventoryEntryDTO], currency: [CurrencyAmountDTO]? = nil) async {
+        guard campaign != nil else {
+            statusMessage = "Connect to a server first."
+            return
+        }
+        do {
+            let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
+            let updated = try await client.updatePartyTreasure(items: items, currency: currency)
+            campaign = updated
+            statusMessage = "Party treasure saved."
+            await refreshAll(showStatus: false)
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
+    func sendInventoryItemToPartyTreasure(_ item: InventoryEntryDTO, from character: PlayerViewDTO) async {
+        guard let campaign else {
+            statusMessage = "Connect to a server first."
+            return
+        }
+        guard !item.isContainer else {
+            statusMessage = "Send to Party Treasure only works for items, not containers."
+            return
+        }
+        let transferItem = InventoryEntryDTO(
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            value: item.value,
+            weight: item.weight,
+            url: item.url,
+            category: item.category,
+            containerId: nil,
+            isContainer: false
+        )
+        let originalInventory = character.inventory ?? []
+        let updatedInventory = originalInventory.filter { $0.id != item.id }
+        let originalPartyTreasure = campaign.partyTreasure ?? []
+        let updatedPartyTreasure = originalPartyTreasure + [transferItem]
+
+        do {
+            let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
+            let characterPayload = CharacterInputDTO(
+                id: character.id,
+                campaignName: campaign.name,
+                ownerId: currentPlayerID,
+                ownerName: character.ownerName,
+                name: character.name,
+                initiative: character.initiative,
+                stats: character.stats,
+                currency: character.currency,
+                inventory: updatedInventory,
+                revealStats: character.revealStats,
+                autoSkipTurn: character.autoSkipTurn,
+                useAppInitiativeRoll: character.useAppInitiativeRoll,
+                initiativeBonus: character.initiativeBonus,
+                isHidden: character.isHidden,
+                revealOnTurn: character.revealOnTurn,
+                conditions: character.conditions
+            )
+            _ = try await client.upsertCharacter(characterPayload, campaignID: campaign.id)
+            _ = try await client.updatePartyTreasure(items: updatedPartyTreasure, currency: campaign.currency)
+            await refreshAll(showStatus: false)
+            statusMessage = "Sent \(item.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Item" : item.name) to party treasure."
+        } catch {
+            do {
+                let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
+                let rollbackPayload = CharacterInputDTO(
+                    id: character.id,
+                    campaignName: campaign.name,
+                    ownerId: currentPlayerID,
+                    ownerName: character.ownerName,
+                    name: character.name,
+                    initiative: character.initiative,
+                    stats: character.stats,
+                    currency: character.currency,
+                    inventory: originalInventory,
+                    revealStats: character.revealStats,
+                    autoSkipTurn: character.autoSkipTurn,
+                    useAppInitiativeRoll: character.useAppInitiativeRoll,
+                    initiativeBonus: character.initiativeBonus,
+                    isHidden: character.isHidden,
+                    revealOnTurn: character.revealOnTurn,
+                    conditions: character.conditions
+                )
+                _ = try await client.upsertCharacter(rollbackPayload, campaignID: campaign.id)
+                _ = try await client.updatePartyTreasure(items: originalPartyTreasure, currency: campaign.currency)
+                await refreshAll(showStatus: false)
+            } catch {
+                // If rollback fails, surface the original transfer failure below.
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -503,6 +617,43 @@ final class PlayerAppModel {
 
     private func existingCharacter(with id: UUID) -> PlayerViewDTO? {
         myCharacters.first(where: { $0.id == id })
+    }
+
+    private func saveCharacterDetails(
+        _ character: PlayerViewDTO,
+        inventory: [InventoryEntryDTO]?,
+        currency: [CurrencyAmountDTO]?
+    ) async {
+        guard let campaign else {
+            statusMessage = "Connect to a server first."
+            return
+        }
+        do {
+            let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
+            let payload = CharacterInputDTO(
+                id: character.id,
+                campaignName: campaign.name,
+                ownerId: currentPlayerID,
+                ownerName: character.ownerName,
+                name: character.name,
+                initiative: character.initiative,
+                stats: character.stats,
+                currency: currency,
+                inventory: inventory,
+                revealStats: character.revealStats,
+                autoSkipTurn: character.autoSkipTurn,
+                useAppInitiativeRoll: character.useAppInitiativeRoll,
+                initiativeBonus: character.initiativeBonus,
+                isHidden: character.isHidden,
+                revealOnTurn: character.revealOnTurn,
+                conditions: character.conditions
+            )
+            _ = try await client.upsertCharacter(payload, campaignID: campaign.id)
+            statusMessage = "Character saved."
+            await refreshAll(showStatus: false)
+        } catch {
+            statusMessage = error.localizedDescription
+        }
     }
 
     private func clearPlayerSession(reason: String) async {

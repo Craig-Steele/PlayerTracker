@@ -43,6 +43,10 @@ struct APIClient {
         try await get("conditions-library")
     }
 
+    func fetchEquipmentLibrary(limit: Int = 0) async throws -> EquipmentLibraryResponseDTO {
+        try await get("equipment-library?limit=\(limit)")
+    }
+
     func fetchState() async throws -> GameStateDTO {
         try await get("state")
     }
@@ -119,6 +123,14 @@ struct APIClient {
 
     func completeTurn() async throws -> GameStateDTO {
         try await send("turn-complete", method: "POST", body: Optional<Data>.none)
+    }
+
+    func updatePartyTreasure(items: [InventoryEntryDTO], currency: [CurrencyAmountDTO]? = nil) async throws -> CampaignStateDTO {
+        try await send(
+            "campaign/party-treasure",
+            method: "PUT",
+            body: PartyTreasureUpdateInputDTO(items: items, currency: currency)
+        )
     }
 
     private func makeURL(path: String) throws -> URL {

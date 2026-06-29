@@ -182,7 +182,7 @@
     },
     {
       "id": "chest-huge-huge-treasure-chest",
-      "name": "Chest, Huge / Huge treasure chest",
+      "name": "Chest, Huge",
       "value": 25,
       "weight": 250,
       "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
@@ -190,7 +190,7 @@
     },
     {
       "id": "chest-large-large-treasure-chest",
-      "name": "Chest, Large / Large treasure chest",
+      "name": "Chest, Large",
       "value": 10,
       "weight": 100,
       "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
@@ -198,7 +198,7 @@
     },
     {
       "id": "chest-medium-medium-treasure-chest",
-      "name": "Chest, Medium / Medium treasure chest",
+      "name": "Chest, Medium",
       "value": 5,
       "weight": 50,
       "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",
@@ -206,7 +206,7 @@
     },
     {
       "id": "chest-small-small-treasure-chest",
-      "name": "Chest, Small / Small treasure chest",
+      "name": "Chest, Small",
       "value": 2,
       "weight": 25,
       "url": "https://www.d20pfsrd.com/equipment/goods-and-services/containers-bags-boxes-more/",

@@ -20,6 +20,8 @@
 		4A9A0001000000010000000D /* HealthEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000D /* HealthEditorView.swift */; };
 		4A9A0001000000010000000E /* EncounterPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000E /* EncounterPresentation.swift */; };
 		4A9A0001000000010000000F /* InitiativeEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A0001000000020000000F /* InitiativeEditorView.swift */; };
+		4A9A00010000000100000012 /* InventoryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A00010000000200000013 /* InventoryViews.swift */; };
+		4A9A00010000000100000013 /* InventoryDraftOperations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A00010000000200000014 /* InventoryDraftOperations.swift */; };
 		4A9A00010000000100000011 /* PlayerTrackeriOSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9A00010000000200000011 /* PlayerTrackeriOSTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -39,6 +41,8 @@
 		4A9A0001000000020000000D /* HealthEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthEditorView.swift; sourceTree = "<group>"; };
 		4A9A0001000000020000000E /* EncounterPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EncounterPresentation.swift; sourceTree = "<group>"; };
 		4A9A0001000000020000000F /* InitiativeEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitiativeEditorView.swift; sourceTree = "<group>"; };
+		4A9A00010000000200000013 /* InventoryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryViews.swift; sourceTree = "<group>"; };
+		4A9A00010000000200000014 /* InventoryDraftOperations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InventoryDraftOperations.swift; sourceTree = "<group>"; };
 		4A9A00010000000200000011 /* PlayerTrackeriOSTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerTrackeriOS/PlayerTrackeriOSTests/PlayerTrackeriOSTests.swift; sourceTree = "<group>"; };
 		4A9A00010000000200000012 /* PlayerTrackeriOSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PlayerTrackeriOSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -74,6 +78,8 @@
 				4A9A0001000000020000000C /* CampaignEventStreamClient.swift */,
 				4A9A0001000000020000000E /* EncounterPresentation.swift */,
 				4A9A0001000000020000000F /* InitiativeEditorView.swift */,
+				4A9A00010000000200000013 /* InventoryViews.swift */,
+				4A9A00010000000200000014 /* InventoryDraftOperations.swift */,
 				4A9A00010000000200000009 /* ConditionsEditorView.swift */,
 				4A9A0001000000020000000D /* HealthEditorView.swift */,
 				4A9A0001000000020000000A /* SettingsViews.swift */,
@@ -245,6 +251,8 @@
 				4A9A0001000000010000000C /* CampaignEventStreamClient.swift in Sources */,
 				4A9A0001000000010000000E /* EncounterPresentation.swift in Sources */,
 				4A9A0001000000010000000F /* InitiativeEditorView.swift in Sources */,
+				4A9A00010000000100000012 /* InventoryViews.swift in Sources */,
+				4A9A00010000000100000013 /* InventoryDraftOperations.swift in Sources */,
 				4A9A0001000000010000000D /* HealthEditorView.swift in Sources */,
 				4A9A00010000000100000001 /* PlayerTrackeriOSApp.swift in Sources */,
 				4A9A00010000000100000004 /* PlayerAppModel.swift in Sources */,

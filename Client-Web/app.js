@@ -2725,23 +2725,46 @@ const preferPlayerView = viewMode === 'player' || playerPath;
 
     const menuSummary = document.createElement('div');
     menuSummary.className = 'inventory-row-menu-summary';
-    const valueLine = document.createElement('div');
-    valueLine.className = 'inventory-row-menu-summary-line';
-    valueLine.innerHTML = '<span class="inventory-row-menu-summary-label">Value</span>';
+    const appendMenuDetailLine = (label, valueNode) => {
+      const line = document.createElement('div');
+      line.className = 'inventory-row-menu-summary-line';
+      const detailLabel = document.createElement('span');
+      detailLabel.className = 'inventory-row-menu-summary-label';
+      detailLabel.textContent = label;
+      line.appendChild(detailLabel);
+      line.appendChild(valueNode);
+      menuSummary.appendChild(line);
+    };
+
     const valueAmount = document.createElement('span');
     valueAmount.className = 'inventory-row-menu-summary-value';
     valueAmount.textContent = formatInventoryMenuNumber(entry.value ?? 0);
-    valueLine.appendChild(valueAmount);
-    menuSummary.appendChild(valueLine);
+    appendMenuDetailLine('Value', valueAmount);
 
-    const weightLine = document.createElement('div');
-    weightLine.className = 'inventory-row-menu-summary-line';
-    weightLine.innerHTML = '<span class="inventory-row-menu-summary-label">Weight</span>';
     const weightAmount = document.createElement('span');
     weightAmount.className = 'inventory-row-menu-summary-value';
     weightAmount.textContent = formatInventoryMenuNumber(entry.weight ?? 0);
-    weightLine.appendChild(weightAmount);
-    menuSummary.appendChild(weightLine);
+    appendMenuDetailLine('Weight', weightAmount);
+
+    const url = typeof entry.url === 'string' ? entry.url.trim() : '';
+    if (url) {
+      let displayURL = url;
+      try {
+        displayURL = new URL(url, window.location.href).hostname || url;
+      } catch (err) {
+        displayURL = url.replace(/^https?:\/\//i, '').split('/')[0] || url;
+      }
+      const urlLink = document.createElement('a');
+      urlLink.className = 'inventory-row-menu-summary-value inventory-row-menu-summary-link';
+      urlLink.href = url;
+      urlLink.target = '_blank';
+      urlLink.rel = 'noopener';
+      urlLink.textContent = displayURL;
+      urlLink.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+      appendMenuDetailLine('URL', urlLink);
+    }
 
     overflowMenu.appendChild(menuSummary);
 

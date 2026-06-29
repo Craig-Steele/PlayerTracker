@@ -31,6 +31,7 @@ struct CurrencySystem: Content {
 struct EquipmentLibraryReference: Content {
     let file: String
     let categoryIcons: [String: String]?
+    let commonWeightUnits: [String]?
 }
 
 struct CurrencyUnit: Content {
