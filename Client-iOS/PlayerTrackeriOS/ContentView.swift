@@ -430,6 +430,8 @@ struct ContentView: View {
         )
         let encounterState = encounterPresentation.effectiveEncounterState
         let isCurrentTurn = encounterState == .active && model.gameState?.currentTurnId == player.id
+        let canRollInitiative = encounterState == .active
+            && model.myCharacters.contains(where: { $0.initiative == nil })
         let displayedInitiative = encounterPresentation.displayedInitiative(player.initiative)
         let isRefereeOwned = player.controllerDisplayName.caseInsensitiveCompare("Referee") == .orderedSame
         let nameBadgeTone = encounterPresentation.nameBadgeTone(
@@ -479,16 +481,26 @@ struct ContentView: View {
 
                 if isMine || canClaim {
                     Menu {
-                        if canClaim {
-                            Button {
-                                Task { await model.claimCharacter(player) }
-                            } label: {
-                                Text("Claim \(player.name)")
-                            }
-                        }
-
                         if isMine {
-                            Divider()
+                            if isCurrentTurn {
+                                Button {
+                                    Task { await model.completeTurn() }
+                                } label: {
+                                    Label("Turn Complete", systemImage: "checkmark.circle")
+                                }
+                            }
+
+                            if canRollInitiative {
+                                Button {
+                                    Task { await model.rollInitiativeForMyCharacters() }
+                                } label: {
+                                    Label("Roll for Initiative", systemImage: "die.face.5")
+                                }
+                            }
+
+                            if isCurrentTurn || canRollInitiative {
+                                Divider()
+                            }
 
                             Button {
                                 inventoryCharacter = player
@@ -510,6 +522,8 @@ struct ContentView: View {
                                 Label("Party Treasure", systemImage: "shippingbox")
                             }
 
+                            Divider()
+
                             Button {
                                 editorDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
                             } label: {
@@ -517,26 +531,17 @@ struct ContentView: View {
                             }
 
                             Button {
-                                healthDraft = CharacterDraft(player: player, ruleSet: model.ruleSet)
-                            } label: {
-                                Label("Edit Health", systemImage: "heart.text.square")
-                            }
-
-                            if isCurrentTurn {
-                                Button {
-                                    Task { await model.completeTurn() }
-                                } label: {
-                                    Label("Turn Complete", systemImage: "checkmark.circle")
-                                }
-                            }
-                        }
-
-                        if isMine {
-                            Divider()
-                            Button {
                                 Task { await model.releaseCharacter(player) }
                             } label: {
                                 Text("Release \(player.name)")
+                            }
+                        }
+
+                        if canClaim {
+                            Button {
+                                Task { await model.claimCharacter(player) }
+                            } label: {
+                                Text("Claim \(player.name)")
                             }
                         }
                     } label: {
