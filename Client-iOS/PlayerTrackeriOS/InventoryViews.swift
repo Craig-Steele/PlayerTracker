@@ -756,82 +756,43 @@ struct CharacterMoneySheetView: View {
     }
 }
 
-struct PartyTreasureSheetView: View {
+struct PartyTreasureMoneySheetView: View {
     let campaignName: String?
     let currencySystem: CurrencySystemDTO?
-    let partyTreasure: [InventoryEntryDTO]
-    let campaignCurrency: [CurrencyAmountDTO]
-    let onSave: ([InventoryEntryDTO], [CurrencyAmountDTO]) async -> Void
+    let onSave: ([CurrencyAmountDraft]) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @State private var itemDrafts: [InventoryEntryDraft]
-    @State private var moneyDrafts: [CurrencyAmountDraft]
+    @State private var drafts: [CurrencyAmountDraft]
     @State private var validationMessage: String?
     @State private var isSaving = false
 
     init(
         campaignName: String?,
         currencySystem: CurrencySystemDTO?,
-        partyTreasure: [InventoryEntryDTO],
-        campaignCurrency: [CurrencyAmountDTO],
-        onSave: @escaping ([InventoryEntryDTO], [CurrencyAmountDTO]) async -> Void
+        drafts: [CurrencyAmountDraft],
+        onSave: @escaping ([CurrencyAmountDraft]) -> Void
     ) {
         self.campaignName = campaignName
         self.currencySystem = currencySystem
-        self.partyTreasure = partyTreasure
-        self.campaignCurrency = campaignCurrency
         self.onSave = onSave
-        _itemDrafts = State(initialValue: partyTreasure.map(InventoryEntryDraft.init))
-        _moneyDrafts = State(initialValue: CurrencyAmountDraft.buildDrafts(
-            from: campaignCurrency,
-            currencySystem: currencySystem
-        ))
+        _drafts = State(initialValue: drafts)
     }
 
     var body: some View {
-        let containerLabels = InventoryDraftOperations.containerDisplayLabels(in: itemDrafts)
-        let containerOptions = InventoryDraftOperations.containerSelectionOptions(in: itemDrafts)
         NavigationStack {
             Form {
                 Section {
-                    if itemDrafts.isEmpty {
-                        Text("No party treasure items.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach($itemDrafts) { $draft in
-                            InventoryEntryEditorRow(
-                                draft: $draft,
-                                containerOptions: containerOptions.filter { $0.id != draft.id },
-                                containerLabels: containerLabels
-                            ) {
-                                removeItemDraft(id: draft.id)
-                            }
-                        }
-                    }
-                } header: {
-                    Text(campaignName ?? "Party Treasure")
-                } footer: {
-                    Button("Add Item") {
-                        itemDrafts.append(InventoryEntryDraft())
-                    }
-                }
-
-                Section {
-                    if moneyDrafts.isEmpty {
+                    if drafts.isEmpty {
                         Text("No party money recorded.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach($moneyDrafts) { $draft in
+                        ForEach($drafts) { $draft in
                             CurrencyAmountEditorRow(draft: $draft)
                         }
                     }
-                } header: {
-                    Text("Money")
-                } footer: {
-                    Text("Party treasure money.")
                 }
             }
-            .navigationTitle("Party Treasure")
+            .navigationTitle("Money: " + (campaignName ?? "Party Treasure"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
@@ -841,7 +802,7 @@ struct PartyTreasureSheetView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        Task { await save() }
+                        save()
                     }
                     .disabled(isSaving)
                 }
@@ -857,11 +818,317 @@ struct PartyTreasureSheetView: View {
         }
     }
 
+    private func save() {
+        guard !isSaving else { return }
+        isSaving = true
+        defer { isSaving = false }
+        do {
+            validationMessage = nil
+            _ = try drafts.map { try $0.toDTO() }
+            onSave(drafts)
+            dismiss()
+        } catch {
+            validationMessage = error.localizedDescription
+        }
+    }
+}
+
+struct PartyTreasureSheetView: View {
+    let campaignName: String?
+    let currencySystem: CurrencySystemDTO?
+    let commonWeightUnits: [String]?
+    let categoryIcons: [String: String]
+    let claimTarget: PlayerViewDTO
+    let partyTreasure: [InventoryEntryDTO]
+    let campaignCurrency: [CurrencyAmountDTO]
+    let onClaim: (InventoryEntryDTO, PlayerViewDTO) async -> Void
+    let onSave: ([InventoryEntryDTO], [CurrencyAmountDTO]) async -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var itemDrafts: [InventoryEntryDraft]
+    @State private var moneyDrafts: [CurrencyAmountDraft]
+    @State private var editingContext: InventoryEntryEditorContext?
+    @State private var pendingNewItemID: UUID?
+    @State private var showingMoneyEditor = false
+    @State private var validationMessage: String?
+    @State private var isSaving = false
+
+    init(
+        campaignName: String?,
+        currencySystem: CurrencySystemDTO?,
+        commonWeightUnits: [String]?,
+        categoryIcons: [String: String],
+        claimTarget: PlayerViewDTO,
+        partyTreasure: [InventoryEntryDTO],
+        campaignCurrency: [CurrencyAmountDTO],
+        onClaim: @escaping (InventoryEntryDTO, PlayerViewDTO) async -> Void,
+        onSave: @escaping ([InventoryEntryDTO], [CurrencyAmountDTO]) async -> Void
+    ) {
+        self.campaignName = campaignName
+        self.currencySystem = currencySystem
+        self.commonWeightUnits = commonWeightUnits
+        self.categoryIcons = categoryIcons
+        self.claimTarget = claimTarget
+        self.partyTreasure = partyTreasure
+        self.campaignCurrency = campaignCurrency
+        self.onClaim = onClaim
+        self.onSave = onSave
+        _itemDrafts = State(initialValue: partyTreasure.map(InventoryEntryDraft.init))
+        _moneyDrafts = State(initialValue: CurrencyAmountDraft.buildDrafts(
+            from: campaignCurrency,
+            currencySystem: currencySystem
+        ))
+    }
+
+    var body: some View {
+        let containerLabels = InventoryDraftOperations.containerDisplayLabels(in: itemDrafts)
+        let containerOptions = InventoryDraftOperations.containerSelectionOptions(in: itemDrafts)
+        let itemWeight = InventoryDraftOperations.totalWeight(for: itemDrafts)
+        NavigationStack {
+            List {
+                Section {
+                    Button {
+                        showingMoneyEditor = true
+                    } label: {
+                        InventoryEntrySummaryRow(
+                            glyph: "🪙",
+                            text: moneySummaryText()
+                        )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isSaving)
+                } header: {
+                    HStack {
+                        Text("Money")
+                        Spacer(minLength: 12)
+                        Text("Tap to edit")
+                    }
+                }
+
+                Section {
+                    if itemDrafts.isEmpty {
+                        Text("No party treasure items.")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(itemDrafts) { draft in
+                            partyTreasureRow(for: draft, containerLabels: containerLabels)
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text(campaignName ?? "Party Treasure")
+                        Spacer(minLength: 12)
+                        Text("Wt: " + InventoryDisplayFormatting.formattedWeight(itemWeight, commonWeightUnits: commonWeightUnits))
+                    }
+                }
+            }
+            .navigationTitle("Party Treasure")
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") {
+                        dismiss()
+                    }
+                    .disabled(isSaving)
+                }
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Add Item") {
+                        let draft = InventoryEntryDraft()
+                        itemDrafts.append(draft)
+                        pendingNewItemID = draft.id
+                        editingContext = InventoryEntryEditorContext(
+                            originalID: draft.id,
+                            draft: draft,
+                            title: "Add Item"
+                        )
+                    }
+                    .disabled(isSaving)
+                }
+            }
+            .sheet(isPresented: $showingMoneyEditor) {
+                PartyTreasureMoneySheetView(
+                    campaignName: campaignName,
+                    currencySystem: currencySystem,
+                    drafts: moneyDrafts
+                ) { updatedDrafts in
+                    moneyDrafts = updatedDrafts
+                }
+            }
+            .sheet(item: $editingContext) { context in
+                InventoryEntryEditorSheetView(
+                    title: context.title,
+                    draft: context.draft,
+                    serverURLString: "",
+                    equipmentLibraryItems: [],
+                    containerOptions: containerOptions.filter { $0.id != context.draft.id },
+                    onCancel: {
+                        if let pendingNewItemID, pendingNewItemID == context.originalID {
+                            removeItemDraft(id: pendingNewItemID)
+                            self.pendingNewItemID = nil
+                        }
+                        editingContext = nil
+                    },
+                    onSave: { draft in
+                        if pendingNewItemID == context.originalID {
+                            pendingNewItemID = nil
+                        }
+                        upsertDraft(draft, replacing: context.originalID)
+                        editingContext = nil
+                        Task { await persistItems() }
+                    }
+                )
+            }
+            .overlay(alignment: .bottom) {
+                if let validationMessage {
+                    Text(validationMessage)
+                        .font(.footnote)
+                        .foregroundStyle(.red)
+                        .padding(.bottom, 12)
+                }
+            }
+        }
+        .onChange(of: partyTreasure) { _, newValue in
+            syncItemDrafts(from: newValue)
+        }
+        .onChange(of: campaignCurrency) { _, newValue in
+            syncMoneyDrafts(from: newValue)
+        }
+    }
+
+    private func syncItemDrafts(from treasure: [InventoryEntryDTO]) {
+        let syncedDrafts = InventoryEntryDraft.drafts(from: treasure)
+        guard itemDrafts != syncedDrafts else { return }
+        itemDrafts = syncedDrafts
+    }
+
+    private func syncMoneyDrafts(from currency: [CurrencyAmountDTO]) {
+        let syncedDrafts = CurrencyAmountDraft.buildDrafts(
+            from: currency,
+            currencySystem: currencySystem
+        )
+        guard moneyDrafts != syncedDrafts else { return }
+        moneyDrafts = syncedDrafts
+    }
+
     private func removeItemDraft(id: UUID) {
         itemDrafts.removeAll { $0.id == id }
     }
 
-    private func save() async {
+    private func upsertDraft(_ draft: InventoryEntryDraft, replacing originalID: UUID?) {
+        guard let originalID else {
+            itemDrafts.append(draft)
+            return
+        }
+        if let index = itemDrafts.firstIndex(where: { $0.id == originalID }) {
+            itemDrafts[index] = draft
+        } else {
+            itemDrafts.append(draft)
+        }
+    }
+
+    @ViewBuilder
+    private func partyTreasureRow(
+        for draft: InventoryEntryDraft,
+        containerLabels: [UUID: String]
+    ) -> some View {
+        HStack(spacing: 10) {
+            Menu {
+                partyTreasureMenuDetails(for: draft, containerLabels: containerLabels)
+
+                Button {
+                    editingContext = InventoryEntryEditorContext(
+                        originalID: draft.id,
+                        draft: draft,
+                        title: draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            ? "Edit Item"
+                            : draft.name
+                    )
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+
+                if !draft.isContainer {
+                    Button {
+                        let item = draft.toDTOOrNil() ?? draft.fallbackTransferDTO()
+                        Task { await onClaim(item, claimTarget) }
+                    } label: {
+                        Label("Claim to \(claimTarget.name)", systemImage: "person.crop.circle.badge.plus")
+                    }
+                }
+
+                Button(role: .destructive) {
+                    removeItemDraft(id: draft.id)
+                    Task { await persistItems() }
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Text(inventoryEntryGlyph(for: draft, categoryIcons: categoryIcons))
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                        .frame(width: 24, height: 24)
+
+                    Text(partyTreasureItemDisplayText(for: draft, containerLabels: containerLabels))
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(isSaving)
+        }
+        .padding(.vertical, 4)
+    }
+
+    @ViewBuilder
+    private func partyTreasureMenuDetails(
+        for draft: InventoryEntryDraft,
+        containerLabels: [UUID: String]
+    ) -> some View {
+        Text("\(inventoryEntryGlyph(for: draft, categoryIcons: categoryIcons)) \(partyTreasureItemDisplayText(for: draft, containerLabels: containerLabels))")
+            .lineLimit(1)
+        Text("Value: \(InventoryDisplayFormatting.formattedValue(draft.value, currencySystem: currencySystem))")
+        Text("Weight: \(InventoryDisplayFormatting.formattedWeight(draft.weight, commonWeightUnits: commonWeightUnits))")
+        if let url = partyTreasureURL(for: draft) {
+            Link("URL: \(partyTreasureDisplayHost(for: url))", destination: url)
+        }
+        Divider()
+    }
+
+    private func partyTreasureItemDisplayText(
+        for draft: InventoryEntryDraft,
+        containerLabels: [UUID: String]
+    ) -> String {
+        partyTreasureEntryDisplayText(for: draft, containerLabels: containerLabels)
+    }
+
+    private func moneySummaryText() -> String {
+        let parts = moneyDrafts.compactMap { draft -> String? in
+            let amount = draft.amount.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !amount.isEmpty, amount != "0" else { return nil }
+            return "\(amount) \(draft.label)"
+        }
+        return parts.isEmpty ? "No party money recorded." : parts.joined(separator: ", ")
+    }
+
+    private func partyTreasureURL(for draft: InventoryEntryDraft) -> URL? {
+        let trimmed = draft.url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return URL(string: trimmed) ?? URL(string: "https://\(trimmed)")
+    }
+
+    private func partyTreasureDisplayHost(for url: URL) -> String {
+        let host = url.host?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !host.isEmpty {
+            return host
+        }
+        let raw = url.absoluteString
+        let stripped = raw.replacingOccurrences(of: #"^https?://"#, with: "", options: .regularExpression)
+        return stripped.split(separator: "/").first.map(String.init) ?? raw
+    }
+
+    private func persistItems() async {
         guard !isSaving else { return }
         isSaving = true
         defer { isSaving = false }
@@ -870,7 +1137,6 @@ struct PartyTreasureSheetView: View {
             let items = try itemDrafts.map { try $0.toDTO() }
             let currency = try moneyDrafts.map { try $0.toDTO() }
             await onSave(items, currency)
-            dismiss()
         } catch {
             validationMessage = error.localizedDescription
         }
@@ -942,6 +1208,27 @@ private struct InventoryEntryEditorRow: View {
     }
 }
 
+private struct InventoryEntrySummaryRow: View {
+    let glyph: String
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Text(glyph)
+                .font(.title3)
+                .foregroundStyle(.secondary)
+                .frame(width: 24, height: 24)
+
+            Text(text)
+                .font(.body)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
 private struct InventoryEntryEditorFieldRow: View {
     let title: String
     @Binding var text: String
@@ -964,6 +1251,46 @@ private struct InventoryEntryEditorFieldRow: View {
                 .accessibilityLabel(title)
         }
     }
+}
+
+private func inventoryEntryGlyph(
+    for draft: InventoryEntryDraft,
+    categoryIcons: [String: String]
+) -> String {
+    InventoryCategoryIcons.glyph(for: draft, categoryIcons: categoryIcons)
+}
+
+private func inventoryEntryDisplayText(
+    for draft: InventoryEntryDraft,
+    containerLabels: [UUID: String]
+) -> String {
+    let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    if draft.isContainer {
+        return containerLabels[draft.id] ?? (name.isEmpty ? "Container" : name)
+    }
+    let quantity = draft.quantity.trimmingCharacters(in: .whitespacesAndNewlines)
+    let category = draft.category.trimmingCharacters(in: .whitespacesAndNewlines)
+    let quantityPrefix = quantity.isEmpty || quantity == "1" ? "" : "\(quantity) "
+    if category.isEmpty {
+        return "\(quantityPrefix)\(name.isEmpty ? "Item" : name)"
+    }
+    return "\(quantityPrefix)\(name.isEmpty ? "Item" : name) [\(category)]"
+}
+
+func partyTreasureEntryDisplayText(
+    for draft: InventoryEntryDraft,
+    containerLabels: [UUID: String]
+) -> String {
+    if draft.isContainer, let label = containerLabels[draft.id] {
+        return label
+    }
+    let name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+    let displayName = name.isEmpty ? "Item" : name
+    let quantity = draft.quantity.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard quantity.isEmpty == false, quantity != "1" else {
+        return displayName
+    }
+    return "\(displayName) x\(quantity)"
 }
 
 private struct InventoryEntryEditorContainerSelectorRow: View {

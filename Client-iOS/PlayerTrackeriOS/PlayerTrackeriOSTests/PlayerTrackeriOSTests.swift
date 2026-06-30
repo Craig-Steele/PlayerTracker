@@ -728,7 +728,7 @@ final class PlayerTrackeriOSTests: XCTestCase {
         XCTAssertEqual(InventoryCategoryIcons.glyph(for: fallback, categoryIcons: icons), "🗡")
     }
 
-    func testInventoryTotalWeightIgnoresContainersAndNestedItems() {
+    func testInventoryTotalWeightIncludesAllDraftWeights() {
         let containerID = UUID()
         let nestedID = UUID()
         let drafts = [
@@ -752,7 +752,7 @@ final class PlayerTrackeriOSTests: XCTestCase {
             )
         ]
 
-        XCTAssertEqual(InventoryDraftOperations.totalWeight(for: drafts), 10)
+        XCTAssertEqual(InventoryDraftOperations.totalWeight(for: drafts), 15)
     }
 
     func testInventoryDisplayFormattingUsesCurrencyAndWeightUnits() {
@@ -779,6 +779,22 @@ final class PlayerTrackeriOSTests: XCTestCase {
         XCTAssertEqual(
             InventoryDisplayFormatting.formattedWeight("2", commonWeightUnits: ["kg"]),
             "2 kgs"
+        )
+    }
+
+    func testPartyTreasureDisplayTextOmitsCategoryAndAppendsQuantity() {
+        let draft = InventoryEntryDraft(
+            name: "Potion",
+            category: "Consumable",
+            quantity: "3"
+        )
+
+        XCTAssertEqual(
+            partyTreasureEntryDisplayText(
+                for: draft,
+                containerLabels: [:]
+            ),
+            "Potion x3"
         )
     }
 

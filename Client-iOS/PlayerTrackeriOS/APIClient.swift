@@ -133,6 +133,14 @@ struct APIClient {
         )
     }
 
+    func claimPartyTreasureItem(characterId: UUID, itemId: UUID) async throws -> CampaignStateDTO {
+        try await send(
+            "campaign/party-treasure/claim",
+            method: "POST",
+            body: PartyTreasureClaimInputDTO(characterId: characterId, itemId: itemId)
+        )
+    }
+
     private func makeURL(path: String) throws -> URL {
         guard let url = URL(string: path, relativeTo: baseURL)?.absoluteURL else {
             throw APIClientError.invalidBaseURL

@@ -522,6 +522,26 @@ final class PlayerAppModel {
         }
     }
 
+    func claimPartyTreasureItem(_ item: InventoryEntryDTO, to character: PlayerViewDTO) async {
+        guard campaign != nil else {
+            statusMessage = "Connect to a server first."
+            return
+        }
+        guard let itemId = item.id else {
+            statusMessage = "Select a party treasure item first."
+            return
+        }
+        do {
+            let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
+            _ = try await client.claimPartyTreasureItem(characterId: character.id, itemId: itemId)
+            await refreshAll(showStatus: false)
+            let itemName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            statusMessage = "Claimed \(itemName.isEmpty ? "item" : itemName)."
+        } catch {
+            statusMessage = error.localizedDescription
+        }
+    }
+
     func sendInventoryItemToPartyTreasure(_ item: InventoryEntryDTO, from character: PlayerViewDTO) async {
         guard let campaign else {
             statusMessage = "Connect to a server first."

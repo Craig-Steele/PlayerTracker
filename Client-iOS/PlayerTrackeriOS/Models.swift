@@ -323,6 +323,11 @@ struct PartyTreasureUpdateInputDTO: Codable {
     }
 }
 
+struct PartyTreasureClaimInputDTO: Codable {
+    let characterId: UUID
+    let itemId: UUID
+}
+
 struct CharacterRenameInputDTO: Codable {
     let name: String
 }

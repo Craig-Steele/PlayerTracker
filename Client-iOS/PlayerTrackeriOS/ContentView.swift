@@ -10,7 +10,7 @@ struct ContentView: View {
     @State private var initiativeDraft: InitiativeDraft?
     @State private var inventoryCharacter: PlayerViewDTO?
     @State private var moneyCharacter: PlayerViewDTO?
-    @State private var showingPartyTreasure = false
+    @State private var partyTreasureCharacter: PlayerViewDTO?
     @State private var showingSettings = false
     @State private var showingConnectionSheet = false
     @State private var showingPlayerIdentitySheet = false
@@ -187,15 +187,22 @@ struct ContentView: View {
                 await model.saveCharacterCurrency(currency, for: character)
             }
         }
-        .sheet(isPresented: $showingPartyTreasure) {
+        .sheet(item: $partyTreasureCharacter) { character in
             PartyTreasureSheetView(
-                campaignName: model.campaign?.name,
+                campaignName: character.name,
                 currencySystem: model.ruleSet?.currency,
+                commonWeightUnits: model.ruleSet?.equipmentLibrary?.commonWeightUnits,
+                categoryIcons: model.ruleSet?.equipmentLibrary?.categoryIcons ?? [:],
+                claimTarget: character,
                 partyTreasure: model.campaign?.partyTreasure ?? [],
-                campaignCurrency: model.campaign?.currency ?? []
-            ) { items, currency in
-                await model.savePartyTreasure(items: items, currency: currency)
-            }
+                campaignCurrency: model.campaign?.currency ?? [],
+                onClaim: { item, target in
+                    await model.claimPartyTreasureItem(item, to: target)
+                },
+                onSave: { items, currency in
+                    await model.savePartyTreasure(items: items, currency: currency)
+                }
+            )
         }
         .task {
             await model.connect()
@@ -517,7 +524,7 @@ struct ContentView: View {
                             }
 
                             Button {
-                                showingPartyTreasure = true
+                                partyTreasureCharacter = player
                             } label: {
                                 Label("Party Treasure", systemImage: "shippingbox")
                             }
@@ -771,7 +778,7 @@ struct ContentView: View {
             || initiativeDraft != nil
             || inventoryCharacter != nil
             || moneyCharacter != nil
-            || showingPartyTreasure
+            || partyTreasureCharacter != nil
             || showingSettings
             || showingConnectionSheet
             || showingPlayerIdentitySheet
