@@ -9,7 +9,7 @@ struct CharacterInventorySheetView: View {
     let categoryIcons: [String: String]
     let currencySystem: CurrencySystemDTO?
     let commonWeightUnits: [String]?
-    let onSendToPartyTreasure: ((InventoryEntryDTO) async -> Void)?
+    let onSendToPartyTreasure: ((InventoryEntryDTO, Int) async -> Void)?
     let onSave: ([InventoryEntryDTO]) async -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -18,6 +18,7 @@ struct CharacterInventorySheetView: View {
     @State private var editingContext: InventoryEntryEditorContext?
     @State private var pendingItemRemovalDraft: InventoryEntryDraft?
     @State private var pendingContainerRemovalDraft: InventoryEntryDraft?
+    @State private var pendingTransferDraft: InventoryEntryDraft?
     @State private var validationMessage: String?
     @State private var loadMessage: String?
     @State private var isSaving = false
@@ -29,7 +30,7 @@ struct CharacterInventorySheetView: View {
         categoryIcons: [String: String],
         currencySystem: CurrencySystemDTO?,
         commonWeightUnits: [String]?,
-        onSendToPartyTreasure: ((InventoryEntryDTO) async -> Void)? = nil,
+        onSendToPartyTreasure: ((InventoryEntryDTO, Int) async -> Void)? = nil,
         onSave: @escaping ([InventoryEntryDTO]) async -> Void
     ) {
         self.character = character
@@ -203,6 +204,26 @@ struct CharacterInventorySheetView: View {
         } message: {
             Text("Choose what should happen to the container and the items inside it.")
         }
+        .sheet(item: $pendingTransferDraft) { draft in
+                InventoryTransferQuantitySheetView(
+                    title: "Send to Party Treasure",
+                    itemName: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                    availableQuantity: max(1, Int(draft.quantity.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 1),
+                    actionTitle: "Send",
+                    onConfirm: { quantity in
+                        pendingTransferDraft = nil
+                        let transferItem = draft.toDTOOrNil() ?? draft.fallbackTransferDTO()
+                        Task {
+                            if let onSendToPartyTreasure {
+                                await onSendToPartyTreasure(transferItem, quantity)
+                            }
+                        }
+                    },
+                onCancel: {
+                    pendingTransferDraft = nil
+                }
+            )
+        }
     }
 
     private var rootEquippedItems: [InventoryEntryDraft] {
@@ -248,7 +269,7 @@ struct CharacterInventorySheetView: View {
                 if !draft.isContainer {
                     if let onSendToPartyTreasure {
                         Button {
-                            Task { await onSendToPartyTreasure(draft.toDTOOrNil() ?? draft.fallbackTransferDTO()) }
+                            pendingTransferDraft = draft
                         } label: {
                             Label("Send to Party Treasure", systemImage: "shippingbox.circle")
                         }
@@ -835,45 +856,54 @@ struct PartyTreasureMoneySheetView: View {
 
 struct PartyTreasureSheetView: View {
     let campaignName: String?
+    let serverURLString: String
     let currencySystem: CurrencySystemDTO?
     let commonWeightUnits: [String]?
     let categoryIcons: [String: String]
+    let equipmentLibraryItems: [EquipmentLibraryItemDTO]
     let claimTarget: PlayerViewDTO
     let partyTreasure: [InventoryEntryDTO]
     let campaignCurrency: [CurrencyAmountDTO]
-    let onClaim: (InventoryEntryDTO, PlayerViewDTO) async -> Void
+    let onClaim: (InventoryEntryDTO, Int, PlayerViewDTO) async -> Void
     let onSave: ([InventoryEntryDTO], [CurrencyAmountDTO]) async -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var itemDrafts: [InventoryEntryDraft]
     @State private var moneyDrafts: [CurrencyAmountDraft]
+    @State private var loadedEquipmentLibraryItems: [EquipmentLibraryItemDTO]
     @State private var editingContext: InventoryEntryEditorContext?
     @State private var pendingNewItemID: UUID?
     @State private var showingMoneyEditor = false
+    @State private var pendingClaimDraft: InventoryEntryDraft?
     @State private var validationMessage: String?
     @State private var isSaving = false
 
     init(
         campaignName: String?,
+        serverURLString: String,
         currencySystem: CurrencySystemDTO?,
         commonWeightUnits: [String]?,
         categoryIcons: [String: String],
+        equipmentLibraryItems: [EquipmentLibraryItemDTO],
         claimTarget: PlayerViewDTO,
         partyTreasure: [InventoryEntryDTO],
         campaignCurrency: [CurrencyAmountDTO],
-        onClaim: @escaping (InventoryEntryDTO, PlayerViewDTO) async -> Void,
+        onClaim: @escaping (InventoryEntryDTO, Int, PlayerViewDTO) async -> Void,
         onSave: @escaping ([InventoryEntryDTO], [CurrencyAmountDTO]) async -> Void
     ) {
         self.campaignName = campaignName
+        self.serverURLString = serverURLString
         self.currencySystem = currencySystem
         self.commonWeightUnits = commonWeightUnits
         self.categoryIcons = categoryIcons
+        self.equipmentLibraryItems = equipmentLibraryItems
         self.claimTarget = claimTarget
         self.partyTreasure = partyTreasure
         self.campaignCurrency = campaignCurrency
         self.onClaim = onClaim
         self.onSave = onSave
         _itemDrafts = State(initialValue: partyTreasure.map(InventoryEntryDraft.init))
+        _loadedEquipmentLibraryItems = State(initialValue: equipmentLibraryItems)
         _moneyDrafts = State(initialValue: CurrencyAmountDraft.buildDrafts(
             from: campaignCurrency,
             currencySystem: currencySystem
@@ -953,12 +983,29 @@ struct PartyTreasureSheetView: View {
                     moneyDrafts = updatedDrafts
                 }
             }
+            .sheet(item: $pendingClaimDraft) { draft in
+                InventoryTransferQuantitySheetView(
+                    title: "Claim Party Treasure",
+                    itemName: draft.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                    availableQuantity: max(1, Int(draft.quantity.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 1),
+                    actionTitle: "Claim",
+                    onConfirm: { quantity in
+                        pendingClaimDraft = nil
+                        let item = draft.toDTOOrNil() ?? draft.fallbackTransferDTO()
+                        Task { await onClaim(item, quantity, claimTarget) }
+                    },
+                    onCancel: {
+                        pendingClaimDraft = nil
+                    }
+                )
+            }
             .sheet(item: $editingContext) { context in
+                let libraryItems = loadedEquipmentLibraryItems.isEmpty ? equipmentLibraryItems : loadedEquipmentLibraryItems
                 InventoryEntryEditorSheetView(
                     title: context.title,
                     draft: context.draft,
-                    serverURLString: "",
-                    equipmentLibraryItems: [],
+                    serverURLString: serverURLString,
+                    equipmentLibraryItems: libraryItems,
                     containerOptions: containerOptions.filter { $0.id != context.draft.id },
                     onCancel: {
                         if let pendingNewItemID, pendingNewItemID == context.originalID {
@@ -992,6 +1039,9 @@ struct PartyTreasureSheetView: View {
         .onChange(of: campaignCurrency) { _, newValue in
             syncMoneyDrafts(from: newValue)
         }
+        .task {
+            await loadEquipmentLibraryIfNeeded()
+        }
     }
 
     private func syncItemDrafts(from treasure: [InventoryEntryDTO]) {
@@ -1007,6 +1057,17 @@ struct PartyTreasureSheetView: View {
         )
         guard moneyDrafts != syncedDrafts else { return }
         moneyDrafts = syncedDrafts
+    }
+
+    private func loadEquipmentLibraryIfNeeded() async {
+        guard loadedEquipmentLibraryItems.isEmpty else { return }
+        do {
+            let client = try APIClient(baseURLString: serverURLString)
+            let response = try await client.fetchEquipmentLibrary(limit: 0)
+            loadedEquipmentLibraryItems = response.items
+        } catch {
+            return
+        }
     }
 
     private func removeItemDraft(id: UUID) {
@@ -1048,8 +1109,7 @@ struct PartyTreasureSheetView: View {
 
                 if !draft.isContainer {
                     Button {
-                        let item = draft.toDTOOrNil() ?? draft.fallbackTransferDTO()
-                        Task { await onClaim(item, claimTarget) }
+                        pendingClaimDraft = draft
                     } label: {
                         Label("Claim to \(claimTarget.name)", systemImage: "person.crop.circle.badge.plus")
                     }
@@ -1226,6 +1286,78 @@ private struct InventoryEntrySummaryRow: View {
                 .multilineTextAlignment(.leading)
         }
         .padding(.vertical, 4)
+    }
+}
+
+private struct InventoryTransferQuantitySheetView: View {
+    let title: String
+    let itemName: String
+    let availableQuantity: Int
+    let actionTitle: String
+    let onConfirm: (Int) -> Void
+    let onCancel: () -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var quantity: Double
+
+    init(
+        title: String,
+        itemName: String,
+        availableQuantity: Int,
+        actionTitle: String,
+        onConfirm: @escaping (Int) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.title = title
+        self.itemName = itemName.isEmpty ? "Item" : itemName
+        self.availableQuantity = max(1, availableQuantity)
+        self.actionTitle = actionTitle
+        self.onConfirm = onConfirm
+        self.onCancel = onCancel
+        _quantity = State(initialValue: 1)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text(itemName)
+                        .font(.headline)
+                    Text("Choose how many to move.")
+                        .foregroundStyle(.secondary)
+                }
+
+                Section("Quantity") {
+                    if availableQuantity == 1 {
+                        Text("1")
+                    } else {
+                        Slider(
+                            value: $quantity,
+                            in: 1...Double(availableQuantity),
+                            step: 1
+                        )
+                        Text("\(Int(quantity)) of \(availableQuantity)")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .navigationTitle(title)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        onCancel()
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(actionTitle) {
+                        onConfirm(max(1, Int(quantity.rounded())))
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 

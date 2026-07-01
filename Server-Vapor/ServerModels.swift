@@ -306,6 +306,13 @@ struct PartyTreasureUpdateInput: Content {
 struct PartyTreasureClaimInput: Content {
     let characterId: UUID
     let itemId: UUID
+    let quantity: Int?
+
+    init(characterId: UUID, itemId: UUID, quantity: Int? = nil) {
+        self.characterId = characterId
+        self.itemId = itemId
+        self.quantity = quantity
+    }
 }
 
 struct CharacterState {

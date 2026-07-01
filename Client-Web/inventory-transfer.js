@@ -49,10 +49,46 @@
       : [];
   }
 
+  function normalizedText(value) {
+    return typeof value === 'string' ? value.trim() || null : null;
+  }
+
+  function itemsStackTogether(lhs = {}, rhs = {}) {
+    const normalizedLhs = normalizeTransferEntry(lhs);
+    const normalizedRhs = normalizeTransferEntry(rhs);
+    if (normalizedLhs.isContainer || normalizedRhs.isContainer) return false;
+    if (normalizedLhs.containerId !== normalizedRhs.containerId) return false;
+    return normalizedText(normalizedLhs.name) === normalizedText(normalizedRhs.name)
+      && normalizedText(normalizedLhs.category) === normalizedText(normalizedRhs.category)
+      && normalizedText(normalizedLhs.url) === normalizedText(normalizedRhs.url)
+      && normalizedLhs.value === normalizedRhs.value
+      && normalizedLhs.weight === normalizedRhs.weight;
+  }
+
+  function stackTransferEntry(items = [], entry = {}) {
+    const normalizedItems = Array.isArray(items)
+      ? items.map((item) => normalizeTransferEntry(item))
+      : [];
+    const normalizedEntry = normalizeTransferEntry(entry);
+    const index = normalizedItems.findIndex((item) => itemsStackTogether(item, normalizedEntry));
+    if (index >= 0) {
+      const existing = normalizedItems[index];
+      normalizedItems[index] = {
+        ...existing,
+        quantity: existing.quantity + normalizedEntry.quantity,
+        isContainer: false
+      };
+    } else {
+      normalizedItems.push(normalizedEntry);
+    }
+    return normalizedItems;
+  }
+
   function transferEntry({
     sourceItems = [],
     destinationItems = [],
     entryId,
+    quantity = null,
     mapTransferredEntry = (entry) => entry,
     removeFromSource = true
   } = {}) {
@@ -80,11 +116,44 @@
     }
 
     const sourceEntry = normalizedSourceItems[sourceIndex];
-    const transferredEntry = normalizeTransferEntry(mapTransferredEntry({ ...sourceEntry }));
+    const availableQuantity = Math.max(1, sourceEntry.quantity);
+    const requestedQuantity = quantity == null ? availableQuantity : Math.max(1, Math.min(availableQuantity, Math.floor(quantity)));
+    const transferredEntry = normalizeTransferEntry(
+      mapTransferredEntry({
+        ...sourceEntry,
+        quantity: requestedQuantity
+      })
+    );
     const nextSourceItems = removeFromSource
-      ? normalizedSourceItems.filter((item) => item.id !== normalizedEntryId)
-      : normalizedSourceItems.map((item) => item.id === normalizedEntryId ? normalizeTransferEntry(mapTransferredEntry({ ...item })) : item);
-    const nextDestinationItems = upsertTransferEntry(normalizedDestinationItems, transferredEntry);
+      ? (requestedQuantity >= availableQuantity
+          ? normalizedSourceItems.filter((item) => item.id !== normalizedEntryId)
+          : normalizedSourceItems.map((item) => (
+              item.id === normalizedEntryId
+                ? {
+                    ...item,
+                    quantity: availableQuantity - requestedQuantity
+                  }
+                : item
+            )))
+      : normalizedSourceItems.map((item) => (
+          item.id === normalizedEntryId
+            ? (
+                requestedQuantity >= availableQuantity
+                  ? transferredEntry
+                  : {
+                      ...item,
+                      quantity: availableQuantity - requestedQuantity
+                    }
+              )
+            : item
+        ));
+    const nextDestinationItems = removeFromSource
+      ? stackTransferEntry(normalizedDestinationItems, transferredEntry)
+      : (
+          requestedQuantity >= availableQuantity
+            ? upsertTransferEntry(normalizedDestinationItems, transferredEntry)
+            : stackTransferEntry(nextSourceItems, transferredEntry)
+        );
 
     return {
       sourceItems: nextSourceItems,
@@ -97,6 +166,7 @@
     normalizeTransferEntry,
     upsertTransferEntry,
     removeTransferEntry,
+    stackTransferEntry,
     transferEntry
   };
 });

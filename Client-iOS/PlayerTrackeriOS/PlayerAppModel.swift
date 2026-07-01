@@ -522,7 +522,7 @@ final class PlayerAppModel {
         }
     }
 
-    func claimPartyTreasureItem(_ item: InventoryEntryDTO, to character: PlayerViewDTO) async {
+    func claimPartyTreasureItem(_ item: InventoryEntryDTO, quantity: Int, to character: PlayerViewDTO) async {
         guard campaign != nil else {
             statusMessage = "Connect to a server first."
             return
@@ -531,18 +531,23 @@ final class PlayerAppModel {
             statusMessage = "Select a party treasure item first."
             return
         }
+        let requestedQuantity = max(1, quantity)
+        guard requestedQuantity <= max(1, item.quantity) else {
+            statusMessage = "Select a quantity between 1 and \(max(1, item.quantity))."
+            return
+        }
         do {
             let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
-            _ = try await client.claimPartyTreasureItem(characterId: character.id, itemId: itemId)
+            _ = try await client.claimPartyTreasureItem(characterId: character.id, itemId: itemId, quantity: requestedQuantity)
             await refreshAll(showStatus: false)
             let itemName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
-            statusMessage = "Claimed \(itemName.isEmpty ? "item" : itemName)."
+            statusMessage = "Claimed \(requestedQuantity) \(itemName.isEmpty ? "item" : itemName)."
         } catch {
             statusMessage = error.localizedDescription
         }
     }
 
-    func sendInventoryItemToPartyTreasure(_ item: InventoryEntryDTO, from character: PlayerViewDTO) async {
+    func sendInventoryItemToPartyTreasure(_ item: InventoryEntryDTO, quantity: Int, from character: PlayerViewDTO) async {
         guard let campaign else {
             statusMessage = "Connect to a server first."
             return
@@ -551,21 +556,24 @@ final class PlayerAppModel {
             statusMessage = "Send to Party Treasure only works for items, not containers."
             return
         }
-        let transferItem = InventoryEntryDTO(
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            value: item.value,
-            weight: item.weight,
-            url: item.url,
-            category: item.category,
-            containerId: nil,
-            isContainer: false
-        )
+        let requestedQuantity = max(1, quantity)
+        guard requestedQuantity <= max(1, item.quantity) else {
+            statusMessage = "Select a quantity between 1 and \(max(1, item.quantity))."
+            return
+        }
         let originalInventory = character.inventory ?? []
-        let updatedInventory = originalInventory.filter { $0.id != item.id }
         let originalPartyTreasure = campaign.partyTreasure ?? []
-        let updatedPartyTreasure = originalPartyTreasure + [transferItem]
+        guard let transfer = InventoryTransferOperations.transferEntry(
+            sourceItems: originalInventory,
+            destinationItems: originalPartyTreasure,
+            entryID: item.id ?? UUID(),
+            quantity: requestedQuantity
+        ) else {
+            statusMessage = "Unable to move that item."
+            return
+        }
+        let updatedInventory = transfer.sourceItems
+        let updatedPartyTreasure = transfer.destinationItems
 
         do {
             let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
@@ -590,7 +598,8 @@ final class PlayerAppModel {
             _ = try await client.upsertCharacter(characterPayload, campaignID: campaign.id)
             _ = try await client.updatePartyTreasure(items: updatedPartyTreasure, currency: campaign.currency)
             await refreshAll(showStatus: false)
-            statusMessage = "Sent \(item.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Item" : item.name) to party treasure."
+            let itemName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            statusMessage = "Sent \(requestedQuantity) \(itemName.isEmpty ? "item" : itemName) to party treasure."
         } catch {
             do {
                 let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)

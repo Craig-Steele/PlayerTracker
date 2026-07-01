@@ -150,12 +150,20 @@
    */
   function getInventoryRowData(row) {
     if (!row) return null;
+    let rawEntry = {};
+    try {
+      rawEntry = row.dataset.inventoryEntry ? JSON.parse(row.dataset.inventoryEntry) : {};
+    } catch {
+      rawEntry = {};
+    }
+    const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
     return {
       id: typeof row.dataset.inventoryEntryId === 'string' ? row.dataset.inventoryEntryId : '',
       containerId: typeof row.dataset.inventoryContainerId === 'string' && row.dataset.inventoryContainerId.trim()
         ? row.dataset.inventoryContainerId.trim()
         : null,
-      isContainer: row.dataset.inventoryIsContainer === 'true'
+      isContainer: row.dataset.inventoryIsContainer === 'true',
+      quantity: quantityInput ? Number(quantityInput.value) : Number(rawEntry.quantity) || 1
     };
   }
 

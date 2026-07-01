@@ -166,8 +166,8 @@ struct ContentView: View {
                 categoryIcons: model.ruleSet?.equipmentLibrary?.categoryIcons ?? [:],
                 currencySystem: model.ruleSet?.currency,
                 commonWeightUnits: model.ruleSet?.equipmentLibrary?.commonWeightUnits,
-                onSendToPartyTreasure: { item in
-                    await model.sendInventoryItemToPartyTreasure(item, from: character)
+                onSendToPartyTreasure: { item, quantity in
+                    await model.sendInventoryItemToPartyTreasure(item, quantity: quantity, from: character)
                     await MainActor.run {
                         inventoryCharacter = model.myCharacters.first(where: { $0.id == character.id })
                     }
@@ -190,14 +190,16 @@ struct ContentView: View {
         .sheet(item: $partyTreasureCharacter) { character in
             PartyTreasureSheetView(
                 campaignName: character.name,
+                serverURLString: model.normalizedServerURL,
                 currencySystem: model.ruleSet?.currency,
                 commonWeightUnits: model.ruleSet?.equipmentLibrary?.commonWeightUnits,
                 categoryIcons: model.ruleSet?.equipmentLibrary?.categoryIcons ?? [:],
+                equipmentLibraryItems: model.equipmentLibraryItems,
                 claimTarget: character,
                 partyTreasure: model.campaign?.partyTreasure ?? [],
                 campaignCurrency: model.campaign?.currency ?? [],
-                onClaim: { item, target in
-                    await model.claimPartyTreasureItem(item, to: target)
+                onClaim: { item, quantity, target in
+                    await model.claimPartyTreasureItem(item, quantity: quantity, to: target)
                 },
                 onSave: { items, currency in
                     await model.savePartyTreasure(items: items, currency: currency)

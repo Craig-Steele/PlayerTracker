@@ -550,6 +550,87 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testPartyTreasureClaimStacksIntoMatchingInventoryItems() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
+        let playerSession = try await join(displayName: "Player", in: tester)
+
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Player",
+                name: "Collector",
+                currency: [CurrencyAmount(unitId: "gp", amount: 0)],
+                inventory: [
+                    InventoryEntry(
+                        id: UUID(),
+                        name: "Expensive Crown",
+                        quantity: 2,
+                        value: 25,
+                        weight: 1,
+                        url: nil,
+                        category: "Treasure"
+                    )
+                ]
+            )
+        )
+
+        let treasureItemID = UUID()
+        let treasurePayload = PartyTreasureUpdateInput(
+            items: [
+                InventoryEntry(
+                    id: treasureItemID,
+                    name: "Expensive Crown",
+                    quantity: 3,
+                    value: 25,
+                    weight: 1,
+                    url: nil,
+                    category: "Treasure"
+                )
+            ]
+        )
+        let treasureUpdateResponse = try await tester.sendRequest(
+            .PUT,
+            "/campaign/party-treasure",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(treasurePayload))
+        )
+        XCTAssertEqual(treasureUpdateResponse.status, .ok)
+
+        let claimResponse = try await tester.sendRequest(
+            .POST,
+            "/campaign/party-treasure/claim",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(playerSession.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                PartyTreasureClaimInput(characterId: character.id, itemId: treasureItemID, quantity: 2)
+            ))
+        )
+        XCTAssertEqual(claimResponse.status, .ok)
+        let claimedCampaign = try claimResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(claimedCampaign.partyTreasure.first?.quantity, 1)
+
+        let charactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(claimedCampaign.id.uuidString)/me/characters",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+        XCTAssertEqual(charactersResponse.status, .ok)
+        let characters = try charactersResponse.content.decode([PlayerView].self)
+        let updatedCharacter = try XCTUnwrap(characters.first(where: { $0.id == character.id }))
+        XCTAssertEqual(updatedCharacter.inventory.count, 1)
+        XCTAssertEqual(updatedCharacter.inventory.first?.name, "Expensive Crown")
+        XCTAssertEqual(updatedCharacter.inventory.first?.quantity, 4)
+        XCTAssertEqual(updatedCharacter.inventory.first?.category, "Treasure")
+    }
+
+    @Test
     func testPartyTreasureUpdateNormalizesInvalidItemIds() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let _ = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")

@@ -327,6 +327,68 @@ private func normalizeTreasureEntry(_ entry: InventoryEntry) -> InventoryEntry? 
     )
 }
 
+private func treasureEntriesStackTogether(_ lhs: InventoryEntry, _ rhs: InventoryEntry) -> Bool {
+    guard !lhs.isContainer, !rhs.isContainer else { return false }
+    guard lhs.containerId == rhs.containerId else { return false }
+    return normalizedTreasureText(lhs.name) == normalizedTreasureText(rhs.name)
+        && normalizedTreasureText(lhs.category) == normalizedTreasureText(rhs.category)
+        && normalizedTreasureText(lhs.url) == normalizedTreasureText(rhs.url)
+        && lhs.value == rhs.value
+        && lhs.weight == rhs.weight
+}
+
+private func normalizedTreasureText(_ value: String?) -> String? {
+    guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+        return nil
+    }
+    return trimmed
+}
+
+private func stackTreasureEntry(
+    into inventory: [InventoryEntry],
+    entry: InventoryEntry
+) -> [InventoryEntry] {
+    let normalizedEntry = InventoryEntry(
+        id: entry.id,
+        name: entry.name.trimmingCharacters(in: .whitespacesAndNewlines),
+        quantity: max(1, entry.quantity),
+        value: entry.value,
+        weight: entry.weight,
+        url: normalizedTreasureText(entry.url),
+        category: normalizedTreasureText(entry.category),
+        containerId: entry.containerId,
+        isContainer: false
+    )
+    var nextInventory = inventory
+    if let index = nextInventory.firstIndex(where: { treasureEntriesStackTogether($0, normalizedEntry) }) {
+        let existing = nextInventory[index]
+        nextInventory[index] = InventoryEntry(
+            id: existing.id ?? normalizedEntry.id,
+            name: existing.name,
+            quantity: existing.quantity + normalizedEntry.quantity,
+            value: existing.value,
+            weight: existing.weight,
+            url: existing.url,
+            category: existing.category,
+            containerId: existing.containerId,
+            isContainer: false
+        )
+    } else {
+        nextInventory.append(InventoryEntry(
+            id: normalizedEntry.id ?? UUID(),
+            name: normalizedEntry.name,
+            quantity: normalizedEntry.quantity,
+            value: normalizedEntry.value,
+            weight: normalizedEntry.weight,
+            url: normalizedEntry.url,
+            category: normalizedEntry.category,
+            containerId: nil,
+            isContainer: false
+        ))
+    }
+    return nextInventory
+}
+
 private func requireRefereeSession(
     _ req: Request,
     campaignStore: CampaignStore
@@ -1416,13 +1478,17 @@ func routes(
             throw Abort(.notFound, reason: "Party treasure item not found.")
         }
         let claimedItem = treasure[itemIndex]
-        let claimedQuantity = max(1, claimedItem.quantity)
+        let requestedQuantity = max(1, input.quantity ?? 1)
+        guard requestedQuantity <= claimedItem.quantity else {
+            throw Abort(.badRequest, reason: "Requested quantity exceeds available party treasure.")
+        }
+        let remainingQuantity = claimedItem.quantity - requestedQuantity
         var updatedTreasure = treasure
-        if claimedQuantity > 1 {
+        if remainingQuantity > 0 {
             updatedTreasure[itemIndex] = InventoryEntry(
                 id: claimedItem.id,
                 name: claimedItem.name,
-                quantity: claimedQuantity - 1,
+                quantity: remainingQuantity,
                 value: claimedItem.value,
                 weight: claimedItem.weight,
                 url: claimedItem.url,
@@ -1437,7 +1503,7 @@ func routes(
         let claimedInventoryItem = InventoryEntry(
             id: UUID(),
             name: claimedItem.name,
-            quantity: 1,
+            quantity: requestedQuantity,
             value: claimedItem.value,
             weight: claimedItem.weight,
             url: claimedItem.url,
@@ -1446,7 +1512,7 @@ func routes(
             isContainer: false
         )
 
-        claimant.inventory.append(claimedInventoryItem)
+        claimant.inventory = stackTreasureEntry(into: claimant.inventory, entry: claimedInventoryItem)
 
         _ = try await userStore.replaceCharacterState(claimant)
         let updatedCampaign = try await campaignStore.updatePartyTreasure(updatedTreasure)

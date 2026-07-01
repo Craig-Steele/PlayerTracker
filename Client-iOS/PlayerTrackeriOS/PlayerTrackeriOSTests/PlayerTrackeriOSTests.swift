@@ -569,6 +569,50 @@ final class PlayerTrackeriOSTests: XCTestCase {
         XCTAssertFalse(dto.isContainer)
     }
 
+    func testInventoryTransferOperationsStacksMatchingDestinationItemsAndSplitsQuantity() {
+        let ropeID = UUID(uuidString: "11111111-1111-1111-1111-111111111111")!
+        let source = [
+            InventoryEntryDTO(
+                id: ropeID,
+                name: "Rope",
+                quantity: 5,
+                value: 1,
+                weight: 10,
+                url: nil,
+                category: "Adventuring Gear",
+                containerId: nil,
+                isContainer: false
+            )
+        ]
+        let destination = [
+            InventoryEntryDTO(
+                id: UUID(uuidString: "22222222-2222-2222-2222-222222222222"),
+                name: "Rope",
+                quantity: 2,
+                value: 1,
+                weight: 10,
+                url: nil,
+                category: "Adventuring Gear",
+                containerId: nil,
+                isContainer: false
+            )
+        ]
+
+        let result = InventoryTransferOperations.transferEntry(
+            sourceItems: source,
+            destinationItems: destination,
+            entryID: ropeID,
+            quantity: 3
+        )
+
+        XCTAssertEqual(result?.sourceItems.first?.quantity, 2)
+        XCTAssertEqual(result?.destinationItems.count, 1)
+        XCTAssertEqual(result?.destinationItems.first?.quantity, 5)
+        XCTAssertEqual(result?.destinationItems.first?.id, destination.first?.id)
+        XCTAssertEqual(result?.transferredEntry.quantity, 3)
+        XCTAssertNotEqual(result?.transferredEntry.id, ropeID)
+    }
+
     func testInventoryEntryDraftsAreRebuiltFromUpdatedInventory() {
         let originalInventory = [
             InventoryEntryDTO(

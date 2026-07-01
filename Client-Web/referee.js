@@ -6,7 +6,8 @@ const {
   formatInitiative,
   updateCampaignHeader,
   appendOverflowMenuSeparator,
-  showConfirmDialog
+  showConfirmDialog,
+  showQuantityDialog
 } = window.PlayerTrackerShared || {
   APP_NAME: 'Tactical Table Top: Initiative',
   APP_ICON_URL: '/favicon-512.png',
@@ -15,7 +16,8 @@ const {
   formatInitiative: () => '🎲',
   updateCampaignHeader: () => {},
   appendOverflowMenuSeparator: (menuEl) => menuEl,
-  showConfirmDialog: async () => true
+  showConfirmDialog: async () => true,
+  showQuantityDialog: async () => null
 };
 const {
   DEFAULT_CLAIM_TIMEOUT_MINUTES,
@@ -478,12 +480,20 @@ window.addEventListener('DOMContentLoaded', () => {
     },
     getInventoryRowData: (row) => {
       if (!row) return null;
+      let rawEntry = {};
+      try {
+        rawEntry = row.dataset.inventoryEntry ? JSON.parse(row.dataset.inventoryEntry) : {};
+      } catch {
+        rawEntry = {};
+      }
+      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
       return {
         id: typeof row.dataset.inventoryEntryId === 'string' ? row.dataset.inventoryEntryId : '',
         containerId: typeof row.dataset.inventoryContainerId === 'string' && row.dataset.inventoryContainerId.trim()
           ? row.dataset.inventoryContainerId.trim()
           : null,
-        isContainer: row.dataset.inventoryIsContainer === 'true'
+        isContainer: row.dataset.inventoryIsContainer === 'true',
+        quantity: quantityInput ? Number(quantityInput.value) : Number(rawEntry.quantity) || 1
       };
     },
     focusInventoryRow: (row) => {
@@ -4435,12 +4445,35 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       return;
     }
+    const availableQuantity = Math.max(
+      1,
+      Number.parseInt(String(rowData.quantity || entry.quantity || 1), 10) || 1
+    );
+    let quantity = availableQuantity;
+    if (availableQuantity > 1) {
+      const selectedQuantity = await showQuantityDialog({
+        title: 'Send Item',
+        header: entry.name || 'This item',
+        message: 'Choose how many to move to party treasure.',
+        min: 1,
+        max: availableQuantity,
+        value: 1,
+        confirmLabel: 'Send Item',
+        cancelLabel: 'Cancel',
+        initialFocus: 'confirm'
+      });
+      if (selectedQuantity == null) {
+        return;
+      }
+      quantity = selectedQuantity;
+    }
     const originalInventory = currentInventory.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item));
     const originalPartyTreasure = currentPartyTreasure.map((item) => partyTreasureHelpers.normalizeInventoryEntry(item));
     const transfer = inventoryTransferHelpers.transferEntry({
       sourceItems: currentInventory,
       destinationItems: currentPartyTreasure,
       entryId: rowData.id,
+      quantity,
       mapTransferredEntry: (item) => ({
         ...item,
         containerId: null,
@@ -4474,7 +4507,9 @@ window.addEventListener('DOMContentLoaded', () => {
       buildPartyTreasureFields(currentPartyTreasure);
       buildInventoryFields(savedPlayer);
       if (statusDiv) {
-        statusDiv.textContent = `Sent ${entry.name || 'Item'} to party treasure.`;
+        statusDiv.textContent = quantity > 1
+          ? `Sent ${quantity} of ${entry.name || 'item'} to party treasure.`
+          : `Sent ${entry.name || 'Item'} to party treasure.`;
       }
     } catch (err) {
       currentPartyTreasure = originalPartyTreasure;

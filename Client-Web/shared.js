@@ -8,6 +8,9 @@
   let choiceDialogState = null;
   let choiceDialogResolve = null;
   let choiceDialogLastFocus = null;
+  let quantityDialogState = null;
+  let quantityDialogResolve = null;
+  let quantityDialogLastFocus = null;
 
   function toArray(targets) {
     if (!targets) return [];
@@ -139,6 +142,25 @@
       }
     }
     choiceDialogLastFocus = null;
+  }
+
+  function closeQuantityDialog(result) {
+    if (!quantityDialogState) return;
+    const resolve = quantityDialogResolve;
+    quantityDialogResolve = null;
+    quantityDialogState.modal.classList.add('hidden');
+    quantityDialogState.modal.setAttribute('aria-hidden', 'true');
+    if (resolve) {
+      resolve(result);
+    }
+    if (quantityDialogLastFocus && typeof quantityDialogLastFocus.focus === 'function') {
+      try {
+        quantityDialogLastFocus.focus();
+      } catch (err) {
+        // Ignore focus restoration failures.
+      }
+    }
+    quantityDialogLastFocus = null;
   }
 
   function ensureConfirmDialog() {
@@ -276,6 +298,90 @@
     return state;
   }
 
+  function ensureQuantityDialog() {
+    if (quantityDialogState) return quantityDialogState;
+    if (!document.body) return null;
+    const modal = document.createElement('div');
+    modal.id = 'shared-quantity-modal';
+    modal.className = 'conditions-modal hidden';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+      <div class="conditions-dialog confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="shared-quantity-title" aria-describedby="shared-quantity-message">
+        <div class="conditions-dialog-header confirm-dialog-header">
+          <div class="confirm-dialog-copy">
+            <h2 id="shared-quantity-title"></h2>
+            <div id="shared-quantity-header" class="subtitle confirm-dialog-header-text hidden"></div>
+          </div>
+          <div class="conditions-dialog-actions quantity-dialog-actions">
+            <button type="button" id="shared-quantity-cancel" class="secondary">Cancel</button>
+            <button type="button" id="shared-quantity-confirm">OK</button>
+          </div>
+        </div>
+        <div class="quantity-dialog-body">
+          <div id="shared-quantity-message" class="confirm-dialog-message hidden"></div>
+          <label class="quantity-dialog-slider-row">
+            <span id="shared-quantity-value-label">1</span>
+            <input id="shared-quantity-slider" type="range" min="1" max="1" value="1" step="1">
+          </label>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    const dialog = modal.querySelector('.conditions-dialog');
+    const title = modal.querySelector('#shared-quantity-title');
+    const header = modal.querySelector('#shared-quantity-header');
+    const message = modal.querySelector('#shared-quantity-message');
+    const cancelButton = modal.querySelector('#shared-quantity-cancel');
+    const confirmButton = modal.querySelector('#shared-quantity-confirm');
+    const slider = modal.querySelector('#shared-quantity-slider');
+    const valueLabel = modal.querySelector('#shared-quantity-value-label');
+
+    const state = {
+      modal,
+      dialog,
+      title,
+      header,
+      message,
+      cancelButton,
+      confirmButton,
+      slider,
+      valueLabel
+    };
+
+    const syncValueLabel = () => {
+      if (state.valueLabel && state.slider) {
+        state.valueLabel.textContent = state.slider.value;
+      }
+    };
+
+    modal.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (event.target === modal) {
+        closeQuantityDialog(null);
+      }
+    });
+    dialog.addEventListener('click', (event) => {
+      event.stopPropagation();
+    });
+    dialog.addEventListener('keydown', (event) => {
+      event.stopPropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeQuantityDialog(null);
+      }
+    });
+    cancelButton.addEventListener('click', () => {
+      closeQuantityDialog(null);
+    });
+    confirmButton.addEventListener('click', () => {
+      closeQuantityDialog(Number.parseInt(state.slider?.value || '1', 10) || 1);
+    });
+    slider.addEventListener('input', syncValueLabel);
+
+    quantityDialogState = state;
+    return state;
+  }
+
   function showConfirmDialog(options = {}) {
     const state = ensureConfirmDialog();
     const {
@@ -378,6 +484,64 @@
     });
   }
 
+  function showQuantityDialog(options = {}) {
+    const state = ensureQuantityDialog();
+    const {
+      title = 'Choose Quantity',
+      header = '',
+      message = '',
+      min = 1,
+      max = 1,
+      value = 1,
+      confirmLabel = 'OK',
+      cancelLabel = 'Cancel',
+      confirmButtonClass = '',
+      initialFocus = 'cancel'
+    } = options;
+
+    if (!state) {
+      return Promise.resolve(null);
+    }
+
+    if (quantityDialogResolve) {
+      closeQuantityDialog(null);
+    }
+
+    const normalizedMin = Number.isFinite(min) ? Math.max(1, Math.floor(min)) : 1;
+    const normalizedMax = Number.isFinite(max) ? Math.max(normalizedMin, Math.floor(max)) : normalizedMin;
+    const normalizedValue = Math.min(
+      normalizedMax,
+      Math.max(normalizedMin, Number.isFinite(value) ? Math.floor(value) : normalizedMin)
+    );
+
+    state.title.textContent = title;
+    state.header.textContent = header;
+    state.header.classList.toggle('hidden', !header);
+    state.message.textContent = message;
+    state.message.classList.toggle('hidden', !message);
+    state.slider.min = String(normalizedMin);
+    state.slider.max = String(normalizedMax);
+    state.slider.value = String(normalizedValue);
+    state.slider.disabled = normalizedMin === normalizedMax;
+    state.valueLabel.textContent = String(normalizedValue);
+    state.confirmButton.textContent = confirmLabel;
+    state.cancelButton.textContent = cancelLabel;
+    state.confirmButton.classList.toggle('danger', confirmButtonClass === 'danger');
+    state.modal.classList.remove('hidden');
+    state.modal.setAttribute('aria-hidden', 'false');
+
+    return new Promise((resolve) => {
+      quantityDialogResolve = resolve;
+      quantityDialogLastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      window.requestAnimationFrame(() => {
+        const focusTarget = initialFocus === 'confirm' ? state.confirmButton : state.cancelButton;
+        if (focusTarget) {
+          focusTarget.focus();
+        }
+      });
+    });
+  }
+
   window.PlayerTrackerShared = {
     APP_NAME,
     APP_ICON_URL,
@@ -389,6 +553,7 @@
     updateCampaignHeader,
     appendOverflowMenuSeparator,
     showConfirmDialog,
-    showChoiceDialog
+    showChoiceDialog,
+    showQuantityDialog
   };
 })();

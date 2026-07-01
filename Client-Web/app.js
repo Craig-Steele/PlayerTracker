@@ -16,7 +16,8 @@ let displayRosterLayoutMode = 'single';
     updateCampaignHeader,
     appendOverflowMenuSeparator,
     showConfirmDialog,
-    showChoiceDialog
+    showChoiceDialog,
+    showQuantityDialog
   } = window.PlayerTrackerShared || {
   APP_NAME: 'Tactical Table Top: Initiative',
   APP_ICON_URL: '/favicon-512.png',
@@ -27,7 +28,8 @@ let displayRosterLayoutMode = 'single';
     updateCampaignHeader: () => {},
     appendOverflowMenuSeparator: (menuEl) => menuEl,
     showConfirmDialog: async () => true,
-    showChoiceDialog: async () => null
+    showChoiceDialog: async () => null,
+    showQuantityDialog: async () => null
   };
 const {
   normalizeConditionEntry,
@@ -698,12 +700,20 @@ window.addEventListener('DOMContentLoaded', () => {
     },
     getInventoryRowData: (row) => {
       if (!row) return null;
+      let rawEntry = {};
+      try {
+        rawEntry = row.dataset.inventoryEntry ? JSON.parse(row.dataset.inventoryEntry) : {};
+      } catch {
+        rawEntry = {};
+      }
+      const quantityInput = row.querySelector('input[data-inventory-field="quantity"]');
       return {
         id: typeof row.dataset.inventoryEntryId === 'string' ? row.dataset.inventoryEntryId : '',
         containerId: typeof row.dataset.inventoryContainerId === 'string' && row.dataset.inventoryContainerId.trim()
           ? row.dataset.inventoryContainerId.trim()
           : null,
-        isContainer: row.dataset.inventoryIsContainer === 'true'
+        isContainer: row.dataset.inventoryIsContainer === 'true',
+        quantity: quantityInput ? Number(quantityInput.value) : Number(rawEntry.quantity) || 1
       };
     },
     focusInventoryRow: (row) => {
@@ -2380,27 +2390,49 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const rowData = partyTreasureHelpers.getInventoryRowData(partyTreasureSelectedRow) || {};
     const itemId = rowData.id || '';
     const itemName = (partyTreasureSelectedRow.querySelector('input[data-inventory-field="name"]')?.value || '').trim();
+    const availableQuantity = Math.max(
+      1,
+      Number.parseInt(String(rowData.quantity || 1), 10) || 1
+    );
     if (!itemId) {
       statusDiv.textContent = 'Select a treasure row with an item id first.';
       return;
     }
     try {
-      const confirmed = await showConfirmDialog({
-        title: 'Claim Item?',
-        header: itemName || 'This item',
-        message: 'Claim this item and add it to your inventory?',
-        confirmLabel: 'Claim Item',
-        cancelLabel: 'Keep Item',
-        confirmButtonClass: 'danger',
-        initialFocus: 'cancel'
-      });
-      if (!confirmed) return;
+      let quantity = availableQuantity;
+      if (availableQuantity > 1) {
+        const selectedQuantity = await showQuantityDialog({
+          title: 'Claim Item',
+          header: itemName || 'This item',
+          message: 'Choose how many to claim.',
+          min: 1,
+          max: availableQuantity,
+          value: 1,
+          confirmLabel: 'Claim Item',
+          cancelLabel: 'Cancel',
+          initialFocus: 'confirm'
+        });
+        if (selectedQuantity == null) return;
+        quantity = selectedQuantity;
+      } else {
+        const confirmed = await showConfirmDialog({
+          title: 'Claim Item?',
+          header: itemName || 'This item',
+          message: 'Claim this item and add it to your inventory?',
+          confirmLabel: 'Claim Item',
+          cancelLabel: 'Cancel',
+          confirmButtonClass: 'danger',
+          initialFocus: 'cancel'
+        });
+        if (!confirmed) return;
+      }
       const res = await fetch('/campaign/party-treasure/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           characterId: partyTreasureEditorCharacterId,
-          itemId
+          itemId,
+          quantity
         })
       });
       if (!res.ok) {
@@ -2413,7 +2445,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       buildPartyTreasureFields(currentPartyTreasure);
       closePartyTreasureEditor();
       await loadState();
-      statusDiv.textContent = `Claimed ${itemName || 'item'}.`;
+      statusDiv.textContent = quantity > 1
+        ? `Claimed ${quantity} of ${itemName || 'item'}.`
+        : `Claimed ${itemName || 'item'}.`;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       statusDiv.textContent = `Claim failed: ${message}`;
@@ -3316,12 +3350,35 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       }
       return;
     }
+    const availableQuantity = Math.max(
+      1,
+      Number.parseInt(String(rowData.quantity || entry.quantity || 1), 10) || 1
+    );
+    let quantity = availableQuantity;
+    if (availableQuantity > 1) {
+      const selectedQuantity = await showQuantityDialog({
+        title: 'Send Item',
+        header: entry.name || 'This item',
+        message: 'Choose how many to move to party treasure.',
+        min: 1,
+        max: availableQuantity,
+        value: 1,
+        confirmLabel: 'Send Item',
+        cancelLabel: 'Keep Item',
+        initialFocus: 'confirm'
+      });
+      if (selectedQuantity == null) {
+        return;
+      }
+      quantity = selectedQuantity;
+    }
     const originalInventory = currentInventory.map((item) => inventoryTransferHelpers.normalizeTransferEntry(item));
     const originalPartyTreasure = currentPartyTreasure.map((item) => partyTreasureHelpers.normalizeInventoryEntry(item));
     const transfer = inventoryTransferHelpers.transferEntry({
       sourceItems: currentInventory,
       destinationItems: currentPartyTreasure,
       entryId: rowData.id,
+      quantity,
       mapTransferredEntry: (item) => ({
         ...item,
         containerId: null,
@@ -3352,7 +3409,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       buildPartyTreasureFields(currentPartyTreasure);
       setSelectedInventoryRow(findInventoryRowById(rowData.id || '') || getInventoryPanelRows()[0] || null);
       if (statusDiv) {
-        statusDiv.textContent = `Sent ${entry.name || 'Item'} to party treasure.`;
+        statusDiv.textContent = quantity > 1
+          ? `Sent ${quantity} of ${entry.name || 'item'} to party treasure.`
+          : `Sent ${entry.name || 'Item'} to party treasure.`;
       }
     } catch (err) {
       currentPartyTreasure = originalPartyTreasure;
@@ -3379,12 +3438,39 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       ? currentInventory.find((item) => item && item.isContainer && item.id === normalizedTargetContainerId)
       : null;
     if (normalizedTargetContainerId && !targetContainer) return;
+    const availableQuantity = Math.max(
+      1,
+      Number.parseInt(String(entry.quantity || 1), 10) || 1
+    );
+    let quantity = availableQuantity;
+    if (availableQuantity > 1) {
+      const selectedQuantity = await showQuantityDialog({
+        title: normalizedTargetContainerId ? 'Move Item' : 'Equip Item',
+        header: entry.name || 'This item',
+        message: normalizedTargetContainerId
+          ? `Choose how many to move to ${targetContainer?.name || 'this container'}.`
+          : 'Choose how many to equip.',
+        min: 1,
+        max: availableQuantity,
+        value: 1,
+        confirmLabel: normalizedTargetContainerId ? 'Move Item' : 'Equip Item',
+        cancelLabel: 'Cancel',
+        initialFocus: 'confirm'
+      });
+      if (selectedQuantity == null) {
+        return;
+      }
+      quantity = selectedQuantity;
+    }
+    const movedEntryId = quantity < availableQuantity ? createInventoryEntryId() : normalizedEntryId;
     const transfer = inventoryTransferHelpers.transferEntry({
       sourceItems: currentInventory,
       destinationItems: currentInventory,
       entryId: normalizedEntryId,
+      quantity,
       mapTransferredEntry: (item) => ({
         ...item,
+        id: movedEntryId,
         containerId: normalizedTargetContainerId,
         isContainer: item.isContainer
       }),
@@ -3398,8 +3484,12 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       setSelectedInventoryRow(findInventoryRowById(normalizedEntryId) || getInventoryPanelRows()[0] || null);
       if (statusDiv) {
         statusDiv.textContent = normalizedTargetContainerId
-          ? `Moved ${entry.name || 'Item'} to ${targetContainer?.name || 'Container'}.`
-          : `Equipped ${entry.name || 'Item'}.`;
+          ? quantity > 1
+            ? `Moved ${quantity} of ${entry.name || 'item'} to ${targetContainer?.name || 'Container'}.`
+            : `Moved ${entry.name || 'Item'} to ${targetContainer?.name || 'Container'}.`
+          : quantity > 1
+            ? `Equipped ${quantity} of ${entry.name || 'item'}.`
+            : `Equipped ${entry.name || 'Item'}.`;
       }
     } catch (err) {
       if (statusDiv) {

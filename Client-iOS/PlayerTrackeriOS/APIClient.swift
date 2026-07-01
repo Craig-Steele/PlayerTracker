@@ -133,11 +133,11 @@ struct APIClient {
         )
     }
 
-    func claimPartyTreasureItem(characterId: UUID, itemId: UUID) async throws -> CampaignStateDTO {
+    func claimPartyTreasureItem(characterId: UUID, itemId: UUID, quantity: Int? = nil) async throws -> CampaignStateDTO {
         try await send(
             "campaign/party-treasure/claim",
             method: "POST",
-            body: PartyTreasureClaimInputDTO(characterId: characterId, itemId: itemId)
+            body: PartyTreasureClaimInputDTO(characterId: characterId, itemId: itemId, quantity: quantity)
         )
     }
 
