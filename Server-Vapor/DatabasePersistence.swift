@@ -15,6 +15,9 @@ struct CampaignPersistenceState {
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
+    let createdAt: Date?
+    let updatedAt: Date?
+    let lastSelectedAt: Date?
 }
 
 struct UserPersistenceState {
@@ -205,6 +208,9 @@ final class CampaignRow: Model, @unchecked Sendable {
     @OptionalField(key: "currency_json")
     var currencyJSON: String?
 
+    @OptionalField(key: "last_selected_at")
+    var lastSelectedAt: Date?
+
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -222,7 +228,8 @@ final class CampaignRow: Model, @unchecked Sendable {
         isInviteOnly: Bool = false,
         userdataFilesJSON: String? = nil,
         partyTreasureJSON: String? = nil,
-        currencyJSON: String? = nil
+        currencyJSON: String? = nil,
+        lastSelectedAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -233,6 +240,7 @@ final class CampaignRow: Model, @unchecked Sendable {
         self.userdataFilesJSON = userdataFilesJSON
         self.partyTreasureJSON = partyTreasureJSON
         self.currencyJSON = currencyJSON
+        self.lastSelectedAt = lastSelectedAt
     }
 }
 
@@ -1332,7 +1340,10 @@ enum DatabasePersistence {
             currency: currency,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
-            currentTurnID: currentTurnID
+            currentTurnID: currentTurnID,
+            createdAt: campaign.createdAt,
+            updatedAt: campaign.updatedAt,
+            lastSelectedAt: campaign.lastSelectedAt
         )
     }
 
@@ -1371,7 +1382,10 @@ enum DatabasePersistence {
             currency: currency,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
-            currentTurnID: currentTurnID
+            currentTurnID: currentTurnID,
+            createdAt: campaign.createdAt,
+            updatedAt: campaign.updatedAt,
+            lastSelectedAt: campaign.lastSelectedAt
         )
     }
 
@@ -1403,11 +1417,21 @@ enum DatabasePersistence {
                 currency: currency,
                 roundIndex: roundIndex,
                 turnIndex: turnIndex,
-                currentTurnID: currentTurnID
+                currentTurnID: currentTurnID,
+                createdAt: campaign.createdAt,
+                updatedAt: campaign.updatedAt,
+                lastSelectedAt: campaign.lastSelectedAt
             )
         }
         .sorted { lhs, rhs in
             lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
+    }
+
+    static func loadMostRecentlySelectedCampaign(on database: any Database) async throws -> CampaignPersistenceState? {
+        let campaigns = try await loadCampaigns(on: database)
+        return campaigns.max { lhs, rhs in
+            campaignSelectionDate(lhs) < campaignSelectionDate(rhs)
         }
     }
 
@@ -1526,6 +1550,19 @@ enum DatabasePersistence {
         return campaignID
     }
 
+    static func markCampaignSelected(
+        campaignID: UUID,
+        on database: any Database
+    ) async throws {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        campaign.lastSelectedAt = Date()
+        try await campaign.save(on: database)
+    }
+
     static func renameCampaign(
         existingName: String,
         newName: String,
@@ -1559,6 +1596,10 @@ enum DatabasePersistence {
             isInviteOnly: isInviteOnly ?? false,
             on: database
         )
+    }
+
+    private static func campaignSelectionDate(_ campaign: CampaignPersistenceState) -> Date {
+        campaign.lastSelectedAt ?? campaign.updatedAt ?? campaign.createdAt ?? .distantPast
     }
 
     static func upsertCampaign(

@@ -40,17 +40,8 @@ actor CampaignStore {
     func configure(database: any Database) async throws {
         self.database = database
         if restorePersistedState,
-           let loaded = try await DatabasePersistence.loadCampaign(named: currentName, on: database) {
-            currentName = loaded.name
-            currentRulesetId = loaded.rulesetId
-            currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
-            currentEncounterState = loaded.encounterState
-            currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
-            currentIsInviteOnly = loaded.isInviteOnly
-            currentUserdataFiles = loaded.userdataFiles
-            currentPartyTreasure = loaded.partyTreasure
-            currentCurrency = loaded.currency
-            currentCampaignID = nil
+           let loaded = try await DatabasePersistence.loadMostRecentlySelectedCampaign(on: database) {
+            try await restoreCampaignState(loaded)
         }
     }
 
@@ -212,6 +203,7 @@ actor CampaignStore {
         currentUserdataFiles = loaded.userdataFiles
         currentPartyTreasure = loaded.partyTreasure
         currentCurrency = loaded.currency
+        try await DatabasePersistence.markCampaignSelected(campaignID: campaignID, on: database)
         return state()!
     }
 
@@ -245,6 +237,7 @@ actor CampaignStore {
             currentUserdataFiles = updated.userdataFiles
             currentPartyTreasure = updated.partyTreasure
             currentCurrency = updated.currency
+            try await DatabasePersistence.markCampaignSelected(campaignID: updatedID, on: database)
             return state()!
         }
 
@@ -284,10 +277,24 @@ actor CampaignStore {
                     currency: currentCurrency,
                     on: database
                 )
+                try await DatabasePersistence.markCampaignSelected(campaignID: currentCampaignID, on: database)
             }
         } catch {
             print("Failed to persist campaign metadata:", error)
         }
+    }
+
+    private func restoreCampaignState(_ loaded: CampaignPersistenceState) async throws {
+        currentName = loaded.name
+        currentRulesetId = loaded.rulesetId
+        currentLibrary = try RuleSetLibraryLoader.loadLibrary(id: loaded.rulesetId)
+        currentEncounterState = loaded.encounterState
+        currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
+        currentIsInviteOnly = loaded.isInviteOnly
+        currentUserdataFiles = loaded.userdataFiles
+        currentPartyTreasure = loaded.partyTreasure
+        currentCurrency = loaded.currency
+        currentCampaignID = loaded.id
     }
 
     func updateUserdataFiles(_ files: [String]) async throws -> CampaignState {

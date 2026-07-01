@@ -695,7 +695,8 @@ struct DatabaseShapeVerification {
                 "is_invite_only",
                 "userdata_files_json",
                 "party_treasure_json",
-                "currency_json"
+                "currency_json",
+                "last_selected_at"
             ]
             let missingCampaignColumns = requiredCampaignColumns.filter { required in
                 campaignColumns.contains(where: { $0.name == required }) == false
@@ -743,6 +744,7 @@ struct CreateCampaigns: AsyncMigration {
             .field("userdata_files_json", .string)
             .field("party_treasure_json", .string)
             .field("currency_json", .string)
+            .field("last_selected_at", .datetime)
             .field("created_at", .datetime)
             .field("updated_at", .datetime)
             .create()
@@ -750,6 +752,32 @@ struct CreateCampaigns: AsyncMigration {
 
     func revert(on database: any Database) async throws {
         try await database.schema("campaigns").delete()
+    }
+}
+
+struct AddLastSelectedAtToCampaigns: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else {
+                return
+            }
+
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(campaigns)")
+                .all(decoding: SQLiteTableInfoRow.self)
+
+            guard columns.contains(where: { $0.name == "last_selected_at" }) == false else {
+                return
+            }
+
+            try await sqlDatabase
+                .raw("ALTER TABLE campaigns ADD COLUMN last_selected_at REAL")
+                .run()
+            connection.logger.notice("Patched campaigns with last_selected_at.")
+        }
+    }
+
+    func revert(on database: any Database) async throws {
     }
 }
 
@@ -917,6 +945,7 @@ enum DatabaseMigrations {
         app.migrations.add(AddUserDataFilesToCampaigns())
         app.migrations.add(AddPartyTreasureToCampaigns())
         app.migrations.add(AddCurrencyToCampaigns())
+        app.migrations.add(AddLastSelectedAtToCampaigns())
         app.migrations.add(CreateCampaignMemberships())
         app.migrations.add(CreateCampaignInvites())
         app.migrations.add(AddInviteTargetNameToCampaignInvites())

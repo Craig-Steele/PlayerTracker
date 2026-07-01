@@ -1770,6 +1770,78 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testActiveCampaignPersistsAcrossRestartWithSQLite() async throws {
+        let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
+        let databaseURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("roll4initiative-active-\(UUID().uuidString).sqlite3")
+
+        var options = ServerBootstrapOptions.production
+        options.hostname = "127.0.0.1"
+        options.port = 0
+        options.campaignName = "Active Smoke"
+        options.databaseFileURL = databaseURL
+        options.restorePersistedState = true
+        options.persistChanges = true
+        options.launchBrowser = false
+        options.verboseOutput = false
+
+        let app1 = try await Application.make(.testing)
+        try await ServerBootstrap.configure(app1, options: options, library: library)
+        let tester1 = try app1.testable()
+        _ = try await activateCampaign(tester1, name: "First Smoke", rulesetId: library.id)
+        let playerSession = try await join(displayName: "Player", in: tester1)
+        let adminCookie = try await signInOwner(in: tester1)
+
+        let secondCampaignResponse = try await tester1.sendRequest(
+            .POST,
+            "/campaigns",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Last Smoke", rulesetId: library.id)
+            ))
+        )
+        XCTAssertEqual(secondCampaignResponse.status, .ok)
+        let secondCampaign = try secondCampaignResponse.content.decode(CampaignSummary.self)
+
+        let selectSecondResponse = try await tester1.sendRequest(
+            .POST,
+            "/campaigns/\(secondCampaign.id.uuidString)/select",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(selectSecondResponse.status, .ok)
+        let selectedSecond = try selectSecondResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(selectedSecond.id, secondCampaign.id)
+
+        try await app1.asyncShutdown()
+
+        let app2 = try await Application.make(.testing)
+        await app2.userStore.resetMemoryForTesting()
+        try await ServerBootstrap.configure(app2, options: options, library: library)
+        let tester2 = try app2.testable()
+
+        let restoredCampaignResponse = try await tester2.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(restoredCampaignResponse.status, .ok)
+        let restoredCampaign = try restoredCampaignResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(restoredCampaign.id, secondCampaign.id)
+        XCTAssertEqual(restoredCampaign.name, "Last Smoke")
+
+        let sessionResponse = try await tester2.sendRequest(
+            .GET,
+            "/player/session",
+            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
+        )
+        XCTAssertEqual(sessionResponse.status, .ok)
+        let restoredSession = try sessionResponse.content.decode(PlayerSessionResponse.self)
+        XCTAssertEqual(restoredSession.campaign.id, secondCampaign.id)
+        XCTAssertEqual(restoredSession.player.displayName, "Player")
+
+        try await app2.asyncShutdown()
+    }
+
+    @Test
     func testFreshPackagedSQLiteDatabaseBootsCleanly() async throws {
         let library = try RuleSetLibraryLoader.loadLibrary(id: "dnd5e")
         let databaseDirectory = FileManager.default.temporaryDirectory
