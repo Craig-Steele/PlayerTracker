@@ -632,8 +632,7 @@ func routes(
     }
 
     app.get("player", "session") { req async throws -> Response in
-        let campaign = try await requireActiveCampaign(campaignStore)
-        let session = try await requirePlayerSession(req)
+        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
         let refereeAccess = try await isRefereeSession(session, in: campaign.id, on: req.db)
         var response = Response(status: .ok)
@@ -643,11 +642,9 @@ func routes(
     }
 
     app.patch("player", "session") { req async throws -> Response in
-        let campaign = try await requireActiveCampaign(campaignStore)
+        let (campaign, session) = try await requireActiveCampaignMemberSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(PlayerJoinInput.self)
-        guard let token = req.cookies[playerSessionCookieName]?.string else {
-            throw Abort(.unauthorized, reason: "No player session.")
-        }
+        let token = session.token
         guard let updated = try await DatabasePersistence.renamePlayerSession(
             token: token,
             to: input.displayName,
@@ -901,11 +898,7 @@ func routes(
               let routeCampaignID = UUID(uuidString: campaignIDString) else {
             throw Abort(.badRequest)
         }
-        _ = try await requireAuthenticatedUser(req)
-        let campaign = try await requireActiveCampaign(campaignStore)
-        guard campaign.id == routeCampaignID else {
-            throw Abort(.conflict, reason: "Campaign is not active.")
-        }
+        let campaign = try await requireInviteManager(req, campaignStore: campaignStore, campaignID: routeCampaignID)
         return try await DatabasePersistence.loadCampaignMembers(campaignID: campaign.id, on: req.db)
     }
 
@@ -1695,6 +1688,36 @@ func routes(
             on: req.db
         )
         return member
+    }
+
+    app.delete("campaigns", ":campaignId", "members", ":membershipId") { req async throws -> HTTPStatus in
+        guard let campaignIDString = req.parameters.get("campaignId"),
+              let campaignID = UUID(uuidString: campaignIDString),
+              let membershipIDString = req.parameters.get("membershipId"),
+              let membershipID = UUID(uuidString: membershipIDString) else {
+            throw Abort(.badRequest)
+        }
+        let campaign = try await requireInviteManager(req, campaignStore: campaignStore, campaignID: campaignID)
+        guard let playerID = try await DatabasePersistence.deleteCampaignMember(
+            membershipID: membershipID,
+            campaignID: campaignID,
+            on: req.db
+        ) else {
+            throw Abort(.notFound, reason: "Campaign member not found.")
+        }
+        await userStore.releaseClaims(for: playerID, campaignName: campaign.name)
+        let refereeSessionIDs = try await DatabasePersistence.loadCampaignRefereeSessionIDs(
+            campaignID: campaignID,
+            on: req.db
+        )
+        await userStore.setCampaignRefereeSessionIDs(
+            campaignName: campaign.name,
+            refereeSessionIDs: refereeSessionIDs
+        )
+        if let activeCampaign = await campaignStore.activeCampaign(), activeCampaign.id == campaign.id {
+            await publishCampaignUpdate(campaign: activeCampaign, userStore: userStore, eventHub: eventHub)
+        }
+        return .noContent
     }
 
     app.post("invites", ":token", "accept") { req async throws -> CampaignSummary in

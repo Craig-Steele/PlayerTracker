@@ -960,9 +960,11 @@ enum DatabasePersistence {
         let playersByID = Dictionary(uniqueKeysWithValues: players.map { ($0.id, $0) })
 
         return memberships.compactMap { membership in
-            guard let player = playersByID[membership.userID] else { return nil }
+            guard let player = playersByID[membership.userID],
+                  let membershipID = membership.id else { return nil }
             return CampaignMemberSummary(
                 id: player.id,
+                membershipId: membershipID,
                 displayName: player.displayName,
                 isReferee: membership.role == "referee"
             )
@@ -1010,11 +1012,32 @@ enum DatabasePersistence {
             role: role,
             on: database
         )
+        let row = try await CampaignMembershipRow.query(on: database)
+            .filter(\.$campaignID == campaignID)
+            .filter(\.$userID == player.id)
+            .first()
         return CampaignMemberSummary(
             id: player.id,
+            membershipId: row?.id ?? UUID(),
             displayName: player.displayName,
             isReferee: role == "referee"
         )
+    }
+
+    static func deleteCampaignMember(
+        membershipID: UUID,
+        campaignID: UUID,
+        on database: any Database
+    ) async throws -> UUID? {
+        guard let row = try await CampaignMembershipRow.query(on: database)
+            .filter(\.$id == membershipID)
+            .filter(\.$campaignID == campaignID)
+            .first() else {
+            return nil
+        }
+        let playerID = row.userID
+        try await row.delete(on: database)
+        return playerID
     }
 
     static func createCampaignInvite(

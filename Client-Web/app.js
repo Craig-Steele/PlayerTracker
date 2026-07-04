@@ -4435,6 +4435,10 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       );
       if (!characterRes.ok) {
         if (characterRes.status === 401 || characterRes.status === 403) {
+          if (characterRes.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             return;
           }
@@ -4486,6 +4490,10 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (res.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             myCharacters = [];
             renderCharacterList();
@@ -4706,6 +4714,10 @@ function getOwnerName() {
       if (!res.ok) {
         if (res.status === 403 && displayOnly) {
           logDisplayForbidden('GET /player/session');
+        }
+        if (res.status === 403 && preferPlayerView) {
+          await invalidatePlayerSessionAndReturnToJoinPage();
+          return false;
         }
         currentPlayerSessionId = '';
         return false;
@@ -5717,6 +5729,10 @@ function getOwnerName() {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (res.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             lastStateJson = null;
             updateConditionsAvailability();
@@ -5756,6 +5772,10 @@ function getOwnerName() {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (res.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             loadStateInFlight = false;
             if (loadStateRefreshQueued) {
@@ -5788,6 +5808,10 @@ function getOwnerName() {
       );
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (res.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             statusDiv.textContent = '';
             return;
@@ -6109,6 +6133,43 @@ function getOwnerName() {
     }
   }
 
+  function clearPlayerSessionStorage() {
+    try {
+      localStorage.removeItem('ownerName');
+      localStorage.removeItem('playerLoginName');
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        if (
+          key.startsWith(LOCAL_DRAFT_PREFIX) ||
+          key.startsWith(LOCAL_TEMP_HP_VISIBILITY_PREFIX)
+        ) {
+          keysToRemove.push(key);
+        }
+      }
+      for (const key of keysToRemove) {
+        localStorage.removeItem(key);
+      }
+    } catch (_err) {
+      // Ignore storage failures.
+    }
+    currentPlayerSessionId = '';
+    if (ownerInput) ownerInput.value = '';
+    if (playerNameInput) playerNameInput.value = '';
+    updatePlayerNameDisplay();
+  }
+
+  async function invalidatePlayerSessionAndReturnToJoinPage() {
+    try {
+      await fetch('/player/logout', { method: 'POST' });
+    } catch (_err) {
+      // Continue with local cleanup even if the request fails.
+    }
+    clearPlayerSessionStorage();
+    window.location.replace('/index.html');
+  }
+
   async function logoutPlayerSession() {
     const confirmed = await showConfirmDialog({
       title: 'Log Out?',
@@ -6120,22 +6181,7 @@ function getOwnerName() {
       initialFocus: 'cancel'
     });
     if (!confirmed) return;
-    try {
-      await fetch('/player/logout', { method: 'POST' });
-    } catch (_err) {
-      // Continue with local cleanup and redirect even if the request fails.
-    }
-    try {
-      localStorage.removeItem('ownerName');
-      localStorage.removeItem('playerLoginName');
-    } catch (_err) {
-      // Ignore storage failures.
-    }
-    currentPlayerSessionId = '';
-    if (ownerInput) ownerInput.value = '';
-    if (playerNameInput) playerNameInput.value = '';
-    updatePlayerNameDisplay();
-    window.location.replace('/index.html');
+    await invalidatePlayerSessionAndReturnToJoinPage();
   }
 
   if (playerNameEditBtn && playerNameInput) {
@@ -6642,6 +6688,10 @@ function getOwnerName() {
 
       if (!characterRes.ok) {
         if (characterRes.status === 401 || characterRes.status === 403) {
+          if (characterRes.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             return;
           }
@@ -6721,6 +6771,10 @@ function getOwnerName() {
           return;
         }
         if (res.status === 401 || res.status === 403) {
+          if (res.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             loadStateInFlight = false;
             if (loadStateRefreshQueued) {
@@ -6855,6 +6909,10 @@ function getOwnerName() {
 
       if (!characterRes.ok) {
         if (characterRes.status === 401 || characterRes.status === 403) {
+          if (characterRes.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return null;
+          }
           if (preferPlayerView) {
             return null;
           }
@@ -7007,6 +7065,10 @@ function getOwnerName() {
       const res = await fetch('/turn-complete', { method: 'POST' });
       if (!res.ok) {
         if (res.status === 401 || res.status === 403) {
+          if (res.status === 403 && preferPlayerView) {
+            await invalidatePlayerSessionAndReturnToJoinPage();
+            return;
+          }
           if (preferPlayerView) {
             return;
           }

@@ -279,6 +279,7 @@ struct PlayerIdentityResponse: Content {
 
 struct CampaignMemberSummary: Content {
     let id: UUID
+    let membershipId: UUID
     let displayName: String
     let isReferee: Bool
 }

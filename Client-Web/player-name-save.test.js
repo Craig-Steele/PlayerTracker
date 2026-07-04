@@ -19,6 +19,19 @@ test('returns session-expired outcome on 401 without attempting a rejoin', () =>
   assert.ok(!('displayName' in outcome));
 });
 
+test('returns session-expired outcome on 403 without attempting a rejoin', () => {
+  const outcome = resolvePlayerNameSaveOutcome({
+    status: 403,
+    responsePayload: null,
+    enteredName: 'Ally'
+  });
+
+  assert.equal(outcome.kind, 'session-expired');
+  assert.equal(outcome.message, SESSION_EXPIRED_MESSAGE);
+  assert.ok(!('playerId' in outcome));
+  assert.ok(!('displayName' in outcome));
+});
+
 test('returns saved outcome for a successful rename', () => {
   const outcome = resolvePlayerNameSaveOutcome({
     status: 200,

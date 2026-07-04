@@ -396,6 +396,12 @@ final class PlayerTrackeriOSTests: XCTestCase {
         XCTAssertNil(CampaignEventStreamClient.eventName(from: "data: {\"campaign\":true}"))
     }
 
+    func testRemovedPlayerSessionErrorsAreDetectedBy403Status() {
+        XCTAssertTrue(isRemovedPlayerSessionError(APIClientError.serverError(403)))
+        XCTAssertFalse(isRemovedPlayerSessionError(APIClientError.serverError(401)))
+        XCTAssertFalse(isRemovedPlayerSessionError(APIClientError.invalidResponse))
+    }
+
     func testDecodesInventoryAndPartyTreasurePayloads() throws {
         let decoder = JSONDecoder()
 

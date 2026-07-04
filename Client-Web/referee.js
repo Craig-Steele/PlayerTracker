@@ -828,11 +828,21 @@ window.addEventListener('DOMContentLoaded', () => {
   ];
 
   if (invitePlayerBtn) {
-    invitePlayerBtn.addEventListener('click', invitePlayer);
+    invitePlayerBtn.addEventListener('click', () => {
+      const settingsUrl = window.PlayerTrackerCampaignSettings?.buildCampaignSettingsPageUrl?.(
+        activeCampaignId,
+        'referee'
+      ) || `campaign-settings.html?campaignId=${encodeURIComponent(activeCampaignId || '')}&source=referee`;
+      window.location.href = `${settingsUrl}&focus=add-player`;
+    });
   }
   if (campaignSettingsBtn) {
     campaignSettingsBtn.addEventListener('click', () => {
-      openCampaignSettingsModal();
+      const settingsUrl = window.PlayerTrackerCampaignSettings?.buildCampaignSettingsPageUrl?.(
+        activeCampaignId,
+        'referee'
+      ) || `campaign-settings.html?campaignId=${encodeURIComponent(activeCampaignId || '')}&source=referee`;
+      window.location.href = settingsUrl;
     });
   }
   if (partyTreasureButton) {
@@ -4695,6 +4705,22 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
+   * Confirm before clearing the current encounter and starting a new one.
+   * @returns {Promise<boolean>}
+   */
+  function confirmNewEncounter() {
+    return showConfirmDialog({
+      title: 'Start New Encounter?',
+      header: 'This clears the current encounter.',
+      message: 'Starting a new encounter will reset the current encounter state and replace the existing encounter. This cannot be undone.',
+      confirmLabel: 'Start New Encounter',
+      cancelLabel: 'Keep Encounter',
+      confirmButtonClass: 'danger',
+      initialFocus: 'cancel'
+    });
+  }
+
+  /**
    * Return the display name for the character controller.
    * @param {object} character Character record.
    * @returns {string}
@@ -6500,7 +6526,8 @@ window.addEventListener('DOMContentLoaded', () => {
     turnCompleteBtn.addEventListener('click', handleTurnComplete);
   }
   if (encounterNewBtn) {
-    encounterNewBtn.addEventListener('click', () => {
+    encounterNewBtn.addEventListener('click', async () => {
+      if (!(await confirmNewEncounter())) return;
       handleEncounterAction('/encounter/new');
     });
   }

@@ -45,6 +45,23 @@
     return manual;
   }
 
+  function normalizeCampaignSettingsSource(value) {
+    return value === 'admin' ? 'admin' : 'referee';
+  }
+
+  function buildCampaignSettingsPageUrl(campaignId, source = 'referee', mode = 'edit') {
+    const params = new URLSearchParams();
+    if (mode === 'new') {
+      params.set('source', normalizeCampaignSettingsSource(source));
+      params.set('mode', 'new');
+      return `campaign-settings.html?${params.toString()}`;
+    }
+    if (!campaignId) return 'campaign-settings.html';
+    params.set('campaignId', campaignId);
+    params.set('source', normalizeCampaignSettingsSource(source));
+    return `campaign-settings.html?${params.toString()}`;
+  }
+
   function populateRulesetSelect(selectEl, rulesets, options = {}) {
     if (!selectEl) return;
     const {
@@ -78,7 +95,9 @@
     readClaimTimeoutMode,
     readClaimTimeoutMinutes,
     syncClaimTimeoutUi,
-    populateRulesetSelect
+    populateRulesetSelect,
+    normalizeCampaignSettingsSource,
+    buildCampaignSettingsPageUrl
   };
 
   if (typeof module === 'object' && module.exports) {

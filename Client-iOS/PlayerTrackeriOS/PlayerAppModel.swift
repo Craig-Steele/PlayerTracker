@@ -2,6 +2,13 @@ import Foundation
 import Observation
 import Security
 
+func isRemovedPlayerSessionError(_ error: Error) -> Bool {
+    if case APIClientError.serverError(403) = error {
+        return true
+    }
+    return false
+}
+
 @MainActor
 @Observable
 final class PlayerAppModel {
@@ -176,17 +183,25 @@ final class PlayerAppModel {
             }
 
             if playerSessionToken != nil {
-                resolvedPlayerSession = try? await client.fetchPlayerSession()
-                if let resolvedPlayerSession {
-                    self.playerSession = resolvedPlayerSession
-                    self.ownerId = resolvedPlayerSession.player.id
-                    self.playerName = resolvedPlayerSession.player.displayName
-                    self.playerSessionStatusMessage = resolvedPlayerSession.player.isReferee
-                        ? "Joined as referee \(resolvedPlayerSession.player.displayName)"
-                        : "Joined as \(resolvedPlayerSession.player.displayName)"
-                    self.lastError = nil
-                } else {
-                    await clearPlayerSession(reason: "Saved player session expired. Please rejoin.")
+                do {
+                    resolvedPlayerSession = try await client.fetchPlayerSession()
+                    if let resolvedPlayerSession {
+                        self.playerSession = resolvedPlayerSession
+                        self.ownerId = resolvedPlayerSession.player.id
+                        self.playerName = resolvedPlayerSession.player.displayName
+                        self.playerSessionStatusMessage = resolvedPlayerSession.player.isReferee
+                            ? "Joined as referee \(resolvedPlayerSession.player.displayName)"
+                            : "Joined as \(resolvedPlayerSession.player.displayName)"
+                        self.lastError = nil
+                    }
+                } catch {
+                    if await handleRemovedPlayerSessionError(error) {
+                        return
+                    }
+                    await clearPlayerSession(
+                        reason: "Saved player session expired. Please rejoin.",
+                        clearPlayerName: true
+                    )
                 }
             } else {
                 self.playerSession = nil
@@ -289,6 +304,9 @@ final class PlayerAppModel {
             lastError = nil
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -339,6 +357,9 @@ final class PlayerAppModel {
             statusMessage = draft.id == nil ? "Character added." : "Character saved."
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -354,6 +375,9 @@ final class PlayerAppModel {
             statusMessage = "Character deleted."
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -373,6 +397,9 @@ final class PlayerAppModel {
             statusMessage = "Character claimed."
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -392,6 +419,9 @@ final class PlayerAppModel {
             statusMessage = "Character released."
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -406,6 +436,9 @@ final class PlayerAppModel {
             statusMessage = "Turn advanced."
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -518,6 +551,9 @@ final class PlayerAppModel {
             statusMessage = "Party treasure saved."
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -543,6 +579,9 @@ final class PlayerAppModel {
             let itemName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
             statusMessage = "Claimed \(requestedQuantity) \(itemName.isEmpty ? "item" : itemName)."
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
@@ -601,6 +640,9 @@ final class PlayerAppModel {
             let itemName = item.name.trimmingCharacters(in: .whitespacesAndNewlines)
             statusMessage = "Sent \(requestedQuantity) \(itemName.isEmpty ? "item" : itemName) to party treasure."
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             do {
                 let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
                 let rollbackPayload = CharacterInputDTO(
@@ -681,15 +723,32 @@ final class PlayerAppModel {
             statusMessage = "Character saved."
             await refreshAll(showStatus: false)
         } catch {
+            if await handleRemovedPlayerSessionError(error) {
+                return
+            }
             statusMessage = error.localizedDescription
         }
     }
 
-    private func clearPlayerSession(reason: String) async {
+    private func handleRemovedPlayerSessionError(_ error: Error) async -> Bool {
+        guard isRemovedPlayerSessionError(error) else {
+            return false
+        }
+        await clearPlayerSession(
+            reason: "You were removed from the campaign. Please rejoin.",
+            clearPlayerName: true
+        )
+        return true
+    }
+
+    private func clearPlayerSession(reason: String, clearPlayerName: Bool = false) async {
         playerSessionToken = nil
         playerSession = nil
         gameState = nil
         myCharacters = []
+        if clearPlayerName {
+            playerName = ""
+        }
         playerSessionStatusMessage = reason
         do {
             try playerSessionStore.clearToken()
@@ -730,6 +789,13 @@ final class PlayerAppModel {
                 }
             } catch {
                 if Task.isCancelled {
+                    return
+                }
+                if case APIClientError.serverError(403) = error {
+                    await clearPlayerSession(
+                        reason: "You were removed from the campaign. Please rejoin.",
+                        clearPlayerName: true
+                    )
                     return
                 }
                 if campaign?.id != campaignID || playerSessionToken == nil {

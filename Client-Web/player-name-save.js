@@ -2,7 +2,7 @@
   const SESSION_EXPIRED_MESSAGE = 'Player session expired. Please rejoin from the join page.';
 
   function resolvePlayerNameSaveOutcome({ status, responsePayload, enteredName }) {
-    if (status === 401) {
+    if (status === 401 || status === 403) {
       return {
         kind: 'session-expired',
         message: SESSION_EXPIRED_MESSAGE

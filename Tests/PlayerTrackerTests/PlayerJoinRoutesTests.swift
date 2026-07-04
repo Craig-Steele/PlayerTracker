@@ -557,6 +557,71 @@ struct PlayerJoinRoutesTests {
     }
 
     @Test
+    func testAdminCanRemoveCampaignMemberAndPlayerSessionCannot() async throws {
+        let app = try await makeApp()
+        defer { shutdownApplicationSynchronously(app) }
+        let tester = try app.testing()
+
+        let campaignID = try await activateCampaign(in: tester)
+        let adminCookie = try await signInOwner(in: tester)
+        let refereeCharacter = try await createUnclaimedRefereeCharacter(in: tester)
+        let addResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaignID.uuidString)/members",
+            headers: [
+                "Cookie": "roll4_session=\(adminCookie)",
+                "Content-Type": "application/json"
+            ],
+            body: ByteBuffer(data: try JSONEncoder().encode(CampaignMemberCreateInput(playerName: "Morgan")))
+        )
+        XCTAssertEqual(addResponse.status, .ok)
+        let member = try addResponse.content.decode(CampaignMemberSummary.self)
+
+        let morganSession = try await join(displayName: "Morgan", tester: tester)
+        let claimResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaignID.uuidString)/me/characters/\(refereeCharacter.id.uuidString)/claim",
+            headers: ["Cookie": "roll4_player_session=\(morganSession.cookieToken)"]
+        )
+        XCTAssertEqual(claimResponse.status, .ok)
+        let claimed = try claimResponse.content.decode(PlayerView.self)
+        XCTAssertEqual(claimed.claimedSessionId, morganSession.session.player.id)
+
+        let deleteResponse = try await tester.sendRequest(
+            .DELETE,
+            "/campaigns/\(campaignID.uuidString)/members/\(member.membershipId.uuidString)",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(deleteResponse.status, .noContent)
+
+        let revokedSessionResponse = try await tester.sendRequest(
+            .GET,
+            "/player/session",
+            headers: ["Cookie": "roll4_player_session=\(morganSession.cookieToken)"]
+        )
+        XCTAssertEqual(revokedSessionResponse.status, .forbidden)
+
+        let memberListResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(campaignID.uuidString)/members",
+            headers: ["Cookie": "roll4_session=\(adminCookie)"]
+        )
+        XCTAssertEqual(memberListResponse.status, .ok)
+        let remainingMembers = try memberListResponse.content.decode([CampaignMemberSummary].self)
+        XCTAssertTrue(remainingMembers.isEmpty)
+
+        let bobSession = try await join(displayName: "Bob", tester: tester)
+        let bobClaimResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(campaignID.uuidString)/me/characters/\(refereeCharacter.id.uuidString)/claim",
+            headers: ["Cookie": "roll4_player_session=\(bobSession.cookieToken)"]
+        )
+        XCTAssertEqual(bobClaimResponse.status, .ok)
+        let bobClaimed = try bobClaimResponse.content.decode(PlayerView.self)
+        XCTAssertEqual(bobClaimed.claimedSessionId, bobSession.session.player.id)
+    }
+
+    @Test
     func testLegacyCharacterCreateRouteIsUnavailable() async throws {
         let app = try await makeApp()
         defer { shutdownApplicationSynchronously(app) }

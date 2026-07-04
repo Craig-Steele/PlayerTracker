@@ -932,13 +932,19 @@ body.referee-page .referee-panel {
 .admin-campaign-invite-player-control {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   width: 100%;
 }
 
 .admin-campaign-invite-player-control input[type="text"] {
-  flex: 1 1 14rem;
+  flex: 1 1 12rem;
   min-width: 0;
+}
+
+.admin-campaign-invite-player-control button {
+  flex: 0 0 auto;
+  margin-top: 0;
 }
 
 .admin-campaign-members {
@@ -1304,6 +1310,20 @@ body.referee-page .referee-panel {
   width: 100%;
 }
 
+.campaign-settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: start;
+}
+
+.campaign-settings-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
 .campaign-settings-ruleset-control {
   display: flex;
   flex-direction: column;
@@ -1327,6 +1347,79 @@ body.referee-page .referee-panel {
   align-items: center;
   gap: 0.5rem;
   margin: 0;
+}
+
+.campaign-settings-add-player-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.campaign-settings-add-player-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.campaign-settings-invite-player-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.campaign-settings-invite-player-control input[type="text"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.campaign-settings-invite-player-control button {
+  white-space: nowrap;
+  margin-top: 0;
+}
+
+.campaign-settings-members-control {
+  width: 100%;
+}
+
+.campaign-settings-member-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.7rem;
+  background: var(--bg-panel);
+  box-sizing: border-box;
+}
+
+.campaign-settings-member-toggle {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.campaign-settings-member-toggle input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+
+.campaign-settings-member-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex: 0 0 auto;
+}
+
+.campaign-settings-remove-player-button {
+  margin-top: 0;
 }
 
 .ref-campaign-invite-only-row .property-control {
@@ -3466,6 +3559,16 @@ body.admin-page .display-page-header {
   background: var(--bg-page);
 }
 
+body.campaign-settings-page .display-page-header {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  width: 100%;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--bg-page);
+}
+
 body:not(.display-only):not(.referee-page) .player-campaign-card {
   margin-top: 0;
   padding-top: 0.75rem;
@@ -3485,6 +3588,12 @@ body.display-only .display-campaign-card {
 }
 
 body.admin-page .admin-campaign-card {
+  margin-top: 0;
+  padding-top: 0.75rem;
+  border-radius: 0 0 12px 12px;
+}
+
+body.campaign-settings-page .admin-campaign-card {
   margin-top: 0;
   padding-top: 0.75rem;
   border-radius: 0 0 12px 12px;
@@ -3742,6 +3851,20 @@ body.admin-page .admin-owner-card .admin-owner-group {
   align-items: flex-start;
   justify-content: flex-end;
   gap: 0.5rem;
+}
+
+.campaign-settings-header-side {
+  align-items: center;
+}
+
+body.campaign-settings-page .detail-panel {
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  .campaign-settings-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .ruleset-icon {

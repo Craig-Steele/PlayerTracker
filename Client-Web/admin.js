@@ -1074,7 +1074,12 @@ window.addEventListener('DOMContentLoaded', () => {
   if (newCampaignBtn) {
     newCampaignBtn.addEventListener('click', () => {
       if (!authUser) return;
-      openModal('new');
+      const settingsUrl = window.PlayerTrackerCampaignSettings?.buildCampaignSettingsPageUrl?.(
+        '',
+        'admin',
+        'new'
+      ) || 'campaign-settings.html?source=admin&mode=new';
+      window.location.href = settingsUrl;
     });
   }
 
@@ -1083,7 +1088,11 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!authUser) return;
       const selected = campaignSummaries.find((campaign) => campaign.id === selectedCampaignId) || null;
       if (!selected) return;
-      openModal('edit', selected);
+      const settingsUrl = window.PlayerTrackerCampaignSettings?.buildCampaignSettingsPageUrl?.(
+        selected.id,
+        'admin'
+      ) || `campaign-settings.html?campaignId=${encodeURIComponent(selected.id)}&source=admin`;
+      window.location.href = settingsUrl;
     });
   }
 

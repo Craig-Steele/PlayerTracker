@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tactical Table Top: Initiative - Campaign Settings</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="stylesheet" href="style.css?v=105">
+</head>
+<body class="campaign-settings-page">
+  <div class="display-page-header">
+    <div class="player-campaign-card admin-campaign-card">
+      <img id="campaign-settings-icon" class="ruleset-icon" alt="" />
+      <div class="player-campaign-text">
+        <div id="campaign-settings-title" class="player-campaign-name">Campaign Settings</div>
+        <div class="ruleset-meta player-ruleset-meta">
+          <a id="campaign-settings-ruleset-link" class="ruleset-label" href="#" target="_blank" rel="noopener"></a>
+          <span id="campaign-settings-ruleset-license-wrap" class="ruleset-license-wrap">
+            (<a id="campaign-settings-ruleset-license" class="ruleset-license" href="#" target="_blank" rel="noopener">license</a>)
+          </span>
+        </div>
+      </div>
+      <div class="display-header-side campaign-settings-header-side">
+        <button type="button" id="campaign-settings-cancel" class="secondary">Back</button>
+        <button type="button" id="campaign-settings-save" disabled>Save</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="detail-panel admin-panel campaign-settings-layout">
+    <div class="campaign-settings-column">
+      <div class="form-section-title">Campaign Details</div>
+      <div class="form-section-block property-group">
+        <label class="property-row">
+          <span class="property-label">Campaign Name</span>
+          <span class="property-control">
+            <input type="text" id="campaign-settings-name-input" required />
+          </span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Ruleset</span>
+          <span class="property-control campaign-settings-ruleset-control">
+            <select id="campaign-settings-ruleset-select" required></select>
+            <span id="campaign-settings-ruleset-lock-note" class="campaign-settings-lock-note hidden">Locked on the referee page</span>
+          </span>
+        </label>
+        <div class="property-row campaign-settings-claim-mode-row">
+          <span class="property-label">Claim Timeout</span>
+          <div class="property-control campaign-settings-claim-mode">
+            <label class="radio-row">
+              <input type="radio" name="campaign-settings-claim-timeout-mode" id="campaign-settings-claim-timeout-manual" value="manual" checked />
+              <span>Explicit Release Only</span>
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="campaign-settings-claim-timeout-mode" id="campaign-settings-claim-timeout-timed" value="timed" />
+              <span>Release after</span>
+              <input type="number" id="campaign-settings-claim-timeout-input" min="0" step="1" />
+              <span>minutes</span>
+            </label>
+          </div>
+        </div>
+        <div class="property-row campaign-settings-invite-only-row">
+          <span class="property-label">Access</span>
+          <span class="property-control campaign-settings-access-control">
+            <label class="radio-row">
+              <input type="radio" name="campaign-settings-access" id="campaign-settings-invite-only" value="invite-only" />
+              <span>Invite Only</span>
+            </label>
+            <label class="radio-row">
+              <input type="radio" name="campaign-settings-access" id="campaign-settings-open-join" value="open-join" checked />
+              <span>Open join</span>
+            </label>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="campaign-settings-column">
+      <div class="form-section-title">Player Management</div>
+      <div class="form-section-block property-group">
+        <div class="campaign-settings-add-player-block">
+          <div class="campaign-settings-add-player-label">Add Player</div>
+          <div class="campaign-settings-invite-player-control">
+            <input type="text" id="campaign-settings-invite-player-name" placeholder="Player name" autocomplete="off" />
+            <button type="button" id="campaign-settings-invite-player-button" class="secondary">Add</button>
+          </div>
+        </div>
+        <div class="property-row campaign-settings-members-row">
+          <span class="property-label">Members</span>
+          <div class="property-control campaign-settings-members-control">
+            <div id="campaign-settings-members" class="admin-campaign-members"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="campaign-settings-status"></div>
+  </section>
+
+  <script src="shared.js?v=6"></script>
+  <script src="campaign-settings.js?v=2"></script>
+  <script src="campaign-settings-page.js?v=8"></script>
+</body>
+</html>
