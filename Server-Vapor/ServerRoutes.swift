@@ -499,6 +499,26 @@ private func publishActiveCampaignUpdate(
     )
 }
 
+func restoreActiveCampaignState(
+    campaignStore: CampaignStore,
+    userStore: UserStore,
+    eventHub: CampaignEventHub,
+    activeCampaignEventHub: ActiveCampaignEventHub,
+    database: any Database
+) async throws {
+    guard let activeCampaign = await campaignStore.activeCampaign() else {
+        return
+    }
+
+    try await userStore.configure(
+        campaignName: activeCampaign.name,
+        rulesetId: activeCampaign.rulesetId,
+        on: database
+    )
+    await publishCampaignUpdate(campaign: activeCampaign, userStore: userStore, eventHub: eventHub)
+    await publishActiveCampaignUpdate(campaignStore: campaignStore, eventHub: activeCampaignEventHub)
+}
+
 func routes(
     _ app: Application,
     campaignStore: CampaignStore,

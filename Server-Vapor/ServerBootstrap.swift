@@ -134,6 +134,13 @@ enum ServerBootstrap {
         let eventHub = CampaignEventHub()
         let activeCampaignEventHub = ActiveCampaignEventHub()
         try await campaignStore.configure(database: app.db)
+        try await restoreActiveCampaignState(
+            campaignStore: campaignStore,
+            userStore: app.userStore,
+            eventHub: eventHub,
+            activeCampaignEventHub: activeCampaignEventHub,
+            database: app.db
+        )
         if options.verboseOutput {
             ServerDiagnostics.writeLoadedDefaultRuleset(conditionLibrary.label)
             ServerDiagnostics.writeConnectionLogs(await connectionLogPath())

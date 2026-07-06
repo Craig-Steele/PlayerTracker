@@ -1759,12 +1759,16 @@ struct ServerRoutesTests {
         await app2.userStore.resetMemoryForTesting()
         try await ServerBootstrap.configure(app2, options: options, library: library)
         let tester2 = try app2.testable()
-        try await activateCampaign(tester2, name: "Persist Smoke", rulesetId: library.id)
 
         let usersResponse = try await tester2.sendRequest(.GET, "/users")
         XCTAssertEqual(usersResponse.status, .ok)
         let users = try usersResponse.content.decode([UserData].self)
         XCTAssertTrue(users.contains { $0.name == "Persisted Hero" && $0.initiative == 17 })
+
+        let restoredCampaignResponse = try await tester2.sendRequest(.GET, "/campaign")
+        XCTAssertEqual(restoredCampaignResponse.status, .ok)
+        let restoredCampaign = try restoredCampaignResponse.content.decode(CampaignState.self)
+        XCTAssertEqual(restoredCampaign.id, playerSession.session.campaign.id)
 
         try await app2.asyncShutdown()
     }
