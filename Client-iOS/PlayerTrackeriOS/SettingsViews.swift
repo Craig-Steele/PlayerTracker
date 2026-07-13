@@ -32,11 +32,11 @@ struct ConnectionSheetView: View {
                 Section {
                     if let scannerError {
                         Text(scannerError)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color(uiColor: .systemRed))
                             .font(.footnote)
                     } else if let errorMessage {
                         Text(errorMessage)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(Color(uiColor: .systemRed))
                             .font(.footnote)
                     } else {
                         Text(statusMessage)
@@ -163,7 +163,7 @@ struct PlayerIdentitySheetView: View {
 struct SettingsView: View {
     let serverURL: String
     let playerName: String
-    let ownerId: UUID
+    let playerID: UUID
     @Binding var showPlayerNames: Bool
     @Binding var showCharacterConditions: Bool
     let onChangeConnection: () -> Void
@@ -197,7 +197,7 @@ struct SettingsView: View {
                 }
 
                 Section("Player ID") {
-                    Text(ownerId.uuidString)
+                    Text(playerID.uuidString)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .textSelection(.enabled)
@@ -233,7 +233,7 @@ struct ServerQRCodeSheetView: View {
                         .scaledToFit()
                         .frame(maxWidth: 320, maxHeight: 320)
                         .padding(16)
-                        .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                 } else {
                     ContentUnavailableView(
                         "Unable to Generate QR Code",
@@ -309,7 +309,7 @@ struct QRScannerSheetView: View {
                         .padding(.bottom, 24)
                 }
             }
-            .background(Color.black)
+            .background(Color(uiColor: .systemBackground))
             .navigationTitle("Scan Server QR")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

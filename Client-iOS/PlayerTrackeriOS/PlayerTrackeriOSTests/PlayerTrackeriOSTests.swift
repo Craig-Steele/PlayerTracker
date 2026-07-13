@@ -2,6 +2,35 @@ import XCTest
 @testable import Tactical_Table_Top__Initiative
 
 final class PlayerTrackeriOSTests: XCTestCase {
+    @MainActor
+    func testCurrentPlayerIDPrefersSessionPlayerIDOverLegacyFallback() {
+        let model = PlayerAppModel()
+        let legacyFallbackID = model.currentPlayerID
+        let sessionPlayerID = UUID()
+        let campaignID = UUID()
+        let sessionCampaign = CampaignStateDTO(
+            id: campaignID,
+            name: "Campaign",
+            rulesetId: "ruleset",
+            rulesetLabel: "Ruleset",
+            encounterState: .new,
+            currency: nil,
+            partyTreasure: nil
+        )
+        model.playerSession = PlayerSessionDTO(
+            player: PlayerIdentityDTO(
+                id: sessionPlayerID,
+                campaignID: campaignID,
+                displayName: "Referee",
+                isReferee: true
+            ),
+            campaign: sessionCampaign
+        )
+
+        XCTAssertEqual(model.currentPlayerID, sessionPlayerID)
+        XCTAssertNotEqual(legacyFallbackID, sessionPlayerID)
+    }
+
     func testEffectiveEncounterStateFallsBackToCampaignState() {
         let presentation = EncounterPresentationState(
             campaignEncounterState: .suspended,

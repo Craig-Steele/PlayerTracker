@@ -24,7 +24,8 @@ final class PlayerAppModel {
     var playerName: String {
         didSet { UserDefaults.standard.set(playerName, forKey: Self.playerNameKey) }
     }
-    var ownerId: UUID {
+    /// Legacy compatibility fallback for installs that predate session-backed identity.
+    private var ownerId: UUID {
         didSet { UserDefaults.standard.set(ownerId.uuidString, forKey: Self.ownerIdKey) }
     }
     var showPlayerNames: Bool {
@@ -122,8 +123,12 @@ final class PlayerAppModel {
         serverURLString.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    var sessionPlayerID: UUID? {
+        playerSession?.player.id
+    }
+
     var currentPlayerID: UUID {
-        playerSession?.player.id ?? ownerId
+        sessionPlayerID ?? ownerId
     }
 
     var currentPlayerDisplayName: String {
@@ -187,7 +192,6 @@ final class PlayerAppModel {
                     resolvedPlayerSession = try await client.fetchPlayerSession()
                     if let resolvedPlayerSession {
                         self.playerSession = resolvedPlayerSession
-                        self.ownerId = resolvedPlayerSession.player.id
                         self.playerName = resolvedPlayerSession.player.displayName
                         self.playerSessionStatusMessage = resolvedPlayerSession.player.isReferee
                             ? "Joined as referee \(resolvedPlayerSession.player.displayName)"
@@ -294,7 +298,6 @@ final class PlayerAppModel {
             try playerSessionStore.saveToken(result.sessionToken)
             playerSessionToken = result.sessionToken
             playerSession = result.session
-            ownerId = result.session.player.id
             playerSessionStatusMessage = result.session.player.isReferee
                 ? "Joined as referee \(result.session.player.displayName)"
                 : "Joined as \(result.session.player.displayName)"

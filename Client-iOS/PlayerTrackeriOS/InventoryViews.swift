@@ -125,7 +125,7 @@ struct CharacterInventorySheetView: View {
                 if let validationMessage {
                     Text(validationMessage)
                         .font(.footnote)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color(uiColor: .systemRed))
                         .padding(.bottom, 12)
                 } else if let loadMessage {
                     Text(loadMessage)
@@ -623,7 +623,7 @@ private struct InventoryEntryEditorSheetView: View {
                 if let validationMessage {
                     Text(validationMessage)
                         .font(.footnote)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color(uiColor: .systemRed))
                         .padding(.bottom, 12)
                 }
             }
@@ -755,7 +755,7 @@ struct CharacterMoneySheetView: View {
                 if let validationMessage {
                     Text(validationMessage)
                         .font(.footnote)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color(uiColor: .systemRed))
                         .padding(.bottom, 12)
                 }
             }
@@ -832,7 +832,7 @@ struct PartyTreasureMoneySheetView: View {
                 if let validationMessage {
                     Text(validationMessage)
                         .font(.footnote)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color(uiColor: .systemRed))
                         .padding(.bottom, 12)
                 }
             }
@@ -1028,7 +1028,7 @@ struct PartyTreasureSheetView: View {
                 if let validationMessage {
                     Text(validationMessage)
                         .font(.footnote)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color(uiColor: .systemRed))
                         .padding(.bottom, 12)
                 }
             }

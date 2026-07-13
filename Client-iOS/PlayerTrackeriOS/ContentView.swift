@@ -49,7 +49,7 @@ struct ContentView: View {
             SettingsView(
                 serverURL: model.normalizedServerURL,
                 playerName: model.playerName,
-                ownerId: model.ownerId,
+                playerID: model.currentPlayerID,
                 showPlayerNames: $model.showPlayerNames,
                 showCharacterConditions: $model.showCharacterConditions,
                 onChangeConnection: {
@@ -334,7 +334,12 @@ struct ContentView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.small)
-                            .tint(.green)
+                            .tint(
+                                adaptiveColor(
+                                    light: UIColor(red: 0.12, green: 0.56, blue: 0.24, alpha: 1.0),
+                                    dark: UIColor(red: 0.52, green: 0.85, blue: 0.62, alpha: 1.0)
+                                )
+                            )
                             .accessibilityLabel("Turn Complete")
                             .disabled(isShowingModal || model.isCompletingTurn)
                         }
@@ -366,7 +371,12 @@ struct ContentView: View {
             if let error = model.lastError {
                 Text(error)
                     .font(.footnote)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(
+                        adaptiveColor(
+                            light: UIColor(red: 0.75, green: 0.10, blue: 0.11, alpha: 1.0),
+                            dark: UIColor(red: 0.99, green: 0.67, blue: 0.67, alpha: 1.0)
+                        )
+                    )
             }
         }
         .padding()
@@ -384,9 +394,15 @@ struct ContentView: View {
         case .new:
             return Color(uiColor: .secondarySystemGroupedBackground)
         case .active:
-            return Color.green.opacity(0.16)
+            return adaptiveColor(
+                light: UIColor(red: 0.71, green: 0.92, blue: 0.77, alpha: 0.16),
+                dark: UIColor(red: 0.20, green: 0.35, blue: 0.24, alpha: 0.55)
+            )
         case .suspended:
-            return Color.red.opacity(0.16)
+            return adaptiveColor(
+                light: UIColor(red: 0.96, green: 0.75, blue: 0.75, alpha: 0.16),
+                dark: UIColor(red: 0.38, green: 0.20, blue: 0.20, alpha: 0.55)
+            )
         }
     }
 
@@ -397,9 +413,15 @@ struct ContentView: View {
         case .new:
             return Color(uiColor: .systemGray4)
         case .active:
-            return Color.green.opacity(0.45)
+            return adaptiveColor(
+                light: UIColor(red: 0.29, green: 0.64, blue: 0.35, alpha: 0.45),
+                dark: UIColor(red: 0.53, green: 0.82, blue: 0.59, alpha: 0.55)
+            )
         case .suspended:
-            return Color.red.opacity(0.45)
+            return adaptiveColor(
+                light: UIColor(red: 0.79, green: 0.29, blue: 0.29, alpha: 0.45),
+                dark: UIColor(red: 0.95, green: 0.55, blue: 0.55, alpha: 0.55)
+            )
         }
     }
 
@@ -410,9 +432,15 @@ struct ContentView: View {
         case .new:
             return .secondary
         case .active:
-            return .green
+            return adaptiveColor(
+                light: UIColor(red: 0.16, green: 0.49, blue: 0.25, alpha: 1.0),
+                dark: UIColor(red: 0.60, green: 0.88, blue: 0.68, alpha: 1.0)
+            )
         case .suspended:
-            return .red
+            return adaptiveColor(
+                light: UIColor(red: 0.72, green: 0.12, blue: 0.12, alpha: 1.0),
+                dark: UIColor(red: 0.99, green: 0.72, blue: 0.72, alpha: 1.0)
+            )
         }
     }
 
@@ -613,7 +641,13 @@ struct ContentView: View {
         .overlay {
             if isMine {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .strokeBorder(Color.blue, lineWidth: 2)
+                    .strokeBorder(
+                        adaptiveColor(
+                            light: UIColor(red: 0.22, green: 0.45, blue: 0.76, alpha: 1.0),
+                            dark: UIColor(red: 0.53, green: 0.72, blue: 0.98, alpha: 1.0)
+                        ),
+                        lineWidth: 2
+                    )
             }
         }
     }
@@ -649,21 +683,48 @@ struct ContentView: View {
         switch tone {
         case .mine:
             return (
-                Color(red: 0.06, green: 0.23, blue: 0.37),
-                Color(red: 0.81, green: 0.91, blue: 1.0),
-                Color(red: 0.47, green: 0.70, blue: 0.90)
+                adaptiveColor(
+                    light: UIColor(red: 0.06, green: 0.23, blue: 0.37, alpha: 1.0),
+                    dark: UIColor(red: 0.64, green: 0.82, blue: 0.98, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.81, green: 0.91, blue: 1.0, alpha: 1.0),
+                    dark: UIColor(red: 0.17, green: 0.28, blue: 0.37, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.47, green: 0.70, blue: 0.90, alpha: 1.0),
+                    dark: UIColor(red: 0.36, green: 0.52, blue: 0.67, alpha: 1.0)
+                )
             )
         case .referee:
             return (
-                Color(red: 0.42, green: 0.12, blue: 0.12),
-                Color(red: 1.0, green: 0.84, blue: 0.84),
-                Color(red: 0.88, green: 0.56, blue: 0.56)
+                adaptiveColor(
+                    light: UIColor(red: 0.42, green: 0.12, blue: 0.12, alpha: 1.0),
+                    dark: UIColor(red: 0.98, green: 0.67, blue: 0.67, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 1.0, green: 0.84, blue: 0.84, alpha: 1.0),
+                    dark: UIColor(red: 0.25, green: 0.15, blue: 0.15, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.88, green: 0.56, blue: 0.56, alpha: 1.0),
+                    dark: UIColor(red: 0.63, green: 0.38, blue: 0.38, alpha: 1.0)
+                )
             )
         case .unclaimed:
             return (
-                Color(red: 0.34, green: 0.11, blue: 0.50),
-                Color(red: 0.92, green: 0.84, blue: 0.99),
-                Color(red: 0.68, green: 0.51, blue: 0.87)
+                adaptiveColor(
+                    light: UIColor(red: 0.34, green: 0.11, blue: 0.50, alpha: 1.0),
+                    dark: UIColor(red: 0.83, green: 0.68, blue: 0.99, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.92, green: 0.84, blue: 0.99, alpha: 1.0),
+                    dark: UIColor(red: 0.24, green: 0.18, blue: 0.31, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.68, green: 0.51, blue: 0.87, alpha: 1.0),
+                    dark: UIColor(red: 0.50, green: 0.39, blue: 0.64, alpha: 1.0)
+                )
             )
         case .other:
             return (
@@ -717,18 +778,72 @@ struct ContentView: View {
         let ratio = Double(summary.current) / Double(summary.max)
 
         if isDead {
-            return (.white, Color(red: 0.29, green: 0.29, blue: 0.29))
+            return (
+                adaptiveColor(
+                    light: UIColor(white: 1.0, alpha: 1.0),
+                    dark: UIColor(red: 0.91, green: 0.92, blue: 0.94, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.29, green: 0.29, blue: 0.29, alpha: 1.0),
+                    dark: UIColor(red: 0.36, green: 0.38, blue: 0.41, alpha: 1.0)
+                )
+            )
         }
         if ratio >= 1 {
-            return (Color(red: 0.06, green: 0.23, blue: 0.37), Color(red: 0.81, green: 0.91, blue: 1.0))
+            return (
+                adaptiveColor(
+                    light: UIColor(red: 0.06, green: 0.23, blue: 0.37, alpha: 1.0),
+                    dark: UIColor(red: 0.64, green: 0.82, blue: 0.98, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.81, green: 0.91, blue: 1.0, alpha: 1.0),
+                    dark: UIColor(red: 0.17, green: 0.28, blue: 0.37, alpha: 1.0)
+                )
+            )
         } else if ratio > 0.75 {
-            return (Color(red: 0.07, green: 0.29, blue: 0.11), Color(red: 0.84, green: 0.96, blue: 0.84))
+            return (
+                adaptiveColor(
+                    light: UIColor(red: 0.07, green: 0.29, blue: 0.11, alpha: 1.0),
+                    dark: UIColor(red: 0.74, green: 0.92, blue: 0.78, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 0.84, green: 0.96, blue: 0.84, alpha: 1.0),
+                    dark: UIColor(red: 0.17, green: 0.26, blue: 0.19, alpha: 1.0)
+                )
+            )
         } else if ratio > 0.5 {
-            return (Color(red: 0.37, green: 0.29, blue: 0.0), Color(red: 1.0, green: 0.95, blue: 0.70))
+            return (
+                adaptiveColor(
+                    light: UIColor(red: 0.37, green: 0.29, blue: 0.0, alpha: 1.0),
+                    dark: UIColor(red: 0.95, green: 0.88, blue: 0.58, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 1.0, green: 0.95, blue: 0.70, alpha: 1.0),
+                    dark: UIColor(red: 0.27, green: 0.24, blue: 0.11, alpha: 1.0)
+                )
+            )
         } else if ratio > 0.25 {
-            return (Color(red: 0.42, green: 0.23, blue: 0.0), Color(red: 1.0, green: 0.84, blue: 0.70))
+            return (
+                adaptiveColor(
+                    light: UIColor(red: 0.42, green: 0.23, blue: 0.0, alpha: 1.0),
+                    dark: UIColor(red: 0.96, green: 0.77, blue: 0.56, alpha: 1.0)
+                ),
+                adaptiveColor(
+                    light: UIColor(red: 1.0, green: 0.84, blue: 0.70, alpha: 1.0),
+                    dark: UIColor(red: 0.33, green: 0.21, blue: 0.13, alpha: 1.0)
+                )
+            )
         }
-        return (Color(red: 0.35, green: 0.04, blue: 0.04), Color(red: 1.0, green: 0.76, blue: 0.76))
+        return (
+            adaptiveColor(
+                light: UIColor(red: 0.35, green: 0.04, blue: 0.04, alpha: 1.0),
+                dark: UIColor(red: 0.98, green: 0.79, blue: 0.79, alpha: 1.0)
+            ),
+            adaptiveColor(
+                light: UIColor(red: 1.0, green: 0.76, blue: 0.76, alpha: 1.0),
+                dark: UIColor(red: 0.34, green: 0.16, blue: 0.16, alpha: 1.0)
+            )
+        )
     }
 
     private func visibleEncounterStats(for player: PlayerViewDTO) -> [StatEntryDTO] {
@@ -752,7 +867,10 @@ struct ContentView: View {
 
     private func encounterRowBackground(for player: PlayerViewDTO) -> Color {
         if player.id == model.gameState?.currentTurnId {
-            return Color.yellow.opacity(0.28)
+            return adaptiveColor(
+                light: UIColor.systemYellow.withAlphaComponent(0.28),
+                dark: UIColor.systemYellow.withAlphaComponent(0.18)
+            )
         }
         return Color(uiColor: .secondarySystemGroupedBackground)
     }
@@ -953,7 +1071,16 @@ struct ContentView: View {
             return (.secondary, Color(uiColor: .tertiarySystemGroupedBackground))
         }
 
-        return (Color(red: 0.06, green: 0.23, blue: 0.37), Color(red: 0.81, green: 0.91, blue: 1.0))
+        return (
+            adaptiveColor(
+                light: UIColor(red: 0.06, green: 0.23, blue: 0.37, alpha: 1.0),
+                dark: UIColor(red: 0.64, green: 0.82, blue: 0.98, alpha: 1.0)
+            ),
+            adaptiveColor(
+                light: UIColor(red: 0.81, green: 0.91, blue: 1.0, alpha: 1.0),
+                dark: UIColor(red: 0.17, green: 0.28, blue: 0.37, alpha: 1.0)
+            )
+        )
     }
 
     private func healthBadge(for character: PlayerViewDTO) -> some View {
@@ -995,6 +1122,12 @@ struct ContentView: View {
             return "\(hpLine)\nTemp HP \(tempHp.current)"
         }
         return hpLine
+    }
+
+    private func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? dark : light
+        })
     }
 
 }
