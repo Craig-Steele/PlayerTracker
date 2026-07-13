@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "encounterId": "00000000-0000-0000-0000-000000000001",
+  "name": "Sample Encounter",
+  "roundNumber": 1,
+  "activeTokenId": "token-hero",
+  "tokens": []
+}

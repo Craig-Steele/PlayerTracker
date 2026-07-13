@@ -1,6 +1,6 @@
 # PlayerTracker
 
-PlayerTracker is a full-stack client-server tabletop RPG tracker started in March 2026. It combines a Vapor console app, browser-based clients, and native companion apps in a single repository. The server and web client are the active surfaces; the mobile clients remain in the tree while mobile feature work is on hold.
+PlayerTracker is a full-stack client-server tabletop RPG tracker started in March 2026. It combines a Vapor console app, browser-based clients, native companion apps, and a tactical Unity client scaffold in a single repository. The server and web client are the active surfaces; the mobile clients remain in the tree while mobile feature work is on hold. The tactical Unity merge is now scaffolded under `Client-Unity/` and `SharedProtocol/`.
 
 The current working architecture is a Vapor service running on a Mac and serving browser clients over the local network. There are also native iOS and Android player clients that talk to the same HTTP API, but mobile feature work is currently on hold while server and web client feature work continues.
 
@@ -10,6 +10,10 @@ The current working architecture is a Vapor service running on a Mac and serving
   The main Vapor service. This is the primary runtime.
 - `Client-Web`
   Browser clients for player, referee, admin, display, and campaign selection. The referee-page parity work from the M7C plan is complete.
+- `Client-Unity`
+  Tactical Unity client scaffold for the mobile-first combat merge.
+- `SharedProtocol`
+  Shared tactical snapshot, command, and event contract stubs.
 - `Client-iOS`
   Native iOS and iPadOS player client for the existing server. Feature work is currently on hold.
 - `Client-Android`
@@ -19,6 +23,8 @@ The current working architecture is a Vapor service running on a Mac and serving
 
 - hosts the web UI from the checked-in `Client-Web/` directory
 - serves player, referee, display-only, and campaign-selector pages
+- contains the tactical Unity client scaffold under `Client-Unity/`
+- contains the tactical shared contract stubs under `SharedProtocol/`
 - manages campaign membership, referee roles, and name-based join/reclaim flow
 - publishes live campaign updates over SSE to browser clients
 - tracks campaigns, encounter state, initiative, character stats, conditions, visibility, and reveal-on-turn behavior

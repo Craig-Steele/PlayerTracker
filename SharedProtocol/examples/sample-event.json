@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "type": "token-selected",
+  "payload": {
+    "tokenId": "token-hero"
+  }
+}

@@ -527,6 +527,8 @@ func routes(
 ) throws {
     let userStore = app.userStore
 
+    app.registerTacticalRoutes()
+
     app.post("auth", "signup") { req async throws -> Response in
         let input = try req.content.decode(AuthSignupInput.self)
         let email = input.email.trimmingCharacters(in: .whitespacesAndNewlines)

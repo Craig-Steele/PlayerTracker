@@ -1,0 +1,27 @@
+# Unity generated files
+Library/
+Logs/
+MemoryCaptures/
+Obj/
+Temp/
+UserSettings/
+Build/
+Builds/
+
+# IDE and package manager caches
+.vscode/
+.idea/
+
+# Generated project files
+*.csproj
+*.sln
+*.slnx
+*.pidb
+*.booproj
+*.svd
+*.user
+*.userprefs
+*.unityproj
+
+# OS noise
+.DS_Store

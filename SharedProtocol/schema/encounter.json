@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "name": "EncounterSnapshot",
+  "description": "Authoritative encounter state projected to tactical clients."
+}

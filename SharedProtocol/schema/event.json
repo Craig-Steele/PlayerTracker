@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "name": "TacticalEvent",
+  "description": "Event envelope broadcast by the tactical host."
+}
