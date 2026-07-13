@@ -65,6 +65,10 @@ private func requireAuthenticatedUser(_ req: Request) async throws -> UserPersis
     return user
 }
 
+private func requireServerOwnerSession(_ req: Request) async throws -> UserPersistenceState {
+    try await requireAuthenticatedUser(req)
+}
+
 private func requirePlayerSession(_ req: Request) async throws -> PlayerSessionPersistenceState {
     guard let token = req.cookies[playerSessionCookieName]?.string,
           let session = try await DatabasePersistence.loadPlayerSession(token: token, on: req.db) else {
@@ -608,7 +612,7 @@ func routes(
     }
 
     app.post("admin", "shutdown") { req async throws -> HTTPStatus in
-        let user = try await requireAuthenticatedUser(req)
+        let user = try await requireServerOwnerSession(req)
         logConnection(req, action: "shutdown", identifier: user.email)
         Task {
             await eventHub.shutdown()
@@ -1807,7 +1811,7 @@ func routes(
               let campaignID = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
-        let user = try await requireAuthenticatedUser(req)
+        let user = try await requireServerOwnerSession(req)
         logConnection(req, action: "select-campaign", identifier: "\(user.email) \(campaignID.uuidString)")
         let previousActiveCampaign = await campaignStore.activeCampaign()
         let selected = try await campaignStore.selectCampaign(id: campaignID)

@@ -1173,6 +1173,30 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testCampaignSelectionRejectsRefereeSession() async throws {
+        let tester = try await makeTester()
+
+        let createResponse = try await tester.sendRequest(
+            .POST,
+            "/campaign",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                CampaignUpdateInput(name: "Referee Locked", rulesetId: "pathfinder")
+            ))
+        )
+        XCTAssertEqual(createResponse.status, .ok)
+        let created = try createResponse.content.decode(CampaignState.self)
+
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+        let selectAsRefereeResponse = try await tester.sendRequest(
+            .POST,
+            "/campaigns/\(created.id.uuidString)/select",
+            headers: ["Cookie": "roll4_player_session=\(refereeCookie)"]
+        )
+        XCTAssertEqual(selectAsRefereeResponse.status, .unauthorized)
+    }
+
+    @Test
     func testLegacyCharacterCreateRouteIsUnavailable() async throws {
         let tester = try await makeTester()
         _ = try await activateCampaign(tester, name: "Ancients!", rulesetId: "traveller")
