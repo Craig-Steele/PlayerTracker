@@ -261,7 +261,6 @@ struct GameStateDTO: Codable, Equatable {
 struct CharacterInputDTO: Codable {
     let id: UUID?
     let campaignName: String?
-    let ownerId: UUID?
     let ownerName: String
     let name: String
     let initiative: Double?
@@ -279,7 +278,6 @@ struct CharacterInputDTO: Codable {
     init(
         id: UUID? = nil,
         campaignName: String? = nil,
-        ownerId: UUID? = nil,
         ownerName: String,
         name: String,
         initiative: Double? = nil,
@@ -296,7 +294,6 @@ struct CharacterInputDTO: Codable {
     ) {
         self.id = id
         self.campaignName = campaignName
-        self.ownerId = ownerId
         self.ownerName = ownerName
         self.name = name
         self.initiative = initiative

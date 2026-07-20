@@ -4405,7 +4405,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       await ensurePlayerSessionId();
       const payload = {
         id: character.id,
-        ownerId: currentPlayerSessionId,
         ownerName: character.ownerName,
         name: character.name,
         statBlockId: character.statBlockId || inferCharacterStatBlockIdFromStats(character.stats) || null,
@@ -6659,7 +6658,6 @@ function getOwnerName() {
         return;
       }
       const payload = {
-        ownerId: currentPlayerSessionId,
         ownerName,
         name,
         statBlockId: inferCharacterStatBlockIdFromStats(statsPayload) || null,
@@ -6889,9 +6887,6 @@ function getOwnerName() {
 
     try {
       await ensurePlayerSessionId();
-      if (!payload.ownerId) {
-        payload.ownerId = currentPlayerSessionId;
-      }
       if (currentCampaignName) {
         payload.campaignName = currentCampaignName;
       }
@@ -6970,7 +6965,6 @@ function getOwnerName() {
     }
     const payload = {
       id: selectedCharacterId,
-      ownerId: currentPlayerSessionId,
       ownerName,
       name,
       initiative,
@@ -7004,7 +6998,6 @@ function getOwnerName() {
     const conditionList = Array.from(selectedConditions);
     const payload = {
       id: selectedCharacterId,
-      ownerId: currentPlayerSessionId,
       ownerName,
       name: selectedCharacter.name,
       initiative: selectedCharacter.initiative,

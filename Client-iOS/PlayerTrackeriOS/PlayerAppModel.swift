@@ -333,7 +333,6 @@ final class PlayerAppModel {
             let payload = CharacterInputDTO(
                 id: draft.id,
                 campaignName: campaign.name,
-                ownerId: currentPlayerID,
                 ownerName: trimmedOwnerName,
                 name: trimmedName,
                 initiative: draft.id.flatMap { existingCharacter(with: $0)?.initiative },
@@ -507,7 +506,6 @@ final class PlayerAppModel {
             let payload = CharacterInputDTO(
                 id: character.id,
                 campaignName: campaign.name,
-                ownerId: currentPlayerID,
                 ownerName: currentPlayerDisplayName,
                 name: character.name,
                 initiative: initiative,
@@ -618,7 +616,6 @@ final class PlayerAppModel {
             let characterPayload = CharacterInputDTO(
                 id: character.id,
                 campaignName: campaign.name,
-                ownerId: currentPlayerID,
                 ownerName: currentPlayerDisplayName,
                 name: character.name,
                 initiative: character.initiative,
@@ -647,7 +644,6 @@ final class PlayerAppModel {
                 let rollbackPayload = CharacterInputDTO(
                     id: character.id,
                     campaignName: campaign.name,
-                    ownerId: currentPlayerID,
                     ownerName: currentPlayerDisplayName,
                     name: character.name,
                     initiative: character.initiative,
@@ -711,7 +707,6 @@ final class PlayerAppModel {
             let payload = CharacterInputDTO(
                 id: character.id,
                 campaignName: campaign.name,
-                ownerId: currentPlayerID,
                 ownerName: currentPlayerDisplayName,
                 name: character.name,
                 initiative: character.initiative,
