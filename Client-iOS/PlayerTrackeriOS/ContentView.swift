@@ -1112,7 +1112,8 @@ struct ContentView: View {
 
         let isDead = summary.current <= 0
         let ratio = Double(summary.current) / Double(summary.max)
-        if model.sessionPlayerID.map({ character.ownerId != $0 }) ?? true, !character.revealStats {
+        let isOwnedByCurrentSession = model.sessionPlayerID.map { character.isClaimed(by: $0) } ?? false
+        if !isOwnedByCurrentSession, !character.revealStats {
             return healthStatusLabel(ratio: ratio, isDead: isDead)
         }
 

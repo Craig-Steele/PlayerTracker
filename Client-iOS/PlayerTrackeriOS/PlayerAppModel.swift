@@ -678,8 +678,11 @@ final class PlayerAppModel {
 
     var isMyTurn: Bool {
         guard let gameState else { return false }
-        guard let currentPlayerID else { return false }
-        return gameState.players.contains(where: { $0.ownerId == currentPlayerID && $0.id == gameState.currentTurnId })
+        guard let currentPlayerID,
+              let currentTurnPlayer = gameState.players.first(where: { $0.id == gameState.currentTurnId }) else {
+            return false
+        }
+        return currentTurnPlayer.isClaimed(by: currentPlayerID)
     }
 
     func isCurrentTurn(for character: PlayerViewDTO) -> Bool {
