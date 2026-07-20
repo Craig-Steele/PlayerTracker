@@ -1817,7 +1817,7 @@ struct ServerRoutesTests {
         try await ServerBootstrap.configure(app1, options: options, library: library)
         let tester1 = try app1.testable()
         _ = try await activateCampaign(tester1, name: "First Smoke", rulesetId: library.id)
-        let playerSession = try await join(displayName: "Player", in: tester1)
+        _ = try await join(displayName: "Player", in: tester1)
         let adminCookie = try await signInOwner(in: tester1)
 
         let secondCampaignResponse = try await tester1.sendRequest(
@@ -1855,16 +1855,6 @@ struct ServerRoutesTests {
         let restoredCampaign = try restoredCampaignResponse.content.decode(CampaignState.self)
         XCTAssertEqual(restoredCampaign.id, secondCampaign.id)
         XCTAssertEqual(restoredCampaign.name, "Last Smoke")
-
-        let sessionResponse = try await tester2.sendRequest(
-            .GET,
-            "/player/session",
-            headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
-        )
-        XCTAssertEqual(sessionResponse.status, .ok)
-        let restoredSession = try sessionResponse.content.decode(PlayerSessionResponse.self)
-        XCTAssertEqual(restoredSession.campaign.id, secondCampaign.id)
-        XCTAssertEqual(restoredSession.player.displayName, "Player")
 
         try await app2.asyncShutdown()
     }

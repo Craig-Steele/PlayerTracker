@@ -38,6 +38,7 @@ struct DatabaseMigrationsTests {
         try await AddUserDataFilesToCampaigns().prepare(on: app.db)
         try await AddPartyTreasureToCampaigns().prepare(on: app.db)
         try await AddCurrencyToCampaigns().prepare(on: app.db)
+        try await AddLastSelectedAtToCampaigns().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
@@ -60,6 +61,7 @@ struct DatabaseMigrationsTests {
         try await AddUserDataFilesToCampaigns().prepare(on: app.db)
         try await AddPartyTreasureToCampaigns().prepare(on: app.db)
         try await AddCurrencyToCampaigns().prepare(on: app.db)
+        try await AddLastSelectedAtToCampaigns().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
@@ -101,6 +103,7 @@ struct DatabaseMigrationsTests {
         try await AddUserDataFilesToCampaigns().prepare(on: app.db)
         try await AddPartyTreasureToCampaigns().prepare(on: app.db)
         try await AddCurrencyToCampaigns().prepare(on: app.db)
+        try await AddLastSelectedAtToCampaigns().prepare(on: app.db)
         try await CreateCampaignInvites().prepare(on: app.db)
         try await DatabaseMigrations.verifyShape(on: app.db)
     }
