@@ -1035,7 +1035,7 @@ Status: complete
 
 ### M8: iOS Migration
 
-Goal: convert iOS from device identity to account identity.
+Goal: convert iOS from device identity to authenticated player-session identity.
 
 Scope notes:
 
@@ -1054,8 +1054,7 @@ Touchpoints:
 
 Work:
 
-- add auth API calls
-- add login/signup/logout/session restore flow
+- keep the iOS client on campaign-scoped player sessions rather than a separate admin login
 - replace `ownerId` persistence as primary identity
 - consume the server's active campaign and refresh when it changes
 - add SSE client handling for the active campaign updates
@@ -1065,15 +1064,14 @@ Work:
 
 Checklist:
 
-- wire the iOS client to the server auth endpoints: `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, and `GET /auth/session`
-- add a startup path that restores auth state from secure storage
+- add a startup path that restores the player session from secure storage
 - replace `ownerId` as the source of ownership and character lookup
 - keep `ownerId` only if needed as a transient client-side compatibility field during the refactor
 - refresh player data, campaign state, and current characters after the server's active campaign changes
 - subscribe to active-campaign SSE updates and reconnect cleanly after disconnects
 - add iOS referee-mode navigation and any referee-only controls needed for campaign play
 - ensure referee access is gated by campaign-scoped role checks, not by local device state
-- keep player and referee views consistent with the same authenticated session model
+- keep player and referee views consistent with the same authenticated player-session model
 - make the iPhone and iPad layouts work without hidden form-factor assumptions
 - ensure settings and connection flows remain usable on both phone and tablet
 - store tokens, sessions, or equivalent auth secrets in Keychain-backed storage
@@ -1082,13 +1080,13 @@ Checklist:
 
 Acceptance:
 
-- user can sign up, sign in, sign out, and restore a prior session on a fresh app launch
-- user can recover all joined campaigns and owned characters after authentication
+- user can join, rejoin, sign out, and restore a prior player session on a fresh app launch
+- user can recover the active campaign and owned characters after authentication
 - same user can use the active campaign on iPhone and iPad without a separate campaign-switching UI
 - designated referees can open the iOS referee workflow for campaigns where they have that role
 - iOS referee actions respect campaign-scoped authorization
 - the iOS client covers the same player and referee workflows as the web client, excluding display-only mode
-- account identity is server-authenticated rather than derived from a device-local `ownerId`
+- player identity is server-authenticated rather than derived from a device-local `ownerId`
 - secure session material is stored in Keychain-backed storage
 - live state updates for the selected campaign arrive via SSE in normal operation
 - reconnecting after a transient disconnect refreshes the selected campaign cleanly
@@ -1097,28 +1095,45 @@ Acceptance:
 
 ### M9: Android Migration
 
-Goal: same as iOS, with parity.
+Goal: convert Android from device identity to authenticated player-session identity, with parity to iOS.
+
+Scope notes:
+
+- support phone and tablet form factors as first-class Android targets
+- do not add a TV target in M9, but avoid UI and architecture choices that would obviously block a future TV port
+- assume a clean launch slate, so no legacy-install migration path is required for existing `ownerId` data
+- target feature parity with the iOS client for player and referee workflows
+- the Android client follows the server's active campaign and does not need a multi-campaign picker
+- display-only remains web-only for now
 
 Touchpoints:
 
 - `Client-Android/app/src/main/java/com/roll4initiative/android/ui/PlayerAppViewModel.kt`
 - `Client-Android/app/src/main/java/com/roll4initiative/android/api/ApiService.kt`
-- Compose auth/campaign UI
+- `Client-Android/app/src/main/java/com/roll4initiative/android/ui/SettingsScreen.kt`
 
 Work:
 
-- add auth API calls
-- add login/signup/logout/session restore
-- remove `ownerId` as primary identity
-- add active-campaign display and membership view
-- add SSE client handling for selected campaign updates
-- move auth state into secure storage
+- keep the Android client on campaign-scoped player sessions rather than a separate admin login
+- replace `ownerId` persistence as primary identity
+- consume the server's active campaign and refresh when it changes
+- add SSE client handling for the active campaign updates
+- store session securely in encrypted Android storage
+- add referee-mode UI and the referee-only actions required for Android
+- match the iOS client feature set for player and referee interactions where practical
 
 Acceptance:
 
-- Android becomes a real account-based client
-- users can move between campaigns without losing ownership continuity
-- live state updates arrive via SSE in normal operation
+- user can join, rejoin, sign out, and restore a prior player session on a fresh app launch
+- user can recover the active campaign and owned characters after authentication
+- same user can use the active campaign on phone and tablet without a separate campaign-switching UI
+- designated referees can open the Android referee workflow for campaigns where they have that role
+- Android referee actions respect campaign-scoped authorization
+- the Android client covers the same player and referee workflows as the iOS client, excluding display-only mode
+- player identity is server-authenticated rather than derived from a device-local `ownerId`
+- secure session material is stored in encrypted Android storage
+- live state updates for the selected campaign arrive via SSE in normal operation
+- reconnecting after a transient disconnect refreshes the selected campaign cleanly
 
 ### M10: Legacy Anonymous Migration
 
