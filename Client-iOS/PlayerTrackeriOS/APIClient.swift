@@ -75,22 +75,8 @@ struct APIClient {
         let _: EmptyResponse = try await send("player/logout", method: "POST", body: Optional<Data>.none)
     }
 
-    func fetchCharacters(ownerId: UUID, campaignName: String?) async throws -> [PlayerViewDTO] {
-        var path = "players/\(ownerId.uuidString.lowercased())/characters"
-        if let campaignName, !campaignName.isEmpty {
-            let encoded = campaignName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? campaignName
-            path += "?campaign=\(encoded)"
-        }
-        return try await get(path)
-    }
-
-    func renameOwner(ownerId: UUID, name: String) async throws {
-        let payload = CharacterRenameInputDTO(name: name)
-        let _: EmptyResponse = try await send(
-            "players/\(ownerId.uuidString.lowercased())/rename",
-            method: "POST",
-            body: payload
-        )
+    func fetchCharacters(campaignID: UUID) async throws -> [PlayerViewDTO] {
+        try await get("campaigns/\(campaignID.uuidString.lowercased())/me/characters")
     }
 
     func upsertCharacter(_ input: CharacterInputDTO, campaignID: UUID) async throws -> PlayerViewDTO {

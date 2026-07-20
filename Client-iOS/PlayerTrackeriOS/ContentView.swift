@@ -49,7 +49,7 @@ struct ContentView: View {
             SettingsView(
                 serverURL: model.normalizedServerURL,
                 playerName: model.playerName,
-                playerID: model.currentPlayerID,
+                playerID: model.sessionPlayerID,
                 showPlayerNames: $model.showPlayerNames,
                 showCharacterConditions: $model.showCharacterConditions,
                 onChangeConnection: {
@@ -459,7 +459,7 @@ struct ContentView: View {
     }
 
     private func encounterOrderRow(for player: PlayerViewDTO) -> some View {
-        let isMine = player.isClaimed(by: model.currentPlayerID)
+        let isMine = model.sessionPlayerID.map { player.isClaimed(by: $0) } ?? false
         let canClaim = player.canBeClaimed
         let encounterPresentation = EncounterPresentationState(
             campaignEncounterState: model.campaign?.encounterState,
@@ -1112,7 +1112,7 @@ struct ContentView: View {
 
         let isDead = summary.current <= 0
         let ratio = Double(summary.current) / Double(summary.max)
-        if character.ownerId != model.currentPlayerID && !character.revealStats {
+        if model.sessionPlayerID.map({ character.ownerId != $0 }) ?? true, !character.revealStats {
             return healthStatusLabel(ratio: ratio, isDead: isDead)
         }
 

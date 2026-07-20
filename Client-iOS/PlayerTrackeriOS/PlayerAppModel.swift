@@ -24,10 +24,6 @@ final class PlayerAppModel {
     var playerName: String {
         didSet { UserDefaults.standard.set(playerName, forKey: Self.playerNameKey) }
     }
-    /// Legacy compatibility fallback for installs that predate session-backed identity.
-    private var ownerId: UUID {
-        didSet { UserDefaults.standard.set(ownerId.uuidString, forKey: Self.ownerIdKey) }
-    }
     var showPlayerNames: Bool {
         didSet { UserDefaults.standard.set(showPlayerNames, forKey: Self.showPlayerNamesKey) }
     }
@@ -54,7 +50,6 @@ final class PlayerAppModel {
 
     private static let serverURLKey = "ios.serverURL"
     private static let playerNameKey = "ios.playerName"
-    private static let ownerIdKey = "ios.ownerId"
     private static let showPlayerNamesKey = "ios.showPlayerNames"
     private static let showCharacterConditionsKey = "ios.showCharacterConditions"
     private let playerSessionStore = PlayerSessionStore()
@@ -63,13 +58,6 @@ final class PlayerAppModel {
     init() {
         self.serverURLString = UserDefaults.standard.string(forKey: Self.serverURLKey) ?? "http://localhost:8080"
         self.playerName = UserDefaults.standard.string(forKey: Self.playerNameKey) ?? ""
-        if let raw = UserDefaults.standard.string(forKey: Self.ownerIdKey), let existing = UUID(uuidString: raw) {
-            self.ownerId = existing
-        } else {
-            let fresh = UUID()
-            self.ownerId = fresh
-            UserDefaults.standard.set(fresh.uuidString, forKey: Self.ownerIdKey)
-        }
         self.showPlayerNames = UserDefaults.standard.object(forKey: Self.showPlayerNamesKey) as? Bool ?? true
         self.showCharacterConditions = UserDefaults.standard.object(forKey: Self.showCharacterConditionsKey) as? Bool ?? true
         self.playerSessionToken = try? playerSessionStore.loadToken()
@@ -127,8 +115,8 @@ final class PlayerAppModel {
         playerSession?.player.id
     }
 
-    var currentPlayerID: UUID {
-        sessionPlayerID ?? ownerId
+    var currentPlayerID: UUID? {
+        sessionPlayerID
     }
 
     var currentPlayerDisplayName: String {
@@ -220,7 +208,7 @@ final class PlayerAppModel {
             }
 
             let characters = (resolvedCampaign != nil && (resolvedPlayerSession != nil || playerSessionToken != nil))
-                ? try await client.fetchCharacters(ownerId: currentPlayerID, campaignName: resolvedCampaign?.name)
+                ? try await client.fetchCharacters(campaignID: resolvedCampaign!.id)
                 : []
 
             self.campaign = resolvedCampaign
@@ -319,7 +307,11 @@ final class PlayerAppModel {
             statusMessage = "Connect to a server first."
             return
         }
-        let trimmedOwnerName = playerName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let currentPlayerID else {
+            statusMessage = "Join the campaign before creating or editing characters."
+            return
+        }
+        let trimmedOwnerName = currentPlayerDisplayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedOwnerName.isEmpty else {
             statusMessage = "Save a player name before creating characters."
             return
@@ -412,7 +404,7 @@ final class PlayerAppModel {
             statusMessage = "Connect to a server first."
             return
         }
-        guard character.isClaimed(by: currentPlayerID) else {
+        guard let currentPlayerID, character.isClaimed(by: currentPlayerID) else {
             statusMessage = "Character is not claimed by you."
             return
         }
@@ -506,13 +498,17 @@ final class PlayerAppModel {
             statusMessage = "Connect to a server first."
             return
         }
+        guard let currentPlayerID else {
+            statusMessage = "Join the campaign before editing initiative."
+            return
+        }
         do {
             let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
             let payload = CharacterInputDTO(
                 id: character.id,
                 campaignName: campaign.name,
                 ownerId: currentPlayerID,
-                ownerName: character.ownerName,
+                ownerName: currentPlayerDisplayName,
                 name: character.name,
                 initiative: initiative,
                 stats: character.stats,
@@ -623,7 +619,7 @@ final class PlayerAppModel {
                 id: character.id,
                 campaignName: campaign.name,
                 ownerId: currentPlayerID,
-                ownerName: character.ownerName,
+                ownerName: currentPlayerDisplayName,
                 name: character.name,
                 initiative: character.initiative,
                 stats: character.stats,
@@ -652,7 +648,7 @@ final class PlayerAppModel {
                     id: character.id,
                     campaignName: campaign.name,
                     ownerId: currentPlayerID,
-                    ownerName: character.ownerName,
+                    ownerName: currentPlayerDisplayName,
                     name: character.name,
                     initiative: character.initiative,
                     stats: character.stats,
@@ -682,6 +678,7 @@ final class PlayerAppModel {
 
     var isMyTurn: Bool {
         guard let gameState else { return false }
+        guard let currentPlayerID else { return false }
         return gameState.players.contains(where: { $0.ownerId == currentPlayerID && $0.id == gameState.currentTurnId })
     }
 
@@ -702,13 +699,17 @@ final class PlayerAppModel {
             statusMessage = "Connect to a server first."
             return
         }
+        guard let currentPlayerID else {
+            statusMessage = "Join the campaign before editing characters."
+            return
+        }
         do {
             let client = try APIClient(baseURLString: serverURLString, playerSessionToken: playerSessionToken)
             let payload = CharacterInputDTO(
                 id: character.id,
                 campaignName: campaign.name,
                 ownerId: currentPlayerID,
-                ownerName: character.ownerName,
+                ownerName: currentPlayerDisplayName,
                 name: character.name,
                 initiative: character.initiative,
                 stats: character.stats,

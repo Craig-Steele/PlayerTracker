@@ -3,9 +3,9 @@ import XCTest
 
 final class PlayerTrackeriOSTests: XCTestCase {
     @MainActor
-    func testCurrentPlayerIDPrefersSessionPlayerIDOverLegacyFallback() {
+    func testCurrentPlayerIDTracksTheAuthenticatedSession() {
         let model = PlayerAppModel()
-        let legacyFallbackID = model.currentPlayerID
+        XCTAssertNil(model.currentPlayerID)
         let sessionPlayerID = UUID()
         let campaignID = UUID()
         let sessionCampaign = CampaignStateDTO(
@@ -28,7 +28,6 @@ final class PlayerTrackeriOSTests: XCTestCase {
         )
 
         XCTAssertEqual(model.currentPlayerID, sessionPlayerID)
-        XCTAssertNotEqual(legacyFallbackID, sessionPlayerID)
     }
 
     func testEffectiveEncounterStateFallsBackToCampaignState() {

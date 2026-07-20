@@ -1043,6 +1043,7 @@ Scope notes:
 - do not add an AppleTV target in M8, but avoid UI and architecture choices that would obviously block a future tvOS port
 - assume a clean launch slate, so no legacy-install migration path is required for existing `ownerId` data
 - target feature parity with the web client for player and referee workflows
+- the iOS client follows the server's active campaign and does not need a multi-campaign picker
 - display-only remains web-only for now
 
 Touchpoints:
@@ -1056,8 +1057,8 @@ Work:
 - add auth API calls
 - add login/signup/logout/session restore flow
 - replace `ownerId` persistence as primary identity
-- add campaign selection
-- add SSE client handling for selected campaign updates
+- consume the server's active campaign and refresh when it changes
+- add SSE client handling for the active campaign updates
 - store session securely in Keychain-backed storage
 - add referee-mode UI and the referee-only actions required for iOS
 - match the web client feature set for player and referee interactions where practical
@@ -1068,9 +1069,8 @@ Checklist:
 - add a startup path that restores auth state from secure storage
 - replace `ownerId` as the source of ownership and character lookup
 - keep `ownerId` only if needed as a transient client-side compatibility field during the refactor
-- add explicit campaign selection and campaign switching UI
-- refresh player data, campaign state, and current characters after campaign changes
-- subscribe to selected-campaign SSE updates and reconnect cleanly after disconnects
+- refresh player data, campaign state, and current characters after the server's active campaign changes
+- subscribe to active-campaign SSE updates and reconnect cleanly after disconnects
 - add iOS referee-mode navigation and any referee-only controls needed for campaign play
 - ensure referee access is gated by campaign-scoped role checks, not by local device state
 - keep player and referee views consistent with the same authenticated session model
@@ -1084,7 +1084,7 @@ Acceptance:
 
 - user can sign up, sign in, sign out, and restore a prior session on a fresh app launch
 - user can recover all joined campaigns and owned characters after authentication
-- same user can view joined campaigns and join the active campaign on iPhone and iPad
+- same user can use the active campaign on iPhone and iPad without a separate campaign-switching UI
 - designated referees can open the iOS referee workflow for campaigns where they have that role
 - iOS referee actions respect campaign-scoped authorization
 - the iOS client covers the same player and referee workflows as the web client, excluding display-only mode

@@ -163,7 +163,7 @@ struct PlayerIdentitySheetView: View {
 struct SettingsView: View {
     let serverURL: String
     let playerName: String
-    let playerID: UUID
+    let playerID: UUID?
     @Binding var showPlayerNames: Bool
     @Binding var showCharacterConditions: Bool
     let onChangeConnection: () -> Void
@@ -196,11 +196,13 @@ struct SettingsView: View {
                     Button("Change Name", action: onChangePlayer)
                 }
 
-                Section("Player ID") {
-                    Text(playerID.uuidString)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
+                if let playerID {
+                    Section("Player ID") {
+                        Text(playerID.uuidString)
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
                 }
             }
             .navigationTitle("Settings")
