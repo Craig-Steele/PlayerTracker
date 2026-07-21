@@ -1042,7 +1042,7 @@ Scope notes:
 - support iPhone and iPad as first-class iOS form factors
 - do not add an AppleTV target in M8, but avoid UI and architecture choices that would obviously block a future tvOS port
 - assume a clean launch slate, so no legacy-install migration path is required for existing `ownerId` data
-- target feature parity with the web client for player and referee workflows
+- target feature parity with the web client for player workflows
 - the iOS client follows the server's active campaign and does not need a multi-campaign picker
 - display-only remains web-only for now
 
@@ -1059,8 +1059,7 @@ Work:
 - consume the server's active campaign and refresh when it changes
 - add SSE client handling for the active campaign updates
 - store session securely in Keychain-backed storage
-- add referee-mode UI and the referee-only actions required for iOS
-- match the web client feature set for player and referee interactions where practical
+- match the web client feature set for player interactions where practical
 
 Checklist:
 
@@ -1083,15 +1082,14 @@ Acceptance:
 - user can join, rejoin, sign out, and restore a prior player session on a fresh app launch
 - user can recover the active campaign and owned characters after authentication
 - same user can use the active campaign on iPhone and iPad without a separate campaign-switching UI
-- designated referees can open the iOS referee workflow for campaigns where they have that role
-- iOS referee actions respect campaign-scoped authorization
-- the iOS client covers the same player and referee workflows as the web client, excluding display-only mode
 - player identity is server-authenticated rather than derived from a device-local `ownerId`
 - secure session material is stored in Keychain-backed storage
 - live state updates for the selected campaign arrive via SSE in normal operation
 - reconnecting after a transient disconnect refreshes the selected campaign cleanly
 - the iOS client works in both compact and regular size classes without requiring a separate code path for iPad
 - the M8 implementation does not introduce assumptions that would obviously block a future AppleTV port
+
+Status: in progress
 
 ### M9: Android Migration
 
@@ -1102,7 +1100,7 @@ Scope notes:
 - support phone and tablet form factors as first-class Android targets
 - do not add a TV target in M9, but avoid UI and architecture choices that would obviously block a future TV port
 - assume a clean launch slate, so no legacy-install migration path is required for existing `ownerId` data
-- target feature parity with the iOS client for player and referee workflows
+- target feature parity with the iOS client for player workflows
 - the Android client follows the server's active campaign and does not need a multi-campaign picker
 - display-only remains web-only for now
 
@@ -1119,17 +1117,13 @@ Work:
 - consume the server's active campaign and refresh when it changes
 - add SSE client handling for the active campaign updates
 - store session securely in encrypted Android storage
-- add referee-mode UI and the referee-only actions required for Android
-- match the iOS client feature set for player and referee interactions where practical
+- match the iOS client feature set for player interactions where practical
 
 Acceptance:
 
 - user can join, rejoin, sign out, and restore a prior player session on a fresh app launch
 - user can recover the active campaign and owned characters after authentication
 - same user can use the active campaign on phone and tablet without a separate campaign-switching UI
-- designated referees can open the Android referee workflow for campaigns where they have that role
-- Android referee actions respect campaign-scoped authorization
-- the Android client covers the same player and referee workflows as the iOS client, excluding display-only mode
 - player identity is server-authenticated rather than derived from a device-local `ownerId`
 - secure session material is stored in encrypted Android storage
 - live state updates for the selected campaign arrive via SSE in normal operation
