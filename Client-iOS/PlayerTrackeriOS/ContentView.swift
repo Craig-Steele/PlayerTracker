@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @Bindable var model: PlayerAppModel
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var editorDraft: CharacterDraft?
     @State private var healthDraft: CharacterDraft?
@@ -208,6 +209,12 @@ struct ContentView: View {
         }
         .task {
             await model.connect()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task {
+                await model.refreshAll(showStatus: false)
+            }
         }
     }
 
