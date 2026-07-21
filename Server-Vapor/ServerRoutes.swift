@@ -1199,11 +1199,20 @@ func routes(
             )
         }
         let input = try req.content.decode(CharacterInput.self)
-        let resolvedOwnerName = session.displayName
+        let existingCharacter = input.id.flatMap { userStore.characterState(for: $0) }
+        let resolvedOwnerId: UUID
+        let resolvedOwnerName: String
+        if let existingCharacter, existingCharacter.ownerId != session.id {
+            resolvedOwnerId = existingCharacter.ownerId
+            resolvedOwnerName = existingCharacter.ownerName
+        } else {
+            resolvedOwnerId = session.id
+            resolvedOwnerName = session.displayName
+        }
         let created = await userStore.upsertCharacter(
             id: input.id,
             campaignName: campaign.name,
-            ownerId: session.id,
+            ownerId: resolvedOwnerId,
             ownerName: resolvedOwnerName,
             characterName: input.name,
             referenceUrl: input.referenceUrl,

@@ -1278,6 +1278,78 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testRefereeEditingPlayerCharacterPreservesPlayerOwnership() async throws {
+        let tester = try await makeTester(selectDefaultCampaign: false)
+        let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "traveller")
+        let playerSession = try await join(displayName: "Player", in: tester)
+        let refereeCookie = try await grantRefereeAccess(in: tester, displayName: "Referee")
+
+        let createPayload = CharacterInput(
+            id: nil,
+            campaignName: campaign.name,
+            ownerId: UUID(),
+            ownerName: "Player",
+            name: "Hero",
+            initiative: 12,
+            stats: [StatEntry(key: "HP", current: 8, max: 10)],
+            revealStats: true,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+        let created = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: createPayload
+        )
+        XCTAssertEqual(created.ownerId, playerSession.session.player.id)
+        XCTAssertEqual(created.ownerName, "Player")
+        XCTAssertFalse(created.isReferee)
+
+        let editPayload = CharacterInput(
+            id: created.id,
+            campaignName: campaign.name,
+            ownerId: UUID(),
+            ownerName: "Referee",
+            name: "Hero",
+            initiative: 14,
+            stats: [StatEntry(key: "HP", current: 9, max: 10)],
+            revealStats: true,
+            autoSkipTurn: false,
+            useAppInitiativeRoll: true,
+            initiativeBonus: 0,
+            isHidden: false,
+            revealOnTurn: false,
+            conditions: []
+        )
+        let edited = try await createMemberCharacter(
+            in: tester,
+            cookieToken: refereeCookie,
+            payload: editPayload
+        )
+        XCTAssertEqual(edited.id, created.id)
+        XCTAssertEqual(edited.ownerId, playerSession.session.player.id)
+        XCTAssertEqual(edited.ownerName, "Player")
+        XCTAssertFalse(edited.isReferee)
+        XCTAssertEqual(edited.initiative, 14)
+
+        let charactersResponse = try await tester.sendRequest(
+            .GET,
+            "/campaigns/\(campaign.id.uuidString)/characters",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(refereeCookie)")])
+        )
+        XCTAssertEqual(charactersResponse.status, .ok)
+        let characters = try charactersResponse.content.decode([PlayerView].self)
+        let stored = try XCTUnwrap(characters.first(where: { $0.id == created.id }))
+        XCTAssertEqual(stored.ownerId, playerSession.session.player.id)
+        XCTAssertEqual(stored.ownerName, "Player")
+        XCTAssertFalse(stored.isReferee)
+    }
+
+    @Test
     func testCampaignEventStreamAndKeepaliveRequireMembership() async throws {
         let tester = try await makeTester()
         let campaign = try await activateCampaign(tester, name: "Route Smoke", rulesetId: "dnd5e")
