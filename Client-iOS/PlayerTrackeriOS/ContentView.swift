@@ -32,11 +32,13 @@ struct ContentView: View {
             case .playerName:
                 PlayerIdentitySheetView(
                     playerName: $model.playerName,
+                    campaignName: model.campaign?.name ?? "No campaign connected",
+                    campaignSubtitle: model.campaign?.rulesetLabel ?? "Active campaign",
+                    campaignIconURL: rulesetIconURL,
                     onSave: {
                         Task { await model.savePlayerName() }
                     },
                     onChangeUser: nil,
-                    title: "Join Campaign",
                     footerText: "Enter a player name to join this campaign.",
                     confirmButtonTitle: "Join",
                     showsCloseButton: false,
@@ -76,6 +78,9 @@ struct ContentView: View {
         .sheet(isPresented: $showingPlayerIdentitySheet) {
             PlayerIdentitySheetView(
                 playerName: $model.playerName,
+                campaignName: model.campaign?.name ?? "No campaign connected",
+                campaignSubtitle: model.campaign?.rulesetLabel ?? "Active campaign",
+                campaignIconURL: rulesetIconURL,
                 onSave: {
                     Task { await model.savePlayerName() }
                 },
@@ -243,9 +248,6 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .background(Color(uiColor: .systemGroupedBackground))
-            .onDisappear {
-                model.stopPolling()
-            }
         }
     }
 
@@ -264,30 +266,11 @@ struct ContentView: View {
 
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
-                HStack(alignment: .center, spacing: 12) {
-                    if let iconURL = rulesetIconURL {
-                        AsyncImage(url: iconURL) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                            default:
-                                EmptyView()
-                            }
-                        }
-                        .frame(width: 64, height: 64)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(model.campaign?.name ?? "No campaign connected")
-                            .font(.title3.weight(.semibold))
-                        Text("Player: \(playerDisplayName)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                CampaignHeaderView(
+                    campaignName: model.campaign?.name ?? "No campaign connected",
+                    campaignSubtitle: "Player: \(playerDisplayName)",
+                    iconURL: rulesetIconURL
+                )
 
                 Spacer()
 

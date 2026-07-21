@@ -100,9 +100,11 @@ struct ConnectionSheetView: View {
 
 struct PlayerIdentitySheetView: View {
     @Binding var playerName: String
+    let campaignName: String
+    let campaignSubtitle: String
+    let campaignIconURL: URL?
     let onSave: () -> Void
     let onChangeUser: (() async -> Void)?
-    var title: String = "Player Name"
     var footerText: String = "This name is shown as the owner of your characters."
     var confirmButtonTitle: String = "Save"
     var showsCloseButton: Bool = true
@@ -115,10 +117,18 @@ struct PlayerIdentitySheetView: View {
         NavigationStack {
             Form {
                 Section {
+                    CampaignHeaderView(
+                        campaignName: campaignName,
+                        campaignSubtitle: campaignSubtitle,
+                        iconURL: campaignIconURL
+                    )
+                }
+
+                Section {
                     TextField("Player name", text: $playerName)
                         .focused($playerNameFieldFocused)
                 } header: {
-                    Text("Player")
+                    Text("Join as Player")
                 } footer: {
                     Text(footerText)
                 }
@@ -136,7 +146,6 @@ struct PlayerIdentitySheetView: View {
                     }
                 }
             }
-            .navigationTitle(title)
             .onAppear {
                 playerNameFieldFocused = true
             }
@@ -157,6 +166,41 @@ struct PlayerIdentitySheetView: View {
                 }
             }
         }
+    }
+}
+
+struct CampaignHeaderView: View {
+    let campaignName: String
+    let campaignSubtitle: String
+    let iconURL: URL?
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            if let iconURL {
+                AsyncImage(url: iconURL) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFit()
+                    default:
+                        EmptyView()
+                    }
+                }
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(campaignName)
+                    .font(.title3.weight(.semibold))
+                Text(campaignSubtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 4)
     }
 }
 

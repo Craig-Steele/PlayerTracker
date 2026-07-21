@@ -67,8 +67,23 @@ final class PlayerAppModel {
     }
 
     func startPolling() {
-        // The web client now relies on server push updates rather than a timer.
-        // Keep this as a no-op until the iOS client has the same SSE path.
+        guard refreshTask == nil,
+              playerSessionToken == nil,
+              hasServerConnection,
+              campaign != nil else {
+            return
+        }
+
+        refreshTask = Task { [weak self] in
+            guard let self else { return }
+            while !Task.isCancelled {
+                await self.refreshAll(showStatus: false)
+                if Task.isCancelled {
+                    return
+                }
+                try? await Task.sleep(for: .seconds(5))
+            }
+        }
     }
 
     func stopPolling() {
@@ -192,7 +207,7 @@ final class PlayerAppModel {
                     }
                     await clearPlayerSession(
                         reason: "Saved player session expired. Please rejoin.",
-                        clearPlayerName: true
+                        clearPlayerName: false
                     )
                 }
             } else {
@@ -223,6 +238,7 @@ final class PlayerAppModel {
                     : "Connected to \(client.baseURL.absoluteString)"
             }
             syncCampaignStream()
+            syncJoinCampaignPolling()
         } catch {
             hasServerConnection = false
             self.lastError = error.localizedDescription
@@ -231,6 +247,7 @@ final class PlayerAppModel {
             self.equipmentLibraryItems = []
             self.gameState = nil
             self.myCharacters = []
+            stopPolling()
             if showStatus || self.campaign == nil {
                 self.statusMessage = error.localizedDescription
             }
@@ -255,7 +272,6 @@ final class PlayerAppModel {
             lastError = error.localizedDescription
         }
         await clearPlayerSession(reason: "Signed out.")
-        playerName = ""
         statusMessage = "Signed out."
         stopPolling()
         stopCampaignStream()
@@ -738,7 +754,7 @@ final class PlayerAppModel {
         }
         await clearPlayerSession(
             reason: "You were removed from the campaign. Please rejoin.",
-            clearPlayerName: true
+            clearPlayerName: false
         )
         return true
     }
@@ -757,8 +773,8 @@ final class PlayerAppModel {
         } catch {
             lastError = error.localizedDescription
         }
-        stopPolling()
         stopCampaignStream()
+        syncJoinCampaignPolling()
     }
 
     private func syncCampaignStream() {
@@ -772,6 +788,14 @@ final class PlayerAppModel {
             return
         }
         startCampaignStream()
+    }
+
+    private func syncJoinCampaignPolling() {
+        if playerSessionToken == nil, hasServerConnection, campaign != nil {
+            startPolling()
+        } else {
+            stopPolling()
+        }
     }
 
     private func runCampaignStream(campaignID: UUID) async {
@@ -796,7 +820,7 @@ final class PlayerAppModel {
                 if case APIClientError.serverError(403) = error {
                     await clearPlayerSession(
                         reason: "You were removed from the campaign. Please rejoin.",
-                        clearPlayerName: true
+                        clearPlayerName: false
                     )
                     return
                 }
