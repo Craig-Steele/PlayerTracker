@@ -35,14 +35,11 @@ struct ContentView: View {
                     campaignName: model.campaign?.name ?? "No campaign connected",
                     campaignSubtitle: model.campaign?.rulesetLabel ?? "Active campaign",
                     campaignIconURL: rulesetIconURL,
+                    isJoinMode: true,
                     onSave: {
                         Task { await model.savePlayerName() }
                     },
                     onChangeUser: nil,
-                    footerText: "Enter a player name to join this campaign.",
-                    confirmButtonTitle: "Join",
-                    showsCloseButton: false,
-                    showsChangeUserButton: false
                 )
             case .campaign:
                 campaignContent
@@ -81,6 +78,7 @@ struct ContentView: View {
                 campaignName: model.campaign?.name ?? "No campaign connected",
                 campaignSubtitle: model.campaign?.rulesetLabel ?? "Active campaign",
                 campaignIconURL: rulesetIconURL,
+                isJoinMode: false,
                 onSave: {
                     Task { await model.savePlayerName() }
                 },
@@ -228,7 +226,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 encounterCard
                     .padding(.horizontal)
-                    .padding(.top)
+                    .padding(.top, 4)
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {

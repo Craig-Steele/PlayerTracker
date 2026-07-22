@@ -103,67 +103,105 @@ struct PlayerIdentitySheetView: View {
     let campaignName: String
     let campaignSubtitle: String
     let campaignIconURL: URL?
+    let isJoinMode: Bool
     let onSave: () -> Void
     let onChangeUser: (() async -> Void)?
-    var footerText: String = "This name is shown as the owner of your characters."
-    var confirmButtonTitle: String = "Save"
-    var showsCloseButton: Bool = true
-    var showsChangeUserButton: Bool = true
+    
+    private var showsChangeUserButton: Bool {
+        !isJoinMode
+    }
 
     @Environment(\.dismiss) private var dismiss
     @FocusState private var playerNameFieldFocused: Bool
 
+    private var canSave: Bool {
+        !playerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var confirmButtonTitle: String {
+        isJoinMode ? "Join" : "Save"
+    }
+
+    private func saveAndDismiss() {
+        onSave()
+        dismiss()
+    }
+
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
+            Group {
+                VStack(alignment: .leading, spacing: 16) {
                     CampaignHeaderView(
                         campaignName: campaignName,
                         campaignSubtitle: campaignSubtitle,
                         iconURL: campaignIconURL
                     )
-                }
 
-                Section {
-                    TextField("Player name", text: $playerName)
-                        .focused($playerNameFieldFocused)
-                } header: {
-                    Text("Join as Player")
-                } footer: {
-                    Text(footerText)
-                }
+                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                        Text("Player Name:")
+                            .font(.subheadline)
+                            .frame(alignment: .leading)
 
-                if showsChangeUserButton, let onChangeUser {
-                    Section {
-                        Button("Change User", role: .destructive) {
-                            Task {
-                                await onChangeUser()
+                        TextField("Player name", text: $playerName)
+                            .focused($playerNameFieldFocused)
+                            .textFieldStyle(.roundedBorder)
+                            .submitLabel(.done)
+                            .onSubmit {
+                                guard canSave else { return }
+                                saveAndDismiss()
+                            }
+                    }
+
+                    if (isJoinMode)
+                    {
+                        Button(confirmButtonTitle) {
+                            saveAndDismiss()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(!canSave)
+                    }
+                    else
+                    {
+                        HStack(alignment: .firstTextBaseline) {
+                            Spacer()
+                            
+                            Button("Cancel") {
                                 dismiss()
                             }
+                            .buttonStyle(.borderedProminent)
+                            
+                            Button(confirmButtonTitle) {
+                                saveAndDismiss()
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .disabled(!canSave)
                         }
-                    } footer: {
-                        Text("Log out and return to the join screen for a different user.")
+                        .frame(maxWidth: .infinity)
+                        
+                        if showsChangeUserButton, let onChangeUser {
+                            Divider()
+                            VStack(alignment: .center) {
+                                Text("Or, return to the join screen to change user.")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                                Button("Change User", role: .destructive) {
+                                    Task {
+                                        await onChangeUser()
+                                        dismiss()
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding()
             }
             .onAppear {
                 playerNameFieldFocused = true
-            }
-            .toolbar {
-                if showsCloseButton {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Close") {
-                            dismiss()
-                        }
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(confirmButtonTitle) {
-                        onSave()
-                        dismiss()
-                    }
-                    .disabled(playerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
             }
         }
     }
@@ -187,8 +225,8 @@ struct CampaignHeaderView: View {
                         EmptyView()
                     }
                 }
-                .frame(width: 64, height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .frame(width: 50, height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 2, style: .continuous))
             }
 
             VStack(alignment: .leading, spacing: 4) {
