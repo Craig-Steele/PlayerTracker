@@ -806,7 +806,7 @@ final class PlayerAppModel {
                     baseURL: streamClient.baseURL,
                     playerSessionToken: playerSessionToken ?? ""
                 )
-                try await campaignStream.listen(campaignID: campaignID) { [weak self] _ in
+                try await campaignStream.listen(campaignID: campaignID) { [weak self] eventName in
                     guard let self else { return }
                     await self.refreshAll(showStatus: false)
                 }

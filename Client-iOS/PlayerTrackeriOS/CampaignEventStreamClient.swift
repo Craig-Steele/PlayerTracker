@@ -3,6 +3,7 @@ import Foundation
 struct CampaignEventStreamClient {
     let baseURL: URL
     let playerSessionToken: String
+    private static let streamTimeout: TimeInterval = 10 * 60
 
     func listen(
         campaignID: UUID,
@@ -11,10 +12,11 @@ struct CampaignEventStreamClient {
         let url = try makeURL(path: "campaigns/\(campaignID.uuidString.lowercased())/events")
         var request = URLRequest(url: url)
         request.cachePolicy = .reloadIgnoringLocalCacheData
+        request.timeoutInterval = Self.streamTimeout
         request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
         request.setValue("roll4_player_session=\(playerSessionToken)", forHTTPHeaderField: "Cookie")
 
-        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        let (bytes, response) = try await Self.streamSession.bytes(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIClientError.invalidResponse
         }
@@ -53,4 +55,12 @@ struct CampaignEventStreamClient {
         }
         return url
     }
+
+    private static let streamSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = streamTimeout
+        configuration.timeoutIntervalForResource = streamTimeout
+        configuration.waitsForConnectivity = true
+        return URLSession(configuration: configuration)
+    }()
 }

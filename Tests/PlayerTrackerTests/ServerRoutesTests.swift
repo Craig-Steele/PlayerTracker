@@ -731,7 +731,6 @@ struct ServerRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
-            ownerId: UUID(),
             ownerName: "Player",
             name: "Pack Mule",
             inventory: [
@@ -1212,7 +1211,6 @@ struct ServerRoutesTests {
             body: ByteBuffer(data: try JSONEncoder().encode(CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Referee",
                 name: "Legacy Scout",
                 initiative: 10,
@@ -1238,7 +1236,6 @@ struct ServerRoutesTests {
         let createPayload = CharacterInput(
             id: nil,
             campaignName: campaign.name,
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Aasimar",
             statBlockId: "refereeHealthPool",
@@ -1287,7 +1284,6 @@ struct ServerRoutesTests {
         let createPayload = CharacterInput(
             id: nil,
             campaignName: campaign.name,
-            ownerId: UUID(),
             ownerName: "Player",
             name: "Hero",
             initiative: 12,
@@ -1312,7 +1308,6 @@ struct ServerRoutesTests {
         let editPayload = CharacterInput(
             id: created.id,
             campaignName: campaign.name,
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Hero",
             initiative: 14,
@@ -1511,7 +1506,6 @@ struct ServerRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: "Route Smoke",
-            ownerId: ownerId,
             ownerName: "Player",
             name: "Hero",
             initiative: 12,
@@ -1601,7 +1595,6 @@ struct ServerRoutesTests {
             payload: CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Referee",
                 name: "Goblin (1)",
                 initiative: nil,
@@ -1623,7 +1616,6 @@ struct ServerRoutesTests {
             payload: CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Referee",
                 name: "Goblin (2)",
                 initiative: nil,
@@ -1645,7 +1637,6 @@ struct ServerRoutesTests {
             payload: CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Referee",
                 name: "Orc",
                 initiative: nil,
@@ -1691,7 +1682,6 @@ struct ServerRoutesTests {
             payload: CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Referee",
                 name: "Skeleton (1)",
                 initiative: 15,
@@ -1713,7 +1703,6 @@ struct ServerRoutesTests {
             payload: CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Referee",
                 name: "Skeleton (2)",
                 initiative: nil,
@@ -1830,7 +1819,6 @@ struct ServerRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: "Persist Smoke",
-            ownerId: UUID(),
             ownerName: "Player",
             name: "Persisted Hero",
             initiative: 17,
@@ -1999,7 +1987,6 @@ struct ServerRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: ownerId,
             ownerName: "Referee",
             name: "Traveller Scout",
             initiative: 11,
@@ -2122,7 +2109,6 @@ struct ServerRoutesTests {
         let travellerCharacter = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Traveller Scout",
             initiative: 11,
@@ -2165,7 +2151,6 @@ struct ServerRoutesTests {
         let pathfinderCharacter = CharacterInput(
             id: nil,
             campaignName: "Hell's Vengance",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Pathfinder Scout",
             initiative: 14,
@@ -2278,7 +2263,6 @@ struct ServerRoutesTests {
         let ancientCharacter = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Ancient Scout",
             initiative: 9,
@@ -2310,7 +2294,6 @@ struct ServerRoutesTests {
         let pathfinderCharacter = CharacterInput(
             id: nil,
             campaignName: "Hell's Vengance",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Pathfinder Scout",
             initiative: 13,
@@ -2404,7 +2387,6 @@ struct ServerRoutesTests {
         let firstCharacter = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Lead Scout",
             initiative: 15,
@@ -2421,7 +2403,6 @@ struct ServerRoutesTests {
         let secondCharacter = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Backup Scout",
             initiative: 10,
@@ -2507,7 +2488,6 @@ struct ServerRoutesTests {
         let ancientCharacter = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: sharedOwnerId,
             ownerName: "Shared Owner",
             name: "Ancient Scout",
             initiative: 9,
@@ -2541,7 +2521,6 @@ struct ServerRoutesTests {
         let pathfinderCharacter = CharacterInput(
             id: nil,
             campaignName: "Hell's Vengance",
-            ownerId: sharedOwnerId,
             ownerName: "Shared Owner",
             name: "Pathfinder Scout",
             initiative: 13,
@@ -2638,7 +2617,6 @@ struct ServerRoutesTests {
         let ancientCharacter = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Shared Scout",
             initiative: 9,
@@ -2672,7 +2650,6 @@ struct ServerRoutesTests {
         let pathfinderCharacter = CharacterInput(
             id: nil,
             campaignName: "Hell's Vengance",
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Shared Scout",
             initiative: 13,
@@ -2783,7 +2760,6 @@ struct ServerRoutesTests {
         let ancientCharacter = CharacterInput(
             id: nil,
             campaignName: "Ancients!",
-            ownerId: ancientRefereeJoin.session.player.id,
             ownerName: ancientRefereeJoin.session.player.displayName,
             name: "Visible Scout",
             initiative: 9,
@@ -2836,7 +2812,6 @@ struct ServerRoutesTests {
         let pathfinderCharacter = CharacterInput(
             id: nil,
             campaignName: "Hell's Vengance",
-            ownerId: pathfinderRefereeJoin.session.player.id,
             ownerName: pathfinderRefereeJoin.session.player.displayName,
             name: "Visible Scout",
             initiative: 13,

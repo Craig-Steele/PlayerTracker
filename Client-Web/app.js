@@ -5081,7 +5081,7 @@ function getOwnerName() {
     }
     const byId = new Map(
       players
-        .filter((player) => player.ownerId && player.ownerId === currentPlayerSessionId)
+        .filter((player) => player.claimedSessionId && player.claimedSessionId === currentPlayerSessionId)
         .map((player) => [player.id, player])
     );
     if (byId.size === 0) return;

@@ -451,6 +451,56 @@ private func refreshPlayerClaimActivity(
     )
 }
 
+private enum ServerSentEventStreamFrame<Value> {
+    case heartbeat
+    case value(Value)
+}
+
+private final class ServerSentEventStreamTaskBag: @unchecked Sendable {
+    var messageTask: Task<Void, Never>?
+    var heartbeatTask: Task<Void, Never>?
+
+    func cancel() {
+        messageTask?.cancel()
+        heartbeatTask?.cancel()
+    }
+}
+
+private func makeServerSentEventStream<Value: Sendable>(
+    messages: AsyncStream<Value>,
+    heartbeatInterval: Duration = .seconds(25)
+) -> AsyncStream<ServerSentEventStreamFrame<Value>> {
+    let (stream, continuation) = AsyncStream<ServerSentEventStreamFrame<Value>>.makeStream()
+    let taskBag = ServerSentEventStreamTaskBag()
+
+    continuation.onTermination = { _ in
+        taskBag.cancel()
+    }
+
+    taskBag.messageTask = Task {
+        for await message in messages {
+            if Task.isCancelled {
+                break
+            }
+            continuation.yield(.value(message))
+        }
+        continuation.finish()
+        taskBag.heartbeatTask?.cancel()
+    }
+
+    taskBag.heartbeatTask = Task {
+        while !Task.isCancelled {
+            try? await Task.sleep(for: heartbeatInterval)
+            if Task.isCancelled {
+                return
+            }
+            continuation.yield(.heartbeat)
+        }
+    }
+
+    return stream
+}
+
 private func serverSentEvent<T: Encodable>(
     event: String,
     payload: T
@@ -744,13 +794,18 @@ func routes(
                 try await writer.writeBuffer(
                     ByteBuffer(string: try serverSentEvent(event: "snapshot", payload: snapshot))
                 )
-                for await message in messages {
+                for await frame in makeServerSentEventStream(messages: messages) {
                     if Task.isCancelled {
                         break
                     }
-                    try await writer.writeBuffer(
-                        ByteBuffer(string: try serverSentEvent(event: message.event, payload: message.snapshot))
-                    )
+                    switch frame {
+                    case .heartbeat:
+                        try await writer.writeBuffer(ByteBuffer(string: ": keepalive\n\n"))
+                    case .value(let message):
+                        try await writer.writeBuffer(
+                            ByteBuffer(string: try serverSentEvent(event: message.event, payload: message.snapshot))
+                        )
+                    }
                 }
             })
         } else {
@@ -1631,13 +1686,18 @@ func routes(
                 try await writer.writeBuffer(
                     ByteBuffer(string: try serverSentEvent(event: "snapshot", payload: snapshot))
                 )
-                for await message in messages {
+                for await frame in makeServerSentEventStream(messages: messages) {
                     if Task.isCancelled {
                         break
                     }
-                    try await writer.writeBuffer(
-                        ByteBuffer(string: try serverSentEvent(event: message.event, payload: message.snapshot))
-                    )
+                    switch frame {
+                    case .heartbeat:
+                        try await writer.writeBuffer(ByteBuffer(string: ": keepalive\n\n"))
+                    case .value(let message):
+                        try await writer.writeBuffer(
+                            ByteBuffer(string: try serverSentEvent(event: message.event, payload: message.snapshot))
+                        )
+                    }
                 }
             })
         } else {

@@ -420,7 +420,6 @@ struct ConditionsInput: Content {
 struct CharacterInput: Content {
     let id: UUID?
     let campaignName: String?
-    let ownerId: UUID?
     let ownerName: String
     let name: String
     let referenceUrl: String?
@@ -442,7 +441,6 @@ struct CharacterInput: Content {
     init(
         id: UUID? = nil,
         campaignName: String? = nil,
-        ownerId: UUID? = nil,
         ownerName: String,
         name: String,
         referenceUrl: String? = nil,
@@ -463,7 +461,6 @@ struct CharacterInput: Content {
     ) {
         self.id = id
         self.campaignName = campaignName
-        self.ownerId = ownerId
         self.ownerName = ownerName
         self.name = name
         self.referenceUrl = referenceUrl

@@ -98,7 +98,6 @@ struct PlayerJoinRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
-            ownerId: forgedOwnerID,
             ownerName: "Alex",
             name: "Scout",
             initiative: nil,
@@ -162,7 +161,6 @@ struct PlayerJoinRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
-            ownerId: UUID(),
             ownerName: "Alex",
             name: "Scout",
             initiative: nil,
@@ -216,7 +214,6 @@ struct PlayerJoinRoutesTests {
             body: ByteBuffer(data: try JSONEncoder().encode(CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Alex",
                 name: "Scout",
                 initiative: 1,
@@ -309,7 +306,6 @@ struct PlayerJoinRoutesTests {
         let createPayload = CharacterInput(
             id: nil,
             campaignName: nil,
-            ownerId: forgedOwnerID,
             ownerName: "Not Alex",
             name: "Scout",
             referenceUrl: "https://example.com/scout",
@@ -341,7 +337,6 @@ struct PlayerJoinRoutesTests {
         let updatePayload = CharacterInput(
             id: created.id,
             campaignName: nil,
-            ownerId: forgedOwnerID,
             ownerName: "Still Not Alex",
             name: "Scout II",
             initiative: 7,
@@ -639,7 +634,6 @@ struct PlayerJoinRoutesTests {
             body: ByteBuffer(data: try JSONEncoder().encode(CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Alex",
                 name: "Legacy Scout",
                 initiative: nil,
@@ -860,7 +854,6 @@ struct PlayerJoinRoutesTests {
             body: ByteBuffer(data: try JSONEncoder().encode(CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: playerSession.session.player.id,
                 ownerName: "Alex",
                 name: "Scout",
                 initiative: nil,
@@ -1096,7 +1089,6 @@ struct PlayerJoinRoutesTests {
             body: ByteBuffer(data: try JSONEncoder().encode(CharacterInput(
                 id: nil,
                 campaignName: nil,
-                ownerId: UUID(),
                 ownerName: "Admin",
                 name: "Admin Character",
                 initiative: nil,
@@ -1240,7 +1232,6 @@ struct PlayerJoinRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
-            ownerId: UUID(),
             ownerName: "Referee",
             name: "Unclaimed Scout",
             initiative: nil,
@@ -1274,7 +1265,6 @@ struct PlayerJoinRoutesTests {
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
-            ownerId: UUID(),
             ownerName: "Alex",
             name: "Unclaimed Scout",
             initiative: nil,
