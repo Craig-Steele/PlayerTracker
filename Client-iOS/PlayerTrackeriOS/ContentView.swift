@@ -255,23 +255,29 @@ struct ContentView: View {
             gameEncounterState: model.gameState?.encounterState
         )
         let encounterState = encounterPresentation.effectiveEncounterState
+        let roundIndicatorTone = encounterPresentation.roundIndicatorTone()
+        let roundIndicatorText = encounterPresentation.roundIndicatorText(round: model.gameState?.round)
+        let roundIndicatorBackground = roundIndicatorBackground(for: roundIndicatorTone)
+        let roundIndicatorBorder = roundIndicatorBorder(for: roundIndicatorTone)
+        let roundIndicatorForeground = roundIndicatorForeground(for: roundIndicatorTone)
+        let turnCompleteTint = adaptiveColor(
+            light: UIColor(red: 0.12, green: 0.56, blue: 0.24, alpha: 1.0),
+            dark: UIColor(red: 0.52, green: 0.85, blue: 0.62, alpha: 1.0)
+        )
         let canRollInitiativeAll = encounterState == .active
             && model.myCharacters.contains(where: { $0.initiative == nil })
         let canCompleteTurn = encounterPresentation.shouldShowTurnCompleteButton(
             isMyTurn: model.isMyTurn,
             isCompletingTurn: model.isCompletingTurn
         )
+        let canCreateCharacter = model.playerSession != nil && !isShowingModal
 
         return VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top) {
-                CampaignHeaderView(
-                    campaignName: model.campaign?.name ?? "No campaign connected",
-                    campaignSubtitle: "Player: \(playerDisplayName)",
-                    iconURL: rulesetIconURL
-                )
-
-                Spacer()
-
+            CampaignHeaderView(
+                campaignName: model.campaign?.name ?? "No campaign connected",
+                campaignSubtitle: "Player: \(playerDisplayName)",
+                iconURL: rulesetIconURL
+            ) {
                 Button {
                     showingSettings = true
                 } label: {
@@ -284,77 +290,28 @@ struct ContentView: View {
                 .disabled(isShowingModal)
             }
 
-            ZStack {
-                HStack {
-                    Button {
-                        editorDraft = CharacterDraft.new(ruleSet: model.ruleSet)
-                    } label: {
-                        Image(systemName: "person.badge.plus")
-                            .foregroundStyle(.primary)
-                            .frame(width: 18, height: 18)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
-                    .disabled(isShowingModal || model.playerSession == nil)
-
-                    Spacer(minLength: 0)
-
-                    HStack(spacing: 8) {
-                        if canRollInitiativeAll {
-                            Button {
-                                Task { await model.rollInitiativeForMyCharacters() }
-                            } label: {
-                                Label("Init", systemImage: "die.face.5")
-                                    .labelStyle(.titleAndIcon)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .accessibilityLabel("Roll for Initiative")
-                            .disabled(isShowingModal)
-                        }
-
-                        if canCompleteTurn {
-                            Button {
-                                Task { await model.completeTurn() }
-                            } label: {
-                                Label("Done", systemImage: "checkmark")
-                                    .labelStyle(.titleAndIcon)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                            .tint(
-                                adaptiveColor(
-                                    light: UIColor(red: 0.12, green: 0.56, blue: 0.24, alpha: 1.0),
-                                    dark: UIColor(red: 0.52, green: 0.85, blue: 0.62, alpha: 1.0)
-                                )
-                            )
-                            .accessibilityLabel("Turn Complete")
-                            .disabled(isShowingModal || model.isCompletingTurn)
-                        }
-                    }
+            EncounterControlPaneView(
+                roundIndicatorText: roundIndicatorText,
+                roundIndicatorBackground: roundIndicatorBackground,
+                roundIndicatorBorder: roundIndicatorBorder,
+                roundIndicatorForeground: roundIndicatorForeground,
+                backgroundColor: roundIndicatorBackground,
+                canCreateCharacter: canCreateCharacter,
+                canRollInitiativeAll: canRollInitiativeAll,
+                canCompleteTurn: canCompleteTurn,
+                isShowingModal: isShowingModal,
+                isCompletingTurn: model.isCompletingTurn,
+                turnCompleteTint: turnCompleteTint,
+                onCreateCharacter: {
+                    editorDraft = CharacterDraft.new(ruleSet: model.ruleSet)
+                },
+                onRollInitiativeAll: {
+                    Task { await model.rollInitiativeForMyCharacters() }
+                },
+                onCompleteTurn: {
+                    Task { await model.completeTurn() }
                 }
-
-                HStack {
-                    Spacer(minLength: 0)
-
-                    Text(encounterPresentation.roundIndicatorText(round: model.gameState?.round))
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule(style: .continuous)
-                                .fill(roundIndicatorBackground(for: encounterPresentation.roundIndicatorTone()))
-                        )
-                        .overlay(
-                            Capsule(style: .continuous)
-                                .strokeBorder(roundIndicatorBorder(for: encounterPresentation.roundIndicatorTone()), lineWidth: 1)
-                        )
-                        .foregroundStyle(roundIndicatorForeground(for: encounterPresentation.roundIndicatorTone()))
-                        .fixedSize(horizontal: true, vertical: false)
-
-                    Spacer(minLength: 0)
-                }
-            }
+            )
 
             if let error = model.lastError {
                 Text(error)
@@ -367,12 +324,102 @@ struct ContentView: View {
                     )
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(uiColor: .secondarySystemGroupedBackground))
-        )
+    }
+
+    private struct EncounterControlPaneView: View {
+        let roundIndicatorText: String
+        let roundIndicatorBackground: Color
+        let roundIndicatorBorder: Color
+        let roundIndicatorForeground: Color
+        let backgroundColor: Color
+        let canCreateCharacter: Bool
+        let canRollInitiativeAll: Bool
+        let canCompleteTurn: Bool
+        let isShowingModal: Bool
+        let isCompletingTurn: Bool
+        let turnCompleteTint: Color
+        let onCreateCharacter: () -> Void
+        let onRollInitiativeAll: () -> Void
+        let onCompleteTurn: () -> Void
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 0) {
+                    HStack {
+                        Button {
+                            onCreateCharacter()
+                        } label: {
+                            Image(systemName: "person.badge.plus")
+                                .foregroundStyle(.primary)
+                                .frame(width: 18, height: 18)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .disabled(!canCreateCharacter)
+
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Text(roundIndicatorText)
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule(style: .continuous)
+                                .fill(roundIndicatorBackground)
+                        )
+                        .overlay(
+                            Capsule(style: .continuous)
+                                .strokeBorder(roundIndicatorBorder, lineWidth: 1)
+                        )
+                        .foregroundStyle(roundIndicatorForeground)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        HStack(spacing: 8) {
+                            if canRollInitiativeAll {
+                                Button("🎲 Init") {
+                                    onRollInitiativeAll()
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .accessibilityLabel("Roll for Initiative")
+                                .disabled(isShowingModal)
+                            }
+
+                            if canCompleteTurn {
+                                Button {
+                                    onCompleteTurn()
+                                } label: {
+                                    Label("Done", systemImage: "checkmark")
+                                        .labelStyle(.titleAndIcon)
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .controlSize(.small)
+                                .tint(turnCompleteTint)
+                                .accessibilityLabel("Turn Complete")
+                                .disabled(isShowingModal || isCompletingTurn)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(backgroundColor)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(Color(uiColor: .systemGray5), lineWidth: 1)
+            )
+        }
     }
 
     private func roundIndicatorBackground(

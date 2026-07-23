@@ -207,10 +207,50 @@ struct PlayerIdentitySheetView: View {
     }
 }
 
-struct CampaignHeaderView: View {
+struct CampaignHeaderView<Accessory: View>: View {
     let campaignName: String
     let campaignSubtitle: String
     let iconURL: URL?
+    private let trailingAccessory: Accessory
+
+    init(
+        campaignName: String,
+        campaignSubtitle: String,
+        iconURL: URL?,
+        @ViewBuilder trailingAccessory: () -> Accessory
+    ) {
+        self.campaignName = campaignName
+        self.campaignSubtitle = campaignSubtitle
+        self.iconURL = iconURL
+        self.trailingAccessory = trailingAccessory()
+    }
+}
+
+extension CampaignHeaderView where Accessory == EmptyView {
+    init(
+        campaignName: String,
+        campaignSubtitle: String,
+        iconURL: URL?
+    ) {
+        self.init(
+            campaignName: campaignName,
+            campaignSubtitle: campaignSubtitle,
+            iconURL: iconURL,
+            trailingAccessory: { EmptyView() }
+        )
+    }
+}
+
+extension CampaignHeaderView {
+    private var headerBackground: some View {
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .fill(Color(uiColor: .secondarySystemGroupedBackground))
+    }
+
+    private var headerBorder: some View {
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .strokeBorder(Color(uiColor: .systemGray5), lineWidth: 1)
+    }
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -236,9 +276,15 @@ struct CampaignHeaderView: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
+
+            Spacer(minLength: 0)
+
+            trailingAccessory
         }
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 4)
+        .background(headerBackground)
+        .overlay(headerBorder)
     }
 }
 
