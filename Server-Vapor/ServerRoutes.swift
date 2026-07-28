@@ -667,8 +667,7 @@ func routes(
         Task {
             await eventHub.shutdown()
             await activeCampaignEventHub.shutdown()
-            try? await Task.sleep(for: .milliseconds(200))
-            try? await app.asyncShutdown()
+            await app.server.shutdown()
         }
         return .ok
     }
