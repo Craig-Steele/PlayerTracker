@@ -1089,7 +1089,7 @@ Acceptance:
 - the iOS client works in both compact and regular size classes without requiring a separate code path for iPad
 - the M8 implementation does not introduce assumptions that would obviously block a future AppleTV port
 
-Status: in progress
+Status: complete
 
 ### M9: Android Migration
 

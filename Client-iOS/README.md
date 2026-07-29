@@ -4,8 +4,9 @@ Native iOS player client for the existing `PlayerTracker` Vapor server.
 
 ## Current scope
 
+- M8 identity migration is complete
 - connect to an existing PlayerTracker server by URL
-- persist server URL, player name, and player ID locally
+- persist server URL, player name, and player session locally
 - load campaign, ruleset, encounter state, initiative order, and the current player's characters
 - show campaign metadata including icon, round, current turn, and next turn
 - create, edit, and delete player-owned characters
@@ -24,10 +25,11 @@ Then set a signing team for the `PlayerTrackeriOS` target before running on devi
 
 ## Notes
 
-- this is still player-only; referee and display-only views remain in the web client
-- connection settings and player identity are managed from the app's `Settings` screen
+- this remains player-only; referee and display-only views stay in the web client
+- connection settings and player session are managed from the app's `Settings` screen
+- the app follows the server's active campaign and does not need a multi-campaign picker
 - the server settings sheet supports both QR scanning and QR display for quick sharing
 - the QR scanner supports pinch-to-zoom
-- the app talks to the existing HTTP server on port `8080`
+- the app talks to the PlayerTracker HTTP server on port `8080`
 - the installed iOS app name is `Tactical Table Top: Initiative`
-- `Info.plist` currently allows HTTP so it can connect to local-network PlayerTracker hosts during development
+- `Info.plist` allows HTTP so it can connect to local-network PlayerTracker hosts during development

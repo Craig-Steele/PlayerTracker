@@ -15,9 +15,9 @@ The current working architecture is a Vapor service running on a Mac and serving
 - `SharedProtocol`
   Shared tactical snapshot, command, and event contract stubs.
 - `Client-iOS`
-  Native iOS and iPadOS player client for the existing server. Feature work is currently on hold.
+  Native iOS and iPadOS player client for the existing server. The M8 identity migration is complete.
 - `Client-Android`
-  Native Android player client. Feature work is currently on hold.
+  Native Android player client. M9 parity work follows the iOS migration.
 
 ## What the server does
 
