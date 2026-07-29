@@ -81,7 +81,7 @@ Add `--overwrite` if you want to replace existing local creature files.
   checked-in browser client and rulesets
 - `Client-iOS/`
   native iOS player app
-- `FEATURE_TRACKING.md`
+- `Docs/FEATURE_TRACKING.md`
   lightweight notes file for feature ideas, decisions, and follow-up items
 
 ## Notes

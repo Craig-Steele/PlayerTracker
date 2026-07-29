@@ -4,7 +4,7 @@
 - Prefer repo-root commands such as `swift test` when validating changes.
 - Keep scratch files inside `.tmp/` when a repo-local temp path is sufficient.
 - Keep startup and packaging behavior aligned with `Server-Vapor/ServerPlatform.swift` and `Server-Vapor/ServerBootstrap.swift`.
-- Treat `README.md`, `PRODUCTION_PLAN.md`, and `TEST_PLAN.md` as the main human-facing project docs.
+- Treat `README.md`, `Docs/PRODUCTION_PLAN.md`, and `Docs/TEST_PLAN.md` as the main human-facing project docs.
 - Treat `Client-Web/rulesets/*.json` manifests as the source of truth for ruleset assets.
 - Do not infer ruleset identity from filenames.
 - Reference creature libraries explicitly from the ruleset manifest with `creatureLibrary.file`.
