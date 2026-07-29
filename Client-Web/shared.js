@@ -2,6 +2,7 @@
   const APP_NAME = 'Tactical Table Top: Initiative';
   const APP_ICON_URL = '/favicon-512.png';
   const QR_CODE_SIZE = 96;
+  const DISPLAY_QR_CODE_SIZE = 192;
   let confirmDialogState = null;
   let confirmDialogResolve = null;
   let confirmDialogLastFocus = null;
@@ -546,6 +547,7 @@
     APP_NAME,
     APP_ICON_URL,
     QR_CODE_SIZE,
+    DISPLAY_QR_CODE_SIZE,
     isAdminHost,
     parseStandardDie,
     rollStandardDie,

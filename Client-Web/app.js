@@ -5,11 +5,13 @@ let loadStateInFlight = false;
 let loadStateRefreshQueued = false;
 let displayRosterLayoutFrame = null;
 let displayRosterLayoutMode = 'single';
+let currentJoinAddressUrl = null;
 
   const {
     APP_NAME,
     APP_ICON_URL,
     QR_CODE_SIZE,
+    DISPLAY_QR_CODE_SIZE,
     isAdminHost,
     rollStandardDie,
     formatInitiative,
@@ -22,6 +24,7 @@ let displayRosterLayoutMode = 'single';
   APP_NAME: 'Tactical Table Top: Initiative',
   APP_ICON_URL: '/favicon-512.png',
   QR_CODE_SIZE: 96,
+  DISPLAY_QR_CODE_SIZE: 192,
   isAdminHost: () => false,
   rollStandardDie: () => null,
     formatInitiative: () => '🎲',
@@ -346,21 +349,31 @@ if (shouldRedirectToDisplay) {
   window.location.replace('/display.html');
 }
 
-// Render a QR code for a given URL into #qr-container
-function renderQrCode(url) {
-  const container = document.getElementById('qr-container');
-  if (!container || typeof QRCode === 'undefined') return;
+function renderQrCodeInto(container, url, size) {
+  if (!container) return;
 
-  // Clear any previous QR
   while (container.firstChild) {
     container.removeChild(container.firstChild);
   }
 
+  if (!url || typeof QRCode === 'undefined') return;
+
   new QRCode(container, {
     text: url,
-    width: QR_CODE_SIZE,
-    height: QR_CODE_SIZE
+    width: size,
+    height: size
   });
+}
+
+function getDisplayQrOverlaySize() {
+  const overlaySize = Math.floor(Math.min(window.innerWidth * 0.5, window.innerHeight * 0.7));
+  const interiorPadding = 32;
+  return Math.max(DISPLAY_QR_CODE_SIZE, overlaySize - interiorPadding);
+}
+
+function renderJoinQrCodes(url = currentJoinAddressUrl) {
+  renderQrCodeInto(document.getElementById('qr-container'), url, QR_CODE_SIZE);
+  renderQrCodeInto(document.getElementById('display-qr-overlay'), url, getDisplayQrOverlaySize());
 }
 
 // Fetch the available join addresses and show the selected URL as a QR code.
@@ -380,6 +393,8 @@ async function showServerIP() {
       if (selector) {
         selector.classList.add('hidden');
       }
+      currentJoinAddressUrl = null;
+      renderJoinQrCodes(null);
       return;
     }
 
@@ -392,7 +407,8 @@ async function showServerIP() {
 
     function updateSelectedAddress() {
       if (!selectedURL) return;
-      renderQrCode(selectedURL);
+      currentJoinAddressUrl = selectedURL;
+      renderJoinQrCodes(selectedURL);
     }
 
     if (selector) {
@@ -3699,6 +3715,18 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       displayEncounterState.classList.remove('player-encounter-state-mine');
       displayEncounterState.textContent = encounterText;
     }
+    if (displayOnly) {
+      const overlayVisible = encounterState !== 'active';
+      document.body.classList.toggle('display-qr-overlay-visible', overlayVisible);
+      const qrOverlay = document.getElementById('display-qr-overlay');
+      if (qrOverlay) {
+        qrOverlay.classList.toggle('hidden', !overlayVisible);
+        qrOverlay.setAttribute('aria-hidden', (!overlayVisible).toString());
+      }
+      if (overlayVisible) {
+        renderJoinQrCodes();
+      }
+    }
   }
 
   // Admin UI: show/hide IP banner/QR
@@ -3709,6 +3737,12 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   } else {
     if (qrContainer) qrContainer.innerHTML = '';
   }
+
+  window.addEventListener('resize', () => {
+    if (displayOnly && document.body.classList.contains('display-qr-overlay-visible')) {
+      renderJoinQrCodes();
+    }
+  });
 
   updatePlayerNameDisplay();
   updateInitiativeBonusAvailability();
