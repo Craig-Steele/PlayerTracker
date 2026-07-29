@@ -1351,11 +1351,7 @@ TacticalTableTop/
 |   |-- examples/
 |
 |-- Docs/
-|   |-- ProductScope.md
-|   |-- Architecture.md
-|   |-- MobileWorkflows.md
-|   |-- RefereeHybridWorkflow.md
-|   |-- TVDisplayWorkflows.md
+|   |-- TABLETOP_PLAN.md
 |
 |-- SampleData/
     |-- Encounters/
