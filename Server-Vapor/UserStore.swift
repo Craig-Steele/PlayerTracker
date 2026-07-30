@@ -566,7 +566,7 @@ actor UserStore {
         }?.ownerName
     }
 
-    func characterState(for id: UUID) -> CharacterState? {
+    func characterState(for id: UUID) async -> CharacterState? {
         storage[id]
     }
 
