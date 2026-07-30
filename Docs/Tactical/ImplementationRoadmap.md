@@ -1,6 +1,8 @@
 # Tactical Table Top: Implementation Roadmap
 
-## Milestone 0: First Playable Loop
+## Milestone 0: First Playable Loop Spec
+
+Status: Complete. This milestone defines the contract; implementation begins at Milestone 1.
 
 Define the smallest end-to-end tactical loop that proves the product direction without turning this into a full VTT.
 
@@ -116,6 +118,8 @@ Save and reload the encounter
 
 ## Milestone 1: Unity Tactical Referee Prototype
 
+Implementation begins here.
+
 ### Goal
 
 Prove the spatial/tactical interaction in Unity before building the full hybrid system.
@@ -140,6 +144,19 @@ Prove the spatial/tactical interaction in Unity before building the full hybrid 
 
 Referee can manipulate a sample encounter in Unity with no web UI yet.
 
+### Acceptance criteria
+
+```text
+- A sample map loads in Unity
+- Tokens snap to grid squares
+- A token can be selected
+- A token can be moved
+- Camera pan and zoom work
+- LOS blockers are visible and affect preview logic
+- LOS and cover previews are shown for a selected target
+- The prototype runs without the browser UI or Local Host dependency
+```
+
 ## Milestone 2: Serializable EncounterState
 
 ### Goal
@@ -162,6 +179,17 @@ Refactor Unity so the tactical scene is driven by serializable state instead of 
 ### Deliverable
 
 Unity can load `EncounterState.json`, render the encounter, and apply basic state changes through a clean state API.
+
+### Acceptance criteria
+
+```text
+- Encounter state can be serialized to JSON
+- Arena dimensions and image reference are stored in state
+- Token positions are stored in square coordinates
+- Unity can load the serialized state and render the same encounter
+- A basic state change updates the rendered scene
+- The same encounter can be saved, loaded, and re-rendered deterministically
+```
 
 ## Milestone 3: Local Referee Host
 
@@ -196,6 +224,18 @@ ClaimTokenCommand
 
 A test client can connect, update a token property, and receive a broadcast event.
 
+### Acceptance criteria
+
+```text
+- The host starts locally
+- A client can connect over WebSocket
+- The host sends an initial EncounterStateSnapshot
+- A command can update a token property
+- The host validates the command before applying it
+- The host broadcasts the resulting event
+- The host participates in the existing Swift initiative/turn signaling flow
+```
+
 ## Milestone 4: Persistence
 
 ### Goal
@@ -216,6 +256,17 @@ Allow the referee to save and reload the first playable loop.
 ### Deliverable
 
 The first playable loop survives closing and reopening without losing the arena or turn state.
+
+### Acceptance criteria
+
+```text
+- The arena can be saved and reloaded
+- Arena dimensions persist across reload
+- Arena image location persists across reload
+- Character locations persist across reload
+- Existing Swift server data persists across reload
+- Reloading restores the same active encounter state
+```
 
 ## Milestone 5: Unity Referee View Becomes a Client
 
