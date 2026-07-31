@@ -128,9 +128,12 @@ Prove the spatial/tactical interaction in Unity before building the full hybrid 
 
 ```text
 Arcane Library PZO30084E.png
+Arcane Library PZO30084E.map.json
 24 squares wide
 30 squares tall
 Black regions are LOS blockers
+Per-square elevations are authored as float heights in feet
+Ramp regions are rectangular square ranges with linear interpolation
 ```
 
 ### Required systems
@@ -138,7 +141,10 @@ Black regions are LOS blockers
 ```text
 - Battle map scene
 - Sample map loading
+- Map JSON loading from the same folder as the image
 - Grid-based arena layout
+- Per-square elevation support
+- Ramp region support
 - Token rendering
 - Token selection
 - Token movement
@@ -158,12 +164,15 @@ Referee can manipulate a sample encounter in Unity with no web UI yet.
 
 ```text
 - The Arcane Library sample map loads in Unity
+- The Arcane Library map JSON loads alongside the image
 - Tokens snap to grid squares
 - A token can be selected
 - A token can be moved
 - Camera pan and zoom work
 - LOS blockers are visible and affect preview logic
 - Black regions in the sample map behave as LOS blockers
+- Sample map square heights are loaded and used for view/LOS
+- Ramp regions interpolate linearly across their square rectangles
 - LOS and cover previews are shown for a selected target
 - The prototype runs without the browser UI or Local Host dependency
 ```
@@ -182,6 +191,9 @@ Refactor Unity so the tactical scene is driven by serializable state instead of 
 - Define MapState
 - Define TurnState
 - Define VisibilityState
+- Define map elevation grid data
+- Define ramp region data
+- Define map JSON source format
 - Persist token positions in square coordinates
 - Save/load sample EncounterState.json
 - Render Unity scene from EncounterState
@@ -196,11 +208,18 @@ Unity can load `EncounterState.json`, render the encounter, and apply basic stat
 ```text
 - Encounter state can be serialized to JSON
 - Arena dimensions and image reference are stored in state
+- Square elevation data is stored in state
+- Ramp regions are stored in state
 - Token positions are stored in square coordinates
 - Unity can load the serialized state and render the same encounter
 - A basic state change updates the rendered scene
 - The same encounter can be saved, loaded, and re-rendered deterministically
+- Map JSON source files remain editable outside the runtime save format
 ```
+
+### Later milestone note
+
+Map elevation and ramp authoring tools are deferred. For now the referee/map authoring data lives in hand-edited JSON next to the image. A later milestone can add a proper editor UI for square heights and ramp regions.
 
 ## Milestone 3: Local Referee Host
 

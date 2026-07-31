@@ -44,6 +44,35 @@ The first playable loop is intentionally small:
 - The player claims the placed character through the existing Swift server claim flow
 ```
 
+### Map elevation
+
+```text
+- Map source data is stored as JSON alongside the image for now
+- The source JSON stores a default height, sparse per-square height overrides, and ramp regions
+- Ramp regions are authored as rectangular square ranges with a low edge height and a high edge height
+- Ramp regions are axis-aligned rectangles
+- Ramp height is inferred linearly across the ramp from the low edge to the high edge
+- The loader expands the source JSON into a per-square float elevation grid in feet
+- Squares outside ramp regions keep their authored grid height
+- LOS and view sampling use the square center height
+```
+
+### Map JSON format
+
+```text
+MapData
+- version
+- imagePath
+- gridWidth
+- gridHeight
+- squareSizeFt
+- defaultHeightFt
+- heightOverrides
+- rampRegions
+```
+
+`heightOverrides` is a sparse list of square coordinates with explicit float heights. `rampRegions` is a sparse list of rectangular ramps that the loader expands into square heights. The runtime `BattleMap` carries the full expanded `elevationGrid`, while the source JSON remains the hand-authored map file stored beside the PNG.
+
 ### Turn and initiative
 
 ```text
@@ -236,6 +265,8 @@ BattleMap
 - height
 - gridType
 - scale
+- elevationGrid
+- rampRegions
 - obstacles
 - walls
 - terrainZones

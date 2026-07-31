@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "imagePath": "Arcane Library PZO30084E.png",
+  "gridWidth": 24,
+  "gridHeight": 30,
+  "squareSizeFt": 5,
+  "defaultHeightFt": 0,
+  "heightOverrides": [],
+  "rampRegions": [
+    {
+      "id": "arcane_library_ramp_01",
+      "bounds": {
+        "x": 7,
+        "y": 25,
+        "width": 3,
+        "height": 2
+      },
+      "lowEdge": {
+        "side": "west",
+        "heightFt": 0
+      },
+      "highEdge": {
+        "side": "east",
+        "heightFt": 10
+      }
+    }
+  ]
+}
