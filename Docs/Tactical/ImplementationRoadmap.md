@@ -124,10 +124,20 @@ Implementation begins here.
 
 Prove the spatial/tactical interaction in Unity before building the full hybrid system.
 
+### Sample map
+
+```text
+Arcane Library PZO30084E.png
+24 squares wide
+30 squares tall
+Black regions are LOS blockers
+```
+
 ### Required systems
 
 ```text
 - Battle map scene
+- Sample map loading
 - Grid-based arena layout
 - Token rendering
 - Token selection
@@ -147,12 +157,13 @@ Referee can manipulate a sample encounter in Unity with no web UI yet.
 ### Acceptance criteria
 
 ```text
-- A sample map loads in Unity
+- The Arcane Library sample map loads in Unity
 - Tokens snap to grid squares
 - A token can be selected
 - A token can be moved
 - Camera pan and zoom work
 - LOS blockers are visible and affect preview logic
+- Black regions in the sample map behave as LOS blockers
 - LOS and cover previews are shown for a selected target
 - The prototype runs without the browser UI or Local Host dependency
 ```
