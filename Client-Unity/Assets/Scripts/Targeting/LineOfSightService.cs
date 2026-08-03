@@ -16,6 +16,9 @@ namespace Roll4InitiativeVTT.Targeting
         [SerializeField] private bool drawDebugRay = true;
         [SerializeField] private bool logDebugContext = true;
 
+        private const float TerrainSampleSpacing = 0.1f;
+        private const float TerrainClearanceEpsilon = 0.02f;
+
         public bool HasLineOfSight(TokenView source, TokenView destination)
         {
             return BuildAttackContext(source, destination).HasLineOfSight;
@@ -120,6 +123,8 @@ namespace Roll4InitiativeVTT.Targeting
             Vector3 delta = to - from;
             float distance = delta.magnitude;
 
+            bool terrainBlocks = TryGetTerrainBlockDistance(from, to, out float terrainBlockDistance);
+
             if (distance <= 0.001f)
             {
                 result.ReachedTarget = true;
@@ -134,6 +139,15 @@ namespace Roll4InitiativeVTT.Targeting
 
                 foreach (RaycastHit hit in hits)
                 {
+                    if (terrainBlocks && terrainBlockDistance <= hit.distance)
+                    {
+                        result.ReachedTarget = false;
+                        result.HitObject = null;
+                        result.HitTacticalCollider = null;
+                        result.CoverType = CoverType.Total;
+                        return result;
+                    }
+
                     if (hit.collider == null)
                     {
                         continue;
@@ -184,9 +198,51 @@ namespace Roll4InitiativeVTT.Targeting
                 }
             }
 
+            if (terrainBlocks)
+            {
+                result.ReachedTarget = false;
+                result.HitObject = null;
+                result.HitTacticalCollider = null;
+                result.CoverType = CoverType.Total;
+                return result;
+            }
+
             result.ReachedTarget = true;
             result.CoverType = CoverType.None;
             return result;
+        }
+
+        private static bool TryGetTerrainBlockDistance(Vector3 from, Vector3 to, out float blockDistance)
+        {
+            blockDistance = 0f;
+
+            Vector3 delta = to - from;
+            float distance = delta.magnitude;
+            if (distance <= 0.001f)
+            {
+                return false;
+            }
+
+            int steps = Mathf.Max(2, Mathf.CeilToInt(distance / TerrainSampleSpacing));
+
+            for (int i = 1; i < steps; i++)
+            {
+                float t = (float)i / steps;
+                Vector3 samplePoint = Vector3.Lerp(from, to, t);
+
+                if (!TerrainHeightMap.TryGetHeightWorldAtWorldPoint(samplePoint, out float terrainHeightWorld))
+                {
+                    continue;
+                }
+
+                if (samplePoint.y <= terrainHeightWorld + TerrainClearanceEpsilon)
+                {
+                    blockDistance = distance * t;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static CoverType DetermineCoverType(int clearRays, int totalRays)
