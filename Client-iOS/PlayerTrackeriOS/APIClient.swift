@@ -51,6 +51,14 @@ struct APIClient {
         try await get("state")
     }
 
+    func fetchTacticalMap() async throws -> TacticalMapStateDTO {
+        try await get("tactical/map")
+    }
+
+    func fetchTacticalEncounter() async throws -> TacticalEncounterSnapshotDTO {
+        try await get("tactical/encounter")
+    }
+
     func fetchPlayerSession() async throws -> PlayerSessionDTO {
         try await get("player/session")
     }
@@ -125,6 +133,10 @@ struct APIClient {
             method: "POST",
             body: PartyTreasureClaimInputDTO(characterId: characterId, itemId: itemId, quantity: quantity)
         )
+    }
+
+    func sendTacticalCommand<T: Decodable>(_ command: TacticalCommandEnvelopeDTO, as type: T.Type) async throws -> T {
+        try await send("tactical/command", method: "POST", body: command)
     }
 
     private func makeURL(path: String) throws -> URL {
@@ -213,3 +225,9 @@ struct APIClient {
 }
 
 private struct EmptyResponse: Decodable {}
+
+struct TacticalCommandEnvelopeDTO: Codable, Equatable {
+    let schemaVersion: Int
+    let type: String
+    let payload: [String: String]
+}

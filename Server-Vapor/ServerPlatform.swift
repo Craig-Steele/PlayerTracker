@@ -89,6 +89,13 @@ enum AppPaths {
             .appendingPathComponent("Client-Web", isDirectory: true)
     }
 
+    static func tacticalMapSourceURL() -> URL {
+        webClientDirectory()
+            .deletingLastPathComponent()
+            .appendingPathComponent("Images", isDirectory: true)
+            .appendingPathComponent("Arcane Library PZO30084E.map.json")
+    }
+
     private static func environmentDirectory(_ key: String, environment: [String: String]) -> URL {
         if let rawValue = environment[key],
            !rawValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

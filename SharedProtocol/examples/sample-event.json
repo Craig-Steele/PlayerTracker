@@ -1,7 +1,10 @@
 {
   "schemaVersion": 1,
-  "type": "token-selected",
+  "type": "token-moved",
   "payload": {
-    "tokenId": "token-hero"
+    "tokenId": "token-hero",
+    "x": "12",
+    "y": "8",
+    "z": "0"
   }
 }

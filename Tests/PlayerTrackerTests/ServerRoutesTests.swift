@@ -56,6 +56,196 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testTacticalEncounterMapsTokensToActualPlayerSessions() async throws {
+        let tester = try await makeTester()
+        let alice = try await join(displayName: "Alice", in: tester)
+        let bob = try await join(displayName: "Bob", in: tester)
+
+        let aliceCharacter = try await createMemberCharacter(
+            in: tester,
+            cookieToken: alice.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Alice",
+                name: "Alice Token",
+                initiative: 12,
+                stats: nil,
+                currency: nil,
+                inventory: nil,
+                revealStats: true,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: false,
+                initiativeBonus: 0,
+                isHidden: false,
+                revealOnTurn: false,
+                conditions: nil
+            )
+        )
+        let bobCharacter = try await createMemberCharacter(
+            in: tester,
+            cookieToken: bob.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Bob",
+                name: "Bob Token",
+                initiative: 11,
+                stats: nil,
+                currency: nil,
+                inventory: nil,
+                revealStats: true,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: false,
+                initiativeBonus: 0,
+                isHidden: false,
+                revealOnTurn: false,
+                conditions: nil
+            )
+        )
+
+        let encounterResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/encounter",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(alice.cookieToken)")])
+        )
+        XCTAssertEqual(encounterResponse.status, .ok)
+        let snapshot = try encounterResponse.content.decode(TacticalEncounterSnapshot.self)
+
+        let aliceTokenID = aliceCharacter.id.uuidString.lowercased()
+        let bobTokenID = bobCharacter.id.uuidString.lowercased()
+        let aliceToken = try XCTUnwrap(snapshot.tokens.first(where: { $0.id == aliceTokenID }))
+        let bobToken = try XCTUnwrap(snapshot.tokens.first(where: { $0.id == bobTokenID }))
+
+        XCTAssertEqual(aliceToken.ownerSessionId, alice.session.player.id)
+        XCTAssertEqual(aliceToken.ownerDisplayName, "Alice")
+        XCTAssertEqual(bobToken.ownerSessionId, bob.session.player.id)
+        XCTAssertEqual(bobToken.ownerDisplayName, "Bob")
+    }
+
+    @Test
+    func testTacticalMapRouteReturnsSquareHeightsAndBlockers() async throws {
+        let tester = try await makeTester()
+        let mapViewer = try await join(displayName: "Map Viewer", in: tester)
+
+        let mapResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/map",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(mapViewer.cookieToken)")])
+        )
+        XCTAssertEqual(mapResponse.status, .ok)
+        let mapState = try mapResponse.content.decode(TacticalMapState.self)
+        XCTAssertEqual(mapState.gridWidth, 24)
+        XCTAssertEqual(mapState.gridHeight, 30)
+        XCTAssertEqual(mapState.squareHeights.count, 24 * 30)
+        XCTAssertFalse(mapState.blockedTiles.isEmpty)
+        XCTAssertTrue(mapState.squareHeights.contains { $0 != mapState.defaultHeightFt })
+    }
+
+    @Test
+    func testTacticalMoveTokenRequiresOwnershipAndUpdatesPosition() async throws {
+        let tester = try await makeTester()
+        let alice = try await join(displayName: "Alice", in: tester)
+        let bob = try await join(displayName: "Bob", in: tester)
+
+        let aliceCharacter = try await createMemberCharacter(
+            in: tester,
+            cookieToken: alice.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Alice",
+                name: "Alice Token",
+                initiative: 12,
+                stats: nil,
+                currency: nil,
+                inventory: nil,
+                revealStats: true,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: false,
+                initiativeBonus: 0,
+                isHidden: false,
+                revealOnTurn: false,
+                conditions: nil
+            )
+        )
+        let bobCharacter = try await createMemberCharacter(
+            in: tester,
+            cookieToken: bob.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Bob",
+                name: "Bob Token",
+                initiative: 11,
+                stats: nil,
+                currency: nil,
+                inventory: nil,
+                revealStats: true,
+                autoSkipTurn: false,
+                useAppInitiativeRoll: false,
+                initiativeBonus: 0,
+                isHidden: false,
+                revealOnTurn: false,
+                conditions: nil
+            )
+        )
+
+        let bobTokenID = bobCharacter.id.uuidString.lowercased()
+        let aliceTokenID = aliceCharacter.id.uuidString.lowercased()
+        let mapResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/map",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(alice.cookieToken)")])
+        )
+        XCTAssertEqual(mapResponse.status, .ok)
+        let mapState = try mapResponse.content.decode(TacticalMapState.self)
+        let blockedSquare = try XCTUnwrap(mapState.blockedTiles.first)
+        let openSquare = firstOpenSquare(in: mapState)
+
+        let forbiddenPayload = TacticalCommandEnvelope(
+            schemaVersion: 1,
+            type: "move-token",
+            payload: [
+                "tokenId": bobTokenID,
+                "squareX": String(blockedSquare.x),
+                "squareY": String(blockedSquare.y)
+            ]
+        )
+        let forbiddenResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/command",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(alice.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(forbiddenPayload))
+        )
+        XCTAssertEqual(forbiddenResponse.status, .forbidden)
+        let forbiddenResult = try forbiddenResponse.content.decode(TacticalCommandResponse.self)
+        XCTAssertFalse(forbiddenResult.accepted)
+        XCTAssertEqual(forbiddenResult.rejectionReason, "Move rejected: blocked square.")
+
+        let movePayload = TacticalCommandEnvelope(
+            schemaVersion: 1,
+            type: "move-token",
+            payload: [
+                "tokenId": aliceTokenID,
+                "squareX": String(openSquare.x),
+                "squareY": String(openSquare.y)
+            ]
+        )
+        let moveResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/command",
+            headers: HTTPHeaders([
+                ("Content-Type", "application/json"),
+                ("Cookie", "roll4_player_session=\(alice.cookieToken)")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(movePayload))
+        )
+        XCTAssertEqual(moveResponse.status, .ok)
+        let result = try moveResponse.content.decode(TacticalCommandResponse.self)
+        XCTAssertTrue(result.accepted)
+        let movedToken = try XCTUnwrap(result.snapshot.tokens.first(where: { $0.id == aliceTokenID }))
+        XCTAssertEqual(Int(movedToken.x), openSquare.x)
+        XCTAssertEqual(Int(movedToken.y), openSquare.y)
+        XCTAssertEqual(movedToken.z, mapState.squareHeights[(openSquare.y * mapState.gridWidth) + openSquare.x])
+    }
+
+    @Test
     func testCampaignPatchRejectsRulesetChangesAfterCreation() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let adminCookie = try await signInOwner(in: tester)
@@ -3031,5 +3221,18 @@ struct ServerRoutesTests {
         )
         XCTAssertEqual(response.status, .ok)
         return try response.content.decode(PlayerView.self)
+    }
+
+    private func firstOpenSquare(in mapState: TacticalMapState) -> TacticalMapPoint {
+        let blocked = Set(mapState.blockedTiles)
+        for y in 0..<mapState.gridHeight {
+            for x in 0..<mapState.gridWidth {
+                let point = TacticalMapPoint(x: x, y: y)
+                if !blocked.contains(point) {
+                    return point
+                }
+            }
+        }
+        return TacticalMapPoint(x: 0, y: 0)
     }
 }

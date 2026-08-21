@@ -33,6 +33,51 @@ enum EncounterStateDTO: String, Codable, Equatable {
     case suspended
 }
 
+struct TacticalMapStateDTO: Codable, Equatable {
+    let schemaVersion: Int
+    let mapId: String
+    let imagePath: String
+    let gridWidth: Int
+    let gridHeight: Int
+    let squareSizeFt: Double
+    let defaultHeightFt: Double
+    let squareHeights: [Double]
+    let blockedTiles: [TacticalMapPointDTO]
+}
+
+struct TacticalMapPointDTO: Codable, Equatable, Hashable {
+    let x: Int
+    let y: Int
+}
+
+struct TacticalCommandResponseDTO: Codable, Equatable {
+    let accepted: Bool
+    let rejectionReason: String?
+    let snapshot: TacticalEncounterSnapshotDTO
+}
+
+struct TacticalEncounterSnapshotDTO: Codable, Equatable {
+    let schemaVersion: Int
+    let encounterId: UUID
+    let name: String
+    let roundNumber: Int
+    let activeTokenId: String?
+    let selectedTokenId: String?
+    let tokens: [TacticalTokenSnapshotDTO]
+}
+
+struct TacticalTokenSnapshotDTO: Codable, Equatable {
+    let id: String
+    let displayName: String
+    let ownerSessionId: UUID?
+    let ownerDisplayName: String?
+    let team: String?
+    let x: Double
+    let y: Double
+    let z: Double
+    let isHidden: Bool
+}
+
 struct RuleSetLibraryDTO: Codable, Equatable {
     let id: String
     let label: String

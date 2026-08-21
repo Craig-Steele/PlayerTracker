@@ -106,6 +106,13 @@ namespace Roll4InitiativeVTT.Map
             groundPlane.gameObject.SetActive(false);
 
             bool[,] blockedTiles = BuildBlockedTileGrid(mapData);
+            TacticalMapRuntime.Configure(
+                elevationGrid,
+                blockedTiles,
+                mapData.gridWidth,
+                mapData.gridHeight,
+                mapData.squareSizeFt,
+                mapData.defaultHeightFt);
             Transform blockerRoot = EnsureChildTransform(level0Floor, "ArcaneLibraryBlockers");
             ClearChildren(blockerRoot);
             GenerateBlockers(blockerRoot, blockedTiles, elevationGrid, mapData.gridWidth, mapData.gridHeight, mapData.squareSizeFt, mapData.defaultHeightFt);

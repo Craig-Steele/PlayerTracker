@@ -4,5 +4,6 @@
   "name": "Sample Encounter",
   "roundNumber": 1,
   "activeTokenId": "token-hero",
+  "selectedTokenId": null,
   "tokens": []
 }

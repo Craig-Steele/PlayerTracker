@@ -7,13 +7,15 @@ struct TacticalEncounterSnapshot: Content, Codable {
     let name: String
     let roundNumber: Int
     let activeTokenId: String?
+    let selectedTokenId: String?
     let tokens: [TacticalTokenSnapshot]
 }
 
 struct TacticalTokenSnapshot: Content, Codable {
     let id: String
     let displayName: String
-    let ownerId: String?
+    let ownerSessionId: UUID?
+    let ownerDisplayName: String?
     let team: String?
     let x: Double
     let y: Double
@@ -25,6 +27,12 @@ struct TacticalCommandEnvelope: Content, Codable {
     let schemaVersion: Int
     let type: String
     let payload: [String: String]
+}
+
+struct TacticalCommandResponse: Content, Codable {
+    let accepted: Bool
+    let rejectionReason: String?
+    let snapshot: TacticalEncounterSnapshot
 }
 
 struct TacticalEventEnvelope: Content, Codable {

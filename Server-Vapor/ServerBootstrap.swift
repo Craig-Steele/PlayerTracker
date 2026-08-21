@@ -113,6 +113,8 @@ enum ServerBootstrap {
             restorePersistedState: options.restorePersistedState,
             persistChanges: options.persistChanges
         )
+        let tacticalSessionStore = TacticalSessionStore()
+        let tacticalMapStore = TacticalMapStore()
 
         if options.verboseOutput {
             ServerDiagnostics.writeServingStaticFiles(sitesDir)
@@ -151,7 +153,9 @@ enum ServerBootstrap {
             app,
             campaignStore: campaignStore,
             eventHub: eventHub,
-            activeCampaignEventHub: activeCampaignEventHub
+            activeCampaignEventHub: activeCampaignEventHub,
+            tacticalSessionStore: tacticalSessionStore,
+            tacticalMapStore: tacticalMapStore
         )
 
         if options.launchBrowser {

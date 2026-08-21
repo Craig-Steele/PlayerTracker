@@ -577,11 +577,18 @@ func routes(
     _ app: Application,
     campaignStore: CampaignStore,
     eventHub: CampaignEventHub,
-    activeCampaignEventHub: ActiveCampaignEventHub
+    activeCampaignEventHub: ActiveCampaignEventHub,
+    tacticalSessionStore: TacticalSessionStore,
+    tacticalMapStore: TacticalMapStore
 ) throws {
     let userStore = app.userStore
 
-    app.registerTacticalRoutes()
+    app.registerTacticalRoutes(
+        campaignStore: campaignStore,
+        userStore: userStore,
+        tacticalSessionStore: tacticalSessionStore,
+        tacticalMapStore: tacticalMapStore
+    )
 
     app.post("auth", "signup") { req async throws -> Response in
         let input = try req.content.decode(AuthSignupInput.self)
