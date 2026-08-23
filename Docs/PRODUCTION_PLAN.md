@@ -7,7 +7,7 @@ Commercial launch shape:
 - paid server app
 - distributed through Apple and Microsoft app stores
 - licensed at a low annual price point, tentatively `$5/year`
-- free iOS and Android companion clients
+- free iOS companion client; native Android client deferred
 - the server remains the source of truth for encounter state
 
 ## Architecture Decision
@@ -265,7 +265,7 @@ Launch billing decision:
 
 - sell the server on a low-cost annual license, tentatively `$5/year`
 - distribute the paid server through Apple and Microsoft storefronts
-- keep iOS and Android clients free
+- keep the iOS client free; defer native Android client distribution
 - tie entitlement to the server installation or store purchaser, not to each player account
 - do not introduce launch caps on campaign count, archive count, or player count
 - if the license expires, preserve read/export access and block starting new hosted sessions until renewal
@@ -628,7 +628,9 @@ Constrained by:
 
 - `M7` Web migration
 - `M8` iOS migration
-- `M9` Android migration
+- `M9` Web-first 2D tactical map
+
+Native Android migration is deferred. Android phones remain supported through the responsive Web tactical client.
 
 Constrained by:
 
@@ -1091,43 +1093,51 @@ Acceptance:
 
 Status: complete
 
-### M9: Android Migration
+### M9: Web-First 2D Tactical Map
 
-Goal: convert Android from device identity to authenticated player-session identity, with parity to iOS.
+Goal: reach a usable map-based tactical system quickly through the existing responsive Web client, while keeping the server, protocol, and state model reusable by iOS, Android, and Unity later.
 
 Scope notes:
 
-- support phone and tablet form factors as first-class Android targets
-- do not add a TV target in M9, but avoid UI and architecture choices that would obviously block a future TV port
-- assume a clean launch slate, so no legacy-install migration path is required for existing `ownerId` data
-- target feature parity with the iOS client for player workflows
-- the Android client follows the server's active campaign and does not need a multi-campaign picker
-- display-only remains web-only for now
+- desktop browsers, iPhone browsers, and Android browsers are supported through one responsive tactical view
+- the server remains authoritative for encounter state, ownership, visibility, and movement legality
+- the first tactical renderer is 2D; Unity 3D remains deferred exploratory work
+- native Android development is deferred and is not required for this milestone
+- the map model is renderer-independent and does not require Unity world coordinates or 3D elevation
 
 Touchpoints:
 
-- `Client-Android/app/src/main/java/com/roll4initiative/android/ui/PlayerAppViewModel.kt`
-- `Client-Android/app/src/main/java/com/roll4initiative/android/api/ApiService.kt`
-- `Client-Android/app/src/main/java/com/roll4initiative/android/ui/SettingsScreen.kt`
+- `Server-Vapor/Tactical/`
+- `SharedProtocol/schema/`
+- `SharedProtocol/examples/`
+- `Client-Web/tactical/`
+- `Images/Arcane Library PZO30084E.png`
+- `Images/Arcane Library PZO30084E.map.json`
+- `Tests/PlayerTrackerTests/ServerRoutesTests.swift`
 
 Work:
 
-- keep the Android client on campaign-scoped player sessions rather than a separate admin login
-- replace `ownerId` persistence as primary identity
-- consume the server's active campaign and refresh when it changes
-- add SSE client handling for the active campaign updates
-- store session securely in encrypted Android storage
-- match the iOS client feature set for player interactions where practical
+- migrate the tactical map, encounter snapshot, command, and ownership contracts onto the production `main` foundation
+- reconcile tactical encounter state with existing campaign-scoped persistence before building client interaction
+- define the canonical 2D map model: grid dimensions, background image, cardinal impassable boundaries, blocked squares, token coordinates, teams, and visibility
+- build a responsive Web tactical view with graph-paper styling, map rendering, pan/zoom, token colors, and creature-information sheets
+- identify the player's controlled token through the authenticated player session
+- implement server-authoritative eight-direction movement with adjacency, boundary, blocked-square, occupancy, and diagonal corner-cutting validation
+- preserve typed tactical rejection responses containing `accepted`, `rejectionReason`, and the unchanged snapshot
+- connect tactical updates to the existing Server-Sent Events strategy, with reload/polling fallback where necessary
+- validate the same player workflow on desktop, iPhone, and Android browsers
 
 Acceptance:
 
-- user can join, rejoin, sign out, and restore a prior player session on a fresh app launch
-- user can recover the active campaign and owned characters after authentication
-- same user can use the active campaign on phone and tablet without a separate campaign-switching UI
-- player identity is server-authenticated rather than derived from a device-local `ownerId`
-- secure session material is stored in encrypted Android storage
-- live state updates for the selected campaign arrive via SSE in normal operation
-- reconnecting after a transient disconnect refreshes the selected campaign cleanly
+- a referee can open an encounter in a desktop browser and see the 2D map
+- a player can open the same tactical view from an iPhone or Android browser
+- the player sees their own token, visible party tokens, and visible enemy tokens with the correct team presentation
+- tapping a token opens visibility-filtered creature information
+- a player can move one square in any of eight directions when the server permits it
+- illegal movement returns a client-readable rejection and does not alter the snapshot
+- accepted movement updates all connected tactical views through the existing live-update model
+- tactical state survives server restart through the existing campaign persistence boundary
+- the Web client does not depend on Unity, a Unity scene, or a native Android client
 
 ### M10: Legacy Anonymous Migration
 
@@ -1281,7 +1291,7 @@ The launch billing decision is already made:
 
 - sell the server app on an annual license, tentatively `$5/year`
 - distribute the paid server through Apple and Microsoft storefronts where they fit
-- keep iOS and Android player clients free
+- keep the iOS player client free; native Android remains deferred
 - validate store entitlement and exchange it for a signed local server license lease
 - do not introduce launch caps for campaign count or player count
 - on expiry, preserve read/export access and block new hosted sessions until renewal
