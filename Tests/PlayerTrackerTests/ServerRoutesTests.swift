@@ -111,6 +111,176 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testTacticalTokenPlacementRequiresPlayerSession() async throws {
+        let tester = try await makeTester()
+        let response = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(TacticalPlacementRequest(characterId: UUID(), x: 1, y: 1)))
+        )
+
+        XCTAssertEqual(response.status, .unauthorized)
+    }
+
+    @Test
+    func testTacticalTokenPlacementReturnsPlayerTokenAndPersistsIt() async throws {
+        let tester = try await makeTester()
+        let playerSession = try await join(displayName: "Placement Player", in: tester)
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: CharacterInput(ownerName: "Placement Player", name: "Fighter")
+        )
+        let headers = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(playerSession.cookieToken)"),
+            ("Content-Type", "application/json")
+        ])
+
+        let response = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: headers,
+            body: ByteBuffer(data: try JSONEncoder().encode(TacticalPlacementRequest(characterId: character.id, x: 1, y: 1)))
+        )
+
+        XCTAssertEqual(response.status, .ok)
+        let token = try response.content.decode(TacticalTokenSnapshot.self)
+        XCTAssertEqual(token.displayName, "Placement Player")
+        XCTAssertEqual(token.characterId, character.id)
+        XCTAssertEqual(token.team, "player")
+        XCTAssertEqual(token.x, 1)
+        XCTAssertEqual(token.y, 1)
+
+        let tokensResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/tokens",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+        XCTAssertEqual(tokensResponse.status, .ok)
+        let tokens = try tokensResponse.content.decode([TacticalTokenSnapshot].self)
+        XCTAssertEqual(tokens.count, 1)
+        XCTAssertEqual(tokens[0].id, token.id)
+    }
+
+    @Test
+    func testTacticalTokenPlacementRejectsBlockedAndOutOfBoundsSquares() async throws {
+        let tester = try await makeTester()
+        let playerSession = try await join(displayName: "Placement Player", in: tester)
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: CharacterInput(ownerName: "Placement Player", name: "Fighter")
+        )
+        let headers = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(playerSession.cookieToken)"),
+            ("Content-Type", "application/json")
+        ])
+
+        let blockedResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: headers,
+            body: ByteBuffer(data: try JSONEncoder().encode(TacticalPlacementRequest(characterId: character.id, x: 0, y: 0)))
+        )
+        XCTAssertEqual(blockedResponse.status, .conflict)
+
+        let boundsResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: headers,
+            body: ByteBuffer(data: try JSONEncoder().encode(TacticalPlacementRequest(characterId: character.id, x: 24, y: 0)))
+        )
+        XCTAssertEqual(boundsResponse.status, .badRequest)
+    }
+
+    @Test
+    func testTacticalTokenPlacementRejectsSecondPlacement() async throws {
+        let tester = try await makeTester()
+        let playerSession = try await join(displayName: "Placement Player", in: tester)
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: playerSession.cookieToken,
+            payload: CharacterInput(ownerName: "Placement Player", name: "Fighter")
+        )
+        let headers = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(playerSession.cookieToken)"),
+            ("Content-Type", "application/json")
+        ])
+        let body = ByteBuffer(data: try JSONEncoder().encode(TacticalPlacementRequest(characterId: character.id, x: 1, y: 1)))
+
+        let firstResponse = try await tester.sendRequest(.POST, "/tactical/tokens/place", headers: headers, body: body)
+        XCTAssertEqual(firstResponse.status, .ok)
+
+        let secondResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: headers,
+            body: ByteBuffer(data: try JSONEncoder().encode(TacticalPlacementRequest(characterId: character.id, x: 2, y: 2)))
+        )
+        XCTAssertEqual(secondResponse.status, .conflict)
+    }
+
+    @Test
+    func testRefereeCanPlaceAndSeeHiddenTacticalToken() async throws {
+        let tester = try await makeTester()
+        let referee = try await join(displayName: "Tactical Referee", in: tester)
+        let campaignResponse = try await tester.sendRequest(.GET, "/campaign")
+        let campaign = try campaignResponse.content.decode(CampaignState.self)
+        let updatePayload = CampaignUpdateInput(
+            name: campaign.name,
+            rulesetId: campaign.rulesetId,
+            refereeSessionIds: [referee.session.player.id]
+        )
+        let updateResponse = try await tester.sendRequest(
+            .PATCH,
+            "/campaigns/\(campaign.id.uuidString)",
+            headers: HTTPHeaders([("Content-Type", "application/json")]),
+            body: ByteBuffer(data: try JSONEncoder().encode(updatePayload))
+        )
+        XCTAssertEqual(updateResponse.status, .ok)
+
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: referee.cookieToken,
+            payload: CharacterInput(
+                ownerName: "Tactical Referee",
+                name: "Hidden Goblin",
+                isHidden: true
+            )
+        )
+        let headers = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(referee.cookieToken)"),
+            ("Content-Type", "application/json")
+        ])
+        let charactersResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/characters",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(referee.cookieToken)")])
+        )
+        XCTAssertEqual(charactersResponse.status, .ok)
+        let tacticalCharacters = try charactersResponse.content.decode([PlayerView].self)
+        XCTAssertTrue(tacticalCharacters.contains { $0.id == character.id && $0.isHidden })
+
+        let placementResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: headers,
+            body: ByteBuffer(data: try JSONEncoder().encode(TacticalPlacementRequest(characterId: character.id, x: 1, y: 1)))
+        )
+        XCTAssertEqual(placementResponse.status, .ok)
+
+        let tokensResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/tokens",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(referee.cookieToken)")])
+        )
+        XCTAssertEqual(tokensResponse.status, .ok)
+        let tokens = try tokensResponse.content.decode([TacticalTokenSnapshot].self)
+        XCTAssertTrue(tokens.contains { $0.characterId == character.id && $0.isHidden })
+    }
+
+    @Test
     func testCampaignPatchRejectsRulesetChangesAfterCreation() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let adminCookie = try await signInOwner(in: tester)

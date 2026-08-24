@@ -73,15 +73,29 @@ struct TacticalEncounterSnapshot: Content, Codable {
     let tokens: [TacticalTokenSnapshot]
 }
 
-struct TacticalTokenSnapshot: Content, Codable {
+struct TacticalTokenSnapshot: Content, Codable, Equatable, Sendable {
     let id: String
+    let characterId: UUID
     let displayName: String
+    let ownerName: String?
+    let tokenDescription: String?
+    let conditions: [String]
     let ownerId: String?
     let team: String?
     let x: Double
     let y: Double
     let z: Double
     let isHidden: Bool
+}
+
+struct TacticalTokenUpdateEvent: Content, Codable, Sendable {
+    let token: TacticalTokenSnapshot
+}
+
+struct TacticalPlacementRequest: Content, Codable {
+    let characterId: UUID
+    let x: Int
+    let y: Int
 }
 
 struct TacticalCommandEnvelope: Content, Codable {

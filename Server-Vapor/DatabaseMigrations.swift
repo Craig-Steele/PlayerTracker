@@ -895,6 +895,24 @@ struct CreateCharacterStats: AsyncMigration {
     }
 }
 
+struct AddTokenDescriptionToCharacters: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else { return }
+            let columns = try await sqlDatabase
+                .raw("PRAGMA table_info(characters)")
+                .all(decoding: SQLiteTableInfoRow.self)
+            guard !columns.contains(where: { $0.name == "token_description" }) else { return }
+            try await sqlDatabase
+                .raw("ALTER TABLE characters ADD COLUMN token_description TEXT")
+                .run()
+        }
+    }
+
+    func revert(on database: any Database) async throws {
+    }
+}
+
 struct CreateCharacterConditions: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema("character_conditions")
@@ -960,6 +978,7 @@ enum DatabaseMigrations {
         app.migrations.add(AddInitiativeGroupColumnsToCharacters())
         app.migrations.add(CreateCharacterStats())
         app.migrations.add(CreateCharacterConditions())
+        app.migrations.add(AddTokenDescriptionToCharacters())
         app.migrations.add(CreateCampaignEncounters())
     }
 

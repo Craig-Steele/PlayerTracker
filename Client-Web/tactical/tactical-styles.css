@@ -46,6 +46,25 @@
   color: var(--tactical-error);
 }
 
+.tactical-tooltip {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 0.35rem;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  max-width: 20rem;
+  padding: 0.45rem 0.6rem;
+  pointer-events: none;
+  position: fixed;
+  z-index: 10;
+}
+
+.tactical-tooltip [data-tactical-tooltip-conditions] {
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+
 @media (prefers-color-scheme: dark) {
   .tactical-shell {
     --tactical-grid: rgba(104, 177, 232, 0.64);

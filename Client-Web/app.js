@@ -448,6 +448,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerNameLogoutBtn = document.getElementById('player-name-logout');
   const playerNameNudge = document.getElementById('player-name-nudge');
   const nameInput = document.getElementById('name');
+  const tokenDescriptionInput = document.getElementById('token-description');
   const useAppInitiativeRollInput = document.getElementById('use-app-initiative-roll');
   const initiativeBonusInput = document.getElementById('initiative-bonus');
   const initiativeBonusWrap = document.getElementById('initiative-bonus-wrap');
@@ -1342,6 +1343,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       return;
     }
     nameInput.value = current.name || '';
+    if (tokenDescriptionInput) tokenDescriptionInput.value = current.tokenDescription || '';
     if (revealStatsInput) {
       revealStatsInput.checked = Boolean(current.revealStats);
     }
@@ -4286,6 +4288,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     drafts[draftKey] = {
       id: selectedCharacterId,
       name: nameInput ? nameInput.value.trim() : '',
+      tokenDescription: tokenDescriptionInput ? tokenDescriptionInput.value.trim() : '',
       stats,
       revealStats: revealStatsInput ? revealStatsInput.checked : null,
       autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
@@ -4306,6 +4309,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (!draft) return;
     if (draft.name && nameInput) {
       nameInput.value = draft.name;
+    }
+    if (tokenDescriptionInput && typeof draft.tokenDescription === 'string') {
+      tokenDescriptionInput.value = draft.tokenDescription;
     }
     if (draft.stats) {
       statInputs.forEach((entry, key) => {
@@ -4342,6 +4348,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       if (!draft) return;
       if (draft.name) {
         character.name = draft.name;
+      }
+      if (typeof draft.tokenDescription === 'string') {
+        character.tokenDescription = draft.tokenDescription;
       }
       if (draft.stats && Array.isArray(character.stats)) {
         character.stats = character.stats.map((stat) => {
@@ -4441,6 +4450,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
         id: character.id,
         ownerName: character.ownerName,
         name: character.name,
+        tokenDescription: character.tokenDescription || null,
         statBlockId: character.statBlockId || inferCharacterStatBlockIdFromStats(character.stats) || null,
         initiative: character.initiative,
         stats: Array.isArray(character.stats) ? character.stats : [],
@@ -5585,6 +5595,7 @@ function getOwnerName() {
     selectedCharacterId = found.id;
     isCreatingCharacter = false;
     nameInput.value = found.name;
+    if (tokenDescriptionInput) tokenDescriptionInput.value = found.tokenDescription || '';
     if (Array.isArray(found.stats)) {
       const statsByKey = new Map(found.stats.map((stat) => [stat.key, stat]));
       statInputs.forEach((entry, key) => {
@@ -5630,6 +5641,7 @@ function getOwnerName() {
     setDetailsPanelOpen(false);
     setConditionsPanelOpen(false);
     nameInput.value = '';
+    if (tokenDescriptionInput) tokenDescriptionInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.currentInput) entry.currentInput.value = '';
       if (entry.maxInput) entry.maxInput.value = '';
@@ -7001,6 +7013,7 @@ function getOwnerName() {
       id: selectedCharacterId,
       ownerName,
       name,
+      tokenDescription: tokenDescriptionInput ? tokenDescriptionInput.value.trim() || null : null,
       initiative,
       stats,
       currency: Array.isArray(selectedCharacter?.currency) ? selectedCharacter.currency : null,

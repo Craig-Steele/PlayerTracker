@@ -422,6 +422,9 @@ final class CharacterRow: Model, @unchecked Sendable {
     @Field(key: "name")
     var name: String
 
+    @OptionalField(key: "token_description")
+    var tokenDescription: String?
+
     @OptionalField(key: "initiative")
     var initiative: Double?
 
@@ -472,6 +475,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         claimedDisplayName: String? = nil,
         claimedAt: Date? = nil,
         name: String,
+        tokenDescription: String? = nil,
         initiative: Double?,
         initiativeGroupId: UUID? = nil,
         initiativeGroupIndex: Int? = nil,
@@ -496,6 +500,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.claimedDisplayName = claimedDisplayName
         self.claimedAt = claimedAt
         self.name = name
+        self.tokenDescription = tokenDescription
         self.initiative = initiative
         self.initiativeGroupId = initiativeGroupId
         self.initiativeGroupIndex = initiativeGroupIndex
@@ -1722,6 +1727,7 @@ enum DatabasePersistence {
                     isReferee: false,
                     isClaimable: row.isClaimable,
                     characterName: row.name,
+                    tokenDescription: row.tokenDescription,
                     initiative: row.initiative,
                     initiativeGroupId: row.initiativeGroupId,
                     initiativeGroupIndex: row.initiativeGroupIndex,
@@ -1765,6 +1771,7 @@ enum DatabasePersistence {
                 row.claimedDisplayName = state.claimedDisplayName
                 row.claimedAt = state.claimedAt
                 row.name = state.characterName
+                row.tokenDescription = state.tokenDescription
                 row.initiative = state.initiative
                 row.initiativeGroupId = state.initiativeGroupId
                 row.initiativeGroupIndex = state.initiativeGroupIndex
@@ -1795,6 +1802,7 @@ enum DatabasePersistence {
                     claimedDisplayName: state.claimedDisplayName,
                     claimedAt: state.claimedAt,
                     name: state.characterName,
+                    tokenDescription: state.tokenDescription,
                     initiative: state.initiative,
                     initiativeGroupId: state.initiativeGroupId,
                     initiativeGroupIndex: state.initiativeGroupIndex,

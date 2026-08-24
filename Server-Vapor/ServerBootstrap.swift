@@ -133,6 +133,7 @@ enum ServerBootstrap {
         try await DatabaseMigrations.verifyShape(on: app.db)
         let eventHub = CampaignEventHub()
         let activeCampaignEventHub = ActiveCampaignEventHub()
+        let tacticalEventHub = TacticalEventHub()
         try await campaignStore.configure(database: app.db)
         try await restoreActiveCampaignState(
             campaignStore: campaignStore,
@@ -151,7 +152,8 @@ enum ServerBootstrap {
             app,
             campaignStore: campaignStore,
             eventHub: eventHub,
-            activeCampaignEventHub: activeCampaignEventHub
+            activeCampaignEventHub: activeCampaignEventHub,
+            tacticalEventHub: tacticalEventHub
         )
 
         if options.launchBrowser {

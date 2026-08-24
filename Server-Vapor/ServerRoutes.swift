@@ -112,7 +112,7 @@ private func playerSessionResponse(
     )
 }
 
-private func isRefereeSession(
+func isRefereeSession(
     _ session: PlayerSessionPersistenceState,
     in campaignID: UUID,
     on database: any Database
@@ -577,13 +577,17 @@ func routes(
     _ app: Application,
     campaignStore: CampaignStore,
     eventHub: CampaignEventHub,
-    activeCampaignEventHub: ActiveCampaignEventHub
+    activeCampaignEventHub: ActiveCampaignEventHub,
+    tacticalEventHub: TacticalEventHub
 ) throws {
     let userStore = app.userStore
 
     app.registerTacticalRoutes(
         campaignStore: campaignStore,
-        tacticalMapStore: TacticalMapStore()
+        userStore: userStore,
+        tacticalMapStore: TacticalMapStore(),
+        tacticalPlacementStore: TacticalPlacementStore(),
+        tacticalEventHub: tacticalEventHub
     )
 
     app.post("auth", "signup") { req async throws -> Response in
@@ -670,6 +674,7 @@ func routes(
         Task {
             await eventHub.shutdown()
             await activeCampaignEventHub.shutdown()
+            await tacticalEventHub.shutdown()
             await app.server.shutdown()
         }
         return .ok
@@ -1272,6 +1277,7 @@ func routes(
             ownerId: resolvedOwnerId,
             ownerName: resolvedOwnerName,
             characterName: input.name,
+            tokenDescription: input.tokenDescription,
             referenceUrl: input.referenceUrl,
             statBlockId: input.statBlockId,
             initiative: input.initiative,
@@ -1379,6 +1385,7 @@ func routes(
             ownerId: session.id,
             ownerName: session.displayName,
             characterName: input.name,
+            tokenDescription: input.tokenDescription,
             referenceUrl: input.referenceUrl,
             statBlockId: input.statBlockId,
             initiative: input.initiative,

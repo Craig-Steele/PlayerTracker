@@ -14,12 +14,22 @@
         <h1>Tactical Map</h1>
         <div class="tactical-status" data-tactical-status>Loading map…</div>
       </div>
+      <label>
+        Character
+        <select data-tactical-character aria-label="Character to place"></select>
+      </label>
       <button type="button" data-tactical-reset>Reset view</button>
     </div>
     <div class="tactical-viewport">
       <canvas class="tactical-canvas" data-tactical-canvas aria-label="Tactical map"></canvas>
     </div>
   </main>
+  <div class="tactical-tooltip" data-tactical-tooltip hidden role="status">
+    <div data-tactical-tooltip-character></div>
+    <div data-tactical-tooltip-conditions-section hidden>
+      <div data-tactical-tooltip-conditions></div>
+    </div>
+  </div>
   <script src="tactical/tactical-state.js"></script>
   <script src="tactical/tactical-client.js"></script>
   <script src="tactical/tactical-render.js"></script>
