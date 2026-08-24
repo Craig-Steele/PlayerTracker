@@ -1,4 +1,56 @@
 .tactical-shell {
+  --tactical-grid: rgba(39, 109, 173, 0.58);
+  --tactical-viewport: #f5f8fb;
+  --tactical-status: #425466;
+  --tactical-error: #a12622;
   display: grid;
   gap: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.tactical-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.tactical-viewport {
+  background: var(--tactical-viewport);
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  height: min(78vh, 900px);
+  overflow: hidden;
+}
+
+.tactical-canvas {
+  cursor: grab;
+  display: block;
+  height: 100%;
+  touch-action: none;
+  width: 100%;
+}
+
+.tactical-canvas:active {
+  cursor: grabbing;
+}
+
+.tactical-status {
+  color: var(--tactical-status);
+  font-size: 0.9rem;
+}
+
+.tactical-error {
+  color: var(--tactical-error);
+}
+
+@media (prefers-color-scheme: dark) {
+  .tactical-shell {
+    --tactical-grid: rgba(104, 177, 232, 0.64);
+    --tactical-viewport: #20252b;
+    --tactical-status: var(--text-secondary);
+    --tactical-error: var(--text-danger);
+  }
 }
