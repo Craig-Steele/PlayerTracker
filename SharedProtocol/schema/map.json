@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "name": "TacticalMapState",
+  "description": "Canonical 2D map projection shared with tactical clients.",
+  "fields": {
+    "version": "Integer map schema version.",
+    "imagePath": "Map image path relative to the map asset directory.",
+    "grid": {
+      "eastWestSquareCount": "Number of squares from west to east.",
+      "northSouthSquareCount": "Number of squares from north to south.",
+      "squareSizeFt": "Physical size of each grid square in feet.",
+      "coordinateConvention": {
+        "origin": "Map corner from which positive coordinates increase inward."
+      }
+    },
+    "blockedTiles": "Array of blocked square points with integer x and y coordinates.",
+    "terrain": "Terrain type defaults and rectangular overrides.",
+    "elevation": "Default elevation and rectangular elevation overrides.",
+    "mapPresentation": "Renderer-facing map appearance settings."
+  },
+  "deferred": [
+    "blockedBoundaries"
+  ]
+}

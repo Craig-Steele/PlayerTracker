@@ -148,7 +148,7 @@ private func requireActiveCampaignMemberSession(
     return (campaign, session)
 }
 
-private func requireActiveCampaignParticipantSession(
+func requireActiveCampaignParticipantSession(
     _ req: Request,
     campaignStore: CampaignStore
 ) async throws -> (campaign: CampaignState, session: PlayerSessionPersistenceState) {
@@ -581,7 +581,10 @@ func routes(
 ) throws {
     let userStore = app.userStore
 
-    app.registerTacticalRoutes()
+    app.registerTacticalRoutes(
+        campaignStore: campaignStore,
+        tacticalMapStore: TacticalMapStore()
+    )
 
     app.post("auth", "signup") { req async throws -> Response in
         let input = try req.content.decode(AuthSignupInput.self)

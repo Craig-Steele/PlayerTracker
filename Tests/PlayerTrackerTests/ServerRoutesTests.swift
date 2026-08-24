@@ -56,6 +56,61 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testTacticalMapRouteRequiresPlayerSession() async throws {
+        let tester = try await makeTester()
+
+        let response = try await tester.sendRequest(.GET, "/tactical/map")
+
+        XCTAssertEqual(response.status, .unauthorized)
+    }
+
+    @Test
+    func testTacticalMapRouteReturnsCanonicalMapForParticipant() async throws {
+        let tester = try await makeTester()
+        let playerSession = try await join(displayName: "Map Player", in: tester)
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/tactical/map",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+
+        XCTAssertEqual(response.status, .ok)
+        let map = try response.content.decode(TacticalMapState.self)
+        XCTAssertEqual(map.version, 1)
+        XCTAssertEqual(map.grid.eastWestSquareCount, 24)
+        XCTAssertEqual(map.grid.northSouthSquareCount, 30)
+        XCTAssertEqual(map.grid.squareSizeFt, 5.0)
+        XCTAssertEqual(map.grid.coordinateConvention.origin, "southwest")
+        XCTAssertEqual(map.blockedTiles.count, 197)
+    }
+
+    @Test
+    func testTacticalMapImageRouteRequiresPlayerSession() async throws {
+        let tester = try await makeTester()
+
+        let response = try await tester.sendRequest(.GET, "/tactical/map/image")
+
+        XCTAssertEqual(response.status, .unauthorized)
+    }
+
+    @Test
+    func testTacticalMapImageRouteReturnsPngForParticipant() async throws {
+        let tester = try await makeTester()
+        let playerSession = try await join(displayName: "Map Image Player", in: tester)
+
+        let response = try await tester.sendRequest(
+            .GET,
+            "/tactical/map/image",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(playerSession.cookieToken)")])
+        )
+
+        XCTAssertEqual(response.status, .ok)
+        XCTAssertEqual(response.headers.first(name: .contentType), "image/png")
+        XCTAssertGreaterThan(response.body.readableBytes, 0)
+    }
+
+    @Test
     func testCampaignPatchRejectsRulesetChangesAfterCreation() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let adminCookie = try await signInOwner(in: tester)

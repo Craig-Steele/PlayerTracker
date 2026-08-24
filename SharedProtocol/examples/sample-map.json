@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "imagePath": "Arcane Library PZO30084E.png",
+  "grid": {
+    "eastWestSquareCount": 4,
+    "northSouthSquareCount": 3,
+    "squareSizeFt": 5.0,
+    "coordinateConvention": {
+      "origin": "southwest"
+    }
+  },
+  "blockedTiles": [
+    {"x": 0, "y": 2}
+  ],
+  "terrain": {
+    "defaultType": "normal",
+    "overrides": [
+      {
+        "x": 2,
+        "y": 0,
+        "width": 2,
+        "height": 1,
+        "type": "water"
+      }
+    ]
+  },
+  "elevation": {
+    "defaultHeightFt": 0.0,
+    "overrides": [
+      {
+        "x": 1,
+        "y": 1,
+        "width": 1,
+        "height": 1,
+        "heightFt": 5.0
+      }
+    ]
+  },
+  "mapPresentation": {
+    "sideWallColor": {
+      "r": 0.1,
+      "g": 0.1,
+      "b": 0.1,
+      "a": 0.5
+    }
+  }
+}
