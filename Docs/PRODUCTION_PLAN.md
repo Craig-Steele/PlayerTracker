@@ -1127,6 +1127,85 @@ Work:
 - connect tactical updates to the existing Server-Sent Events strategy, with reload/polling fallback where necessary
 - validate the same player workflow on desktop, iPhone, and Android browsers
 
+#### M9-02: Referee Map Selection
+
+Goal: let the referee choose the map during New Encounter setup before the encounter becomes active.
+
+Status: complete
+
+Implemented slice:
+
+- catalog bundled `.map.json` map packages from `Images/`
+- show the bundled map catalog in the referee view while the encounter is `new`
+- allow only an authenticated referee to select a map
+- validate the selected map JSON and referenced image before accepting it
+- import a PNG with optional sidecar JSON, or collect minimum grid metadata when no sidecar is provided
+- serve the selected map and image through the tactical routes
+- reject map changes after the encounter starts
+- import a single `.map.zip` package containing the map JSON and image
+- show a preview of the selected map during encounter setup
+- provide specific validation errors for malformed or incomplete map packages
+
+Next:
+
+- M9-02 is complete; proceed to M9-03 player starting-area restrictions.
+
+#### M9-03: Player Starting Area
+
+Goal: let the referee restrict player token placement to a rectangular area during encounter setup.
+
+Planned behavior:
+
+- the referee selects a rectangle directly on the tactical map
+- bounds use inclusive cardinal grid coordinates: `west`, `east`, `south`, and `north`
+- players may place or reposition tokens only inside the selected rectangle
+- the referee remains unrestricted when placing controlled creatures or characters
+- the server enforces the rectangle; clients use it for visual guidance only
+- the permitted area is shown as a translucent map overlay
+- starting a New Encounter clears the placement rectangle
+- changing maps clears it because the previous coordinates may not apply
+- when no rectangle is selected, players may place in any legal square
+
+Acceptance:
+
+- a referee can draw and adjust a player placement rectangle during encounter setup
+- a player can place and reposition a token inside the rectangle
+- a player receives a typed rejection when attempting placement outside the rectangle
+- the referee can place tokens outside the rectangle
+- the rectangle is cleared when a new encounter begins or the map changes
+
+#### M9-04: Map Authoring and Package Export
+
+Goal: provide a map-authoring tool so a referee can create and correct the metadata required by a portable `.map.zip` package.
+
+Planned behavior:
+
+- import a PNG as the map background
+- define east-west and north-south grid measurements, square size, and coordinate origin
+- mark blocked tiles with click and drag
+- paint terrain types such as normal, difficult, water, and lava
+- mark walls on tile edges, separate from blocked tile occupancy
+- paint or enter elevation values independently from terrain type
+- provide eraser and undo controls
+- preview the final tactical rendering
+- validate the map before export
+- export a package containing the PNG and canonical map JSON
+
+Canonical data distinctions:
+
+- `blockedTiles` represent squares that cannot be entered
+- `terrain` represents movement or environmental properties of squares
+- `walls` represent barriers on the edges between squares
+- `elevation` represents height independently from terrain
+
+Acceptance:
+
+- a referee can align a grid to an imported PNG
+- a referee can create blocked, terrain, wall, and elevation metadata without editing JSON by hand
+- the editor preview matches the tactical client’s coordinate convention
+- exported `.map.zip` packages can be imported by the referee map selector
+- malformed or incomplete map packages receive actionable validation errors
+
 Acceptance:
 
 - a referee can open an encounter in a desktop browser and see the 2D map

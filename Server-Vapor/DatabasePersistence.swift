@@ -12,6 +12,7 @@ struct CampaignPersistenceState {
     let userdataFiles: [String]
     let partyTreasure: [InventoryEntry]
     let currency: [CurrencyAmount]
+    let selectedMapID: String?
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
@@ -208,6 +209,9 @@ final class CampaignRow: Model, @unchecked Sendable {
     @OptionalField(key: "currency_json")
     var currencyJSON: String?
 
+    @OptionalField(key: "selected_map_id")
+    var selectedMapID: String?
+
     @OptionalField(key: "last_selected_at")
     var lastSelectedAt: Date?
 
@@ -229,6 +233,7 @@ final class CampaignRow: Model, @unchecked Sendable {
         userdataFilesJSON: String? = nil,
         partyTreasureJSON: String? = nil,
         currencyJSON: String? = nil,
+        selectedMapID: String? = nil,
         lastSelectedAt: Date? = nil
     ) {
         self.id = id
@@ -240,6 +245,7 @@ final class CampaignRow: Model, @unchecked Sendable {
         self.userdataFilesJSON = userdataFilesJSON
         self.partyTreasureJSON = partyTreasureJSON
         self.currencyJSON = currencyJSON
+        self.selectedMapID = selectedMapID
         self.lastSelectedAt = lastSelectedAt
     }
 }
@@ -722,6 +728,20 @@ enum DatabasePersistence {
             throw Abort(.notFound, reason: "Campaign not found.")
         }
         campaign.userdataFilesJSON = try encodeUserDataFiles(files)
+        try await campaign.save(on: database)
+    }
+
+    static func updateCampaignSelectedMap(
+        campaignID: UUID,
+        mapID: String?,
+        on database: any Database
+    ) async throws {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        campaign.selectedMapID = mapID
         try await campaign.save(on: database)
     }
 
@@ -1366,6 +1386,7 @@ enum DatabasePersistence {
             userdataFiles: userdataFiles,
             partyTreasure: partyTreasure,
             currency: currency,
+            selectedMapID: campaign.selectedMapID,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID,
@@ -1408,6 +1429,7 @@ enum DatabasePersistence {
             userdataFiles: userdataFiles,
             partyTreasure: partyTreasure,
             currency: currency,
+            selectedMapID: campaign.selectedMapID,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID,
@@ -1443,6 +1465,7 @@ enum DatabasePersistence {
                 userdataFiles: userdataFiles,
                 partyTreasure: partyTreasure,
                 currency: currency,
+                selectedMapID: campaign.selectedMapID,
                 roundIndex: roundIndex,
                 turnIndex: turnIndex,
                 currentTurnID: currentTurnID,

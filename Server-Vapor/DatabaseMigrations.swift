@@ -621,6 +621,19 @@ struct AddCurrencyToCampaigns: AsyncMigration {
     }
 }
 
+struct AddSelectedMapToCampaigns: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.withConnection { connection in
+            guard let sqlDatabase = connection as? any SQLDatabase else { return }
+            let columns = try await sqlDatabase.raw("PRAGMA table_info(campaigns)").all(decoding: SQLiteTableInfoRow.self)
+            guard !columns.contains(where: { $0.name == "selected_map_id" }) else { return }
+            try await sqlDatabase.raw("ALTER TABLE campaigns ADD COLUMN selected_map_id TEXT").run()
+        }
+    }
+
+    func revert(on database: any Database) async throws { }
+}
+
 struct DatabaseShapeVerification {
     static func verify(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -963,6 +976,7 @@ enum DatabaseMigrations {
         app.migrations.add(AddUserDataFilesToCampaigns())
         app.migrations.add(AddPartyTreasureToCampaigns())
         app.migrations.add(AddCurrencyToCampaigns())
+        app.migrations.add(AddSelectedMapToCampaigns())
         app.migrations.add(AddLastSelectedAtToCampaigns())
         app.migrations.add(CreateCampaignMemberships())
         app.migrations.add(CreateCampaignInvites())

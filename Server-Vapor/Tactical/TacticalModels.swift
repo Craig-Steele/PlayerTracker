@@ -11,11 +11,47 @@ struct TacticalMapState: Content, Codable, Equatable {
     let mapPresentation: TacticalMapPresentation
 }
 
+struct TacticalMapSummary: Content, Codable, Equatable {
+    let id: String
+    let name: String
+    let selected: Bool
+}
+
+struct TacticalMapSelectionRequest: Content, Codable {
+    let mapID: String
+}
+
+struct TacticalMapImportRequest: Content, Codable {
+    let filename: String
+    let imageBase64: String
+    let map: TacticalMapState
+}
+
+struct TacticalMapArchiveImportRequest: Content, Codable {
+    let filename: String
+    let archiveBase64: String
+}
+
 struct TacticalMapGrid: Content, Codable, Equatable {
     let eastWestSquareCount: Int
     let northSouthSquareCount: Int
     let squareSizeFt: Double
     let coordinateConvention: TacticalCoordinateConvention
+    let boundaryBehavior: String?
+
+    init(
+        eastWestSquareCount: Int,
+        northSouthSquareCount: Int,
+        squareSizeFt: Double,
+        coordinateConvention: TacticalCoordinateConvention,
+        boundaryBehavior: String? = nil
+    ) {
+        self.eastWestSquareCount = eastWestSquareCount
+        self.northSouthSquareCount = northSouthSquareCount
+        self.squareSizeFt = squareSizeFt
+        self.coordinateConvention = coordinateConvention
+        self.boundaryBehavior = boundaryBehavior
+    }
 }
 
 struct TacticalCoordinateConvention: Content, Codable, Equatable {
@@ -55,6 +91,18 @@ struct TacticalElevationOverride: Content, Codable, Equatable {
 
 struct TacticalMapPresentation: Content, Codable, Equatable {
     let sideWallColor: TacticalColor
+    let outsideMapFill: String?
+    let terrainBoundary: String?
+
+    init(
+        sideWallColor: TacticalColor,
+        outsideMapFill: String? = nil,
+        terrainBoundary: String? = nil
+    ) {
+        self.sideWallColor = sideWallColor
+        self.outsideMapFill = outsideMapFill
+        self.terrainBoundary = terrainBoundary
+    }
 }
 
 struct TacticalColor: Content, Codable, Equatable {

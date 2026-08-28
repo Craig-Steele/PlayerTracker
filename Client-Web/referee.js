@@ -162,6 +162,22 @@ window.addEventListener('DOMContentLoaded', () => {
   const encounterNewBtn = document.getElementById('encounter-new');
   const encounterStartBtn = document.getElementById('encounter-start');
   const encounterSuspendBtn = document.getElementById('encounter-suspend');
+  const encounterMapButton = document.getElementById('encounter-map-button');
+  const encounterMapSetup = document.getElementById('encounter-map-setup');
+  const encounterMapSelect = document.getElementById('encounter-map-select');
+  const encounterMapStatus = document.getElementById('encounter-map-status');
+  const encounterMapPreview = document.getElementById('encounter-map-preview');
+  const encounterMapClose = document.getElementById('encounter-map-close');
+  const encounterMapImage = document.getElementById('encounter-map-image');
+  const encounterMapArchive = document.getElementById('encounter-map-archive');
+  const encounterMapSidecar = document.getElementById('encounter-map-sidecar');
+  const encounterMapMetadata = document.getElementById('encounter-map-metadata');
+  const encounterMapEastWest = document.getElementById('encounter-map-east-west');
+  const encounterMapNorthSouth = document.getElementById('encounter-map-north-south');
+  const encounterMapSquareSize = document.getElementById('encounter-map-square-size');
+  const encounterMapBlockedTiles = document.getElementById('encounter-map-blocked-tiles');
+  const encounterMapImport = document.getElementById('encounter-map-import');
+  const encounterMapArchiveImport = document.getElementById('encounter-map-archive-import');
 
   const refereeCampaignName = document.getElementById('ref-campaign-name');
   const refereeEncounterState = document.getElementById('ref-encounter-state');
@@ -4680,6 +4696,194 @@ window.addEventListener('DOMContentLoaded', () => {
       encounterSuspendBtn.disabled = isSuspended;
       encounterSuspendBtn.setAttribute('aria-disabled', isSuspended.toString());
     }
+    if (encounterMapSetup) {
+      if (encounterState !== 'new' && !encounterMapSetup.classList.contains('hidden')) {
+        encounterMapSetup.classList.add('hidden');
+        encounterMapSetup.setAttribute('aria-hidden', 'true');
+      }
+    }
+    if (encounterMapButton) {
+      const isNew = encounterState === 'new';
+      encounterMapButton.classList.toggle('hidden', !isNew);
+      encounterMapButton.disabled = !isNew;
+      encounterMapButton.setAttribute('aria-disabled', (!isNew).toString());
+    }
+  }
+
+  async function loadEncounterMaps() {
+    if (!encounterMapSelect) return;
+    try {
+      const res = await fetch('/tactical/maps');
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const maps = await res.json();
+      encounterMapSelect.innerHTML = '';
+      maps.forEach((map) => {
+        const option = document.createElement('option');
+        option.value = map.id;
+        option.textContent = map.name;
+        option.selected = Boolean(map.selected);
+        encounterMapSelect.appendChild(option);
+      });
+      if (encounterMapStatus) {
+        encounterMapStatus.textContent = maps.length ? 'Select the map before starting.' : 'No bundled maps are available.';
+      }
+      updateEncounterMapPreview();
+    } catch (err) {
+      if (encounterMapStatus) encounterMapStatus.textContent = `Unable to load maps: ${err.message}`;
+    }
+  }
+
+  async function selectEncounterMap(mapID) {
+    if (!mapID) return;
+    try {
+      const res = await fetch('/tactical/map', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mapID })
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.reason || `Server returned ${res.status}`);
+      }
+      if (encounterMapStatus) encounterMapStatus.textContent = 'Map selected.';
+      updateEncounterMapPreview();
+    } catch (err) {
+      if (encounterMapStatus) encounterMapStatus.textContent = `Unable to select map: ${err.message}`;
+      await loadEncounterMaps();
+    }
+  }
+
+  function updateEncounterMapPreview() {
+    if (!encounterMapPreview) return;
+    if (!encounterMapSelect?.value) {
+      encounterMapPreview.classList.add('hidden');
+      encounterMapPreview.removeAttribute('src');
+      return;
+    }
+    encounterMapPreview.src = `/tactical/map/image?v=${Date.now()}`;
+    encounterMapPreview.classList.remove('hidden');
+  }
+
+  function setEncounterMapMetadataVisible(visible) {
+    if (!encounterMapMetadata) return;
+    encounterMapMetadata.classList.toggle('hidden', !visible);
+  }
+
+  function fileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result).split(',')[1] || '');
+      reader.onerror = () => reject(reader.error || new Error('Unable to read image.'));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function buildImportedMapMetadata(imageFile) {
+    const sidecar = encounterMapSidecar?.files?.[0];
+    if (sidecar) {
+      const text = await sidecar.text();
+      const map = JSON.parse(text);
+      map.imagePath = imageFile.name;
+      return map;
+    }
+    let blockedTiles = [];
+    const blockedText = encounterMapBlockedTiles?.value.trim();
+    if (blockedText) blockedTiles = JSON.parse(blockedText);
+    return {
+      version: 1,
+      imagePath: imageFile.name,
+      grid: {
+        eastWestSquareCount: Number.parseInt(encounterMapEastWest?.value || '0', 10),
+        northSouthSquareCount: Number.parseInt(encounterMapNorthSouth?.value || '0', 10),
+        squareSizeFt: Number.parseFloat(encounterMapSquareSize?.value || '0'),
+        coordinateConvention: { origin: 'southwest' }
+      },
+      blockedTiles,
+      terrain: { defaultType: 'normal', overrides: [] },
+      elevation: { defaultHeightFt: 0, overrides: [] },
+      mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } }
+    };
+  }
+
+  async function importEncounterMap() {
+    const imageFile = encounterMapImage?.files?.[0];
+    if (!imageFile) {
+      if (encounterMapStatus) encounterMapStatus.textContent = 'Choose a PNG first.';
+      return;
+    }
+    if (!imageFile.name.toLowerCase().endsWith('.png')) {
+      if (encounterMapStatus) encounterMapStatus.textContent = 'The map image must be a PNG.';
+      return;
+    }
+    if (encounterMapImport) encounterMapImport.disabled = true;
+    try {
+      const map = await buildImportedMapMetadata(imageFile);
+      const imageBase64 = await fileAsBase64(imageFile);
+      const res = await fetch('/tactical/maps/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: imageFile.name, imageBase64, map })
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.reason || `Server returned ${res.status}`);
+      }
+      await loadEncounterMaps();
+      if (encounterMapStatus) encounterMapStatus.textContent = 'Map imported and selected.';
+      if (encounterMapImage) encounterMapImage.value = '';
+      if (encounterMapSidecar) encounterMapSidecar.value = '';
+      setEncounterMapMetadataVisible(false);
+    } catch (err) {
+      if (encounterMapStatus) encounterMapStatus.textContent = `Unable to import map: ${err.message}`;
+    } finally {
+      if (encounterMapImport) encounterMapImport.disabled = false;
+    }
+  }
+
+  async function importEncounterMapArchive() {
+    const archiveFile = encounterMapArchive?.files?.[0];
+    if (!archiveFile) {
+      if (encounterMapStatus) encounterMapStatus.textContent = 'Choose a .map.zip file first.';
+      return;
+    }
+    if (!archiveFile.name.toLowerCase().endsWith('.map.zip')) {
+      if (encounterMapStatus) encounterMapStatus.textContent = 'The map archive must use the .map.zip extension.';
+      return;
+    }
+    if (encounterMapArchiveImport) encounterMapArchiveImport.disabled = true;
+    try {
+      const archiveBase64 = await fileAsBase64(archiveFile);
+      const res = await fetch('/tactical/maps/import-archive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: archiveFile.name, archiveBase64 })
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.reason || `Server returned ${res.status}`);
+      }
+      await loadEncounterMaps();
+      if (encounterMapStatus) encounterMapStatus.textContent = 'Map archive imported and selected.';
+      encounterMapArchive.value = '';
+    } catch (err) {
+      if (encounterMapStatus) encounterMapStatus.textContent = `Unable to import map archive: ${err.message}`;
+    } finally {
+      if (encounterMapArchiveImport) encounterMapArchiveImport.disabled = false;
+    }
+  }
+
+  function closeEncounterMapSetup() {
+    if (!encounterMapSetup) return;
+    encounterMapSetup.classList.add('hidden');
+    encounterMapSetup.setAttribute('aria-hidden', 'true');
+  }
+
+  async function openEncounterMapSetup() {
+    if (encounterState !== 'new' || !encounterMapSetup) return;
+    await loadEncounterMaps();
+    encounterMapSetup.classList.remove('hidden');
+    encounterMapSetup.setAttribute('aria-hidden', 'false');
+    encounterMapSelect?.focus();
   }
 
   /**
@@ -4779,6 +4983,7 @@ window.addEventListener('DOMContentLoaded', () => {
     closeInventoryViewer();
     hideAddForm();
     closeCampaignSettingsModal();
+    closeEncounterMapSetup();
     closePartyTreasureEditor();
     clearSelectedCharacter();
   }
@@ -4794,6 +4999,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (campaignSettingsModal && !campaignSettingsModal.classList.contains('hidden')) {
       closeCampaignSettingsModal();
+      return true;
+    }
+    if (encounterMapSetup && !encounterMapSetup.classList.contains('hidden')) {
+      closeEncounterMapSetup();
       return true;
     }
     if (conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open') && !conditionsPanel.classList.contains('hidden')) {
@@ -6503,10 +6712,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (hasActiveCampaign) {
       await loadCampaignUserData();
       await loadState();
+      await loadEncounterMaps();
     } else if (await recoverActiveCampaignIfNeeded()) {
       await loadCampaign();
       await loadCampaignUserData();
       await loadState();
+      await loadEncounterMaps();
     }
     campaignLiveStream.start();
   }
@@ -6528,7 +6739,46 @@ window.addEventListener('DOMContentLoaded', () => {
   if (encounterNewBtn) {
     encounterNewBtn.addEventListener('click', async () => {
       if (!(await confirmNewEncounter())) return;
-      handleEncounterAction('/encounter/new');
+      await handleEncounterAction('/encounter/new');
+      await loadEncounterMaps();
+    });
+  }
+  if (encounterMapSelect) {
+    encounterMapSelect.addEventListener('change', () => {
+      selectEncounterMap(encounterMapSelect.value);
+    });
+  }
+  if (encounterMapImage) {
+    encounterMapImage.addEventListener('change', () => {
+      setEncounterMapMetadataVisible(!encounterMapSidecar?.files?.length);
+    });
+  }
+  if (encounterMapSidecar) {
+    encounterMapSidecar.addEventListener('change', () => {
+      setEncounterMapMetadataVisible(!encounterMapSidecar.files.length);
+    });
+  }
+  if (encounterMapImport) {
+    encounterMapImport.addEventListener('click', () => {
+      void importEncounterMap();
+    });
+  }
+  if (encounterMapArchiveImport) {
+    encounterMapArchiveImport.addEventListener('click', () => {
+      void importEncounterMapArchive();
+    });
+  }
+  if (encounterMapButton) {
+    encounterMapButton.addEventListener('click', () => {
+      void openEncounterMapSetup();
+    });
+  }
+  if (encounterMapClose) {
+    encounterMapClose.addEventListener('click', closeEncounterMapSetup);
+  }
+  if (encounterMapSetup) {
+    encounterMapSetup.addEventListener('click', (event) => {
+      if (event.target === encounterMapSetup) closeEncounterMapSetup();
     });
   }
   if (encounterStartBtn) {

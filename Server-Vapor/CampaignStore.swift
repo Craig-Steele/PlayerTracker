@@ -12,6 +12,7 @@ actor CampaignStore {
     private var currentUserdataFiles: [String]
     private var currentPartyTreasure: [InventoryEntry]
     private var currentCurrency: [CurrencyAmount]
+    private var currentSelectedMapID: String?
     private var currentCampaignID: UUID?
     private var database: (any Database)?
     private let restorePersistedState: Bool
@@ -34,6 +35,7 @@ actor CampaignStore {
         self.currentUserdataFiles = []
         self.currentPartyTreasure = []
         self.currentCurrency = []
+        self.currentSelectedMapID = nil
         self.currentCampaignID = nil
     }
 
@@ -59,7 +61,8 @@ actor CampaignStore {
             isInviteOnly: currentIsInviteOnly,
             userdataFiles: currentUserdataFiles,
             partyTreasure: currentPartyTreasure,
-            currency: currentCurrency
+            currency: currentCurrency,
+            selectedMapID: currentSelectedMapID
         )
     }
 
@@ -77,6 +80,19 @@ actor CampaignStore {
 
     func encounterState() -> EncounterState {
         currentEncounterState
+    }
+
+    func selectMap(_ mapID: String?) async throws -> CampaignState {
+        guard let database, let currentCampaignID else {
+            throw Abort(.internalServerError, reason: "Database is not configured.")
+        }
+        currentSelectedMapID = mapID
+        try await DatabasePersistence.updateCampaignSelectedMap(
+            campaignID: currentCampaignID,
+            mapID: mapID,
+            on: database
+        )
+        return state()!
     }
 
     func activeCampaign() -> CampaignState? {
@@ -167,6 +183,7 @@ actor CampaignStore {
             currentUserdataFiles = updated.userdataFiles
             currentPartyTreasure = updated.partyTreasure
             currentCurrency = updated.currency
+            currentSelectedMapID = updated.selectedMapID
         }
         return CampaignSummary(
             id: updated.id,
@@ -203,6 +220,7 @@ actor CampaignStore {
         currentUserdataFiles = loaded.userdataFiles
         currentPartyTreasure = loaded.partyTreasure
         currentCurrency = loaded.currency
+        currentSelectedMapID = loaded.selectedMapID
         try await DatabasePersistence.markCampaignSelected(campaignID: campaignID, on: database)
         return state()!
     }
@@ -237,6 +255,7 @@ actor CampaignStore {
             currentUserdataFiles = updated.userdataFiles
             currentPartyTreasure = updated.partyTreasure
             currentCurrency = updated.currency
+            currentSelectedMapID = updated.selectedMapID
             try await DatabasePersistence.markCampaignSelected(campaignID: updatedID, on: database)
             return state()!
         }
@@ -251,6 +270,7 @@ actor CampaignStore {
         currentUserdataFiles = []
         currentPartyTreasure = []
         currentCurrency = []
+        currentSelectedMapID = nil
         await savePersistedStateIfNeeded()
         return state()!
     }
@@ -277,6 +297,11 @@ actor CampaignStore {
                     currency: currentCurrency,
                     on: database
                 )
+                try await DatabasePersistence.updateCampaignSelectedMap(
+                    campaignID: currentCampaignID,
+                    mapID: currentSelectedMapID,
+                    on: database
+                )
                 try await DatabasePersistence.markCampaignSelected(campaignID: currentCampaignID, on: database)
             }
         } catch {
@@ -294,6 +319,7 @@ actor CampaignStore {
         currentUserdataFiles = loaded.userdataFiles
         currentPartyTreasure = loaded.partyTreasure
         currentCurrency = loaded.currency
+        currentSelectedMapID = loaded.selectedMapID
         currentCampaignID = loaded.id
     }
 

@@ -7,12 +7,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   try {
     const client = TacticalClient.createClient(window.location.origin);
-    const [map, tokens, session] = await Promise.all([
-      client.fetchMap(),
+    let map = await client.fetchMap();
+    const [tokens, session] = await Promise.all([
       client.fetchTokens(),
       client.fetchPlayerSession()
     ]);
     const viewerId = session.player.id;
+    let encounterState = session.campaign?.encounterState || 'new';
     const characters = await client.fetchCharacters();
     for (const character of characters) {
       const option = document.createElement('option');
@@ -39,16 +40,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       viewerId,
       viewerIsReferee: session.player.isReferee,
       tooltip,
+      onTokenSelect: (token) => {
+        viewport.setSelectedToken(token);
+        status.textContent = token.displayName;
+      },
       onTap: async (clientX, clientY) => {
         const characterId = characterSelect.value;
-        if (!characterId || tokens.some((token) => token.characterId === characterId)) return;
+        if (!characterId || (encounterState !== 'new' && tokens.some((token) => token.characterId === characterId))) return;
         const rect = canvas.getBoundingClientRect();
         const point = viewport.mapPointAt(clientX - rect.left, clientY - rect.top);
         if (!point) return;
         try {
           status.textContent = `Placing token at ${point.x}, ${point.y}…`;
           const token = await client.placeToken(characterId, point.x, point.y);
-          tokens.push(token);
+          const existingIndex = tokens.findIndex((existing) => existing.id === token.id);
+          if (existingIndex >= 0) tokens[existingIndex] = token;
+          else tokens.push(token);
           viewport.draw();
           updateStatus();
         } catch (error) {
@@ -66,13 +73,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       viewport.draw();
       updateStatus();
     });
-    const refreshTokens = async () => {
-      const latestTokens = await client.fetchTokens();
+    const refreshMapAndTokens = async () => {
+      const [latestMap, latestTokens] = await Promise.all([
+        client.fetchMap(),
+        client.fetchTokens()
+      ]);
+      map = latestMap;
       tokens.splice(0, tokens.length, ...latestTokens);
+      const latestImage = new Image();
+      latestImage.src = client.imageURL(Date.now().toString());
+      viewport.updateMap(map, latestImage);
       viewport.draw();
       updateStatus();
     };
-    client.subscribeToCampaignEvents(session.campaign.id, refreshTokens);
+    client.subscribeToCampaignEvents(session.campaign.id, (snapshot) => {
+      if (snapshot?.campaign?.encounterState) encounterState = snapshot.campaign.encounterState;
+      return refreshMapAndTokens();
+    });
     updateStatus();
     resetButton.addEventListener('click', viewport.fit);
   } catch (error) {

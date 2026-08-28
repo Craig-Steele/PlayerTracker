@@ -1226,6 +1226,14 @@ body.referee-page .referee-panel {
   color: var(--text-danger);
 }
 
+.encounter-map-button {
+  position: static;
+  transform: none;
+  margin-left: auto;
+  margin-top: 0;
+  white-space: nowrap;
+}
+
 .character-list-header > button {
   margin-top: 0;
 }
@@ -2668,6 +2676,16 @@ body.referee-page .referee-panel {
     margin: 0;
     padding: 0.28rem 0.8rem;
     min-height: 0;
+  }
+
+  .referee-top-actions > #encounter-map-button {
+    grid-area: turn;
+    position: static;
+    transform: none;
+    justify-self: end;
+    width: fit-content !important;
+    margin: 0;
+    padding: 0.5rem 0.7rem;
   }
 
   .referee-top-actions > #turn-complete {
@@ -4257,6 +4275,17 @@ body.campaign-settings-page .detail-panel {
   margin-top: 0.15rem;
   margin-bottom: 0.35rem;
   line-height: 1.25;
+}
+
+.encounter-map-preview {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 0.35rem;
+  display: block;
+  margin-top: 0.75rem;
+  max-height: 18rem;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .admin-campaign-list {

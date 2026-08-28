@@ -61,6 +61,7 @@
       <button type="button" id="ref-party-treasure-button">💰 Party<br/>Treasure</button>
       <button type="button" id="ref-campaign-settings">🛠️ Campaign<br/>Settings</button>
       <div id="ref-round-indicator" class="round-indicator">Round: 1</div>
+      <button type="button" id="encounter-map-button" class="encounter-map-button">🗺️ Select Map</button>
       <button type="button" id="turn-complete">✅ Turn<br/>Complete</button>
     </div>
     <div class="encounter-controls">
@@ -83,6 +84,50 @@
     </div>
     <div id="status" class="subtitle"></div>
   </section>
+
+  <div id="encounter-map-setup" class="conditions-modal hidden" aria-hidden="true">
+    <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="encounter-map-dialog-title">
+      <div class="conditions-dialog-header">
+        <h2 id="encounter-map-dialog-title">🗺️ Select Map</h2>
+        <div class="conditions-dialog-actions">
+          <button type="button" id="encounter-map-close" class="secondary">✖️ Close</button>
+        </div>
+      </div>
+      <div class="form-section-block property-group">
+        <label class="property-row" for="encounter-map-select">
+          <span class="property-label">Map for this encounter</span>
+          <span class="property-control">
+            <select id="encounter-map-select" aria-label="Map for this encounter"></select>
+          </span>
+        </label>
+        <div id="encounter-map-status" class="subtitle"></div>
+        <img id="encounter-map-preview" class="encounter-map-preview hidden" alt="Selected tactical map preview" />
+      </div>
+      <div class="form-section-block property-group">
+        <label class="property-row" for="encounter-map-image">
+          <span class="property-label">Import PNG</span>
+          <span class="property-control"><input type="file" id="encounter-map-image" accept="image/png" /></span>
+        </label>
+        <label class="property-row" for="encounter-map-archive">
+          <span class="property-label">Import map ZIP</span>
+          <span class="property-control"><input type="file" id="encounter-map-archive" accept=".map.zip,application/zip" /></span>
+        </label>
+        <label class="property-row" for="encounter-map-sidecar">
+          <span class="property-label">Sidecar JSON (optional)</span>
+          <span class="property-control"><input type="file" id="encounter-map-sidecar" accept=".json,application/json" /></span>
+        </label>
+        <div id="encounter-map-metadata" class="encounter-map-metadata hidden">
+          <div class="subtitle">No sidecar selected. Enter the minimum grid metadata.</div>
+          <label class="property-row"><span class="property-label">East-west squares</span><span class="property-control"><input type="number" id="encounter-map-east-west" min="1" value="24" /></span></label>
+          <label class="property-row"><span class="property-label">North-south squares</span><span class="property-control"><input type="number" id="encounter-map-north-south" min="1" value="30" /></span></label>
+          <label class="property-row"><span class="property-label">Square size (ft)</span><span class="property-control"><input type="number" id="encounter-map-square-size" min="0.1" step="0.1" value="5" /></span></label>
+          <label class="property-row"><span class="property-label">Blocked tiles (optional JSON)</span><span class="property-control"><textarea id="encounter-map-blocked-tiles" rows="3" placeholder="[{&quot;x&quot;:0,&quot;y&quot;:0}]"></textarea></span></label>
+        </div>
+        <button type="button" id="encounter-map-import" class="secondary">Import PNG Map</button>
+        <button type="button" id="encounter-map-archive-import" class="secondary">Import .map.zip</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Add a new character to the referee roster, either manually or from the library. -->
   <form id="ref-add-panel" class="details-panel-collapsed property-sheet hidden" aria-hidden="true">
@@ -446,6 +491,6 @@
   <script src="ruleset.js?v=2"></script>
   <script src="encounter.js?v=3"></script>
   <script src="referee-visibility.js?v=1"></script>
-  <script src="referee.js?v=90"></script>
+  <script src="referee.js?v=92"></script>
 </body>
 </html>

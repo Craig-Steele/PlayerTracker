@@ -67,14 +67,21 @@ const TacticalClient = (() => {
           new URL(`/campaigns/${encodeURIComponent(campaignID)}/events`, baseURL),
           { withCredentials: true }
         );
-        const refresh = () => onCampaignUpdated();
+        const refresh = (event) => {
+          let snapshot = null;
+          try { snapshot = event?.data ? JSON.parse(event.data).snapshot : null; } catch (_) { /* refresh still applies */ }
+          onCampaignUpdated(snapshot);
+        };
         events.addEventListener('snapshot', refresh);
         events.addEventListener('campaign-updated', refresh);
         events.addEventListener('turn-changed', refresh);
+        events.addEventListener('map-changed', refresh);
         return events;
       },
-      imageURL() {
-        return new URL('/tactical/map/image', baseURL).toString();
+      imageURL(cacheBust = '') {
+        const url = new URL('/tactical/map/image', baseURL);
+        if (cacheBust) url.searchParams.set('v', cacheBust);
+        return url.toString();
       }
     };
   }

@@ -4,7 +4,9 @@ extension RoutesBuilder {
     func registerTacticalRoutes(
         campaignStore: CampaignStore,
         userStore: UserStore,
+        campaignEventHub: CampaignEventHub,
         tacticalMapStore: TacticalMapStore,
+        tacticalMapSelectionStore: TacticalMapSelectionStore,
         tacticalPlacementStore: TacticalPlacementStore,
         tacticalEventHub: TacticalEventHub
     ) {
@@ -15,20 +17,196 @@ extension RoutesBuilder {
         }
 
         tactical.get("map") { req async throws -> TacticalMapState in
-            _ = try await requireActiveCampaignParticipantSession(
+            let (campaign, _) = try await requireActiveCampaignParticipantSession(
                 req,
                 campaignStore: campaignStore
             )
-            return try tacticalMapStore.load()
+            let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
+            let mapID = await tacticalMapSelectionStore.selectedMapID(for: campaign.id, persistedMapID: campaign.selectedMapID, defaultMapID: defaultMapID)
+            if let imported = await tacticalMapSelectionStore.importedMap(mapID: mapID, for: campaign.id) {
+                return imported.map
+            }
+            return try tacticalMapStore.load(mapID: mapID)
+        }
+
+        tactical.get("maps") { req async throws -> [TacticalMapSummary] in
+            let (campaign, _) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+            let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
+            let selectedMapID = await tacticalMapSelectionStore.selectedMapID(for: campaign.id, persistedMapID: campaign.selectedMapID, defaultMapID: defaultMapID)
+            let bundled = try tacticalMapStore.catalog().map {
+                TacticalMapSummary(id: $0.id, name: $0.name, selected: $0.id == selectedMapID)
+            }
+            let imported = await tacticalMapSelectionStore.importedSummaries(
+                for: campaign.id,
+                selectedMapID: selectedMapID
+            )
+            if imported.isEmpty,
+               let selectedImported = await tacticalMapSelectionStore.importedMap(mapID: selectedMapID, for: campaign.id) {
+                return bundled + [TacticalMapSummary(id: selectedImported.id, name: selectedImported.name, selected: true)]
+            }
+            return bundled + imported
+        }
+
+        tactical.on(.POST, "maps", "import", body: .collect(maxSize: "50mb")) { req async throws -> TacticalMapSummary in
+            let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+            guard try await isRefereeSession(session, in: campaign.id, on: req.db) else {
+                throw Abort(.forbidden, reason: "Only a referee can import a tactical map.")
+            }
+            guard await campaignStore.encounterState() == .new else {
+                throw Abort(.conflict, reason: "A map can only be imported during a new encounter.")
+            }
+            let input = try req.content.decode(TacticalMapImportRequest.self)
+            guard input.filename.lowercased().hasSuffix(".png"),
+                  let imageData = Data(base64Encoded: input.imageBase64),
+                  imageData.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
+                  imageData.count <= 20 * 1024 * 1024,
+                  input.map.grid.eastWestSquareCount > 0,
+                  input.map.grid.northSouthSquareCount > 0,
+                  input.map.grid.squareSizeFt > 0 else {
+                throw Abort(.badRequest, reason: "The PNG and required map metadata are invalid.")
+            }
+            let name = input.filename.replacingOccurrences(of: ".png", with: "", options: [.caseInsensitive, .anchored])
+            let imported = try await tacticalMapSelectionStore.importMap(
+                name: name,
+                map: input.map,
+                imageData: imageData,
+                for: campaign.id
+            )
+            let updatedCampaign = try await campaignStore.selectMap(imported.id)
+            try await tacticalPlacementStore.clear(campaignID: campaign.id)
+            await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
+            return TacticalMapSummary(id: imported.id, name: imported.name, selected: true)
+        }
+
+        tactical.on(.POST, "maps", "import-archive", body: .collect(maxSize: "50mb")) { req async throws -> TacticalMapSummary in
+            let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+            guard try await isRefereeSession(session, in: campaign.id, on: req.db) else {
+                throw Abort(.forbidden, reason: "Only a referee can import a tactical map.")
+            }
+            guard await campaignStore.encounterState() == .new else {
+                throw Abort(.conflict, reason: "A map can only be imported during a new encounter.")
+            }
+            let input = try req.content.decode(TacticalMapArchiveImportRequest.self)
+            guard input.filename.lowercased().hasSuffix(".map.zip"),
+                  let archiveData = Data(base64Encoded: input.archiveBase64),
+                  archiveData.count <= 35 * 1024 * 1024 else {
+                throw Abort(.badRequest, reason: "The map archive is invalid or too large.")
+            }
+
+            let temporaryDirectory = FileManager.default.temporaryDirectory
+                .appendingPathComponent("roll4initiative-map-import-(UUID().uuidString)", isDirectory: true)
+            let archiveURL = temporaryDirectory.appendingPathComponent(input.filename)
+            defer { try? FileManager.default.removeItem(at: temporaryDirectory) }
+            try FileManager.default.createDirectory(at: temporaryDirectory, withIntermediateDirectories: true)
+            try archiveData.write(to: archiveURL, options: .atomic)
+
+            let unzip = Process()
+            unzip.executableURL = URL(fileURLWithPath: "/usr/bin/unzip")
+            unzip.arguments = ["-qq", archiveURL.path, "-d", temporaryDirectory.path]
+            try unzip.run()
+            unzip.waitUntilExit()
+            guard unzip.terminationStatus == 0 else {
+                throw Abort(.badRequest, reason: "Unable to open the map archive.")
+            }
+
+            let extractedFiles = FileManager.default.enumerator(
+                at: temporaryDirectory,
+                includingPropertiesForKeys: [.isRegularFileKey],
+                options: [.skipsHiddenFiles, .skipsPackageDescendants]
+            )?.compactMap { $0 as? URL }.filter {
+                (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true &&
+                !$0.path.contains("/__MACOSX/")
+            } ?? []
+            let imageURLs = extractedFiles.filter { $0.pathExtension.lowercased() == "png" }
+            let mapURLs = extractedFiles.filter { $0.lastPathComponent.lowercased().hasSuffix(".map.json") }
+            guard imageURLs.count == 1 else {
+                throw Abort(.badRequest, reason: "The archive must contain exactly one PNG map image.")
+            }
+            guard mapURLs.count == 1 else {
+                throw Abort(.badRequest, reason: "The archive must contain exactly one .map.json sidecar.")
+            }
+            let imageURL = imageURLs[0]
+            let mapURL = mapURLs[0]
+            guard let imageData = try? Data(contentsOf: imageURL),
+                  imageData.starts(with: [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]) else {
+                throw Abort(.badRequest, reason: "The archive's map image is not a valid PNG.")
+            }
+            guard imageData.count <= 20 * 1024 * 1024 else {
+                throw Abort(.badRequest, reason: "The map PNG is too large. Maximum size is 20 MB.")
+            }
+            guard let mapData = try? Data(contentsOf: mapURL),
+                  var map = try? JSONDecoder().decode(TacticalMapState.self, from: mapData) else {
+                throw Abort(.badRequest, reason: "The archive's .map.json sidecar is invalid JSON or does not match the map format.")
+            }
+            guard map.grid.eastWestSquareCount > 0,
+                  map.grid.northSouthSquareCount > 0,
+                  map.grid.squareSizeFt > 0 else {
+                throw Abort(.badRequest, reason: "The map sidecar must define positive grid dimensions and square size.")
+            }
+
+            map = TacticalMapState(
+                version: map.version,
+                imagePath: imageURL.lastPathComponent,
+                grid: map.grid,
+                blockedTiles: map.blockedTiles,
+                terrain: map.terrain,
+                elevation: map.elevation,
+                mapPresentation: map.mapPresentation
+            )
+            let imported = try await tacticalMapSelectionStore.importMap(
+                name: imageURL.deletingPathExtension().lastPathComponent,
+                map: map,
+                imageData: imageData,
+                for: campaign.id
+            )
+            let updatedCampaign = try await campaignStore.selectMap(imported.id)
+            try await tacticalPlacementStore.clear(campaignID: campaign.id)
+            await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
+            return TacticalMapSummary(id: imported.id, name: imported.name, selected: true)
+        }
+
+        tactical.put("map") { req async throws -> TacticalMapSummary in
+            let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+            guard try await isRefereeSession(session, in: campaign.id, on: req.db) else {
+                throw Abort(.forbidden, reason: "Only a referee can select the tactical map.")
+            }
+            guard await campaignStore.encounterState() == .new else {
+                throw Abort(.conflict, reason: "The tactical map can only be changed during a new encounter.")
+            }
+            let input = try req.content.decode(TacticalMapSelectionRequest.self)
+            if let imported = await tacticalMapSelectionStore.importedMap(mapID: input.mapID, for: campaign.id) {
+                let updatedCampaign = try await campaignStore.selectMap(imported.id)
+                await tacticalMapSelectionStore.select(mapID: imported.id, for: campaign.id)
+            try await tacticalPlacementStore.clear(campaignID: campaign.id)
+                await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
+                return TacticalMapSummary(id: imported.id, name: imported.name, selected: true)
+            }
+            guard let map = try tacticalMapStore.catalog().first(where: { $0.id == input.mapID }) else {
+                throw Abort(.notFound, reason: "Map not found.")
+            }
+            _ = try tacticalMapStore.load(mapID: map.id)
+            await tacticalMapSelectionStore.select(mapID: map.id, for: campaign.id)
+            let updatedCampaign = try await campaignStore.selectMap(map.id)
+            try await tacticalPlacementStore.clear(campaignID: campaign.id)
+            await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
+            return TacticalMapSummary(id: map.id, name: map.name, selected: true)
         }
 
         tactical.get("map", "image") { req async throws -> Response in
-            _ = try await requireActiveCampaignParticipantSession(
+            let (campaign, _) = try await requireActiveCampaignParticipantSession(
                 req,
                 campaignStore: campaignStore
             )
-            let map = try tacticalMapStore.load()
-            let imageURL = try tacticalMapStore.imageURL(for: map)
+            let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
+            let mapID = await tacticalMapSelectionStore.selectedMapID(for: campaign.id, persistedMapID: campaign.selectedMapID, defaultMapID: defaultMapID)
+            if let imported = await tacticalMapSelectionStore.importedMap(mapID: mapID, for: campaign.id) {
+                let response = Response(status: .ok)
+                response.headers.replaceOrAdd(name: .contentType, value: "image/png")
+                response.body = .init(data: imported.imageData)
+                return response
+            }
+            let map = try tacticalMapStore.load(mapID: mapID)
+            let imageURL = try tacticalMapStore.imageURL(for: map, mapID: mapID)
             let response = Response(status: .ok)
             response.headers.replaceOrAdd(name: .contentType, value: "image/png")
             response.body = .init(data: try Data(contentsOf: imageURL))
@@ -42,7 +220,7 @@ extension RoutesBuilder {
             )
             let viewerIsReferee = try await isRefereeSession(session, in: campaign.id, on: req.db)
             let characters = await userStore.allCharacters(campaignName: campaign.name)
-            let tokens = await tacticalPlacementStore.tokens(
+            let tokens = try await tacticalPlacementStore.tokens(
                 for: campaign.id,
                 characters: characters
             )
@@ -107,11 +285,28 @@ extension RoutesBuilder {
             }) else {
                 throw Abort(.forbidden, reason: "That character is not controlled by this player.")
             }
-            let map = try tacticalMapStore.load()
-            guard input.x >= 0,
-                  input.x < map.grid.eastWestSquareCount,
-                  input.y >= 0,
-                  input.y < map.grid.northSouthSquareCount else {
+            let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
+            let selectedMapID = await tacticalMapSelectionStore.selectedMapID(
+                for: campaign.id,
+                persistedMapID: campaign.selectedMapID,
+                defaultMapID: defaultMapID
+            )
+            let map: TacticalMapState
+            if let imported = await tacticalMapSelectionStore.importedMap(
+                mapID: selectedMapID,
+                for: campaign.id
+            ) {
+                map = imported.map
+            } else {
+                map = try tacticalMapStore.load(mapID: selectedMapID)
+            }
+            let isInfiniteTerrain = map.grid.boundaryBehavior == "infinite"
+            guard isInfiniteTerrain || (
+                input.x >= 0 &&
+                input.x < map.grid.eastWestSquareCount &&
+                input.y >= 0 &&
+                input.y < map.grid.northSouthSquareCount
+            ) else {
                 throw Abort(.badRequest, reason: "Placement must be inside the map bounds.")
             }
             guard !map.blockedTiles.contains(where: { $0.x == input.x && $0.y == input.y }) else {
@@ -120,15 +315,16 @@ extension RoutesBuilder {
             do {
                 let token = try await tacticalPlacementStore.place(
                     campaignID: campaign.id,
-                    session: session,
+                    ownerId: character.claimedSessionId?.uuidString,
                     characterId: character.id,
                     characterName: character.name,
                     ownerName: character.ownerName,
                     tokenDescription: character.tokenDescription,
                     conditions: character.conditions,
-                    team: isReferee ? "enemy" : "player",
+                    team: character.claimedSessionId == nil ? "enemy" : "player",
                     isHidden: character.isHidden,
-                    at: TacticalMapPoint(x: input.x, y: input.y)
+                    at: TacticalMapPoint(x: input.x, y: input.y),
+                    allowReposition: campaign.encounterState == .new
                 )
                 await tacticalEventHub.publish(token: token)
                 return token

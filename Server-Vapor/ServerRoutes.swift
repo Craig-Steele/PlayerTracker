@@ -529,7 +529,7 @@ private func activeCampaignStreamSnapshot(
     ActiveCampaignStreamSnapshot(campaign: await campaignStore.activeCampaign())
 }
 
-private func publishCampaignUpdate(
+func publishCampaignUpdate(
     campaign: CampaignState,
     userStore: UserStore,
     eventHub: CampaignEventHub,
@@ -581,12 +581,22 @@ func routes(
     tacticalEventHub: TacticalEventHub
 ) throws {
     let userStore = app.userStore
+    let tacticalPlacementStore = TacticalPlacementStore(
+        storageDirectory: AppPaths.appDataDirectory(application: app)
+            .appendingPathComponent("tactical-tokens", isDirectory: true)
+    )
+    let tacticalMapSelectionStore = TacticalMapSelectionStore(
+        storageDirectory: AppPaths.appDataDirectory(application: app)
+            .appendingPathComponent("tactical-maps", isDirectory: true)
+    )
 
     app.registerTacticalRoutes(
         campaignStore: campaignStore,
         userStore: userStore,
+        campaignEventHub: eventHub,
         tacticalMapStore: TacticalMapStore(),
-        tacticalPlacementStore: TacticalPlacementStore(),
+        tacticalMapSelectionStore: tacticalMapSelectionStore,
+        tacticalPlacementStore: tacticalPlacementStore,
         tacticalEventHub: tacticalEventHub
     )
 
@@ -671,10 +681,13 @@ func routes(
     app.post("admin", "shutdown") { req async throws -> HTTPStatus in
         let user = try await requireServerOwnerSession(req)
         logConnection(req, action: "shutdown", identifier: user.email)
-        Task {
+        Task.detached {
             await eventHub.shutdown()
             await activeCampaignEventHub.shutdown()
             await tacticalEventHub.shutdown()
+            // Let the shutdown response leave the socket before closing the listener.
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            app.running?.stop()
             await app.server.shutdown()
         }
         return .ok
@@ -1095,6 +1108,7 @@ func routes(
         logConnection(req, action: "encounter-new")
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let campaignName = campaign.name
+        try await tacticalPlacementStore.clear(campaignID: campaign.id)
         await userStore.resetForNewEncounter(campaignName: campaignName)
         _ = await campaignStore.setEncounterState(.new)
         let updatedCampaign = await campaignStore.activeCampaign() ?? campaign

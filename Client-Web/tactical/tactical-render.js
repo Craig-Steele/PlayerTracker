@@ -1,7 +1,8 @@
 window.TacticalRender = (() => {
-  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, tooltip, onTap }) {
+  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, tooltip, onTap, onTokenSelect }) {
     const context = canvas.getContext('2d');
-    const grid = map.grid;
+    let currentMap = map;
+    let currentImage = image;
     const emojiTokenCache = new Map();
     const graphemeSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
       ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
@@ -10,9 +11,13 @@ window.TacticalRender = (() => {
     let dragging = false;
     let lastPoint = null;
     const pointers = new Map();
+    let averageEdgeColorCache = null;
     let pinchStart = null;
     let tapStart = null;
     let tapMoved = false;
+    let suppressNextClick = false;
+    let ignoreNextClick = false;
+    let selectedTokenId = null;
 
     function centeredTextOrigin(textContext, text, centerX, centerY) {
       const metrics = textContext.measureText(text);
@@ -27,13 +32,63 @@ window.TacticalRender = (() => {
     }
 
     function mapSize() {
-      return { width: image.naturalWidth, height: image.naturalHeight };
+      return { width: currentImage.naturalWidth, height: currentImage.naturalHeight };
+    }
+
+    function isInfiniteTerrain() {
+      return currentMap.grid.boundaryBehavior === 'infinite' ||
+        currentMap.mapPresentation?.terrainBoundary === 'infinite';
+    }
+
+    function averageEdgeColor() {
+      if (averageEdgeColorCache) return averageEdgeColorCache;
+      try {
+        const sampleCanvas = document.createElement('canvas');
+        const sampleSize = 64;
+        sampleCanvas.width = sampleSize;
+        sampleCanvas.height = sampleSize;
+        const sampleContext = sampleCanvas.getContext('2d');
+        sampleContext.drawImage(currentImage, 0, 0, sampleSize, sampleSize);
+        const pixels = sampleContext.getImageData(0, 0, sampleSize, sampleSize).data;
+        let red = 0;
+        let green = 0;
+        let blue = 0;
+        let alpha = 0;
+        let count = 0;
+        for (let y = 0; y < sampleSize; y += 1) {
+          for (let x = 0; x < sampleSize; x += 1) {
+            if (x !== 0 && x !== sampleSize - 1 && y !== 0 && y !== sampleSize - 1) continue;
+            const offset = (y * sampleSize + x) * 4;
+            red += pixels[offset];
+            green += pixels[offset + 1];
+            blue += pixels[offset + 2];
+            alpha += pixels[offset + 3];
+            count += 1;
+          }
+        }
+        averageEdgeColorCache = `rgba(${Math.round(red / count)}, ${Math.round(green / count)}, ${Math.round(blue / count)}, ${alpha / count / 255})`;
+        return averageEdgeColorCache;
+      } catch (_) {
+        return getComputedStyle(canvas).getPropertyValue('--tactical-viewport').trim() || '#f5f8fb';
+      }
+    }
+
+    function drawInfiniteBackground(size) {
+      if (!isInfiniteTerrain()) return;
+      const left = Math.min(0, (-view.x) / view.scale);
+      const right = Math.max(size.width, (canvas.clientWidth - view.x) / view.scale);
+      const top = Math.min(0, (-view.y) / view.scale);
+      const bottom = Math.max(size.height, (canvas.clientHeight - view.y) / view.scale);
+
+      context.fillStyle = averageEdgeColor();
+      context.fillRect(left, top, right - left, bottom - top);
     }
 
     function tokenAt(screenX, screenY) {
       const size = mapSize();
       const mapX = (screenX - view.x) / view.scale;
       const mapY = (screenY - view.y) / view.scale;
+      const grid = currentMap.grid;
       const squareWidth = size.width / grid.eastWestSquareCount;
       const squareHeight = size.height / grid.northSouthSquareCount;
       return tokens.find((token) => {
@@ -66,8 +121,19 @@ window.TacticalRender = (() => {
       tooltip.hidden = false;
     }
 
+    function handleTap(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const tappedToken = tokenAt(clientX - rect.left, clientY - rect.top);
+      if (tappedToken && onTokenSelect) {
+        onTokenSelect(tappedToken);
+      } else if (onTap) {
+        onTap(clientX, clientY);
+      }
+    }
+
     function fit() {
       const size = mapSize();
+      if (size.width <= 0 || size.height <= 0) return;
       view.scale = Math.min(canvas.clientWidth / size.width, canvas.clientHeight / size.height) * 0.92;
       view.x = (canvas.clientWidth - size.width * view.scale) / 2;
       view.y = (canvas.clientHeight - size.height * view.scale) / 2;
@@ -78,30 +144,37 @@ window.TacticalRender = (() => {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
       context.clearRect(0, 0, width, height);
+      const size = mapSize();
+      if (size.width <= 0 || size.height <= 0) return;
       context.save();
       context.translate(view.x, view.y);
       context.scale(view.scale, view.scale);
-      context.drawImage(image, 0, 0);
 
-      const size = mapSize();
+      const grid = currentMap.grid;
       const squareWidth = size.width / grid.eastWestSquareCount;
       const squareHeight = size.height / grid.northSouthSquareCount;
+      drawInfiniteBackground(size);
+      context.drawImage(currentImage, 0, 0);
 
       context.strokeStyle = getComputedStyle(canvas).getPropertyValue('--tactical-grid').trim();
       context.lineWidth = Math.max(1 / view.scale, 0.7);
       context.beginPath();
-      for (let x = 0; x <= grid.eastWestSquareCount; x += 1) {
-        context.moveTo(x * squareWidth, 0);
-        context.lineTo(x * squareWidth, size.height);
+      const visibleLeft = isInfiniteTerrain() ? Math.floor((-view.x) / view.scale / squareWidth) - 1 : 0;
+      const visibleRight = isInfiniteTerrain() ? Math.ceil((canvas.clientWidth - view.x) / view.scale / squareWidth) + 1 : grid.eastWestSquareCount;
+      const visibleTop = isInfiniteTerrain() ? Math.floor((-view.y) / view.scale / squareHeight) - 1 : 0;
+      const visibleBottom = isInfiniteTerrain() ? Math.ceil((canvas.clientHeight - view.y) / view.scale / squareHeight) + 1 : grid.northSouthSquareCount;
+      for (let x = visibleLeft; x <= visibleRight; x += 1) {
+        context.moveTo(x * squareWidth, isInfiniteTerrain() ? visibleTop * squareHeight : 0);
+        context.lineTo(x * squareWidth, isInfiniteTerrain() ? visibleBottom * squareHeight : size.height);
       }
-      for (let y = 0; y <= grid.northSouthSquareCount; y += 1) {
-        context.moveTo(0, y * squareHeight);
-        context.lineTo(size.width, y * squareHeight);
+      for (let y = visibleTop; y <= visibleBottom; y += 1) {
+        context.moveTo(isInfiniteTerrain() ? visibleLeft * squareWidth : 0, y * squareHeight);
+        context.lineTo(isInfiniteTerrain() ? visibleRight * squareWidth : size.width, y * squareHeight);
       }
       context.stroke();
 
       context.fillStyle = 'rgba(0, 0, 0, 0.62)';
-      for (const tile of map.blockedTiles || []) {
+      for (const tile of currentMap.blockedTiles || []) {
         const row = grid.northSouthSquareCount - 1 - tile.y;
         context.fillRect(tile.x * squareWidth, row * squareHeight, squareWidth, squareHeight);
       }
@@ -111,13 +184,28 @@ window.TacticalRender = (() => {
         const row = grid.northSouthSquareCount - 1 - token.y;
         const centerX = (token.x + 0.5) * squareWidth;
         const centerY = (row + 0.5) * squareHeight;
-        const tokenColor = token.team === 'enemy'
-          ? '#c62828'
-          : token.ownerId === viewerId
+        const tokenColor = token.ownerId
+          ? token.ownerId === viewerId
             ? '#1976d2'
+            : '#2e8b57'
+          : token.team === 'enemy'
+            ? '#c62828'
             : token.team === 'player' || token.team === 'party'
               ? '#2e8b57'
               : '#555';
+        if (token.id === selectedTokenId) {
+          context.beginPath();
+          context.strokeStyle = '#d4af37';
+          context.lineWidth = Math.max(4 / view.scale, 2);
+          context.arc(
+            centerX,
+            centerY,
+            Math.min(squareWidth, squareHeight) * 0.52,
+            0,
+            Math.PI * 2
+          );
+          context.stroke();
+        }
         const tokenLabel = token.tokenDescription || token.displayName;
         const firstGrapheme = (value) => graphemeSegmenter
           ? graphemeSegmenter.segment(value.trim())[Symbol.iterator]().next().value?.segment || ''
@@ -217,11 +305,12 @@ window.TacticalRender = (() => {
       const size = mapSize();
       const mapX = (screenX - view.x) / view.scale;
       const mapY = (screenY - view.y) / view.scale;
+      const grid = currentMap.grid;
       const squareWidth = size.width / grid.eastWestSquareCount;
       const squareHeight = size.height / grid.northSouthSquareCount;
       const column = Math.floor(mapX / squareWidth);
       const row = Math.floor(mapY / squareHeight);
-      if (column < 0 || column >= grid.eastWestSquareCount || row < 0 || row >= grid.northSouthSquareCount) {
+      if (!isInfiniteTerrain() && (column < 0 || column >= grid.eastWestSquareCount || row < 0 || row >= grid.northSouthSquareCount)) {
         return null;
       }
       return {
@@ -272,8 +361,9 @@ window.TacticalRender = (() => {
         return;
       }
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-      if (tapStart && Math.hypot(event.clientX - tapStart.x, event.clientY - tapStart.y) > 8) {
+      if (tapStart && Math.hypot(event.clientX - tapStart.x, event.clientY - tapStart.y) > 16) {
         tapMoved = true;
+        suppressNextClick = true;
       }
 
       if (pointers.size === 2 && pinchStart) {
@@ -295,9 +385,6 @@ window.TacticalRender = (() => {
       }
     });
     function endPointer(event) {
-      if (pointers.size === 1 && !tapMoved && tapStart && onTap) {
-        onTap(event.clientX, event.clientY);
-      }
       pointers.delete(event.pointerId);
       if (pointers.size < 2) pinchStart = null;
       dragging = pointers.size === 1;
@@ -305,18 +392,69 @@ window.TacticalRender = (() => {
     }
     canvas.addEventListener('pointerup', endPointer);
     canvas.addEventListener('pointercancel', endPointer);
+    canvas.addEventListener('click', (event) => {
+      if (ignoreNextClick) {
+        ignoreNextClick = false;
+        return;
+      }
+      if (suppressNextClick) {
+        suppressNextClick = false;
+        return;
+      }
+      handleTap(event.clientX, event.clientY);
+    });
+    document.addEventListener('touchend', (event) => {
+      if (!canvas.contains(event.target) || event.changedTouches.length !== 1 || tapMoved || !tapStart) return;
+      const touch = event.changedTouches[0];
+      ignoreNextClick = true;
+      event.preventDefault();
+      handleTap(touch.clientX, touch.clientY);
+    }, { capture: true, passive: false });
+    canvas.addEventListener('touchstart', (event) => {
+      if (event.touches.length !== 1) return;
+      const touch = event.touches[0];
+      tapStart = { x: touch.clientX, y: touch.clientY };
+      tapMoved = false;
+    }, { passive: true });
+    canvas.addEventListener('touchmove', (event) => {
+      if (event.touches.length !== 1 || !tapStart) return;
+      const touch = event.touches[0];
+      if (Math.hypot(touch.clientX - tapStart.x, touch.clientY - tapStart.y) > 16) {
+        tapMoved = true;
+        suppressNextClick = true;
+      }
+    }, { passive: true });
     canvas.addEventListener('pointerleave', () => {
       if (tooltip) tooltip.hidden = true;
     });
     window.addEventListener('resize', resize);
 
-    image.addEventListener('load', () => {
-      status.textContent = `${grid.eastWestSquareCount} east-west × ${grid.northSouthSquareCount} north-south squares`;
+    currentImage.addEventListener('load', () => {
+      status.textContent = `${currentMap.grid.eastWestSquareCount} east-west × ${currentMap.grid.northSouthSquareCount} north-south squares`;
       resize();
     });
-    if (image.complete) resize();
+    if (currentImage.complete) resize();
 
-    return { fit, draw, mapPointAt };
+    return {
+      fit,
+      draw,
+      mapPointAt,
+      setSelectedToken(token) {
+        selectedTokenId = token ? token.id : null;
+        draw();
+      },
+      updateMap(newMap, newImage) {
+        currentMap = newMap;
+        currentImage = newImage;
+        averageEdgeColorCache = null;
+        selectedTokenId = null;
+        currentImage.addEventListener('load', () => {
+          status.textContent = `${currentMap.grid.eastWestSquareCount} east-west × ${currentMap.grid.northSouthSquareCount} north-south squares`;
+          fit();
+        }, { once: true });
+        if (currentImage.complete) fit();
+      }
+    };
   }
 
   return { render };

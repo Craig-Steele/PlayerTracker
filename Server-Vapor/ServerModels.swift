@@ -216,6 +216,33 @@ struct CampaignState: Content {
     let userdataFiles: [String]
     let partyTreasure: [InventoryEntry]
     let currency: [CurrencyAmount]
+    let selectedMapID: String?
+
+    init(
+        id: UUID,
+        name: String,
+        rulesetId: String,
+        rulesetLabel: String,
+        encounterState: EncounterState,
+        claimTimeoutMinutes: Int,
+        isInviteOnly: Bool,
+        userdataFiles: [String],
+        partyTreasure: [InventoryEntry],
+        currency: [CurrencyAmount],
+        selectedMapID: String? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.rulesetId = rulesetId
+        self.rulesetLabel = rulesetLabel
+        self.encounterState = encounterState
+        self.claimTimeoutMinutes = claimTimeoutMinutes
+        self.isInviteOnly = isInviteOnly
+        self.userdataFiles = userdataFiles
+        self.partyTreasure = partyTreasure
+        self.currency = currency
+        self.selectedMapID = selectedMapID
+    }
 }
 
 struct CampaignUpdateInput: Content {

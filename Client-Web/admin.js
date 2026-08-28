@@ -854,13 +854,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const token = ++refreshToken;
     try {
-      const [rulesets, campaigns, header] = await Promise.all([
+      const [rulesetsResult, campaignsResult, headerResult] = await Promise.allSettled([
         fetchRulesets(),
         fetchCampaigns(),
         fetchHeader()
       ]);
       if (token !== refreshToken) return;
-      availableRulesets = rulesets;
+      if (campaignsResult.status === 'rejected') {
+        throw campaignsResult.reason;
+      }
+      availableRulesets = rulesetsResult.status === 'fulfilled' ? rulesetsResult.value : [];
+      const campaigns = campaignsResult.value;
+      const header = headerResult.status === 'fulfilled'
+        ? headerResult.value
+        : { campaign: null, library: null };
       if (!isCampaignModalOpen()) {
         populateRulesetSelect(availableRulesets);
       }
@@ -874,6 +881,9 @@ window.addEventListener('DOMContentLoaded', () => {
       updateCampaignListSelection();
       updateSelectionStatus();
       updateEditButtonState();
+      if (headerResult.status === 'rejected') {
+        setStatus(`Campaigns loaded, but header data failed: ${headerResult.reason?.message || 'Network error.'}`, true);
+      }
     } catch (err) {
       if (String(err.message).includes('401') || String(err.message).toLowerCase().includes('not signed in')) {
         authUser = null;
