@@ -7,6 +7,7 @@ extension RoutesBuilder {
         campaignEventHub: CampaignEventHub,
         tacticalMapStore: TacticalMapStore,
         tacticalMapSelectionStore: TacticalMapSelectionStore,
+        tacticalPlayerPlacementStore: TacticalPlayerPlacementStore,
         tacticalPlacementStore: TacticalPlacementStore,
         tacticalEventHub: TacticalEventHub
     ) {
@@ -47,6 +48,57 @@ extension RoutesBuilder {
             return bundled + imported
         }
 
+        tactical.get("player-placement") { req async throws -> TacticalPlayerPlacementResponse in
+            let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+            let isReferee = try await isRefereeSession(session, in: campaign.id, on: req.db)
+            let override = await tacticalPlayerPlacementStore.override(for: campaign.id)
+            if isReferee {
+                return TacticalPlayerPlacementResponse(bounds: override != nil ? override! : nil, isOverride: override != nil)
+            }
+            let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
+            let selectedMapID = await tacticalMapSelectionStore.selectedMapID(for: campaign.id, persistedMapID: campaign.selectedMapID, defaultMapID: defaultMapID)
+            let map = if let imported = await tacticalMapSelectionStore.importedMap(mapID: selectedMapID, for: campaign.id) {
+                imported.map
+            } else {
+                try tacticalMapStore.load(mapID: selectedMapID)
+            }
+            return TacticalPlayerPlacementResponse(
+                bounds: override != nil ? override! : map.playerPlacement?.defaultBounds,
+                isOverride: override != nil
+            )
+        }
+
+        tactical.put("player-placement") { req async throws -> TacticalPlayerPlacementResponse in
+            let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
+            guard try await isRefereeSession(session, in: campaign.id, on: req.db) else {
+                throw Abort(.forbidden, reason: "Only a referee can change player placement bounds.")
+            }
+            guard await campaignStore.encounterState() == .new else {
+                throw Abort(.conflict, reason: "Player placement bounds can only be changed during a new encounter.")
+            }
+            let input = try req.content.decode(TacticalPlayerPlacementUpdateRequest.self)
+            if let bounds = input.bounds {
+                guard bounds.west <= bounds.east, bounds.south <= bounds.north else {
+                    throw Abort(.badRequest, reason: "Player placement bounds must have west <= east and south <= north.")
+                }
+                try await tacticalPlayerPlacementStore.set(bounds, for: campaign.id)
+            } else {
+                try await tacticalPlayerPlacementStore.set(nil, for: campaign.id)
+            }
+            let selected = input.useMapDefault == true
+            if selected { try await tacticalPlayerPlacementStore.clear(for: campaign.id) }
+            let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
+            let selectedMapID = await tacticalMapSelectionStore.selectedMapID(for: campaign.id, persistedMapID: campaign.selectedMapID, defaultMapID: defaultMapID)
+            let map = if let imported = await tacticalMapSelectionStore.importedMap(mapID: selectedMapID, for: campaign.id) {
+                imported.map
+            } else {
+                try tacticalMapStore.load(mapID: selectedMapID)
+            }
+            let override = await tacticalPlayerPlacementStore.override(for: campaign.id)
+            await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: campaignEventHub, event: "player-placement-changed")
+            return TacticalPlayerPlacementResponse(bounds: override != nil ? override! : map.playerPlacement?.defaultBounds, isOverride: override != nil)
+        }
+
         tactical.on(.POST, "maps", "import", body: .collect(maxSize: "50mb")) { req async throws -> TacticalMapSummary in
             let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
             guard try await isRefereeSession(session, in: campaign.id, on: req.db) else {
@@ -74,6 +126,7 @@ extension RoutesBuilder {
             )
             let updatedCampaign = try await campaignStore.selectMap(imported.id)
             try await tacticalPlacementStore.clear(campaignID: campaign.id)
+            try await tacticalPlayerPlacementStore.clear(for: campaign.id)
             await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
             return TacticalMapSummary(id: imported.id, name: imported.name, selected: true)
         }
@@ -151,7 +204,8 @@ extension RoutesBuilder {
                 blockedTiles: map.blockedTiles,
                 terrain: map.terrain,
                 elevation: map.elevation,
-                mapPresentation: map.mapPresentation
+                mapPresentation: map.mapPresentation,
+                playerPlacement: map.playerPlacement
             )
             let imported = try await tacticalMapSelectionStore.importMap(
                 name: imageURL.deletingPathExtension().lastPathComponent,
@@ -161,6 +215,7 @@ extension RoutesBuilder {
             )
             let updatedCampaign = try await campaignStore.selectMap(imported.id)
             try await tacticalPlacementStore.clear(campaignID: campaign.id)
+            try await tacticalPlayerPlacementStore.clear(for: campaign.id)
             await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
             return TacticalMapSummary(id: imported.id, name: imported.name, selected: true)
         }
@@ -178,6 +233,7 @@ extension RoutesBuilder {
                 let updatedCampaign = try await campaignStore.selectMap(imported.id)
                 await tacticalMapSelectionStore.select(mapID: imported.id, for: campaign.id)
             try await tacticalPlacementStore.clear(campaignID: campaign.id)
+            try await tacticalPlayerPlacementStore.clear(for: campaign.id)
                 await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
                 return TacticalMapSummary(id: imported.id, name: imported.name, selected: true)
             }
@@ -188,6 +244,7 @@ extension RoutesBuilder {
             await tacticalMapSelectionStore.select(mapID: map.id, for: campaign.id)
             let updatedCampaign = try await campaignStore.selectMap(map.id)
             try await tacticalPlacementStore.clear(campaignID: campaign.id)
+            try await tacticalPlayerPlacementStore.clear(for: campaign.id)
             await publishCampaignUpdate(campaign: updatedCampaign, userStore: userStore, eventHub: campaignEventHub, event: "map-changed")
             return TacticalMapSummary(id: map.id, name: map.name, selected: true)
         }
@@ -308,6 +365,12 @@ extension RoutesBuilder {
                 input.y < map.grid.northSouthSquareCount
             ) else {
                 throw Abort(.badRequest, reason: "Placement must be inside the map bounds.")
+            }
+            let placementOverride = await tacticalPlayerPlacementStore.override(for: campaign.id)
+            let playerBounds = placementOverride != nil ? placementOverride! : map.playerPlacement?.defaultBounds
+            if character.claimedSessionId != nil, let playerBounds,
+               (input.x < playerBounds.west || input.x > playerBounds.east || input.y < playerBounds.south || input.y > playerBounds.north) {
+                throw Abort(.forbidden, reason: "That square is outside the player placement area.")
             }
             guard !map.blockedTiles.contains(where: { $0.x == input.x && $0.y == input.y }) else {
                 throw Abort(.conflict, reason: "That square is blocked.")

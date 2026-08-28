@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tactical Map</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="tactical/tactical-styles.css">
+  <link rel="stylesheet" href="tactical/tactical-styles.css?v=3">
 </head>
 <body>
   <main class="tactical-shell">
@@ -21,6 +21,16 @@
       <button type="button" data-tactical-reset>Reset view</button>
       <button type="button" data-tactical-zoom>Zoom</button>
     </div>
+    <form class="tactical-placement-form" data-tactical-placement-form hidden>
+      <span>Player placement area</span>
+      <label>West <input type="number" data-placement-west /></label>
+      <label>East <input type="number" data-placement-east /></label>
+      <label>South <input type="number" data-placement-south /></label>
+      <label>North <input type="number" data-placement-north /></label>
+      <button type="button" data-placement-draw>Draw on map</button>
+      <button type="submit">Apply</button>
+      <button type="button" data-placement-default>Use map default</button>
+    </form>
     <div class="tactical-viewport">
       <canvas class="tactical-canvas" data-tactical-canvas aria-label="Tactical map"></canvas>
     </div>
@@ -32,9 +42,9 @@
     </div>
   </div>
   <script src="tactical/tactical-state.js?v=2"></script>
-  <script src="tactical/tactical-client.js?v=2"></script>
-  <script src="tactical/tactical-render.js?v=3"></script>
+  <script src="tactical/tactical-client.js?v=3"></script>
+  <script src="tactical/tactical-render.js?v=4"></script>
   <script src="tactical/tactical-controls.js?v=2"></script>
-  <script src="tactical/tactical.js?v=3"></script>
+  <script src="tactical/tactical.js?v=5"></script>
 </body>
 </html>

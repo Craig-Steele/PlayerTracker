@@ -1154,6 +1154,16 @@ Next:
 
 Goal: let the referee restrict player token placement to a rectangular area during encounter setup.
 
+Status: in progress
+
+Implemented slice:
+
+- map JSON may define default player placement bounds
+- referee encounter overrides are persisted per campaign
+- referee can set bounds with cardinal coordinate fields or draw them on the tactical map
+- the server enforces bounds for player-owned characters
+- players see non-permitted areas blacked out
+
 Planned behavior:
 
 - the map JSON may provide optional default player placement bounds

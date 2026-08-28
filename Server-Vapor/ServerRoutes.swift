@@ -589,6 +589,10 @@ func routes(
         storageDirectory: AppPaths.appDataDirectory(application: app)
             .appendingPathComponent("tactical-maps", isDirectory: true)
     )
+    let tacticalPlayerPlacementStore = TacticalPlayerPlacementStore(
+        storageDirectory: AppPaths.appDataDirectory(application: app)
+            .appendingPathComponent("tactical-placement", isDirectory: true)
+    )
 
     app.registerTacticalRoutes(
         campaignStore: campaignStore,
@@ -596,6 +600,7 @@ func routes(
         campaignEventHub: eventHub,
         tacticalMapStore: TacticalMapStore(),
         tacticalMapSelectionStore: tacticalMapSelectionStore,
+        tacticalPlayerPlacementStore: tacticalPlayerPlacementStore,
         tacticalPlacementStore: tacticalPlacementStore,
         tacticalEventHub: tacticalEventHub
     )
@@ -1109,6 +1114,7 @@ func routes(
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let campaignName = campaign.name
         try await tacticalPlacementStore.clear(campaignID: campaign.id)
+        try await tacticalPlayerPlacementStore.clear(for: campaign.id)
         await userStore.resetForNewEncounter(campaignName: campaignName)
         _ = await campaignStore.setEncounterState(.new)
         let updatedCampaign = await campaignStore.activeCampaign() ?? campaign

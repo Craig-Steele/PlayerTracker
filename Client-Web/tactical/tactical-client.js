@@ -26,6 +26,23 @@ const TacticalClient = (() => {
       fetchTokens() {
         return request('/tactical/tokens');
       },
+      fetchPlayerPlacement() {
+        return request('/tactical/player-placement');
+      },
+      updatePlayerPlacement(bounds, useMapDefault = false) {
+        return fetch(new URL('/tactical/player-placement', baseURL), {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bounds, useMapDefault })
+        }).then(async (response) => {
+          if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.reason || `Placement area update failed (${response.status})`);
+          }
+          return response.json();
+        });
+      },
       fetchPlayerSession() {
         return request('/player/session');
       },
@@ -76,6 +93,7 @@ const TacticalClient = (() => {
         events.addEventListener('campaign-updated', refresh);
         events.addEventListener('turn-changed', refresh);
         events.addEventListener('map-changed', refresh);
+        events.addEventListener('player-placement-changed', refresh);
         return events;
       },
       imageURL(cacheBust = '') {

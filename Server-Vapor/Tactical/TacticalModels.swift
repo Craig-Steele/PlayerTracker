@@ -9,6 +9,48 @@ struct TacticalMapState: Content, Codable, Equatable {
     let terrain: TacticalTerrainState
     let elevation: TacticalElevationState
     let mapPresentation: TacticalMapPresentation
+    let playerPlacement: TacticalPlayerPlacement?
+
+    init(
+        version: Int,
+        imagePath: String,
+        grid: TacticalMapGrid,
+        blockedTiles: [TacticalMapPoint],
+        terrain: TacticalTerrainState,
+        elevation: TacticalElevationState,
+        mapPresentation: TacticalMapPresentation,
+        playerPlacement: TacticalPlayerPlacement? = nil
+    ) {
+        self.version = version
+        self.imagePath = imagePath
+        self.grid = grid
+        self.blockedTiles = blockedTiles
+        self.terrain = terrain
+        self.elevation = elevation
+        self.mapPresentation = mapPresentation
+        self.playerPlacement = playerPlacement
+    }
+}
+
+struct TacticalPlayerPlacement: Content, Codable, Equatable {
+    let defaultBounds: TacticalPlayerPlacementBounds?
+}
+
+struct TacticalPlayerPlacementBounds: Content, Codable, Equatable {
+    let west: Int
+    let east: Int
+    let south: Int
+    let north: Int
+}
+
+struct TacticalPlayerPlacementResponse: Content, Codable, Equatable {
+    let bounds: TacticalPlayerPlacementBounds?
+    let isOverride: Bool
+}
+
+struct TacticalPlayerPlacementUpdateRequest: Content, Codable {
+    let bounds: TacticalPlayerPlacementBounds?
+    let useMapDefault: Bool?
 }
 
 struct TacticalMapSummary: Content, Codable, Equatable {

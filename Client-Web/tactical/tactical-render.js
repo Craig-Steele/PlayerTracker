@@ -1,5 +1,5 @@
 window.TacticalRender = (() => {
-  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, tooltip, onTap, onTokenSelect }) {
+  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, playerPlacement = null, hideEnemyTokens = false, allowPlacementEdit = false, onPlayerPlacementSelect, tooltip, onTap, onTokenSelect }) {
     const context = canvas.getContext('2d');
     let currentMap = map;
     let currentImage = image;
@@ -18,6 +18,11 @@ window.TacticalRender = (() => {
     let suppressNextClick = false;
     let ignoreNextClick = false;
     let selectedTokenId = null;
+    let currentPlayerPlacement = playerPlacement;
+    let currentHideEnemyTokens = hideEnemyTokens;
+    let placementDrawMode = false;
+    let placementDragStart = null;
+    let placementDragEnd = null;
 
     function centeredTextOrigin(textContext, text, centerX, centerY) {
       const metrics = textContext.measureText(text);
@@ -92,7 +97,7 @@ window.TacticalRender = (() => {
       const squareWidth = size.width / grid.eastWestSquareCount;
       const squareHeight = size.height / grid.northSouthSquareCount;
       return tokens.find((token) => {
-        if (token.isHidden && !viewerIsReferee) return false;
+        if (!viewerIsReferee && (token.isHidden || (currentHideEnemyTokens && token.team === 'enemy'))) return false;
         const row = grid.northSouthSquareCount - 1 - token.y;
         const centerX = (token.x + 0.5) * squareWidth;
         const centerY = (row + 0.5) * squareHeight;
@@ -200,6 +205,48 @@ window.TacticalRender = (() => {
       }
       context.stroke();
 
+      if (!viewerIsReferee && currentPlayerPlacement) {
+        const left = isInfiniteTerrain() ? visibleLeft * squareWidth : 0;
+        const right = isInfiniteTerrain() ? visibleRight * squareWidth : size.width;
+        const top = isInfiniteTerrain() ? visibleTop * squareHeight : 0;
+        const bottom = isInfiniteTerrain() ? visibleBottom * squareHeight : size.height;
+        const placementTop = (grid.northSouthSquareCount - 1 - currentPlayerPlacement.north) * squareHeight;
+        const placementBottom = (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
+        context.fillStyle = '#000';
+        context.beginPath();
+        context.rect(left, top, right - left, bottom - top);
+        context.rect(
+          currentPlayerPlacement.west * squareWidth,
+          placementTop,
+          (currentPlayerPlacement.east - currentPlayerPlacement.west + 1) * squareWidth,
+          placementBottom - placementTop
+        );
+        context.fill('evenodd');
+      }
+
+      const draft = placementDragStart && placementDragEnd
+        ? placementBounds(placementDragStart, placementDragEnd)
+        : null;
+      if ((viewerIsReferee || allowPlacementEdit) && draft) {
+        const draftTop = (grid.northSouthSquareCount - 1 - draft.north) * squareHeight;
+        const draftBottom = (grid.northSouthSquareCount - draft.south) * squareHeight;
+        context.fillStyle = 'rgba(25, 118, 210, 0.18)';
+        context.fillRect(
+          draft.west * squareWidth,
+          draftTop,
+          (draft.east - draft.west + 1) * squareWidth,
+          draftBottom - draftTop
+        );
+        context.strokeStyle = '#1976d2';
+        context.lineWidth = Math.max(3 / view.scale, 1.5);
+        context.strokeRect(
+          draft.west * squareWidth,
+          draftTop,
+          (draft.east - draft.west + 1) * squareWidth,
+          draftBottom - draftTop
+        );
+      }
+
       context.fillStyle = 'rgba(0, 0, 0, 0.62)';
       for (const tile of currentMap.blockedTiles || []) {
         const row = grid.northSouthSquareCount - 1 - tile.y;
@@ -207,7 +254,7 @@ window.TacticalRender = (() => {
       }
 
       for (const token of tokens) {
-        if (token.isHidden && !viewerIsReferee) continue;
+        if (!viewerIsReferee && (token.isHidden || (currentHideEnemyTokens && token.team === 'enemy'))) continue;
         const row = grid.northSouthSquareCount - 1 - token.y;
         const centerX = (token.x + 0.5) * squareWidth;
         const centerY = (row + 0.5) * squareHeight;
@@ -346,6 +393,15 @@ window.TacticalRender = (() => {
       };
     }
 
+    function placementBounds(first, second) {
+      return {
+        west: Math.min(first.x, second.x),
+        east: Math.max(first.x, second.x),
+        south: Math.min(first.y, second.y),
+        north: Math.max(first.y, second.y)
+      };
+    }
+
     canvas.addEventListener('wheel', (event) => {
       event.preventDefault();
       const factor = event.deltaY < 0 ? 1.1 : 0.9;
@@ -359,6 +415,14 @@ window.TacticalRender = (() => {
     }, { passive: false });
 
     canvas.addEventListener('pointerdown', (event) => {
+      if (placementDrawMode && allowPlacementEdit) {
+        const rect = canvas.getBoundingClientRect();
+        placementDragStart = mapPointAt(event.clientX - rect.left, event.clientY - rect.top);
+        placementDragEnd = placementDragStart;
+        canvas.setPointerCapture(event.pointerId);
+        draw();
+        return;
+      }
       pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
       canvas.setPointerCapture(event.pointerId);
       tapStart = { x: event.clientX, y: event.clientY };
@@ -383,6 +447,12 @@ window.TacticalRender = (() => {
       }
     });
     canvas.addEventListener('pointermove', (event) => {
+      if (placementDrawMode && placementDragStart && allowPlacementEdit) {
+        const rect = canvas.getBoundingClientRect();
+        placementDragEnd = mapPointAt(event.clientX - rect.left, event.clientY - rect.top) || placementDragEnd;
+        draw();
+        return;
+      }
       if (!pointers.has(event.pointerId)) {
         if (!dragging) updateTooltip(event.clientX, event.clientY);
         return;
@@ -412,6 +482,15 @@ window.TacticalRender = (() => {
       }
     });
     function endPointer(event) {
+      if (placementDrawMode && placementDragStart && allowPlacementEdit) {
+        const bounds = placementBounds(placementDragStart, placementDragEnd || placementDragStart);
+        placementDrawMode = false;
+        placementDragStart = null;
+        placementDragEnd = null;
+        if (onPlayerPlacementSelect) onPlayerPlacementSelect(bounds);
+        draw();
+        return;
+      }
       pointers.delete(event.pointerId);
       if (pointers.size < 2) pinchStart = null;
       dragging = pointers.size === 1;
@@ -469,6 +548,21 @@ window.TacticalRender = (() => {
       mapPointAt,
       setSelectedToken(token) {
         selectedTokenId = token ? token.id : null;
+        draw();
+      },
+      setPlayerPlacement(bounds) {
+        currentPlayerPlacement = bounds || null;
+        draw();
+      },
+      setHideEnemyTokens(hidden) {
+        currentHideEnemyTokens = Boolean(hidden);
+        draw();
+      },
+      setPlacementDrawMode(enabled) {
+        placementDrawMode = Boolean(enabled && allowPlacementEdit);
+        placementDragStart = null;
+        placementDragEnd = null;
+        canvas.style.cursor = placementDrawMode ? 'crosshair' : '';
         draw();
       },
       updateMap(newMap, newImage) {

@@ -4,16 +4,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const resetButton = document.querySelector('[data-tactical-reset]');
   const zoomButton = document.querySelector('[data-tactical-zoom]');
   const characterSelect = document.querySelector('[data-tactical-character]');
+  const placementForm = document.querySelector('[data-tactical-placement-form]');
   const tooltip = document.querySelector('[data-tactical-tooltip]');
 
   try {
     const client = TacticalClient.createClient(window.location.origin);
     let map = await client.fetchMap();
-    const [tokens, session] = await Promise.all([
+    const [tokens, session, playerPlacement] = await Promise.all([
       client.fetchTokens(),
-      client.fetchPlayerSession()
+      client.fetchPlayerSession(),
+      client.fetchPlayerPlacement()
     ]);
     const viewerId = session.player.id;
+    if (placementForm && session.player.isReferee) placementForm.hidden = false;
     let encounterState = session.campaign?.encounterState || 'new';
     const characters = await client.fetchCharacters();
     for (const character of characters) {
@@ -40,6 +43,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       tokens,
       viewerId,
       viewerIsReferee: session.player.isReferee,
+      playerPlacement: playerPlacement.bounds,
+      hideEnemyTokens: !session.player.isReferee && encounterState === 'new',
+      allowPlacementEdit: session.player.isReferee,
+      onPlayerPlacementSelect: (bounds) => {
+        ['west', 'east', 'south', 'north'].forEach((key) => {
+          const field = placementForm?.querySelector(`[data-placement-${key}]`);
+          if (field) field.value = bounds[key];
+        });
+        status.textContent = 'Placement area drawn. Press Apply to save it.';
+      },
       tooltip,
       onTokenSelect: (token) => {
         viewport.setSelectedToken(token);
@@ -75,24 +88,60 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateStatus();
     });
     const refreshMapAndTokens = async () => {
-      const [latestMap, latestTokens] = await Promise.all([
+      const [latestMap, latestTokens, latestPlayerPlacement] = await Promise.all([
         client.fetchMap(),
-        client.fetchTokens()
+        client.fetchTokens(),
+        client.fetchPlayerPlacement()
       ]);
       map = latestMap;
       tokens.splice(0, tokens.length, ...latestTokens);
       const latestImage = new Image();
       latestImage.src = client.imageURL(Date.now().toString());
       viewport.updateMap(map, latestImage);
+      viewport.setPlayerPlacement(latestPlayerPlacement.bounds);
       viewport.draw();
       updateStatus();
     };
     client.subscribeToCampaignEvents(session.campaign.id, (snapshot) => {
       if (snapshot?.campaign?.encounterState) encounterState = snapshot.campaign.encounterState;
+      viewport.setHideEnemyTokens(!session.player.isReferee && encounterState === 'new');
       return refreshMapAndTokens();
     });
     updateStatus();
     resetButton.addEventListener('click', viewport.fit);
+    if (placementForm) {
+      const fields = ['west', 'east', 'south', 'north'].map((key) => placementForm.querySelector(`[data-placement-${key}]`));
+      fields.forEach((field, index) => {
+        const key = ['west', 'east', 'south', 'north'][index];
+        if (field && playerPlacement.bounds?.[key] !== undefined) field.value = playerPlacement.bounds[key];
+      });
+      placementForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        try {
+          const bounds = Object.fromEntries(fields.map((field, index) => [
+            ['west', 'east', 'south', 'north'][index], Number.parseInt(field.value, 10)
+          ]));
+          const updated = await client.updatePlayerPlacement(bounds);
+          viewport.setPlayerPlacement(updated.bounds);
+          status.textContent = 'Player placement area updated.';
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      });
+      placementForm.querySelector('[data-placement-draw]')?.addEventListener('click', () => {
+        viewport.setPlacementDrawMode(true);
+        status.textContent = 'Drag across the map to define the player placement area.';
+      });
+      placementForm.querySelector('[data-placement-default]')?.addEventListener('click', async () => {
+        try {
+          const updated = await client.updatePlayerPlacement(null, true);
+          viewport.setPlayerPlacement(updated.bounds);
+          status.textContent = 'Using the map default placement area.';
+        } catch (error) {
+          status.textContent = error.message;
+        }
+      });
+    }
     zoomButton.addEventListener('click', () => {
       const characterId = characterSelect.value;
       const token = tokens.find((candidate) => candidate.characterId === characterId &&
