@@ -140,6 +140,33 @@ window.TacticalRender = (() => {
       draw();
     }
 
+    function zoomToToken(token) {
+      if (!token) return false;
+      const size = mapSize();
+      if (size.width <= 0 || size.height <= 0) return false;
+      const grid = currentMap.grid;
+      const squareWidth = size.width / grid.eastWestSquareCount;
+      const squareHeight = size.height / grid.northSouthSquareCount;
+      const row = grid.northSouthSquareCount - 1 - token.y;
+      const centerX = (token.x + 0.5) * squareWidth;
+      const centerY = (row + 0.5) * squareHeight;
+      const squareSpan = 12;
+      view.scale = Math.min(
+        8,
+        Math.max(
+          0.15,
+          Math.min(
+            canvas.clientWidth / (squareSpan * squareWidth),
+            canvas.clientHeight / (squareSpan * squareHeight)
+          )
+        )
+      );
+      view.x = canvas.clientWidth / 2 - centerX * view.scale;
+      view.y = canvas.clientHeight / 2 - centerY * view.scale;
+      draw();
+      return true;
+    }
+
     function draw() {
       const width = canvas.clientWidth;
       const height = canvas.clientHeight;
@@ -437,6 +464,7 @@ window.TacticalRender = (() => {
 
     return {
       fit,
+      zoomToToken,
       draw,
       mapPointAt,
       setSelectedToken(token) {

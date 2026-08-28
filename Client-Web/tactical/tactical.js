@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const status = document.querySelector('[data-tactical-status]');
   const canvas = document.querySelector('[data-tactical-canvas]');
   const resetButton = document.querySelector('[data-tactical-reset]');
+  const zoomButton = document.querySelector('[data-tactical-zoom]');
   const characterSelect = document.querySelector('[data-tactical-character]');
   const tooltip = document.querySelector('[data-tactical-tooltip]');
 
@@ -92,6 +93,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     updateStatus();
     resetButton.addEventListener('click', viewport.fit);
+    zoomButton.addEventListener('click', () => {
+      const characterId = characterSelect.value;
+      const token = tokens.find((candidate) => candidate.characterId === characterId &&
+        (!candidate.isHidden || session.player.isReferee));
+      if (!token) {
+        status.textContent = 'The selected character does not have a visible token.';
+        return;
+      }
+      viewport.zoomToToken(token);
+      status.textContent = `Centered on ${token.displayName}`;
+    });
   } catch (error) {
     status.textContent = error.message;
     status.classList.add('tactical-error');

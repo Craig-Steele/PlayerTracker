@@ -1156,23 +1156,41 @@ Goal: let the referee restrict player token placement to a rectangular area duri
 
 Planned behavior:
 
-- the referee selects a rectangle directly on the tactical map
+- the map JSON may provide optional default player placement bounds
+- the referee can adjust or remove those bounds during New Encounter setup
+- map defaults are copied into encounter setup when the map is selected
+- referee adjustments are stored with the campaign/encounter and do not modify the map package
+- when no default or override exists, players may place in any legal square
 - bounds use inclusive cardinal grid coordinates: `west`, `east`, `south`, and `north`
 - players may place or reposition tokens only inside the selected rectangle
 - the referee remains unrestricted when placing controlled creatures or characters
 - the server enforces the rectangle; clients use it for visual guidance only
-- the permitted area is shown as a translucent map overlay
-- starting a New Encounter clears the placement rectangle
-- changing maps clears it because the previous coordinates may not apply
-- when no rectangle is selected, players may place in any legal square
+- non-permitted areas are blacked out on the player tactical view
+- the referee sees the entire map and is not affected by the blackout
+- changing maps clears the encounter override and applies the newly selected map's default bounds
+
+Map JSON shape:
+
+```json
+"playerPlacement": {
+  "defaultBounds": {
+    "west": 2,
+    "east": 8,
+    "south": 1,
+    "north": 6
+  }
+}
+```
 
 Acceptance:
 
 - a referee can draw and adjust a player placement rectangle during encounter setup
+- a map package can provide default player placement bounds
 - a player can place and reposition a token inside the rectangle
 - a player receives a typed rejection when attempting placement outside the rectangle
 - the referee can place tokens outside the rectangle
-- the rectangle is cleared when a new encounter begins or the map changes
+- non-permitted areas are blacked out for players
+- changing maps applies the new map's default bounds and removes the previous encounter override
 
 #### M9-04: Map Authoring and Package Export
 
