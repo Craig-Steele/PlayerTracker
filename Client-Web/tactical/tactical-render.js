@@ -224,6 +224,18 @@ window.TacticalRender = (() => {
         context.fill('evenodd');
       }
 
+      if (viewerIsReferee && currentPlayerPlacement) {
+        const placementTop = (grid.northSouthSquareCount - 1 - currentPlayerPlacement.north) * squareHeight;
+        const placementBottom = (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
+        const placementLeft = currentPlayerPlacement.west * squareWidth;
+        const placementRight = (currentPlayerPlacement.east + 1) * squareWidth;
+        context.fillStyle = 'rgba(25, 118, 210, 0.16)';
+        context.fillRect(placementLeft, placementTop, placementRight - placementLeft, placementBottom - placementTop);
+        context.strokeStyle = '#1976d2';
+        context.lineWidth = Math.max(3 / view.scale, 1.5);
+        context.strokeRect(placementLeft, placementTop, placementRight - placementLeft, placementBottom - placementTop);
+      }
+
       const draft = placementDragStart && placementDragEnd
         ? placementBounds(placementDragStart, placementDragEnd)
         : null;

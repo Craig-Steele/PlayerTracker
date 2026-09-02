@@ -32,6 +32,10 @@
   gap: 0.5rem;
 }
 
+.tactical-placement-form[hidden] {
+  display: none;
+}
+
 .tactical-placement-form label {
   align-items: center;
   display: inline-flex;

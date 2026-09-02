@@ -49,12 +49,8 @@ extension RoutesBuilder {
         }
 
         tactical.get("player-placement") { req async throws -> TacticalPlayerPlacementResponse in
-            let (campaign, session) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
-            let isReferee = try await isRefereeSession(session, in: campaign.id, on: req.db)
+            let (campaign, _) = try await requireActiveCampaignParticipantSession(req, campaignStore: campaignStore)
             let override = await tacticalPlayerPlacementStore.override(for: campaign.id)
-            if isReferee {
-                return TacticalPlayerPlacementResponse(bounds: override != nil ? override! : nil, isOverride: override != nil)
-            }
             let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
             let selectedMapID = await tacticalMapSelectionStore.selectedMapID(for: campaign.id, persistedMapID: campaign.selectedMapID, defaultMapID: defaultMapID)
             let map = if let imported = await tacticalMapSelectionStore.importedMap(mapID: selectedMapID, for: campaign.id) {
