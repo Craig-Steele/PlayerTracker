@@ -235,6 +235,255 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testPlayerPlacementUsesMapDefaultsAndRejectsOutsideSquaresWithoutChangingSnapshot() async throws {
+        let tester = try await makeTester()
+        let referee = try await grantRefereeAccess(in: tester, displayName: "Placement Referee")
+        let player = try await join(displayName: "Placement Player", in: tester)
+        let sourceMap = try TacticalMapStore().load()
+        let placementBounds = TacticalPlayerPlacementBounds(west: 2, east: 4, south: 2, north: 4)
+        let map = TacticalMapState(
+            version: sourceMap.version,
+            imagePath: sourceMap.imagePath,
+            grid: TacticalMapGrid(
+                eastWestSquareCount: 8,
+                northSouthSquareCount: 8,
+                squareSizeFt: sourceMap.grid.squareSizeFt,
+                coordinateConvention: sourceMap.grid.coordinateConvention
+            ),
+            blockedTiles: [],
+            terrain: sourceMap.terrain,
+            elevation: sourceMap.elevation,
+            mapPresentation: sourceMap.mapPresentation,
+            playerPlacement: TacticalPlayerPlacement(defaultBounds: placementBounds)
+        )
+        let pngData = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        let importResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/maps/import",
+            headers: HTTPHeaders([
+                ("Cookie", "roll4_player_session=\(referee)"),
+                ("Content-Type", "application/json")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalMapImportRequest(
+                    filename: "placement-defaults.png",
+                    imageBase64: pngData.base64EncodedString(),
+                    map: map
+                )
+            ))
+        )
+        XCTAssertEqual(importResponse.status, .ok)
+
+        let playerHeaders = HTTPHeaders([("Cookie", "roll4_player_session=\(player.cookieToken)")])
+        let placementResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/player-placement",
+            headers: playerHeaders
+        )
+        XCTAssertEqual(placementResponse.status, .ok)
+        XCTAssertEqual(
+            try placementResponse.content.decode(TacticalPlayerPlacementResponse.self),
+            TacticalPlayerPlacementResponse(bounds: placementBounds, isOverride: false)
+        )
+
+        let character = try await createMemberCharacter(
+            in: tester,
+            cookieToken: player.cookieToken,
+            payload: CharacterInput(ownerName: "Placement Player", name: "Placement Fighter")
+        )
+        let placementHeaders = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(player.cookieToken)"),
+            ("Content-Type", "application/json")
+        ])
+        let insideResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: placementHeaders,
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalPlacementRequest(characterId: character.id, x: 2, y: 2)
+            ))
+        )
+        XCTAssertEqual(insideResponse.status, .ok)
+
+        let beforeRejectedPlacementResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/tokens",
+            headers: playerHeaders
+        )
+        let tokensBeforeRejectedPlacement = try beforeRejectedPlacementResponse.content.decode([TacticalTokenSnapshot].self)
+
+        let outsideResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: placementHeaders,
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalPlacementRequest(characterId: character.id, x: 1, y: 1)
+            ))
+        )
+        XCTAssertEqual(outsideResponse.status, .forbidden)
+        XCTAssertTrue(outsideResponse.body.string.contains("outside the player placement area"))
+
+        let afterRejectedPlacementResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/tokens",
+            headers: playerHeaders
+        )
+        XCTAssertEqual(
+            try afterRejectedPlacementResponse.content.decode([TacticalTokenSnapshot].self),
+            tokensBeforeRejectedPlacement
+        )
+
+        let refereeCharacter = try await createMemberCharacter(
+            in: tester,
+            cookieToken: referee,
+            payload: CharacterInput(ownerName: "Placement Referee", name: "Referee Goblin")
+        )
+        let refereePlacementResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/tokens/place",
+            headers: HTTPHeaders([
+                ("Cookie", "roll4_player_session=\(referee)"),
+                ("Content-Type", "application/json")
+            ]),
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalPlacementRequest(characterId: refereeCharacter.id, x: 0, y: 0)
+            ))
+        )
+        XCTAssertEqual(refereePlacementResponse.status, .ok)
+    }
+
+    @Test
+    func testChangingMapsClearsPlayerPlacementOverrideAndUsesNewMapDefault() async throws {
+        let tester = try await makeTester()
+        let referee = try await grantRefereeAccess(in: tester, displayName: "Map Change Referee")
+        let headers = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(referee)"),
+            ("Content-Type", "application/json")
+        ])
+        let sourceMap = try TacticalMapStore().load()
+        let pngData = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+
+        func importMap(named name: String, bounds: TacticalPlayerPlacementBounds) async throws {
+            let map = TacticalMapState(
+                version: sourceMap.version,
+                imagePath: sourceMap.imagePath,
+                grid: sourceMap.grid,
+                blockedTiles: [],
+                terrain: sourceMap.terrain,
+                elevation: sourceMap.elevation,
+                mapPresentation: sourceMap.mapPresentation,
+                playerPlacement: TacticalPlayerPlacement(defaultBounds: bounds)
+            )
+            let response = try await tester.sendRequest(
+                .POST,
+                "/tactical/maps/import",
+                headers: headers,
+                body: ByteBuffer(data: try JSONEncoder().encode(
+                    TacticalMapImportRequest(
+                        filename: "\(name).png",
+                        imageBase64: pngData.base64EncodedString(),
+                        map: map
+                    )
+                ))
+            )
+            XCTAssertEqual(response.status, .ok)
+        }
+
+        let firstDefault = TacticalPlayerPlacementBounds(west: 1, east: 3, south: 1, north: 3)
+        let secondDefault = TacticalPlayerPlacementBounds(west: 5, east: 7, south: 5, north: 7)
+        try await importMap(named: "first-placement-map", bounds: firstDefault)
+
+        let override = TacticalPlayerPlacementBounds(west: 2, east: 2, south: 2, north: 2)
+        let overrideResponse = try await tester.sendRequest(
+            .PUT,
+            "/tactical/player-placement",
+            headers: headers,
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalPlayerPlacementUpdateRequest(bounds: override, useMapDefault: false)
+            ))
+        )
+        XCTAssertEqual(overrideResponse.status, .ok)
+        XCTAssertEqual(
+            try overrideResponse.content.decode(TacticalPlayerPlacementResponse.self),
+            TacticalPlayerPlacementResponse(bounds: override, isOverride: true)
+        )
+
+        try await importMap(named: "second-placement-map", bounds: secondDefault)
+        let afterMapChangeResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/player-placement",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(referee)")])
+        )
+        XCTAssertEqual(afterMapChangeResponse.status, .ok)
+        XCTAssertEqual(
+            try afterMapChangeResponse.content.decode(TacticalPlayerPlacementResponse.self),
+            TacticalPlayerPlacementResponse(bounds: secondDefault, isOverride: false)
+        )
+    }
+
+    @Test
+    func testPlayerPlacementBoundsRequireRefereeAndNewEncounter() async throws {
+        let tester = try await makeTester()
+        let referee = try await grantRefereeAccess(in: tester, displayName: "Bounds Referee")
+        let player = try await join(displayName: "Bounds Player", in: tester)
+        let refereeHeaders = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(referee)"),
+            ("Content-Type", "application/json")
+        ])
+        let playerHeaders = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(player.cookieToken)"),
+            ("Content-Type", "application/json")
+        ])
+        let bounds = TacticalPlayerPlacementBounds(west: 1, east: 3, south: 1, north: 3)
+
+        let nonRefereeResponse = try await tester.sendRequest(
+            .PUT,
+            "/tactical/player-placement",
+            headers: playerHeaders,
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalPlayerPlacementUpdateRequest(bounds: bounds, useMapDefault: false)
+            ))
+        )
+        XCTAssertEqual(nonRefereeResponse.status, .forbidden)
+        XCTAssertTrue(nonRefereeResponse.body.string.contains("Only a referee"))
+
+        let invalidBounds = TacticalPlayerPlacementBounds(west: 3, east: 1, south: 1, north: 3)
+        let invalidBoundsResponse = try await tester.sendRequest(
+            .PUT,
+            "/tactical/player-placement",
+            headers: refereeHeaders,
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalPlayerPlacementUpdateRequest(bounds: invalidBounds, useMapDefault: false)
+            ))
+        )
+        XCTAssertEqual(invalidBoundsResponse.status, .badRequest)
+        XCTAssertTrue(invalidBoundsResponse.body.string.contains("west <= east"))
+
+        _ = try await createMemberCharacter(
+            in: tester,
+            cookieToken: referee,
+            payload: CharacterInput(ownerName: "Bounds Referee", name: "Bounds Token")
+        )
+        let startResponse = try await tester.sendRequest(
+            .POST,
+            "/encounter/start",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(referee)")])
+        )
+        XCTAssertEqual(startResponse.status, .ok)
+
+        let afterStartResponse = try await tester.sendRequest(
+            .PUT,
+            "/tactical/player-placement",
+            headers: refereeHeaders,
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalPlayerPlacementUpdateRequest(bounds: bounds, useMapDefault: false)
+            ))
+        )
+        XCTAssertEqual(afterStartResponse.status, .conflict)
+        XCTAssertTrue(afterStartResponse.body.string.contains("only be changed during a new encounter"))
+    }
+
+    @Test
     func testTacticalMapImageRouteRequiresPlayerSession() async throws {
         let tester = try await makeTester()
 

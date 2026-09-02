@@ -1154,7 +1154,7 @@ Next:
 
 Goal: let the referee restrict player token placement to a rectangular area during encounter setup.
 
-Status: in progress
+Status: complete
 
 Implemented slice:
 
@@ -1163,6 +1163,7 @@ Implemented slice:
 - referee can set bounds with cardinal coordinate fields or draw them on the tactical map
 - the server enforces bounds for player-owned characters
 - players see non-permitted areas blacked out
+- route tests cover map defaults, referee overrides, map-change reset, authorization, invalid rectangles, post-start immutability, and unchanged state after rejected placement
 
 Planned behavior:
 
