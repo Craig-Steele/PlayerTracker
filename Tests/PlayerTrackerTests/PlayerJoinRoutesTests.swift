@@ -27,8 +27,7 @@ struct PlayerJoinRoutesTests {
         XCTAssertEqual(session.player.campaignID, campaignID)
         XCTAssertEqual(session.campaign.id, campaignID)
 
-        let joinCookie = try XCTUnwrap(joinResponse.headers.first(name: .setCookie))
-        let joinToken = try XCTUnwrap(joinCookie.split(separator: ";").first?.split(separator: "=").last)
+        let joinToken = try XCTUnwrap(cookieValue(named: "roll4_player_session", from: joinResponse.headers))
 
         let sessionResponse = try await tester.sendRequest(
             .GET,
@@ -709,8 +708,7 @@ struct PlayerJoinRoutesTests {
         let joined = try memberJoinResponse.content.decode(PlayerSessionResponse.self)
         XCTAssertEqual(joined.campaign.id, inviteOnlyCampaign.id)
         XCTAssertEqual(joined.player.displayName, "Alex")
-        let joinCookie = try XCTUnwrap(memberJoinResponse.headers.first(name: .setCookie))
-        let joinToken = try XCTUnwrap(joinCookie.split(separator: ";").first?.split(separator: "=").last)
+        let joinToken = try XCTUnwrap(cookieValue(named: "roll4_player_session", from: memberJoinResponse.headers))
 
         let campaignsResponse = try await tester.sendRequest(
             .GET,
@@ -1219,9 +1217,8 @@ struct PlayerJoinRoutesTests {
         )
         XCTAssertEqual(joinResponse.status, .ok)
         let session = try joinResponse.content.decode(PlayerSessionResponse.self)
-        let joinCookie = try XCTUnwrap(joinResponse.headers.first(name: .setCookie))
-        let joinToken = try XCTUnwrap(joinCookie.split(separator: ";").first?.split(separator: "=").last)
-        return (session, String(joinToken))
+        let joinToken = try XCTUnwrap(cookieValue(named: "roll4_player_session", from: joinResponse.headers))
+        return (session, joinToken)
     }
 
     private func createUnclaimedRefereeCharacter(in tester: XCTApplicationTester) async throws -> PlayerView {
@@ -1326,8 +1323,7 @@ struct PlayerJoinRoutesTests {
             body: ByteBuffer(data: try JSONEncoder().encode(payload))
         )
         XCTAssertEqual(response.status, .ok)
-        let cookie = try XCTUnwrap(response.headers.first(name: .setCookie))
-        return try XCTUnwrap(cookie.split(separator: ";").first?.split(separator: "=").last).description
+        return try XCTUnwrap(cookieValue(named: "roll4_session", from: response.headers))
     }
 
     private func grantRefereeAccess(

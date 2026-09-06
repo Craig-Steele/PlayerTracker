@@ -40,3 +40,14 @@ extension TestingApplicationTester {
         )
     }
 }
+
+func cookieValue(named name: String, from headers: HTTPHeaders) -> String? {
+    for header in headers[canonicalForm: "set-cookie"] {
+        let cookiePair = header.split(separator: ";", maxSplits: 1, omittingEmptySubsequences: true).first
+        let parts = cookiePair?.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+        if parts?.count == 2, parts?[0] == Substring(name) {
+            return String(parts![1])
+        }
+    }
+    return nil
+}
