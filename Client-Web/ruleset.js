@@ -17,13 +17,20 @@
     if (!rulesetIcon) return;
     const resolvedIcon = resolveIconUrl(iconUrl);
     if (resolvedIcon) {
-      rulesetIcon.src = resolvedIcon;
+      // Health/state refreshes reload the campaign metadata frequently. Do not
+      // reassign the same image source, since Safari may re-request it and
+      // briefly relayout the sticky campaign header.
+      if (rulesetIcon.getAttribute('src') !== resolvedIcon && rulesetIcon.src !== resolvedIcon) {
+        rulesetIcon.src = resolvedIcon;
+      }
       rulesetIcon.alt = labelText ? `${labelText} icon` : 'Ruleset icon';
       rulesetIcon.style.display = 'block';
       rulesetIcon.style.width = `${DEFAULT_ICON_SIZE}px`;
       rulesetIcon.style.height = `${DEFAULT_ICON_SIZE}px`;
     } else {
-      rulesetIcon.removeAttribute('src');
+      if (rulesetIcon.hasAttribute('src')) {
+        rulesetIcon.removeAttribute('src');
+      }
       rulesetIcon.alt = '';
       rulesetIcon.style.display = 'none';
     }
@@ -35,13 +42,14 @@
 
   function setRulesetLinkTarget(linkEl, labelText, baseUrl) {
     if (!linkEl) return;
-    linkEl.textContent = labelText || '';
+    const resolvedLabel = labelText || '';
+    if (linkEl.textContent !== resolvedLabel) linkEl.textContent = resolvedLabel;
     if (baseUrl) {
-      linkEl.href = baseUrl;
-      linkEl.removeAttribute('aria-disabled');
+      if (linkEl.getAttribute('href') !== baseUrl) linkEl.setAttribute('href', baseUrl);
+      if (linkEl.hasAttribute('aria-disabled')) linkEl.removeAttribute('aria-disabled');
     } else {
-      linkEl.removeAttribute('href');
-      linkEl.setAttribute('aria-disabled', 'true');
+      if (linkEl.hasAttribute('href')) linkEl.removeAttribute('href');
+      if (linkEl.getAttribute('aria-disabled') !== 'true') linkEl.setAttribute('aria-disabled', 'true');
     }
   }
 
@@ -52,11 +60,11 @@
   function setRulesetLicenseTarget(linkEl, wrapEl, licenseUrl) {
     if (!linkEl || !wrapEl) return;
     if (licenseUrl) {
-      linkEl.href = licenseUrl;
-      wrapEl.style.display = 'inline';
+      if (linkEl.getAttribute('href') !== licenseUrl) linkEl.setAttribute('href', licenseUrl);
+      if (wrapEl.style.display !== 'inline') wrapEl.style.display = 'inline';
     } else {
-      linkEl.removeAttribute('href');
-      wrapEl.style.display = 'none';
+      if (linkEl.hasAttribute('href')) linkEl.removeAttribute('href');
+      if (wrapEl.style.display !== 'none') wrapEl.style.display = 'none';
     }
   }
 

@@ -1127,19 +1127,38 @@ window.addEventListener('DOMContentLoaded', () => {
   updateRefereeHeaderPlayerName();
   window.addEventListener('storage', updateRefereeHeaderPlayerName);
 
+  function shouldReloadCampaignMetadata(event) {
+    if (event?.type === 'state-updated') return false;
+    if (!event?.data) return true;
+    try {
+      const campaign = JSON.parse(event.data)?.snapshot?.campaign;
+      if (!campaign) return true;
+      return campaign.id !== activeCampaignId ||
+        campaign.name !== currentCampaignName ||
+        campaign.rulesetId !== currentRulesetId;
+    } catch (_) {
+      return true;
+    }
+  }
+
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
     getCampaignId: () => activeCampaignId,
-    refresh: async () => {
-      const hasActiveCampaign = await loadCampaign();
+    refresh: async (event) => {
+      const hasActiveCampaign = shouldReloadCampaignMetadata(event)
+        ? await loadCampaign()
+        : Boolean(activeCampaignId);
       if (hasActiveCampaign) {
-        await loadCampaignUserData();
+        if (event?.type !== 'state-updated') {
+          await loadCampaignUserData();
+        }
         await loadState();
       }
     },
     shouldSkipRefresh: () => skipRefresh,
     consumeSkipRefresh: () => {
       skipRefresh = false;
-    }
+    },
+    skipInitialSnapshot: true
   }) || {
     start() {},
     stop() {},
@@ -5820,8 +5839,11 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-    saveCharacterEntry(player);
-    skipRefresh = true;
+    // The save broadcasts state-updated. Let the live stream perform the
+    // authoritative refresh instead of fetching state here and again when
+    // the broadcast arrives.
+    skipRefresh = false;
+    saveCharacterEntry(player, { reloadState: false });
   }
 
   /**

@@ -550,6 +550,7 @@ body.referee-page .character-list-scroll {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  overflow-anchor: none;
 }
 
 body.player-page .character-list-scroll table,

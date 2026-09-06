@@ -1323,7 +1323,12 @@ func routes(
             ) ?? created
         }
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
-        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
+        await publishCampaignUpdate(
+            campaign: campaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "state-updated"
+        )
         return responseCharacter
     }
 
@@ -1423,7 +1428,12 @@ func routes(
             conditions: input.conditions.map { Set($0) }
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
-        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
+        await publishCampaignUpdate(
+            campaign: campaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "state-updated"
+        )
         return updated
     }
 

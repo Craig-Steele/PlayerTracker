@@ -118,6 +118,7 @@ enum ServerBootstrap {
             ServerDiagnostics.writeServingStaticFiles(sitesDir)
         }
 
+        app.middleware.use(ClientIdentityMiddleware(), at: .beginning)
         app.middleware.use(JoinPageRedirectMiddleware(campaignStore: campaignStore))
         app.middleware.use(FileMiddleware(publicDirectory: sitesDir))
         app.http.server.configuration.hostname = options.hostname

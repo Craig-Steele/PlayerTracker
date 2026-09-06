@@ -1,4 +1,31 @@
 (function () {
+  const clientIdentityStorageKey = 'roll4_client_id';
+  const clientIdentityHeader = 'X-Roll4-Client-ID';
+
+  function clientIdentity() {
+    try {
+      const existing = window.sessionStorage.getItem(clientIdentityStorageKey);
+      if (existing) return existing;
+      const created = window.crypto?.randomUUID?.() ||
+        `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      window.sessionStorage.setItem(clientIdentityStorageKey, created);
+      return created;
+    } catch (_) {
+      return '';
+    }
+  }
+
+  const tabClientIdentity = clientIdentity();
+  if (tabClientIdentity && typeof window.fetch === 'function') {
+    const originalFetch = window.fetch.bind(window);
+    window.fetch = (input, init = {}) => {
+      const headers = new Headers(input instanceof Request ? input.headers : undefined);
+      new Headers(init.headers || {}).forEach((value, name) => headers.set(name, value));
+      headers.set(clientIdentityHeader, tabClientIdentity);
+      return originalFetch(input, { ...init, headers });
+    };
+  }
+
   const APP_NAME = 'Tactical Table Top: Initiative';
   const APP_ICON_URL = '/favicon-512.png';
   const QR_CODE_SIZE = 96;
@@ -70,7 +97,7 @@
     const hasCampaignName = Boolean(typeof campaignName === 'string' && campaignName.trim());
     const displayName = hasCampaignName ? campaignName.trim() : fallbackName;
     toArray(nameTargets).forEach((target) => {
-      if (target) target.textContent = displayName;
+      if (target && target.textContent !== displayName) target.textContent = displayName;
     });
 
     if (linkTargets) {

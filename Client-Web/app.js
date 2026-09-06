@@ -1021,10 +1021,25 @@ window.addEventListener('DOMContentLoaded', () => {
   let inventoryAddFormOpen = false;
   let currentInventory = [];
   let currentCampaignId = '';
+  function shouldReloadCampaignMetadata(event) {
+    if (event?.type === 'state-updated') return false;
+    if (!event?.data) return true;
+    try {
+      const campaign = JSON.parse(event.data)?.snapshot?.campaign;
+      if (!campaign) return true;
+      return campaign.id !== currentCampaignId ||
+        campaign.name !== currentCampaignName ||
+        campaign.rulesetId !== currentRulesetId;
+    } catch (_) {
+      return true;
+    }
+  }
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
     getCampaignId: () => currentCampaignId,
-    refresh: async () => {
-      const hasActiveCampaign = await loadCampaign();
+    refresh: async (event) => {
+      const hasActiveCampaign = shouldReloadCampaignMetadata(event)
+        ? await loadCampaign()
+        : Boolean(currentCampaignId);
       if (hasActiveCampaign) {
         await loadState();
       }
@@ -1032,7 +1047,8 @@ window.addEventListener('DOMContentLoaded', () => {
     shouldSkipRefresh: () => skipRefresh,
     consumeSkipRefresh: () => {
       skipRefresh = false;
-    }
+    },
+    skipInitialSnapshot: true
   }) || {
     start() {},
     stop() {},
@@ -4435,7 +4451,11 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       clearTimeout(perCharacterSaveTimers.get(timerKey));
     }
     const timer = setTimeout(() => {
-      saveCharacterEntry(character);
+      // The save broadcasts state-updated. Let the live stream perform the
+      // authoritative state refresh so the posting client does not fetch the
+      // same state once locally and once again from its broadcast.
+      skipRefresh = false;
+      saveCharacterEntry(character, { reloadState: false });
       perCharacterSaveTimers.delete(timerKey);
     }, AUTO_SAVE_DELAY_MS);
     perCharacterSaveTimers.set(timerKey, timer);
@@ -5357,18 +5377,35 @@ function getOwnerName() {
 
   function renderEncounterRows(snapshot) {
     if (!playersBody || !snapshot) return;
+    const rosterScroll = playersBody.closest('.character-list-scroll');
+    const preservedScrollTop = rosterScroll ? rosterScroll.scrollTop : 0;
+    const preservedScrollLeft = rosterScroll ? rosterScroll.scrollLeft : 0;
+    const preservedWindowScrollX = window.scrollX;
+    const preservedWindowScrollY = window.scrollY;
+    const activeElement = document.activeElement;
+    const activeRow = activeElement instanceof Element ? activeElement.closest('tr') : null;
+    const activeControl = activeElement instanceof HTMLElement && activeRow && playersBody.contains(activeElement)
+      ? {
+          playerId: activeRow.dataset.playerId || null,
+          tagName: activeElement.tagName,
+          className: activeElement.className,
+          ariaLabel: activeElement.getAttribute('aria-label') || null
+        }
+      : null;
     const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
     playersBody.innerHTML = '';
 
     if (players.length === 0) {
       const hasConditions = conditionLibrary.length > 0;
       playersBody.appendChild(createEmptyEncounterRow(hasConditions ? 4 : 3));
+      restoreEncounterViewport();
       return;
     }
 
     for (const p of players) {
       const tr = document.createElement('tr');
       tr.classList.add('player-row');
+      tr.dataset.playerId = p.id;
 
       const initTd = document.createElement('td');
       const nameTd = document.createElement('td');
@@ -5577,6 +5614,38 @@ function getOwnerName() {
       playersBody.appendChild(tr);
     }
     queueDisplayRosterLayoutUpdate();
+    restoreEncounterViewport();
+
+    function restoreEncounterViewport() {
+      if (rosterScroll) {
+        rosterScroll.scrollTop = preservedScrollTop;
+        rosterScroll.scrollLeft = preservedScrollLeft;
+      }
+      window.scrollTo(preservedWindowScrollX, preservedWindowScrollY);
+      if (activeControl?.playerId) {
+        const row = playersBody.querySelector(`tr[data-player-id="${activeControl.playerId}"]`);
+        const candidate = row && Array.from(row.querySelectorAll(activeControl.tagName.toLowerCase()))
+          .find((element) =>
+            element.className === activeControl.className &&
+            element.getAttribute('aria-label') === activeControl.ariaLabel
+          );
+        if (candidate instanceof HTMLElement) {
+          try {
+            candidate.focus({ preventScroll: true });
+          } catch (_) {
+            candidate.focus();
+          }
+        }
+      }
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => {
+          if (!rosterScroll?.isConnected) return;
+          rosterScroll.scrollTop = preservedScrollTop;
+          rosterScroll.scrollLeft = preservedScrollLeft;
+          window.scrollTo(preservedWindowScrollX, preservedWindowScrollY);
+        });
+      }
+    }
   }
 
   function selectCharacter(id) {
