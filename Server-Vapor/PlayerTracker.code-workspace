@@ -48,6 +48,46 @@
 				"target": "PlayerTracker",
 				"configuration": "release",
 				"preLaunchTask": "swift: Build Release PlayerTracker (Projects/Roll4Initiative)"
+			},
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:Projects}/Roll4Initiative-TABLE",
+				"name": "Debug PlayerTracker (Projects/Roll4Initiative-TABLE)",
+				"target": "PlayerTracker",
+				"configuration": "debug",
+				"preLaunchTask": "swift: Build Debug PlayerTracker (Projects/Roll4Initiative-TABLE)"
+			},
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:Projects}/Roll4Initiative-TABLE",
+				"name": "Release PlayerTracker (Projects/Roll4Initiative-TABLE)",
+				"target": "PlayerTracker",
+				"configuration": "release",
+				"preLaunchTask": "swift: Build Release PlayerTracker (Projects/Roll4Initiative-TABLE)"
+			},
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:Projects}/Roll4Initiative-Map_2D",
+				"name": "Debug PlayerTracker (Projects/Roll4Initiative-Map_2D)",
+				"target": "PlayerTracker",
+				"configuration": "debug",
+				"preLaunchTask": "swift: Build Debug PlayerTracker (Projects/Roll4Initiative-Map_2D)"
+			},
+			{
+				"type": "swift",
+				"request": "launch",
+				"args": [],
+				"cwd": "${workspaceFolder:Projects}/Roll4Initiative-Map_2D",
+				"name": "Release PlayerTracker (Projects/Roll4Initiative-Map_2D)",
+				"target": "PlayerTracker",
+				"configuration": "release",
+				"preLaunchTask": "swift: Build Release PlayerTracker (Projects/Roll4Initiative-Map_2D)"
 			}
 		]
 	}
