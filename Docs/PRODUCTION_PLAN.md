@@ -1210,6 +1210,7 @@ Goal: provide a map-authoring tool so a referee can create and correct the metad
 Planned behavior:
 
 - import a PNG as the map background
+- crop non-map borders from the imported image before grid alignment
 - define east-west and north-south grid measurements, square size, and coordinate origin
 - mark blocked tiles with click and drag
 - paint terrain types such as normal, difficult, water, and lava
@@ -1218,7 +1219,7 @@ Planned behavior:
 - provide eraser and undo controls
 - preview the final tactical rendering
 - validate the map before export
-- export a package containing the PNG and canonical map JSON
+- export a package containing the cropped PNG and canonical map JSON
 
 Canonical data distinctions:
 
@@ -1229,9 +1230,11 @@ Canonical data distinctions:
 
 Acceptance:
 
-- a referee can align a grid to an imported PNG
+- a referee can crop an imported PNG when its border does not align to the grid
+- a referee can align a grid to the cropped map image
 - a referee can create blocked, terrain, wall, and elevation metadata without editing JSON by hand
 - the editor preview matches the tactical client’s coordinate convention
+- the preview and exported `.map.zip` package use the cropped image and matching grid coordinates
 - exported `.map.zip` packages can be imported by the referee map selector
 - malformed or incomplete map packages receive actionable validation errors
 
