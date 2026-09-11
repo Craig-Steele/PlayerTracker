@@ -9,6 +9,7 @@ let package = Package(
         .macOS(.v13)
     ],
     dependencies: [
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
         .package(url: "https://github.com/vapor/vapor.git", from: "4.90.0"),
         .package(url: "https://github.com/vapor/fluent.git", from: "4.13.0"),
         .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.9.0"),
@@ -17,6 +18,7 @@ let package = Package(
         .executableTarget(
             name: "PlayerTracker",
             dependencies: [
+                .product(name: "Crypto", package: "swift-crypto"),
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "Fluent", package: "fluent"),
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),

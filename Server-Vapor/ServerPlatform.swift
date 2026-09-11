@@ -1,11 +1,42 @@
 import Foundation
 import Vapor
 
+enum ServerRuntimeMode: Equatable {
+    case production
+    case development
+
+    static func current(environment: [String: String]) -> ServerRuntimeMode {
+        switch environment["PLAYERTRACKER_ENV"]?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "development", "dev", "local":
+            return .development
+        default:
+            return .production
+        }
+    }
+
+    static var current: ServerRuntimeMode {
+        current(environment: ProcessInfo.processInfo.environment)
+    }
+
+    var usesSecureCookies: Bool {
+        self == .production
+    }
+}
+
 enum AppPaths {
     private static let appFamilyDirectoryName = "TacticalTableTop"
     private static let appDataDirectoryName = "Initiative"
 
     static func appDataDirectory(environment: [String: String] = ProcessInfo.processInfo.environment) -> URL {
+        let configuredRoot = environment["PLAYERTRACKER_DATA_DIR"]
+            ?? environment["ROLL4INITIATIVE_DATA_DIRECTORY"]
+        if let configuredRoot,
+           !configuredRoot.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return appDataDirectory(
+                baseDirectory: URL(fileURLWithPath: configuredRoot, isDirectory: true)
+            )
+        }
+
         #if os(macOS)
         let root = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support", isDirectory: true)
@@ -81,12 +112,27 @@ enum AppPaths {
             .appendingPathComponent("\(appDataDirectoryName)/logs", isDirectory: true)
     }
 
-    static func webClientDirectory() -> URL {
-        let sourceURL = URL(fileURLWithPath: #filePath)
-        return sourceURL
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("Client-Web", isDirectory: true)
+    static func webClientDirectory(
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        currentDirectory: URL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true),
+        executableURL: URL? = Bundle.main.executableURL
+    ) -> URL {
+        if let configuredPath = environment["ROLL4INITIATIVE_WEB_CLIENT_DIRECTORY"],
+           !configuredPath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return URL(fileURLWithPath: configuredPath, isDirectory: true)
+        }
+
+        var candidates = [currentDirectory.appendingPathComponent("Client-Web", isDirectory: true)]
+        if let executableURL {
+            var executableDirectory = executableURL.deletingLastPathComponent()
+            for _ in 0..<3 {
+                candidates.append(executableDirectory.appendingPathComponent("Client-Web", isDirectory: true))
+                executableDirectory.deleteLastPathComponent()
+            }
+        }
+
+        return candidates.first { FileManager.default.fileExists(atPath: $0.path) }
+            ?? candidates[0]
     }
 
     private static func environmentDirectory(_ key: String, environment: [String: String]) -> URL {
@@ -133,7 +179,11 @@ enum BrowserLauncher {
 
     static func shouldLaunchByDefault(environment: [String: String]) -> Bool {
         guard let rawValue = environment["ROLL4INITIATIVE_LAUNCH_BROWSER"] else {
-            return launchCommand(for: "http://localhost:8080/admin.html") != nil
+            #if os(macOS)
+            return ServerRuntimeMode.current(environment: environment) == .development
+            #else
+            return false
+            #endif
         }
 
         switch rawValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
@@ -181,6 +231,17 @@ enum BrowserLauncher {
 }
 
 enum DirectoryLauncher {
+    static func isEnabledByDefault(environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool {
+        guard let rawValue = environment["ROLL4INITIATIVE_OPEN_LOCAL_FOLDERS"] else {
+            #if os(macOS)
+            return ServerRuntimeMode.current(environment: environment) == .development
+            #else
+            return false
+            #endif
+        }
+        return ["1", "true", "yes", "on"].contains(rawValue.trimmingCharacters(in: .whitespacesAndNewlines).lowercased())
+    }
+
     static func launch(url: URL) throws {
         guard let command = launchCommand(for: url) else {
             throw Abort(.internalServerError, reason: "No supported folder launcher is available for this platform.")

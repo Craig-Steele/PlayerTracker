@@ -56,6 +56,14 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testHealthRouteReturnsOK() async throws {
+        let tester = try await makeTester()
+        let response = try await tester.sendRequest(.GET, "/health")
+        XCTAssertEqual(response.status, .ok)
+        XCTAssertEqual(response.body.string, "OK")
+    }
+
+    @Test
     func testCampaignPatchRejectsRulesetChangesAfterCreation() async throws {
         let tester = try await makeTester(selectDefaultCampaign: false)
         let adminCookie = try await signInOwner(in: tester)

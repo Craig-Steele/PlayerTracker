@@ -24,7 +24,7 @@ private func setAuthCookie(on response: Response, token: String, expiresAt: Date
         string: token,
         expires: expiresAt,
         path: "/",
-        isSecure: false,
+        isSecure: ServerRuntimeMode.current.usesSecureCookies,
         isHTTPOnly: true,
         sameSite: .lax
     )
@@ -39,7 +39,7 @@ private func setPlayerCookie(on response: Response, token: String, expiresAt: Da
         string: token,
         expires: expiresAt,
         path: "/",
-        isSecure: false,
+        isSecure: ServerRuntimeMode.current.usesSecureCookies,
         isHTTPOnly: true,
         sameSite: .lax
     )
@@ -941,6 +941,7 @@ func routes(
     }
 
     app.post("conditions") { req async throws -> HTTPStatus in
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(ConditionsInput.self)
         logConnection(req, action: "set-conditions", identifier: input.name)
         let campaign = try await requireActiveCampaign(campaignStore)
@@ -994,6 +995,7 @@ func routes(
 
     // DELETE /users - clear all players
     app.delete("users") { req async throws -> HTTPStatus in
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         logConnection(req, action: "clear-users")
         await userStore.clear()
         return .ok
@@ -1007,6 +1009,10 @@ func routes(
             localIP: localIP,
             publicIP: publicIP
         )
+    }
+
+    app.get("health") { _ in
+        Response(status: .ok, body: .init(string: "OK"))
     }
 
     // GET /state - full game state (round, current turn, players)
@@ -1451,6 +1457,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(CharacterRenameInput.self)
         logConnection(req, action: "rename-character", identifier: id.uuidString)
         await userStore.renameCharacter(id: id, characterName: input.name)
@@ -1464,6 +1471,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         logConnection(req, action: "delete-character", identifier: id.uuidString)
         let removed = await userStore.deleteCharacter(id: id)
         if !removed {
@@ -1659,6 +1667,9 @@ func routes(
 
     app.post("campaign", "userdata", "open-folders") { req async throws -> HTTPStatus in
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        guard DirectoryLauncher.isEnabledByDefault() else {
+            throw Abort(.notImplemented, reason: "Opening local folders is unavailable on this server.")
+        }
         let rulesetsDirectory = AppPaths.webClientDirectory()
             .appendingPathComponent("rulesets", isDirectory: true)
         let userdataDirectory = AppPaths.userDataDirectory(

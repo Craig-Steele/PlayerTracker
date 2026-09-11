@@ -15,18 +15,32 @@ struct ServerBootstrapOptions {
     var verboseOutput: Bool = true
 
     static var production: ServerBootstrapOptions {
+        production(environment: ProcessInfo.processInfo.environment)
+    }
+
+    static func production(environment: [String: String]) -> ServerBootstrapOptions {
         ServerBootstrapOptions(
             hostname: "0.0.0.0",
-            port: 8080,
-            webClientDirectory: AppPaths.webClientDirectory(),
+            port: serverPort(environment: environment),
+            webClientDirectory: AppPaths.webClientDirectory(environment: environment),
             campaignName: "Campaign",
-            databaseFileURL: AppPaths.appDataDirectory()
+            databaseFileURL: AppPaths.appDataDirectory(environment: environment)
                 .appendingPathComponent("data", isDirectory: true)
                 .appendingPathComponent("app.sqlite3"),
             restorePersistedState: true,
             persistChanges: true,
-            launchBrowser: BrowserLauncher.shouldLaunchByDefault
+            launchBrowser: BrowserLauncher.shouldLaunchByDefault(environment: environment)
         )
+    }
+
+    private static func serverPort(environment: [String: String]) -> Int {
+        guard let rawValue = environment["PORT"],
+              let port = Int(rawValue.trimmingCharacters(in: .whitespacesAndNewlines)),
+              port > 0,
+              port <= 65_535 else {
+            return 8080
+        }
+        return port
     }
 }
 
@@ -158,7 +172,9 @@ enum ServerBootstrap {
             Task {
                 // Give the HTTP listener a moment to bind before opening the browser.
                 try? await Task.sleep(for: .milliseconds(400))
-                BrowserLauncher.launchDisplayPage(url: "http://localhost:8080/admin.html")
+                BrowserLauncher.launchDisplayPage(
+                    url: "http://localhost:\(options.port)/admin.html"
+                )
             }
         }
     }
