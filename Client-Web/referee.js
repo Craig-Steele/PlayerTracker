@@ -125,7 +125,6 @@ const PARTY_TREASURE_CONTAINER_GLYPH =
 const inventoryView = window.PlayerTrackerInventoryView || {};
 const {
   normalizeConditionEntry,
-  formatEncounterStateText,
   orderedEncounterStats,
   encounterStatusInfo,
   applyEncounterHealthClasses,
@@ -137,7 +136,6 @@ const {
   setEncounterHealthLabel
 } = window.PlayerTrackerEncounter || {
   normalizeConditionEntry: () => null,
-  formatEncounterStateText: () => 'Encounter: New',
   orderedEncounterStats: (stats) => (Array.isArray(stats) ? stats : []),
   encounterStatusInfo: () => null,
   applyEncounterHealthClasses: () => {},
@@ -164,7 +162,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const encounterSuspendBtn = document.getElementById('encounter-suspend');
 
   const refereeCampaignName = document.getElementById('ref-campaign-name');
-  const refereeEncounterState = document.getElementById('ref-encounter-state');
   const roundIndicator = document.getElementById('ref-round-indicator');
   const playerNameEdit = document.getElementById('player-name-edit');
   const playerNameInput = document.getElementById('player-name-input');
@@ -252,7 +249,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const initiativeBonusInput = document.getElementById('ref-initiative-bonus');
   const initiativeBonusWrap = document.getElementById('ref-initiative-bonus-wrap');
   const statsFields = document.getElementById('ref-stats-fields');
-  const characterList = document.getElementById('referee-character-list');
   const addManualTabBtn = document.getElementById('ref-add-tab-manual');
   const addLibraryTabBtn = document.getElementById('ref-add-tab-library');
   const addManualPanel = document.getElementById('ref-add-manual-panel');
@@ -278,7 +274,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const addButton = document.getElementById('ref-add-button');
   const addCancelBtn = document.getElementById('ref-add-cancel');
   const addRunAsGroupInput = document.getElementById('ref-run-as-group');
-  const editorEmpty = document.getElementById('ref-editor-empty');
   const editorForm = document.getElementById('ref-editor');
   const editorNameInput = document.getElementById('ref-edit-name');
   const editorInitiativeBonusInput = document.getElementById('ref-edit-initiative-bonus');
@@ -289,7 +284,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const editorConditionsGrid = document.getElementById('ref-conditions-grid');
   const editorSelectedConditions = document.getElementById('ref-selected-conditions');
   const conditionsDialogTitle = document.getElementById('ref-conditions-dialog-title');
-  const detailsToggle = document.getElementById('ref-details-toggle');
   const detailsPanel = document.getElementById('ref-details-panel');
   const conditionsPanel = document.getElementById('ref-conditions-panel');
   const detailsCancelBtn = document.getElementById('ref-details-cancel');
@@ -305,13 +299,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const initiativeModalRollBtn = document.getElementById('ref-initiative-roll');
   const revealNowBtn = document.getElementById('ref-reveal-now');
   const revealTurnBtn = document.getElementById('ref-reveal-turn');
-  const hideBtn = document.getElementById('ref-hide-character');
-  const overflowToggle = document.getElementById('ref-overflow-toggle');
-  const overflowMenu = document.getElementById('ref-overflow-menu');
-  const openReferenceBtn = document.getElementById('ref-open-reference');
-  const claimCharacterBtn = document.getElementById('ref-claim-character');
-  const releaseCharacterBtn = document.getElementById('ref-release-character');
-  const deleteCharacterBtn = document.getElementById('ref-delete-character');
 
   let currentCampaignName = '';
   let currentRulesetId = '';
@@ -1530,20 +1517,14 @@ window.addEventListener('DOMContentLoaded', () => {
   /**
    * Update the visible encounter summary in the referee header.
    * @param {number} round Current encounter round.
-   * @param {object|null} currentTurnPlayer Player who is currently acting.
-   * @param {boolean} isRefTurn Whether the active turn belongs to a referee-owned character.
    * @returns {void}
    */
-  function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isRefTurn = false) {
+  function updateEncounterStateDisplay(round = 1) {
     if (roundIndicator) {
       roundIndicator.textContent = `Round: ${round || 1}`;
       roundIndicator.classList.toggle('round-indicator-active', encounterState === 'active');
       roundIndicator.classList.toggle('round-indicator-suspended', encounterState === 'suspended');
       roundIndicator.classList.toggle('round-indicator-new', encounterState !== 'active' && encounterState !== 'suspended');
-    }
-    if (refereeEncounterState) {
-      refereeEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isRefTurn));
-      refereeEncounterState.textContent = formatEncounterStateText(encounterState, round, currentTurnPlayer);
     }
   }
 
@@ -2001,41 +1982,6 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   /**
-   * Hide the main referee overflow menu.
-   * @returns {void}
-   */
-  function closeOverflowMenu() {
-    if (!overflowMenu || !overflowToggle) return;
-    overflowMenu.classList.add('hidden');
-    overflowMenu.setAttribute('aria-hidden', 'true');
-    overflowToggle.setAttribute('aria-expanded', 'false');
-  }
-
-  /**
-   * Show the main referee overflow menu.
-   * @returns {void}
-   */
-  function openOverflowMenu() {
-    if (!overflowMenu || !overflowToggle) return;
-    overflowMenu.classList.remove('hidden');
-    overflowMenu.setAttribute('aria-hidden', 'false');
-    overflowToggle.setAttribute('aria-expanded', 'true');
-  }
-
-  /**
-   * Toggle the main referee overflow menu.
-   * @returns {void}
-   */
-  function toggleOverflowMenu() {
-    if (!overflowMenu || !overflowToggle) return;
-    if (overflowMenu.classList.contains('hidden')) {
-      openOverflowMenu();
-    } else {
-      closeOverflowMenu();
-    }
-  }
-
-  /**
    * Rebuild the referee add-form stat fields from the active stat block.
    * @returns {void}
    */
@@ -2058,11 +2004,10 @@ window.addEventListener('DOMContentLoaded', () => {
   function setConditionsPanelOpen(open) {
     if (!conditionsPanel) return;
     conditionsPanelOpen = open;
-    if (open && detailsToggle && detailsPanel) {
+    if (open && detailsPanel) {
       detailsPanel.classList.remove('details-panel-open');
       detailsPanel.classList.add('details-panel-collapsed');
       detailsPanel.classList.add('hidden');
-      detailsToggle.setAttribute('aria-expanded', 'false');
       detailsPanel.setAttribute('aria-hidden', 'true');
     }
     conditionsPanel.classList.toggle('hidden', !open);
@@ -2119,9 +2064,6 @@ window.addEventListener('DOMContentLoaded', () => {
     detailsPanel.classList.toggle('hidden', !open);
     detailsPanel.classList.toggle('details-panel-open', open);
     detailsPanel.classList.toggle('details-panel-collapsed', !open);
-    if (detailsToggle) {
-      detailsToggle.setAttribute('aria-expanded', open.toString());
-    }
     detailsPanel.setAttribute('aria-hidden', (!open).toString());
   }
 
@@ -2955,9 +2897,6 @@ window.addEventListener('DOMContentLoaded', () => {
               iconUrl: APP_ICON_URL
             }
           );
-          if (refereeEncounterState) {
-            refereeEncounterState.textContent = 'No campaign selected';
-          }
           setCampaignSummary(null);
           updateInvitePlayerButtonState();
           campaignLiveStream.close();
@@ -4573,8 +4512,7 @@ window.addEventListener('DOMContentLoaded', () => {
     encounterState = state.encounterState || 'new';
     const round = state.round || 1;
     const currentTurnPlayer = currentTurnId ? players.find((player) => player.id === currentTurnId) : null;
-    const isRefTurn = Boolean(currentTurnPlayer?.isReferee);
-    updateEncounterStateDisplay(round, currentTurnPlayer || null, isRefTurn);
+    updateEncounterStateDisplay(round);
     renderTurnTable(players, state.currentTurnId);
     if (selectedCharacterId) {
       const updated = currentPlayers.find((p) => p.id === selectedCharacterId);
@@ -4771,7 +4709,6 @@ window.addEventListener('DOMContentLoaded', () => {
    * @returns {void}
    */
   function closeTransientRefereePanels() {
-    closeOverflowMenu();
     closeRefereeRowOverflowMenus();
     closeExpandedOrderStats();
     closeInitiativeEditor();
@@ -5627,9 +5564,7 @@ window.addEventListener('DOMContentLoaded', () => {
     detailsDirty = false;
     conditionsDirty = false;
     if (selectionChanged) {
-      closeOverflowMenu();
     }
-    if (editorEmpty) editorEmpty.classList.add('hidden');
     if (editorForm) editorForm.classList.remove('hidden');
     if (editorNameInput) editorNameInput.value = player.name || '';
     if (editorInitiativeBonusInput) {
@@ -5757,8 +5692,6 @@ window.addEventListener('DOMContentLoaded', () => {
     detailsDirty = false;
     conditionsDirty = false;
     if (editorForm) editorForm.classList.add('hidden');
-    if (editorEmpty) editorEmpty.classList.remove('hidden');
-    closeOverflowMenu();
     setDetailsPanelOpen(false);
     setConditionsPanelOpen(false);
     updateConditionsDialogTitle('this character');
@@ -6551,22 +6484,6 @@ window.addEventListener('DOMContentLoaded', () => {
       detailsDirty = true;
     });
   }
-  if (detailsToggle && detailsPanel) {
-    detailsToggle.addEventListener('click', async () => {
-      const isOpen = detailsPanel.classList.contains('details-panel-open');
-      if (!isOpen && conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open') && conditionsDirty) {
-        const discard = await confirmDiscardEditedCharacterChanges({
-          dirty: conditionsDirty,
-          header: 'You have unsaved condition changes.',
-          message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
-          cancelLabel: 'Return to Conditions'
-        });
-        if (!discard) return;
-        setConditionsPanelOpen(false);
-      }
-      setDetailsPanelOpen(!isOpen);
-    });
-  }
   if (detailsCancelBtn) {
     detailsCancelBtn.addEventListener('click', async () => {
       if (!(await confirmDiscardEditedCharacterChanges({
@@ -6685,13 +6602,6 @@ window.addEventListener('DOMContentLoaded', () => {
   if (libraryQueryInput) {
     libraryQueryInput.addEventListener('input', (event) => {
       scheduleCreatureLibrarySearch(event.target.value || '');
-    });
-  }
-  if (deleteCharacterBtn) {
-    deleteCharacterBtn.addEventListener('click', async () => {
-      closeOverflowMenu();
-      if (!selectedCharacterId) return;
-      deleteCharacter(selectedCharacterId);
     });
   }
   if (addCancelBtn) {
