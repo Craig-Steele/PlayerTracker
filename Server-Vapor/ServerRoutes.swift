@@ -1281,7 +1281,12 @@ func routes(
             )
         }
         let input = try req.content.decode(CharacterInput.self)
-        let existingCharacter = input.id.flatMap { userStore.characterState(for: $0) }
+        let existingCharacter: CharacterState?
+        if let characterID = input.id {
+            existingCharacter = await userStore.characterState(for: characterID)
+        } else {
+            existingCharacter = nil
+        }
         let resolvedOwnerId: UUID
         let resolvedOwnerName: String
         if let existingCharacter, existingCharacter.ownerId != session.id {
