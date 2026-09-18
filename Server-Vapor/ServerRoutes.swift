@@ -4,6 +4,7 @@ import Vapor
 
 private let authSessionCookieName = "roll4_session"
 private let playerSessionCookieName = "roll4_player_session"
+private let ownerSetupTokenHeader = "X-PlayerTracker-Setup-Token"
 
 private func requireActiveCampaign(_ campaignStore: CampaignStore) async throws -> CampaignState {
     guard let activeCampaign = await campaignStore.activeCampaign() else {
@@ -15,7 +16,8 @@ private func requireActiveCampaign(_ campaignStore: CampaignStore) async throws 
 private func authUserResponse(from user: UserPersistenceState) -> AuthUserResponse {
     AuthUserResponse(
         id: user.id,
-        email: user.email
+        email: user.email,
+        isOwner: user.isServerOwner
     )
 }
 
@@ -66,7 +68,11 @@ private func requireAuthenticatedUser(_ req: Request) async throws -> UserPersis
 }
 
 private func requireServerOwnerSession(_ req: Request) async throws -> UserPersistenceState {
-    try await requireAuthenticatedUser(req)
+    let user = try await requireAuthenticatedUser(req)
+    guard user.isServerOwner else {
+        throw Abort(.forbidden, reason: "Server owner access required.")
+    }
+    return user
 }
 
 private func requirePlayerSession(_ req: Request) async throws -> PlayerSessionPersistenceState {
@@ -593,10 +599,23 @@ func routes(
             throw Abort(.badRequest, reason: "Password is required.")
         }
 
+        guard try await DatabasePersistence.serverOwner(on: req.db) == nil else {
+            throw Abort(.forbidden, reason: "Public signup is disabled. Ask the server owner to create your account.")
+        }
+        if ServerRuntimeMode.current == .production && req.application.environment != .testing {
+            let configuredToken = ProcessInfo.processInfo.environment["PLAYERTRACKER_OWNER_SETUP_TOKEN"]
+            guard let configuredToken,
+                  !configuredToken.isEmpty,
+                  req.headers.first(name: .init(ownerSetupTokenHeader)) == configuredToken else {
+                throw Abort(.forbidden, reason: "Owner setup is not available.")
+            }
+        }
+
         let passwordHash = try await req.application.password.async.hash(input.password)
         let userID = try await DatabasePersistence.createUser(
             email: email,
             passwordHash: passwordHash,
+            role: "owner",
             on: req.db
         )
         guard let user = try await DatabasePersistence.loadUser(id: userID, on: req.db) else {
@@ -659,6 +678,79 @@ func routes(
     app.get("auth", "session") { req async throws -> AuthSessionResponse in
         let user = try await requireAuthenticatedUser(req)
         return AuthSessionResponse(user: authUserResponse(from: user))
+    }
+
+    app.post("admin", "users") { req async throws -> AuthUserResponse in
+        _ = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(AuthSignupInput.self)
+        guard !input.password.isEmpty else {
+            throw Abort(.badRequest, reason: "Password is required.")
+        }
+        let passwordHash = try await req.application.password.async.hash(input.password)
+        let userID = try await DatabasePersistence.createUser(
+            email: input.email,
+            passwordHash: passwordHash,
+            role: "user",
+            on: req.db
+        )
+        guard let user = try await DatabasePersistence.loadUser(id: userID, on: req.db) else {
+            throw Abort(.internalServerError, reason: "Failed to load created user.")
+        }
+        return authUserResponse(from: user)
+    }
+
+    app.post("admin", "owner", "transfer") { req async throws -> HTTPStatus in
+        let owner = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(OwnerTransferInput.self)
+        guard let replacement = try await DatabasePersistence.loadUser(
+            email: input.email.trimmingCharacters(in: .whitespacesAndNewlines),
+            on: req.db
+        ) else {
+            throw Abort(.notFound, reason: "Replacement owner account was not found.")
+        }
+        guard replacement.id != owner.id else {
+            throw Abort(.badRequest, reason: "That account is already the server owner.")
+        }
+        try await DatabasePersistence.setRole("user", for: owner.id, on: req.db)
+        try await DatabasePersistence.setRole("owner", for: replacement.id, on: req.db)
+        if let token = req.cookies[authSessionCookieName]?.string {
+            try await DatabasePersistence.revokeSession(token: token, on: req.db)
+        }
+        return .ok
+    }
+
+    app.post("admin", "owner", "email") { req async throws -> AuthUserResponse in
+        let owner = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(OwnerEmailChangeInput.self)
+        try await DatabasePersistence.updateEmail(input.email, for: owner.id, on: req.db)
+        guard let updated = try await DatabasePersistence.loadUser(id: owner.id, on: req.db) else {
+            throw Abort(.internalServerError, reason: "Failed to load updated owner.")
+        }
+        return authUserResponse(from: updated)
+    }
+
+    app.post("admin", "owner", "password") { req async throws -> HTTPStatus in
+        let owner = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(OwnerPasswordChangeInput.self)
+        guard !input.newPassword.isEmpty else {
+            throw Abort(.badRequest, reason: "New password is required.")
+        }
+        guard try await req.application.password.async.verify(input.currentPassword, created: owner.passwordHash) else {
+            throw Abort(.unauthorized, reason: "Current password is incorrect.")
+        }
+        let passwordHash = try await req.application.password.async.hash(input.newPassword)
+        try await DatabasePersistence.updatePassword(passwordHash, for: owner.id, on: req.db)
+        try await DatabasePersistence.revokeSessions(for: owner.id, on: req.db)
+        return .ok
+    }
+
+    app.delete("admin", "users", ":userID") { req async throws -> HTTPStatus in
+        _ = try await requireServerOwnerSession(req)
+        guard let value = req.parameters.get("userID"), let userID = UUID(uuidString: value) else {
+            throw Abort(.badRequest, reason: "Invalid user ID.")
+        }
+        try await DatabasePersistence.deleteUser(id: userID, on: req.db)
+        return .ok
     }
 
     app.post("admin", "shutdown") { req async throws -> HTTPStatus in

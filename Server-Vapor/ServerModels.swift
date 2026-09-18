@@ -250,9 +250,23 @@ struct AuthLoginInput: Content {
     let password: String
 }
 
+struct OwnerTransferInput: Content {
+    let email: String
+}
+
+struct OwnerPasswordChangeInput: Content {
+    let currentPassword: String
+    let newPassword: String
+}
+
+struct OwnerEmailChangeInput: Content {
+    let email: String
+}
+
 struct AuthUserResponse: Content {
     let id: UUID
     let email: String
+    let isOwner: Bool
 }
 
 struct AuthSessionResponse: Content {

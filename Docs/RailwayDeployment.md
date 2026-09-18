@@ -10,6 +10,7 @@ This repository is prepared for a single Railway service built from the root `Do
 - `Client-Web` is copied to `/app/Client-Web` and served by Vapor.
 - `/health` returns HTTP `200 OK` with body `OK`.
 - Browser and local-folder launching are disabled in the container.
+- The first owner account is created through `/auth/signup` using the private `PLAYERTRACKER_OWNER_SETUP_TOKEN`; later public signup is disabled.
 - Production mode is the default; set `PLAYERTRACKER_ENV=development` only for local HTTP development.
 
 ## Railway service setup
@@ -23,6 +24,8 @@ This repository is prepared for a single Railway service built from the root `Do
 7. Under **Networking → Public Networking**, use **Generate Domain** only when the service is ready to be internet-accessible.
 
 Railway supplies `PORT` at runtime. Do not hard-code a public port or commit secrets. The Docker image defaults `PLAYERTRACKER_ENV=production`, `ROLL4INITIATIVE_LAUNCH_BROWSER=0`, and `ROLL4INITIATIVE_OPEN_LOCAL_FOLDERS=0`; keeping those values explicit as service variables is optional.
+
+For the initial owner setup, configure a long random `PLAYERTRACKER_OWNER_SETUP_TOKEN` variable, open `/admin.html`, select **Set Up Owner**, and enter the token in the setup form. The browser sends the token only in the signup request header; it is not stored by the client. Remove or rotate the variable after successful setup. The owner can create additional accounts at `/admin/users`, transfer ownership at `/admin/owner/transfer`, change credentials at `/admin/owner/email` and `/admin/owner/password`, and remove non-owner accounts at `/admin/users/:userID`.
 
 For local macOS development, run with `PLAYERTRACKER_ENV=development`. This restores browser/Finder launching and permits HTTP cookies. The runtime mode is intentionally independent of `PORT`.
 
@@ -40,7 +43,7 @@ Then request `/health`, `/`, and a static page such as `/index.html` from the ho
 The following must be resolved or consciously accepted before exposing this application publicly:
 
 - Production authentication/session cookies now use the `Secure` flag; local HTTP development requires `PLAYERTRACKER_ENV=development`.
-- `/admin/shutdown` calls the existing `requireServerOwnerSession`, but that helper currently checks authentication rather than a distinct owner role.
+- `/admin/shutdown` and the owner-management routes require the persisted server-owner role.
 - Signup, player joining, and several library/state reads are internet-reachable by design; add rate limiting and/or access policy if this is not intended to be public.
 - `/server-ip` exposes local/public address information and calls an external IP service; disable or protect it if it is not needed remotely.
 - Review CORS, CSRF protection, request limits, and logging before production use. No WebSocket routes were found; the server currently uses HTTP/SSE event streams.

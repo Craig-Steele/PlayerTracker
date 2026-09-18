@@ -25,6 +25,7 @@ struct AuthRoutesTests {
         #expect(signupResponse.status == .ok)
         let signupSession = try signupResponse.content.decode(AuthSessionResponse.self)
         #expect(signupSession.user.email == "owner@example.com")
+        #expect(signupSession.user.isOwner)
         let signupCookie = try #require(signupResponse.headers.first(name: .setCookie))
         let signupToken = try #require(signupCookie.split(separator: ";").first?.split(separator: "=").last)
 
@@ -94,7 +95,7 @@ struct AuthRoutesTests {
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(payload))
         )
-        #expect(duplicateResponse.status == .conflict)
+        #expect(duplicateResponse.status == .forbidden)
     }
 
     @Test("bad login is rejected")
@@ -218,6 +219,47 @@ struct AuthRoutesTests {
 
         let response = try await sendRequest(tester, .POST, "/admin/shutdown")
         #expect(response.status == .unauthorized)
+    }
+
+    @Test("authenticated non-owner cannot use server administration")
+    func authenticatedNonOwnerCannotUseServerAdministration() async throws {
+        let app = try await makeApp()
+        defer { shutdownApplicationSynchronously(app) }
+        let tester = try app.testing()
+
+        let ownerPayload = AuthSignupInput(email: "owner@example.com", password: "owner-password")
+        _ = try await sendRequest(
+            tester,
+            .POST,
+            "/auth/signup",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(ownerPayload))
+        )
+        let passwordHash = try await app.password.async.hash("user-password")
+        _ = try await DatabasePersistence.createUser(
+            email: "user@example.com",
+            passwordHash: passwordHash,
+            on: app.db
+        )
+
+        let loginPayload = AuthLoginInput(email: "user@example.com", password: "user-password")
+        let loginResponse = try await sendRequest(
+            tester,
+            .POST,
+            "/auth/login",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(loginPayload))
+        )
+        let cookie = try #require(loginResponse.headers.first(name: .setCookie))
+        let token = try #require(cookie.split(separator: ";").first?.split(separator: "=").last)
+
+        let response = try await sendRequest(
+            tester,
+            .POST,
+            "/admin/shutdown",
+            headers: ["Cookie": "roll4_session=\(token)"]
+        )
+        #expect(response.status == .forbidden)
     }
 
     private func makeApp() async throws -> Application {

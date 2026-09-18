@@ -28,6 +28,9 @@ struct UserPersistenceState {
     let id: UUID
     let email: String
     let passwordHash: String
+    let role: String
+
+    var isServerOwner: Bool { role == "owner" }
 }
 
 struct SessionPersistenceState {
@@ -66,6 +69,9 @@ final class UserRow: Model, @unchecked Sendable {
     @Field(key: "password_hash")
     var passwordHash: String
 
+    @Field(key: "role")
+    var role: String
+
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -77,11 +83,13 @@ final class UserRow: Model, @unchecked Sendable {
     init(
         id: UUID? = nil,
         email: String,
-        passwordHash: String
+        passwordHash: String,
+        role: String = "user"
     ) {
         self.id = id
         self.email = email
         self.passwordHash = passwordHash
+        self.role = role
     }
 }
 
@@ -756,7 +764,8 @@ enum DatabasePersistence {
         return UserPersistenceState(
             id: id,
             email: row.email,
-            passwordHash: row.passwordHash
+            passwordHash: row.passwordHash,
+            role: row.role
         )
     }
 
@@ -771,13 +780,15 @@ enum DatabasePersistence {
         return UserPersistenceState(
             id: id,
             email: row.email,
-            passwordHash: row.passwordHash
+            passwordHash: row.passwordHash,
+            role: row.role
         )
     }
 
     static func createUser(
         email: String,
         passwordHash: String,
+        role: String = "user",
         on database: any Database
     ) async throws -> UUID {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -791,12 +802,66 @@ enum DatabasePersistence {
             throw Abort(.conflict, reason: "User already exists.")
         }
 
-        let row = UserRow(email: trimmedEmail, passwordHash: passwordHash)
+        let row = UserRow(email: trimmedEmail, passwordHash: passwordHash, role: role)
         try await row.create(on: database)
         guard let id = row.id else {
             throw Abort(.internalServerError, reason: "Failed to create user record.")
         }
         return id
+    }
+
+    static func serverOwner(on database: any Database) async throws -> UserPersistenceState? {
+        guard let row = try await UserRow.query(on: database)
+            .filter(\.$role == "owner")
+            .first(),
+            let id = row.id else {
+            return nil
+        }
+        return UserPersistenceState(id: id, email: row.email, passwordHash: row.passwordHash, role: row.role)
+    }
+
+    static func setRole(_ role: String, for userID: UUID, on database: any Database) async throws {
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        row.role = role
+        try await row.save(on: database)
+    }
+
+    static func updateEmail(_ email: String, for userID: UUID, on database: any Database) async throws {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty else { throw Abort(.badRequest, reason: "Email is required.") }
+        if let existing = try await UserRow.query(on: database)
+            .filter(\.$email == trimmedEmail)
+            .first(), existing.id != userID {
+            throw Abort(.conflict, reason: "User already exists.")
+        }
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        row.email = trimmedEmail
+        try await row.save(on: database)
+    }
+
+    static func updatePassword(_ passwordHash: String, for userID: UUID, on database: any Database) async throws {
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        row.passwordHash = passwordHash
+        try await row.save(on: database)
+    }
+
+    static func deleteUser(id userID: UUID, on database: any Database) async throws {
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        guard row.role != "owner" else {
+            throw Abort(.conflict, reason: "Transfer ownership before removing the owner account.")
+        }
+        try await revokeSessions(for: userID, on: database)
+        try await row.delete(on: database)
+    }
+
+    static func revokeSessions(for userID: UUID, on database: any Database) async throws {
+        let sessions = try await SessionRow.query(on: database)
+            .filter(\.$userID == userID)
+            .all()
+        for session in sessions {
+            session.revokedAt = Date()
+            try await session.save(on: database)
+        }
     }
 
     static func createSession(
