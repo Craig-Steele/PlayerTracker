@@ -377,8 +377,34 @@ function renderJoinQrCodes(url = currentJoinAddressUrl) {
 }
 
 // Fetch the available join addresses and show the selected URL as a QR code.
+function configuredBrowserOrigin() {
+  const protocol = window.location.protocol;
+  const hostname = (window.location.hostname || '').trim().toLowerCase();
+  const isNumericHost = /^[0-9.]+$/.test(hostname) || hostname.includes(':');
+  const isLocalHost = hostname === 'localhost'
+    || hostname === '127.0.0.1'
+    || hostname === '::1'
+    || hostname.endsWith('.local');
+
+  if (!hostname || isNumericHost || isLocalHost) return null;
+  if (protocol !== 'http:' && protocol !== 'https:') return null;
+  return window.location.origin;
+}
+
 async function showServerIP() {
   try {
+    const browserOrigin = configuredBrowserOrigin();
+    if (browserOrigin) {
+      const selector = document.getElementById('ip-selector');
+      if (selector) {
+        selector.innerHTML = '';
+        selector.classList.add('hidden');
+      }
+      currentJoinAddressUrl = browserOrigin;
+      renderJoinQrCodes(browserOrigin);
+      return;
+    }
+
     const res = await fetch('/server-ip');
     if (!res.ok) return;
 
