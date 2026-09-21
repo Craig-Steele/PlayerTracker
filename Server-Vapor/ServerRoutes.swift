@@ -1794,7 +1794,7 @@ func routes(
         return updated
     }
 
-    app.post("campaign", "libraries", "import") { req async throws -> CampaignUserDataResponse in
+    app.on(.POST, "campaign", "libraries", "import", body: .collect(maxSize: "1MiB")) { req async throws -> CampaignUserDataResponse in
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(CampaignLibraryImportInput.self)
         let validated = try CampaignLibraryImportService.validate(input.files, rulesetId: input.rulesetId)
