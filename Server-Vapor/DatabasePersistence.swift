@@ -1,4 +1,8 @@
+#if canImport(CryptoKit)
 import CryptoKit
+#else
+import Crypto
+#endif
 import Fluent
 import Vapor
 
@@ -10,6 +14,8 @@ struct CampaignPersistenceState {
     let claimTimeoutMinutes: Int
     let isInviteOnly: Bool
     let userdataFiles: [String]
+    let userdataLibraries: [CampaignUserDataFile]
+    let enabledRulesetIds: [String]
     let partyTreasure: [InventoryEntry]
     let currency: [CurrencyAmount]
     let selectedMapID: String?
@@ -25,6 +31,9 @@ struct UserPersistenceState {
     let id: UUID
     let email: String
     let passwordHash: String
+    let role: String
+
+    var isServerOwner: Bool { role == "owner" }
 }
 
 struct SessionPersistenceState {
@@ -63,6 +72,9 @@ final class UserRow: Model, @unchecked Sendable {
     @Field(key: "password_hash")
     var passwordHash: String
 
+    @Field(key: "role")
+    var role: String
+
     @OptionalField(key: "created_at")
     var createdAt: Date?
 
@@ -74,11 +86,13 @@ final class UserRow: Model, @unchecked Sendable {
     init(
         id: UUID? = nil,
         email: String,
-        passwordHash: String
+        passwordHash: String,
+        role: String = "user"
     ) {
         self.id = id
         self.email = email
         self.passwordHash = passwordHash
+        self.role = role
     }
 }
 
@@ -621,19 +635,34 @@ enum DatabasePersistence {
         max(-1, campaign.claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
     }
 
-    private static func decodeUserDataFiles(_ json: String?) -> [String] {
-        guard let json,
-              let data = json.data(using: .utf8),
-              let files = try? JSONDecoder().decode([String].self, from: data) else {
-            return []
-        }
-        return normalizeUserDataFiles(files)
+    private struct CampaignUserDataStorage: Codable {
+        let files: [CampaignUserDataFile]
+        let enabledRulesetIds: [String]
     }
 
-    private static func encodeUserDataFiles(_ files: [String]) throws -> String? {
-        let normalized = normalizeUserDataFiles(files)
-        guard !normalized.isEmpty else { return nil }
-        let data = try JSONEncoder().encode(normalized)
+    private static func decodeUserDataLibraries(_ json: String?, defaultRulesetId: String) -> (files: [CampaignUserDataFile], enabledRulesetIds: [String]) {
+        guard let json,
+              let data = json.data(using: .utf8) else {
+            return ([], [defaultRulesetId])
+        }
+        if let storage = try? JSONDecoder().decode(CampaignUserDataStorage.self, from: data) {
+            return (storage.files, Array(Set(storage.enabledRulesetIds + [defaultRulesetId])).sorted())
+        }
+        if let names = try? JSONDecoder().decode([String].self, from: data) {
+            let files = normalizeUserDataFiles(names).map {
+                CampaignUserDataFile(name: $0, rulesetId: defaultRulesetId, kind: "creatures")
+            }
+            return (files, [defaultRulesetId])
+        }
+        return ([], [defaultRulesetId])
+    }
+
+    private static func encodeUserDataLibraries(_ files: [CampaignUserDataFile], enabledRulesetIds: [String]) throws -> String? {
+        let normalizedFiles = files.filter { !$0.name.isEmpty && !$0.rulesetId.isEmpty }
+        let normalizedRulesets = Array(Set(enabledRulesetIds.filter { !$0.isEmpty })).sorted()
+        guard !normalizedFiles.isEmpty || !normalizedRulesets.isEmpty else { return nil }
+        let storage = CampaignUserDataStorage(files: normalizedFiles, enabledRulesetIds: normalizedRulesets)
+        let data = try JSONEncoder().encode(storage)
         return String(decoding: data, as: UTF8.self)
     }
 
@@ -727,7 +756,32 @@ enum DatabasePersistence {
             .first() else {
             throw Abort(.notFound, reason: "Campaign not found.")
         }
-        campaign.userdataFilesJSON = try encodeUserDataFiles(files)
+        let existing = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+        let selected = Set(normalizeUserDataFiles(files))
+        let updatedFiles = existing.files.filter { $0.rulesetId != campaign.rulesetId } +
+            normalizeUserDataFiles(files).map {
+                CampaignUserDataFile(name: $0, rulesetId: campaign.rulesetId, kind: "creatures")
+            }
+        let filtered = updatedFiles.filter { $0.rulesetId != campaign.rulesetId || selected.contains($0.name) }
+        campaign.userdataFilesJSON = try encodeUserDataLibraries(
+            filtered,
+            enabledRulesetIds: existing.enabledRulesetIds
+        )
+        try await campaign.save(on: database)
+    }
+
+    static func updateCampaignUserDataLibraries(
+        campaignID: UUID,
+        files: [CampaignUserDataFile],
+        enabledRulesetIds: [String],
+        on database: any Database
+    ) async throws {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        campaign.userdataFilesJSON = try encodeUserDataLibraries(files, enabledRulesetIds: enabledRulesetIds)
         try await campaign.save(on: database)
     }
 
@@ -777,7 +831,8 @@ enum DatabasePersistence {
         return UserPersistenceState(
             id: id,
             email: row.email,
-            passwordHash: row.passwordHash
+            passwordHash: row.passwordHash,
+            role: row.role
         )
     }
 
@@ -792,13 +847,15 @@ enum DatabasePersistence {
         return UserPersistenceState(
             id: id,
             email: row.email,
-            passwordHash: row.passwordHash
+            passwordHash: row.passwordHash,
+            role: row.role
         )
     }
 
     static func createUser(
         email: String,
         passwordHash: String,
+        role: String = "user",
         on database: any Database
     ) async throws -> UUID {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -812,12 +869,66 @@ enum DatabasePersistence {
             throw Abort(.conflict, reason: "User already exists.")
         }
 
-        let row = UserRow(email: trimmedEmail, passwordHash: passwordHash)
+        let row = UserRow(email: trimmedEmail, passwordHash: passwordHash, role: role)
         try await row.create(on: database)
         guard let id = row.id else {
             throw Abort(.internalServerError, reason: "Failed to create user record.")
         }
         return id
+    }
+
+    static func serverOwner(on database: any Database) async throws -> UserPersistenceState? {
+        guard let row = try await UserRow.query(on: database)
+            .filter(\.$role == "owner")
+            .first(),
+            let id = row.id else {
+            return nil
+        }
+        return UserPersistenceState(id: id, email: row.email, passwordHash: row.passwordHash, role: row.role)
+    }
+
+    static func setRole(_ role: String, for userID: UUID, on database: any Database) async throws {
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        row.role = role
+        try await row.save(on: database)
+    }
+
+    static func updateEmail(_ email: String, for userID: UUID, on database: any Database) async throws {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty else { throw Abort(.badRequest, reason: "Email is required.") }
+        if let existing = try await UserRow.query(on: database)
+            .filter(\.$email == trimmedEmail)
+            .first(), existing.id != userID {
+            throw Abort(.conflict, reason: "User already exists.")
+        }
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        row.email = trimmedEmail
+        try await row.save(on: database)
+    }
+
+    static func updatePassword(_ passwordHash: String, for userID: UUID, on database: any Database) async throws {
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        row.passwordHash = passwordHash
+        try await row.save(on: database)
+    }
+
+    static func deleteUser(id userID: UUID, on database: any Database) async throws {
+        guard let row = try await UserRow.query(on: database).filter(\.$id == userID).first() else { return }
+        guard row.role != "owner" else {
+            throw Abort(.conflict, reason: "Transfer ownership before removing the owner account.")
+        }
+        try await revokeSessions(for: userID, on: database)
+        try await row.delete(on: database)
+    }
+
+    static func revokeSessions(for userID: UUID, on database: any Database) async throws {
+        let sessions = try await SessionRow.query(on: database)
+            .filter(\.$userID == userID)
+            .all()
+        for session in sessions {
+            session.revokedAt = Date()
+            try await session.save(on: database)
+        }
     }
 
     static func createSession(
@@ -1370,7 +1481,8 @@ enum DatabasePersistence {
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
-        let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+        let userdata = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+        let userdataFiles = userdata.files.filter { $0.rulesetId == campaign.rulesetId }.map(\.name)
         let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
         let currency = decodeCurrencyAmounts(campaign.currencyJSON)
         let roundIndex = encounter?.roundIndex ?? 1
@@ -1384,6 +1496,8 @@ enum DatabasePersistence {
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
             userdataFiles: userdataFiles,
+            userdataLibraries: userdata.files,
+            enabledRulesetIds: userdata.enabledRulesetIds,
             partyTreasure: partyTreasure,
             currency: currency,
             selectedMapID: campaign.selectedMapID,
@@ -1413,7 +1527,8 @@ enum DatabasePersistence {
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
-        let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+        let userdata = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+        let userdataFiles = userdata.files.filter { $0.rulesetId == campaign.rulesetId }.map(\.name)
         let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
         let currency = decodeCurrencyAmounts(campaign.currencyJSON)
         let roundIndex = encounter?.roundIndex ?? 1
@@ -1427,6 +1542,8 @@ enum DatabasePersistence {
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
             userdataFiles: userdataFiles,
+            userdataLibraries: userdata.files,
+            enabledRulesetIds: userdata.enabledRulesetIds,
             partyTreasure: partyTreasure,
             currency: currency,
             selectedMapID: campaign.selectedMapID,
@@ -1449,7 +1566,8 @@ enum DatabasePersistence {
             let encounter = encountersByCampaign[campaignID]?.first
             let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
             let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
-            let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+            let userdata = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+            let userdataFiles = userdata.files.filter { $0.rulesetId == campaign.rulesetId }.map(\.name)
             let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
             let currency = decodeCurrencyAmounts(campaign.currencyJSON)
             let roundIndex = encounter?.roundIndex ?? 1
@@ -1463,6 +1581,8 @@ enum DatabasePersistence {
                 claimTimeoutMinutes: claimTimeoutMinutes,
                 isInviteOnly: campaign.isInviteOnly,
                 userdataFiles: userdataFiles,
+                userdataLibraries: userdata.files,
+                enabledRulesetIds: userdata.enabledRulesetIds,
                 partyTreasure: partyTreasure,
                 currency: currency,
                 selectedMapID: campaign.selectedMapID,

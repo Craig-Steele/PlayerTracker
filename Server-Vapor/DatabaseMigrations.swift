@@ -19,6 +19,18 @@ struct CreateUsers: AsyncMigration {
     }
 }
 
+struct AddUserRoles: AsyncMigration {
+    func prepare(on database: any Database) async throws {
+        try await database.schema("users")
+            .field("role", .string, .required, .sql(.default("user")))
+            .update()
+    }
+
+    func revert(on database: any Database) async throws {
+        try await database.schema("users").deleteField("role").update()
+    }
+}
+
 struct RemoveUserDisplayName: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.withConnection { connection in
@@ -967,6 +979,7 @@ enum DatabaseMigrations {
     static func register(on app: Application) {
         app.migrations.add(CreateUsers())
         app.migrations.add(RemoveUserDisplayName())
+        app.migrations.add(AddUserRoles())
         app.migrations.add(CreateSessions())
         app.migrations.add(CreatePlayers())
         app.migrations.add(MigrateLegacyCampaignPlayerSessionsToPlayers())

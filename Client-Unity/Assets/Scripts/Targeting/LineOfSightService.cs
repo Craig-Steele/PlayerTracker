@@ -1,3 +1,4 @@
+using System;
 using Roll4InitiativeVTT.Map;
 using Roll4InitiativeVTT.Tokens;
 using UnityEngine;
@@ -125,35 +126,62 @@ namespace Roll4InitiativeVTT.Targeting
                 return result;
             }
 
-            if (Physics.Raycast(from, delta.normalized, out RaycastHit hit, distance, obstructionMask))
+            RaycastHit[] hits = Physics.RaycastAll(from, delta.normalized, distance, obstructionMask);
+
+            if (hits.Length > 0)
             {
-                result.HitObject = hit.collider.gameObject;
+                Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
 
-                TokenView hitToken = hit.collider.GetComponentInParent<TokenView>();
-
-                if (hitToken == destination)
+                foreach (RaycastHit hit in hits)
                 {
-                    result.ReachedTarget = true;
-                    result.CoverType = CoverType.None;
-                    return result;
+                    if (hit.collider == null)
+                    {
+                        continue;
+                    }
+
+                    result.HitObject = hit.collider.gameObject;
+
+                    TokenView hitToken = hit.collider.GetComponentInParent<TokenView>();
+
+                    if (hitToken == source)
+                    {
+                        continue;
+                    }
+
+                    if (hitToken == destination)
+                    {
+                        result.ReachedTarget = true;
+                        return result;
+                    }
+
+                    TacticalCollider tacticalCollider = hit.collider.GetComponent<TacticalCollider>();
+
+                    if (tacticalCollider == null)
+                    {
+                        result.ReachedTarget = false;
+                        result.HitTacticalCollider = null;
+                        result.CoverType = CoverType.Total;
+                        return result;
+                    }
+
+                    if (result.HitTacticalCollider == null)
+                    {
+                        result.HitTacticalCollider = tacticalCollider;
+                        result.CoverType = tacticalCollider.ProvidesCover
+                            ? tacticalCollider.CoverType
+                            : CoverType.None;
+                    }
+
+                    if (tacticalCollider.BlocksLineOfSight)
+                    {
+                        result.HitTacticalCollider = tacticalCollider;
+                        result.ReachedTarget = false;
+                        result.CoverType = tacticalCollider.ProvidesCover
+                            ? tacticalCollider.CoverType
+                            : CoverType.None;
+                        return result;
+                    }
                 }
-
-                TacticalCollider tacticalCollider = hit.collider.GetComponent<TacticalCollider>();
-                result.HitTacticalCollider = tacticalCollider;
-
-                if (tacticalCollider == null)
-                {
-                    result.ReachedTarget = false;
-                    result.CoverType = CoverType.Total;
-                    return result;
-                }
-
-                result.ReachedTarget = !tacticalCollider.BlocksLineOfSight;
-                result.CoverType = tacticalCollider.ProvidesCover
-                    ? tacticalCollider.CoverType
-                    : CoverType.None;
-
-                return result;
             }
 
             result.ReachedTarget = true;

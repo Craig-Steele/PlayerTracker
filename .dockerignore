@@ -1,0 +1,26 @@
+.git
+.gitignore
+.build
+.swiftpm
+.swiftmodule-cache
+**/.DS_Store
+
+# Other client and platform build artifacts
+Client-Android/.gradle
+Client-Android/build
+Client-iOS/DerivedData
+Client-iOS/build
+Client-Unity/Library
+Client-Unity/Logs
+Client-Unity/Temp
+
+# Repository content not needed by the server image
+Agents
+Docs
+Images
+Scripts
+SharedProtocol
+Tests
+
+# Frontend test files are not served by the production image
+Client-Web/*.test.js

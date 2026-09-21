@@ -66,7 +66,7 @@
           </label>
         </div>
         <div class="admin-auth-submit-row">
-          <button type="button" id="admin-auth-signup" class="secondary">Sign Up</button>
+          <button type="button" id="admin-auth-signup" class="secondary">Set Up Owner</button>
           <button type="button" id="admin-auth-login">Log In</button>
         </div>
       </div>
@@ -84,14 +84,14 @@
   <div id="admin-signup-modal" class="conditions-modal hidden" aria-hidden="true">
     <div class="dialog-shell" role="dialog" aria-modal="true" aria-labelledby="admin-signup-dialog-title">
       <div class="conditions-dialog-header">
-        <h2 id="admin-signup-dialog-title">Create Account</h2>
+        <h2 id="admin-signup-dialog-title">Set Up Server Owner</h2>
         <div class="conditions-dialog-actions">
           <button type="button" id="admin-signup-cancel" class="secondary">Cancel</button>
-          <button type="button" id="admin-signup-save" disabled>Sign Up</button>
+          <button type="button" id="admin-signup-save" disabled>Set Up Owner</button>
         </div>
       </div>
       <div id="admin-signup-modal-summary" class="subtitle">
-        Create the local server owner account.
+        Create the first server owner account. In production, enter the setup token provided by the server operator.
       </div>
       <div class="form-section-block property-group">
         <label class="property-row">
@@ -104,6 +104,12 @@
           <span class="property-label">Password</span>
           <span class="property-control">
             <input type="password" id="admin-signup-password" autocomplete="new-password" />
+          </span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Setup Token</span>
+          <span class="property-control">
+            <input type="password" id="admin-signup-setup-token" autocomplete="off" />
           </span>
         </label>
       </div>

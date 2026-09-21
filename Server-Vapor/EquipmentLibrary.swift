@@ -10,9 +10,10 @@ actor EquipmentLibraryStore {
         rulesetId: String,
         rulesetLabel: String,
         query: String? = nil,
-        limit: Int = 100
+        limit: Int = 100,
+        selectedLocalItemFiles: [String] = []
     ) throws -> EquipmentLibraryResponse {
-        let allItems = try items(for: rulesetId)
+        let allItems = try items(for: rulesetId, selectedLocalItemFiles: selectedLocalItemFiles)
         let trimmedQuery = query?.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedQuery = trimmedQuery?.lowercased()
         let filtered = allItems.filter { item in
@@ -48,23 +49,37 @@ actor EquipmentLibraryStore {
         }
     }
 
-    private func items(for rulesetId: String) throws -> [EquipmentLibraryItem] {
-        let cacheKey = "\(rulesetId)::catalog"
+    private func items(for rulesetId: String, selectedLocalItemFiles: [String]) throws -> [EquipmentLibraryItem] {
+        let cacheKey = "\(rulesetId)::catalog::\(selectedLocalItemFiles.sorted().joined(separator: "|"))"
         if let cached = cache[cacheKey] {
             return cached
         }
-        let loaded = try loadItems(for: rulesetId).sorted {
+        let loaded = try loadItems(for: rulesetId, selectedLocalItemFiles: selectedLocalItemFiles).sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
         cache[cacheKey] = loaded
         return loaded
     }
 
-    private func loadItems(for rulesetId: String) throws -> [EquipmentLibraryItem] {
+    private func loadItems(for rulesetId: String, selectedLocalItemFiles: [String]) throws -> [EquipmentLibraryItem] {
         let ruleset = try RuleSetLibraryLoader.loadLibrary(id: rulesetId)
-        guard let reference = trimmedNonEmpty(ruleset.equipmentLibrary?.file) else {
-            return []
+        var result: [EquipmentLibraryItem] = []
+        if let reference = trimmedNonEmpty(ruleset.equipmentLibrary?.file) {
+            result += try loadBuiltinItems(reference: reference, rulesetId: rulesetId)
         }
+        let selected = Set(selectedLocalItemFiles.map { URL(fileURLWithPath: $0).lastPathComponent })
+        let localDirectory = AppPaths.userDataDirectory(rulesetId: rulesetId)
+        if !selected.isEmpty, let files = try? FileManager.default.contentsOfDirectory(at: localDirectory, includingPropertiesForKeys: nil) {
+            for fileURL in files where selected.contains(fileURL.lastPathComponent) {
+                guard let data = try? Data(contentsOf: fileURL),
+                      let file = try? JSONDecoder().decode(BuiltinEquipmentLibraryFile.self, from: data) else { continue }
+                result += file.items.map { normalizeEquipmentItem($0, rulesetId: rulesetId, fallbackIDSeed: "\(file.id)-\($0.name)") }
+            }
+        }
+        return result
+    }
+
+    private func loadBuiltinItems(reference: String, rulesetId: String) throws -> [EquipmentLibraryItem] {
 
         let directory = AppPaths.webClientDirectory().appendingPathComponent("rulesets", isDirectory: true)
         let url = directory.appendingPathComponent(reference, isDirectory: false)

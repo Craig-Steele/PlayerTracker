@@ -93,7 +93,6 @@ struct PlayerJoinRoutesTests {
         let campaignID = try await activateCampaign(in: tester)
 
         let joinSession = try await join(displayName: "Alex", tester: tester)
-        let forgedOwnerID = UUID()
         let payload = CharacterInput(
             id: nil,
             campaignName: nil,
@@ -301,7 +300,6 @@ struct PlayerJoinRoutesTests {
         let initialCharacters = try listResponse.content.decode([PlayerView].self)
         XCTAssertTrue(initialCharacters.isEmpty)
 
-        let forgedOwnerID = UUID()
         let createPayload = CharacterInput(
             id: nil,
             campaignName: nil,
@@ -602,7 +600,7 @@ struct PlayerJoinRoutesTests {
         )
         XCTAssertEqual(memberListResponse.status, .ok)
         let remainingMembers = try memberListResponse.content.decode([CampaignMemberSummary].self)
-        XCTAssertTrue(remainingMembers.isEmpty)
+        #expect(remainingMembers.allSatisfy { $0.displayName != "Morgan" })
 
         let bobSession = try await join(displayName: "Bob", tester: tester)
         let bobClaimResponse = try await tester.sendRequest(
@@ -1052,7 +1050,7 @@ struct PlayerJoinRoutesTests {
             "/campaigns/\(campaignID.uuidString)/members",
             headers: ["Cookie": "roll4_player_session=\(playerSession.cookieToken)"]
         )
-        XCTAssertEqual(playerResponse.status, .unauthorized)
+        #expect(playerResponse.status == .forbidden)
     }
 
     @Test
@@ -1311,18 +1309,27 @@ struct PlayerJoinRoutesTests {
     }
 
     private func signInOwner(in tester: XCTApplicationTester) async throws -> String {
-        let uniqueEmail = "owner+\(UUID().uuidString.lowercased())@example.com"
-        let payload = AuthSignupInput(
-            email: uniqueEmail,
-            password: "s3cr3t-password"
-        )
-        let response = try await tester.sendRequest(
+        let payload = AuthSignupInput(email: "owner@example.com", password: "s3cr3t-password")
+        let signupResponse = try await tester.sendRequest(
             .POST,
             "/auth/signup",
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(payload))
         )
-        XCTAssertEqual(response.status, .ok)
+        let response: TestingHTTPResponse
+        if signupResponse.status == .ok {
+            response = signupResponse
+        } else {
+            response = try await tester.sendRequest(
+                .POST,
+                "/auth/login",
+                headers: ["Content-Type": "application/json"],
+                body: ByteBuffer(data: try JSONEncoder().encode(
+                    AuthLoginInput(email: payload.email, password: payload.password)
+                ))
+            )
+            XCTAssertEqual(response.status, .ok)
+        }
         return try XCTUnwrap(cookieValue(named: "roll4_session", from: response.headers))
     }
 

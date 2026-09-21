@@ -34,10 +34,14 @@ enum ServerDiagnostics {
     }
 
     static func writeBrowserLauncherUnavailable() {
-        fputs(browserLauncherUnavailableMessage() + "\n", stderr)
+        try? FileHandle.standardError.write(
+            contentsOf: Data((browserLauncherUnavailableMessage() + "\n").utf8)
+        )
     }
 
     static func writeBrowserLaunchFailed(_ error: Error) {
-        fputs(browserLaunchFailedMessage(error) + "\n", stderr)
+        try? FileHandle.standardError.write(
+            contentsOf: Data((browserLaunchFailedMessage(error) + "\n").utf8)
+        )
     }
 }

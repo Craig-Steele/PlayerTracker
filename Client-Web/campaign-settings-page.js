@@ -110,6 +110,10 @@
     const campaignMembersList = document.getElementById('campaign-settings-members');
     const campaignInvitePlayerNameInput = document.getElementById('campaign-settings-invite-player-name');
     const campaignInvitePlayerButton = document.getElementById('campaign-settings-invite-player-button');
+    const libraryRulesetSelect = document.getElementById('campaign-settings-library-ruleset-select');
+    const libraryInput = document.getElementById('campaign-settings-library-input');
+    const libraryStatus = document.getElementById('campaign-settings-library-status');
+    const rulesetToggles = document.getElementById('campaign-settings-ruleset-toggles');
 
     const params = new URLSearchParams(window.location.search);
     const campaignId = params.get('campaignId') || '';
@@ -127,11 +131,163 @@
     let selectedRefereeSessionIds = new Set();
     let campaignMembers = [];
     let campaignMembersLoaded = false;
+    let enabledRulesetIds = new Set();
+    let libraryFiles = [];
 
     function setStatus(message, isError = false) {
       if (!statusEl) return;
       statusEl.textContent = message;
       statusEl.style.color = isError ? '#b00020' : '';
+    }
+
+    function setLibraryStatus(message, isError = false) {
+      if (!libraryStatus) return;
+      libraryStatus.textContent = message;
+      libraryStatus.style.color = isError ? '#b00020' : '';
+    }
+
+    function renderLibraryControls(data = null) {
+      const libraryRulesetIds = new Set([currentRulesetId]);
+      (data?.files || []).forEach((file) => {
+        if (file?.rulesetId) libraryRulesetIds.add(file.rulesetId);
+      });
+      const libraryRulesets = availableRulesets.filter((ruleset) => libraryRulesetIds.has(ruleset.id));
+      if (libraryRulesetSelect) {
+        libraryRulesetSelect.innerHTML = '';
+        libraryRulesets.filter((ruleset) => ruleset.id !== 'none').forEach((ruleset) => {
+          const option = document.createElement('option');
+          option.value = ruleset.id;
+          option.textContent = ruleset.label || ruleset.id;
+          libraryRulesetSelect.appendChild(option);
+        });
+        libraryRulesetSelect.value = currentRulesetId || availableRulesets[0]?.id || '';
+        libraryRulesetSelect.disabled = !currentCampaign;
+      }
+      if (!rulesetToggles) return;
+      rulesetToggles.innerHTML = '';
+      libraryRulesets.filter((ruleset) => ruleset.id !== 'none' && ruleset.id !== currentRulesetId).forEach((ruleset) => {
+        const label = document.createElement('label');
+        label.className = 'property-toggle-row';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = enabledRulesetIds.has(ruleset.id);
+        checkbox.disabled = !currentCampaign;
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) enabledRulesetIds.add(ruleset.id);
+          else enabledRulesetIds.delete(ruleset.id);
+          void saveEnabledRulesets();
+        });
+        const text = document.createElement('span');
+        text.textContent = `${ruleset.label || ruleset.id}${ruleset.id === currentRulesetId ? ' (campaign ruleset)' : ''}`;
+        label.appendChild(checkbox);
+        label.appendChild(text);
+        rulesetToggles.appendChild(label);
+      });
+      if (data?.files?.length) {
+        const summary = document.createElement('div');
+        summary.className = 'subtitle';
+        summary.textContent = `${data.files.length} uploaded library file(s).`;
+        rulesetToggles.appendChild(summary);
+      }
+      const currentFiles = libraryFiles.filter((file) => file.rulesetId === currentRulesetId);
+      if (currentFiles.length > 0) {
+        const heading = document.createElement('div');
+        heading.className = 'subtitle';
+        heading.textContent = 'Files in the campaign ruleset userdata folder:';
+        rulesetToggles.appendChild(heading);
+        currentFiles.forEach((file) => {
+          const label = document.createElement('label');
+          label.className = 'property-toggle-row';
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.checked = Boolean(file.selected);
+          checkbox.disabled = !currentCampaign;
+          checkbox.addEventListener('change', () => {
+            file.selected = checkbox.checked;
+            void saveCurrentLibraryFiles();
+          });
+          const text = document.createElement('span');
+          text.textContent = `${file.name}${file.missing ? ' (missing)' : ''}`;
+          label.appendChild(checkbox);
+          label.appendChild(text);
+          rulesetToggles.appendChild(label);
+        });
+      }
+    }
+
+    async function loadCampaignLibraries() {
+      if (!currentCampaign) {
+        enabledRulesetIds = new Set();
+        libraryFiles = [];
+        renderLibraryControls();
+        return;
+      }
+      try {
+        const data = await fetchJson('/campaign/userdata');
+        enabledRulesetIds = new Set(Array.isArray(data?.enabledRulesetIds) ? data.enabledRulesetIds : [currentRulesetId]);
+        enabledRulesetIds.add(currentRulesetId);
+        libraryFiles = Array.isArray(data?.files) ? data.files : [];
+        renderLibraryControls(data);
+      } catch (err) {
+        setLibraryStatus(`Unable to load libraries: ${err.message}`, true);
+      }
+    }
+
+    async function saveEnabledRulesets() {
+      if (!currentCampaign) return;
+      try {
+        await fetchJson('/campaign/userdata/rulesets', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabledRulesetIds: Array.from(enabledRulesetIds) })
+        });
+        setLibraryStatus('Ruleset selection saved.');
+      } catch (err) {
+        setLibraryStatus(`Unable to save rulesets: ${err.message}`, true);
+      }
+    }
+
+    async function saveCurrentLibraryFiles() {
+      if (!currentCampaign) return;
+      try {
+        await fetchJson('/campaign/userdata', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            files: libraryFiles
+              .filter((file) => file.rulesetId === currentRulesetId && file.selected)
+              .map((file) => file.name)
+          })
+        });
+        setLibraryStatus('Campaign library selection saved.');
+        await loadCampaignLibraries();
+      } catch (err) {
+        setLibraryStatus(`Unable to save library selection: ${err.message}`, true);
+      }
+    }
+
+    async function uploadLibraries() {
+      if (!currentCampaign || !libraryInput?.files?.length) return;
+      const rulesetId = libraryRulesetSelect?.value || currentRulesetId;
+      try {
+        setLibraryStatus('Validating and uploading libraries...');
+        const files = await Promise.all(Array.from(libraryInput.files).map(async (file) => ({
+          filename: file.name,
+          contents: await file.text()
+        })));
+        await fetchJson('/campaign/libraries/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rulesetId, files, overwrite: false })
+        });
+        enabledRulesetIds.add(rulesetId);
+        libraryInput.value = '';
+        setLibraryStatus('Library uploaded and enabled for this campaign.');
+        await loadCampaignLibraries();
+      } catch (err) {
+        setLibraryStatus(`Library upload rejected: ${err.message}`, true);
+        libraryInput.value = '';
+      }
     }
 
     function normalizeName(name) {
@@ -398,6 +554,7 @@
       setStatus('');
       setHeader(currentCampaign);
       renderCampaignMembers();
+      renderLibraryControls();
       updateSaveState();
     }
 
@@ -591,6 +748,9 @@
           void invitePlayerByName();
         });
       }
+      if (libraryInput) {
+        libraryInput.addEventListener('change', () => { void uploadLibraries(); });
+      }
       if (saveBtn) {
         saveBtn.addEventListener('click', () => {
           void saveCampaignSettings();
@@ -618,6 +778,7 @@
         await loadAvailableRulesets();
         populateCampaignForm();
         await loadCampaignMembers();
+        await loadCampaignLibraries();
         if (campaignInvitePlayerButton) {
           setPlayerManagementEnabled(Boolean(currentCampaign) && campaignMembersLoaded);
         }

@@ -4,6 +4,7 @@ import Vapor
 
 private let authSessionCookieName = "roll4_session"
 private let playerSessionCookieName = "roll4_player_session"
+private let ownerSetupTokenHeader = "X-PlayerTracker-Setup-Token"
 
 private func requireActiveCampaign(_ campaignStore: CampaignStore) async throws -> CampaignState {
     guard let activeCampaign = await campaignStore.activeCampaign() else {
@@ -15,7 +16,8 @@ private func requireActiveCampaign(_ campaignStore: CampaignStore) async throws 
 private func authUserResponse(from user: UserPersistenceState) -> AuthUserResponse {
     AuthUserResponse(
         id: user.id,
-        email: user.email
+        email: user.email,
+        isOwner: user.isServerOwner
     )
 }
 
@@ -24,7 +26,7 @@ private func setAuthCookie(on response: Response, token: String, expiresAt: Date
         string: token,
         expires: expiresAt,
         path: "/",
-        isSecure: false,
+        isSecure: ServerRuntimeMode.current.usesSecureCookies,
         isHTTPOnly: true,
         sameSite: .lax
     )
@@ -39,7 +41,7 @@ private func setPlayerCookie(on response: Response, token: String, expiresAt: Da
         string: token,
         expires: expiresAt,
         path: "/",
-        isSecure: false,
+        isSecure: ServerRuntimeMode.current.usesSecureCookies,
         isHTTPOnly: true,
         sameSite: .lax
     )
@@ -66,7 +68,11 @@ private func requireAuthenticatedUser(_ req: Request) async throws -> UserPersis
 }
 
 private func requireServerOwnerSession(_ req: Request) async throws -> UserPersistenceState {
-    try await requireAuthenticatedUser(req)
+    let user = try await requireAuthenticatedUser(req)
+    guard user.isServerOwner else {
+        throw Abort(.forbidden, reason: "Server owner access required.")
+    }
+    return user
 }
 
 private func requirePlayerSession(_ req: Request) async throws -> PlayerSessionPersistenceState {
@@ -615,10 +621,23 @@ func routes(
             throw Abort(.badRequest, reason: "Password is required.")
         }
 
+        guard try await DatabasePersistence.serverOwner(on: req.db) == nil else {
+            throw Abort(.forbidden, reason: "Public signup is disabled. Ask the server owner to create your account.")
+        }
+        if ServerRuntimeMode.current == .production && req.application.environment != .testing {
+            let configuredToken = ProcessInfo.processInfo.environment["PLAYERTRACKER_OWNER_SETUP_TOKEN"]
+            guard let configuredToken,
+                  !configuredToken.isEmpty,
+                  req.headers.first(name: .init(ownerSetupTokenHeader)) == configuredToken else {
+                throw Abort(.forbidden, reason: "Owner setup is not available.")
+            }
+        }
+
         let passwordHash = try await req.application.password.async.hash(input.password)
         let userID = try await DatabasePersistence.createUser(
             email: email,
             passwordHash: passwordHash,
+            role: "owner",
             on: req.db
         )
         guard let user = try await DatabasePersistence.loadUser(id: userID, on: req.db) else {
@@ -681,6 +700,79 @@ func routes(
     app.get("auth", "session") { req async throws -> AuthSessionResponse in
         let user = try await requireAuthenticatedUser(req)
         return AuthSessionResponse(user: authUserResponse(from: user))
+    }
+
+    app.post("admin", "users") { req async throws -> AuthUserResponse in
+        _ = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(AuthSignupInput.self)
+        guard !input.password.isEmpty else {
+            throw Abort(.badRequest, reason: "Password is required.")
+        }
+        let passwordHash = try await req.application.password.async.hash(input.password)
+        let userID = try await DatabasePersistence.createUser(
+            email: input.email,
+            passwordHash: passwordHash,
+            role: "user",
+            on: req.db
+        )
+        guard let user = try await DatabasePersistence.loadUser(id: userID, on: req.db) else {
+            throw Abort(.internalServerError, reason: "Failed to load created user.")
+        }
+        return authUserResponse(from: user)
+    }
+
+    app.post("admin", "owner", "transfer") { req async throws -> HTTPStatus in
+        let owner = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(OwnerTransferInput.self)
+        guard let replacement = try await DatabasePersistence.loadUser(
+            email: input.email.trimmingCharacters(in: .whitespacesAndNewlines),
+            on: req.db
+        ) else {
+            throw Abort(.notFound, reason: "Replacement owner account was not found.")
+        }
+        guard replacement.id != owner.id else {
+            throw Abort(.badRequest, reason: "That account is already the server owner.")
+        }
+        try await DatabasePersistence.setRole("user", for: owner.id, on: req.db)
+        try await DatabasePersistence.setRole("owner", for: replacement.id, on: req.db)
+        if let token = req.cookies[authSessionCookieName]?.string {
+            try await DatabasePersistence.revokeSession(token: token, on: req.db)
+        }
+        return .ok
+    }
+
+    app.post("admin", "owner", "email") { req async throws -> AuthUserResponse in
+        let owner = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(OwnerEmailChangeInput.self)
+        try await DatabasePersistence.updateEmail(input.email, for: owner.id, on: req.db)
+        guard let updated = try await DatabasePersistence.loadUser(id: owner.id, on: req.db) else {
+            throw Abort(.internalServerError, reason: "Failed to load updated owner.")
+        }
+        return authUserResponse(from: updated)
+    }
+
+    app.post("admin", "owner", "password") { req async throws -> HTTPStatus in
+        let owner = try await requireServerOwnerSession(req)
+        let input = try req.content.decode(OwnerPasswordChangeInput.self)
+        guard !input.newPassword.isEmpty else {
+            throw Abort(.badRequest, reason: "New password is required.")
+        }
+        guard try await req.application.password.async.verify(input.currentPassword, created: owner.passwordHash) else {
+            throw Abort(.unauthorized, reason: "Current password is incorrect.")
+        }
+        let passwordHash = try await req.application.password.async.hash(input.newPassword)
+        try await DatabasePersistence.updatePassword(passwordHash, for: owner.id, on: req.db)
+        try await DatabasePersistence.revokeSessions(for: owner.id, on: req.db)
+        return .ok
+    }
+
+    app.delete("admin", "users", ":userID") { req async throws -> HTTPStatus in
+        _ = try await requireServerOwnerSession(req)
+        guard let value = req.parameters.get("userID"), let userID = UUID(uuidString: value) else {
+            throw Abort(.badRequest, reason: "Invalid user ID.")
+        }
+        try await DatabasePersistence.deleteUser(id: userID, on: req.db)
+        return .ok
     }
 
     app.post("admin", "shutdown") { req async throws -> HTTPStatus in
@@ -967,6 +1059,7 @@ func routes(
     }
 
     app.post("conditions") { req async throws -> HTTPStatus in
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(ConditionsInput.self)
         logConnection(req, action: "set-conditions", identifier: input.name)
         let campaign = try await requireActiveCampaign(campaignStore)
@@ -1020,6 +1113,7 @@ func routes(
 
     // DELETE /users - clear all players
     app.delete("users") { req async throws -> HTTPStatus in
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         logConnection(req, action: "clear-users")
         await userStore.clear()
         return .ok
@@ -1033,6 +1127,10 @@ func routes(
             localIP: localIP,
             publicIP: publicIP
         )
+    }
+
+    app.get("health") { _ in
+        Response(status: .ok, body: .init(string: "OK"))
     }
 
     // GET /state - full game state (round, current turn, players)
@@ -1491,6 +1589,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         let input = try req.content.decode(CharacterRenameInput.self)
         logConnection(req, action: "rename-character", identifier: id.uuidString)
         await userStore.renameCharacter(id: id, characterName: input.name)
@@ -1504,6 +1603,7 @@ func routes(
               let id = UUID(uuidString: idString) else {
             throw Abort(.badRequest)
         }
+        let _ = try await requireRefereeSession(req, campaignStore: campaignStore)
         logConnection(req, action: "delete-character", identifier: id.uuidString)
         let removed = await userStore.deleteCharacter(id: id)
         if !removed {
@@ -1519,11 +1619,17 @@ func routes(
     }
 
     app.get("creature-library") { req async throws -> CreatureLibraryResponse in
-        let library = await campaignStore.library()
+        let activeCampaign = try await requireActiveCampaign(campaignStore)
+        let requestedRulesetId = req.query[String.self, at: "rulesetId"] ?? activeCampaign.rulesetId
+        guard activeCampaign.enabledRulesetIds.contains(requestedRulesetId) else {
+            throw Abort(.forbidden, reason: "That ruleset is not enabled for the active campaign.")
+        }
+        let library = try RuleSetLibraryLoader.loadLibrary(id: requestedRulesetId)
         let query = req.query[String.self, at: "query"]
         let limit = req.query[Int.self, at: "limit"] ?? 50
-        let activeCampaign = await campaignStore.activeCampaign()
-        let selectedUserDataFiles = activeCampaign?.userdataFiles ?? []
+        let selectedUserDataFiles = (await campaignStore.userdataLibraries())
+            .filter { $0.rulesetId == requestedRulesetId && activeCampaign.enabledRulesetIds.contains($0.rulesetId) }
+            .map(\.name)
         return try await CreatureLibraryStore.shared.library(
             rulesetId: library.id,
             rulesetLabel: library.label,
@@ -1535,14 +1641,23 @@ func routes(
     }
 
     app.get("equipment-library") { req async throws -> EquipmentLibraryResponse in
-        let library = await campaignStore.library()
+        let activeCampaign = try await requireActiveCampaign(campaignStore)
+        let requestedRulesetId = req.query[String.self, at: "rulesetId"] ?? activeCampaign.rulesetId
+        guard activeCampaign.enabledRulesetIds.contains(requestedRulesetId) else {
+            throw Abort(.forbidden, reason: "That ruleset is not enabled for the active campaign.")
+        }
+        let library = try RuleSetLibraryLoader.loadLibrary(id: requestedRulesetId)
         let query = req.query[String.self, at: "query"]
         let limit = req.query[Int.self, at: "limit"] ?? 100
+        let selectedItemFiles = (await campaignStore.userdataLibraries())
+            .filter { $0.rulesetId == library.id && $0.kind == "items" && activeCampaign.enabledRulesetIds.contains($0.rulesetId) }
+            .map(\.name)
         return try await EquipmentLibraryStore.shared.library(
             rulesetId: library.id,
             rulesetLabel: library.label,
             query: query,
-            limit: limit
+            limit: limit,
+            selectedLocalItemFiles: selectedItemFiles
         )
     }
 
@@ -1654,32 +1769,37 @@ func routes(
 
     app.get("campaign", "userdata") { req async throws -> CampaignUserDataResponse in
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
-        let selected = Set(campaign.userdataFiles)
-        let available = try await CreatureLibraryStore.shared.availableLocalCreatureFiles(
+        let stored = await campaignStore.userdataLibraries()
+        var files = stored.map { file in
+            CampaignUserDataFileSummary(
+                name: file.name,
+                rulesetId: file.rulesetId,
+                kind: file.kind,
+                selected: file.rulesetId == campaign.rulesetId
+                    ? campaign.userdataFiles.contains(file.name)
+                    : campaign.enabledRulesetIds.contains(file.rulesetId),
+                missing: !FileManager.default.fileExists(atPath: AppPaths.userDataDirectory(rulesetId: file.rulesetId, application: req.application).appendingPathComponent(file.name).path)
+            )
+        }
+        let storedCurrentNames = Set(stored.filter { $0.rulesetId == campaign.rulesetId }.map(\.name))
+        let localFiles = try await CreatureLibraryStore.shared.availableLocalCreatureFiles(
             rulesetId: campaign.rulesetId,
             configuration: req.application.creatureLibraryConfiguration
         )
-        var seen = Set<String>()
-        let files = available.map { name -> CampaignUserDataFileSummary in
-            seen.insert(name)
-            return CampaignUserDataFileSummary(
-                name: name,
-                selected: selected.contains(name),
+        files += localFiles.filter { !storedCurrentNames.contains($0) }.map {
+            CampaignUserDataFileSummary(
+                name: $0,
+                rulesetId: campaign.rulesetId,
+                kind: "creatures",
+                selected: false,
                 missing: false
             )
         }
-        let missingFiles = campaign.userdataFiles
-            .filter { seen.contains($0) == false }
-            .map { name in
-                CampaignUserDataFileSummary(
-                    name: name,
-                    selected: true,
-                    missing: true
-                )
-            }
         return CampaignUserDataResponse(
             rulesetId: campaign.rulesetId,
-            files: files + missingFiles
+            enabledRulesetIds: campaign.enabledRulesetIds,
+            rulesets: RuleSetLibraryLoader.availableRulesets(),
+            files: files
         )
     }
 
@@ -1697,8 +1817,86 @@ func routes(
         return updated
     }
 
+    app.put("campaign", "userdata", "rulesets") { req async throws -> CampaignState in
+        let (_, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(CampaignUserDataRulesetUpdateInput.self)
+        let validRulesets = Set(RuleSetLibraryLoader.availableRulesets().map(\.id))
+        guard input.enabledRulesetIds.allSatisfy({ validRulesets.contains($0) }) else {
+            throw Abort(.badRequest, reason: "One or more selected rulesets are not available on this server.")
+        }
+        let updated = try await campaignStore.updateUserdataLibraries(
+            await campaignStore.userdataLibraries(),
+            enabledRulesetIds: input.enabledRulesetIds
+        )
+        await CreatureLibraryStore.shared.invalidate()
+        await EquipmentLibraryStore.shared.invalidate()
+        await publishCampaignUpdate(campaign: updated, userStore: userStore, eventHub: eventHub, event: "campaign-updated")
+        return updated
+    }
+
+    app.on(.POST, "campaign", "libraries", "import", body: .collect(maxSize: "1mb")) { req async throws -> CampaignUserDataResponse in
+        let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(CampaignLibraryImportInput.self)
+        let validated = try CampaignLibraryImportService.validate(input.files, rulesetId: input.rulesetId)
+        let destination = AppPaths.userDataDirectory(rulesetId: input.rulesetId, application: req.application)
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+        let creatureFiles = validated.filter { $0.kind == "creatures" }.map(\.file)
+        if !creatureFiles.isEmpty {
+            _ = try CreatureLibraryImportService.importFiles(
+                creatureFiles,
+                into: destination,
+                overwrite: input.overwrite ?? false,
+                rulesetId: input.rulesetId
+            )
+        }
+        for entry in validated where entry.kind == "items" {
+            let filename = URL(fileURLWithPath: entry.file.filename).lastPathComponent
+            let url = destination.appendingPathComponent(filename)
+            if FileManager.default.fileExists(atPath: url.path), input.overwrite != true { continue }
+            guard let data = entry.file.contents.data(using: .utf8) else {
+                throw Abort(.unprocessableEntity, reason: "Unable to read \(filename).")
+            }
+            try data.write(to: url, options: [.atomic])
+        }
+        let newFiles = validated.map {
+            CampaignUserDataFile(
+                name: URL(fileURLWithPath: $0.file.filename).lastPathComponent,
+                rulesetId: input.rulesetId,
+                kind: $0.kind
+            )
+        }
+        let existing = await campaignStore.userdataLibraries()
+        let merged = existing.filter { old in
+            !newFiles.contains { $0.name == old.name && $0.rulesetId == old.rulesetId }
+        } + newFiles
+        let updated = try await campaignStore.updateUserdataLibraries(
+            merged,
+            enabledRulesetIds: await campaignStore.enabledRulesetIds() + [input.rulesetId]
+        )
+        await CreatureLibraryStore.shared.invalidate()
+        await EquipmentLibraryStore.shared.invalidate()
+        let summaries = merged.map {
+            CampaignUserDataFileSummary(
+                name: $0.name,
+                rulesetId: $0.rulesetId,
+                kind: $0.kind,
+                selected: updated.enabledRulesetIds.contains($0.rulesetId),
+                missing: false
+            )
+        }
+        return CampaignUserDataResponse(
+            rulesetId: campaign.rulesetId,
+            enabledRulesetIds: updated.enabledRulesetIds,
+            rulesets: RuleSetLibraryLoader.availableRulesets(),
+            files: summaries
+        )
+    }
+
     app.post("campaign", "userdata", "open-folders") { req async throws -> HTTPStatus in
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        guard DirectoryLauncher.isEnabledByDefault() else {
+            throw Abort(.notImplemented, reason: "Opening local folders is unavailable on this server.")
+        }
         let rulesetsDirectory = AppPaths.webClientDirectory()
             .appendingPathComponent("rulesets", isDirectory: true)
         let userdataDirectory = AppPaths.userDataDirectory(

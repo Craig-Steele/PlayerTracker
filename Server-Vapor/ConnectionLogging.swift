@@ -25,7 +25,8 @@ private actor ConnectionLogWriter {
             try handle.seekToEnd()
             try handle.write(contentsOf: data)
         } catch {
-            fputs("Failed to append connection log: \(error)\n", stderr)
+            let message = "Failed to append connection log: \(error)\n"
+            try? FileHandle.standardError.write(contentsOf: Data(message.utf8))
         }
     }
 

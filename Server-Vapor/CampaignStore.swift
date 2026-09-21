@@ -10,6 +10,8 @@ actor CampaignStore {
     private var currentClaimTimeoutMinutes: Int
     private var currentIsInviteOnly: Bool
     private var currentUserdataFiles: [String]
+    private var currentUserdataLibraries: [CampaignUserDataFile]
+    private var currentEnabledRulesetIds: [String]
     private var currentPartyTreasure: [InventoryEntry]
     private var currentCurrency: [CurrencyAmount]
     private var currentSelectedMapID: String?
@@ -33,6 +35,8 @@ actor CampaignStore {
         self.currentClaimTimeoutMinutes = 5
         self.currentIsInviteOnly = false
         self.currentUserdataFiles = []
+        self.currentUserdataLibraries = []
+        self.currentEnabledRulesetIds = [defaultLibrary.id]
         self.currentPartyTreasure = []
         self.currentCurrency = []
         self.currentSelectedMapID = nil
@@ -60,6 +64,7 @@ actor CampaignStore {
             claimTimeoutMinutes: currentClaimTimeoutMinutes,
             isInviteOnly: currentIsInviteOnly,
             userdataFiles: currentUserdataFiles,
+            enabledRulesetIds: currentEnabledRulesetIds,
             partyTreasure: currentPartyTreasure,
             currency: currentCurrency,
             selectedMapID: currentSelectedMapID
@@ -181,6 +186,8 @@ actor CampaignStore {
             currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
             currentIsInviteOnly = updated.isInviteOnly
             currentUserdataFiles = updated.userdataFiles
+            currentUserdataLibraries = updated.userdataLibraries
+            currentEnabledRulesetIds = updated.enabledRulesetIds
             currentPartyTreasure = updated.partyTreasure
             currentCurrency = updated.currency
             currentSelectedMapID = updated.selectedMapID
@@ -218,6 +225,8 @@ actor CampaignStore {
         currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
         currentIsInviteOnly = loaded.isInviteOnly
         currentUserdataFiles = loaded.userdataFiles
+        currentUserdataLibraries = loaded.userdataLibraries
+        currentEnabledRulesetIds = loaded.enabledRulesetIds
         currentPartyTreasure = loaded.partyTreasure
         currentCurrency = loaded.currency
         currentSelectedMapID = loaded.selectedMapID
@@ -253,6 +262,8 @@ actor CampaignStore {
             currentClaimTimeoutMinutes = updated.claimTimeoutMinutes
             currentIsInviteOnly = updated.isInviteOnly
             currentUserdataFiles = updated.userdataFiles
+            currentUserdataLibraries = updated.userdataLibraries
+            currentEnabledRulesetIds = updated.enabledRulesetIds
             currentPartyTreasure = updated.partyTreasure
             currentCurrency = updated.currency
             currentSelectedMapID = updated.selectedMapID
@@ -267,7 +278,9 @@ actor CampaignStore {
         currentEncounterState = .new
         currentClaimTimeoutMinutes = max(-1, claimTimeoutMinutes ?? 5)
         currentIsInviteOnly = isInviteOnly ?? false
-        currentUserdataFiles = []
+            currentUserdataFiles = []
+            currentUserdataLibraries = []
+            currentEnabledRulesetIds = [library.id]
         currentPartyTreasure = []
         currentCurrency = []
         currentSelectedMapID = nil
@@ -286,9 +299,10 @@ actor CampaignStore {
                 on: database
             )
             if let currentCampaignID {
-                try await DatabasePersistence.updateCampaignUserDataFiles(
+                try await DatabasePersistence.updateCampaignUserDataLibraries(
                     campaignID: currentCampaignID,
-                    files: currentUserdataFiles,
+                    files: currentUserdataLibraries,
+                    enabledRulesetIds: currentEnabledRulesetIds,
                     on: database
                 )
                 try await DatabasePersistence.updateCampaignPartyTreasure(
@@ -317,6 +331,8 @@ actor CampaignStore {
         currentClaimTimeoutMinutes = loaded.claimTimeoutMinutes
         currentIsInviteOnly = loaded.isInviteOnly
         currentUserdataFiles = loaded.userdataFiles
+        currentUserdataLibraries = loaded.userdataLibraries
+        currentEnabledRulesetIds = loaded.enabledRulesetIds
         currentPartyTreasure = loaded.partyTreasure
         currentCurrency = loaded.currency
         currentSelectedMapID = loaded.selectedMapID
@@ -328,9 +344,36 @@ actor CampaignStore {
             throw Abort(.internalServerError, reason: "Database is not configured.")
         }
         currentUserdataFiles = normalizeUserdataFiles(files)
+        currentUserdataLibraries = currentUserdataFiles.map {
+            CampaignUserDataFile(name: $0, rulesetId: currentRulesetId, kind: "creatures")
+        } + currentUserdataLibraries.filter { $0.rulesetId != currentRulesetId }
         try await DatabasePersistence.updateCampaignUserDataFiles(
             campaignID: currentCampaignID,
             files: currentUserdataFiles,
+            on: database
+        )
+        return state()!
+    }
+
+    func userdataLibraries() -> [CampaignUserDataFile] {
+        currentUserdataLibraries
+    }
+
+    func enabledRulesetIds() -> [String] {
+        currentEnabledRulesetIds
+    }
+
+    func updateUserdataLibraries(_ files: [CampaignUserDataFile], enabledRulesetIds: [String]) async throws -> CampaignState {
+        guard let database, let currentCampaignID else {
+            throw Abort(.internalServerError, reason: "Database is not configured.")
+        }
+        currentUserdataLibraries = files
+        currentEnabledRulesetIds = Array(Set(enabledRulesetIds + [currentRulesetId])).sorted()
+        currentUserdataFiles = files.filter { $0.rulesetId == currentRulesetId }.map(\.name)
+        try await DatabasePersistence.updateCampaignUserDataLibraries(
+            campaignID: currentCampaignID,
+            files: currentUserdataLibraries,
+            enabledRulesetIds: currentEnabledRulesetIds,
             on: database
         )
         return state()!

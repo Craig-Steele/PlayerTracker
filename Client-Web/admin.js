@@ -91,6 +91,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const signupModalSaveBtn = document.getElementById('admin-signup-save');
   const signupEmailInput = document.getElementById('admin-signup-email');
   const signupPasswordInput = document.getElementById('admin-signup-password');
+  const signupSetupTokenInput = document.getElementById('admin-signup-setup-token');
 
   const adminCampaignName = document.getElementById('admin-campaign-name');
   const adminRulesetLink = document.getElementById('admin-ruleset-link');
@@ -287,10 +288,8 @@ window.addEventListener('DOMContentLoaded', () => {
         : 'Shutdown is only available from localhost.';
     }
     if (authSignupBtn) {
-      authSignupBtn.disabled = !allowLocalAdminActions;
-      authSignupBtn.title = allowLocalAdminActions
-        ? ''
-        : 'Create account is only available from localhost.';
+      authSignupBtn.disabled = Boolean(authUser);
+      authSignupBtn.title = '';
     }
     if (authCredentials) {
       authCredentials.classList.toggle('hidden', Boolean(authUser));
@@ -731,8 +730,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function openSignupModal() {
-    if (!signupModal || !allowLocalAdminActions) {
-      setAuthStatus('Create account is only available from localhost.', true);
+    if (!signupModal) {
       return;
     }
     if (signupEmailInput) {
@@ -741,8 +739,11 @@ window.addEventListener('DOMContentLoaded', () => {
     if (signupPasswordInput) {
       signupPasswordInput.value = '';
     }
+    if (signupSetupTokenInput) {
+      signupSetupTokenInput.value = '';
+    }
     if (signupModalSummary) {
-      signupModalSummary.textContent = 'Create the local server owner account.';
+      signupModalSummary.textContent = 'Create the first server owner account. In production, enter the setup token provided by the server operator.';
     }
     setSignupModalStatus('');
     signupModal.classList.remove('hidden');
@@ -957,9 +958,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     try {
       setSignupModalStatus('Creating account...');
+      const headers = { 'Content-Type': 'application/json' };
+      const setupToken = (signupSetupTokenInput?.value || '').trim();
+      if (setupToken) {
+        headers['X-PlayerTracker-Setup-Token'] = setupToken;
+      }
       await fetchJson('/auth/signup', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           email,
           password
@@ -973,6 +979,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
       localStorage.setItem(adminEmailStorageKey, email);
       if (signupPasswordInput) signupPasswordInput.value = '';
+      if (signupSetupTokenInput) signupSetupTokenInput.value = '';
       if (authUser?.email) {
         authEmailInput.value = authUser.email;
         localStorage.setItem(adminEmailStorageKey, authUser.email);

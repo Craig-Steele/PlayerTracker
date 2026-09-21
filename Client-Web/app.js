@@ -377,8 +377,34 @@ function renderJoinQrCodes(url = currentJoinAddressUrl) {
 }
 
 // Fetch the available join addresses and show the selected URL as a QR code.
+function configuredBrowserOrigin() {
+  const protocol = window.location.protocol;
+  const hostname = (window.location.hostname || '').trim().toLowerCase();
+  const isNumericHost = /^[0-9.]+$/.test(hostname) || hostname.includes(':');
+  const isLocalHost = hostname === 'localhost'
+    || hostname === '127.0.0.1'
+    || hostname === '::1'
+    || hostname.endsWith('.local');
+
+  if (!hostname || isNumericHost || isLocalHost) return null;
+  if (protocol !== 'http:' && protocol !== 'https:') return null;
+  return window.location.origin;
+}
+
 async function showServerIP() {
   try {
+    const browserOrigin = configuredBrowserOrigin();
+    if (browserOrigin) {
+      const selector = document.getElementById('ip-selector');
+      if (selector) {
+        selector.innerHTML = '';
+        selector.classList.add('hidden');
+      }
+      currentJoinAddressUrl = browserOrigin;
+      renderJoinQrCodes(browserOrigin);
+      return;
+    }
+
     const res = await fetch('/server-ip');
     if (!res.ok) return;
 
@@ -462,12 +488,9 @@ window.addEventListener('DOMContentLoaded', () => {
   const conditionGrid = document.getElementById('conditions-grid');
   const selectedConditionsWrap = document.getElementById('selected-conditions');
   const conditionFilterInput = document.getElementById('condition-filter');
-  const conditionsCharacter = document.getElementById('conditions-character');
-  const campaignNameLabel = document.getElementById('campaign-name');
   const playerCampaignName = document.getElementById('player-campaign-name');
   const displayCampaignName = document.getElementById('display-campaign-name');
   const playerCardPlayerName = document.getElementById('player-card-player-name');
-  const playerEncounterState = document.getElementById('player-encounter-state');
   const displayEncounterState = document.getElementById('display-encounter-state');
   const playerRulesetLink = document.getElementById('player-ruleset-link');
   const playerRulesetLicense = document.getElementById('player-ruleset-license');
@@ -475,17 +498,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const displayRulesetLink = document.getElementById('display-ruleset-link');
   const displayRulesetLicense = document.getElementById('display-ruleset-license');
   const displayRulesetLicenseWrap = document.getElementById('display-ruleset-license-wrap');
-  const rulesetLink = document.getElementById('ruleset-link');
-  const rulesetLicense = document.getElementById('ruleset-license');
-  const rulesetLicenseWrap = document.getElementById('ruleset-license-wrap');
-  const rulesetIcon = document.getElementById('ruleset-icon');
   const playerRulesetIcon = document.getElementById('player-ruleset-icon');
   const displayRulesetIcon = document.getElementById('display-ruleset-icon');
-  const characterList = document.getElementById('character-list');
   const addCharacterBtn = document.getElementById('character-add');
   const rollInitiativeAllBtn = document.getElementById('roll-initiative-all');
   const turnCompleteBtn = document.getElementById('turn-complete');
-  const removeCharacterBtn = document.getElementById('character-remove');
   const addForm = document.getElementById('add-character-form');
   const addNameInput = document.getElementById('add-name');
   const addUseAppInitiativeRollInput = document.getElementById('add-use-app-initiative-roll');
@@ -497,10 +514,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const addCurrentStats = document.getElementById('add-current-stats');
   const addSaveBtn = document.getElementById('add-save');
   const addCancelBtn = document.getElementById('add-cancel');
-  const detailsToggles = document.querySelector('.details-toggles');
-  const detailsToggle = document.getElementById('details-toggle');
   const detailsPanel = document.getElementById('details-panel');
-  const conditionsToggle = document.getElementById('conditions-toggle');
   const conditionsPanel = document.getElementById('conditions-panel');
   const initiativePanel = document.getElementById('initiative-panel');
   const initiativeEditorInput = document.getElementById('initiative-editor-input');
@@ -580,11 +594,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const displayRosterColumnsLeftBody = document.getElementById('display-players-body-left');
   const displayRosterColumnsRightBody = document.getElementById('display-players-body-right');
   const characterListActions = document.querySelector('.character-list-actions');
-  const inventoryCharacterBtn = document.getElementById('character-inventory');
-  const moneyCharacterBtn = document.getElementById('character-money');
-  const releaseCharacterBtn = document.getElementById('character-release');
-  const characterOverflowToggle = document.getElementById('character-overflow-toggle');
-  const characterOverflowMenu = document.getElementById('character-overflow-menu');
 
   let selectedConditions = new Set();
   let conditionsDirty = false;
@@ -1059,11 +1068,10 @@ window.addEventListener('DOMContentLoaded', () => {
     close() {}
   };
 
-  campaignHeaderNameTargets.push(campaignNameLabel, playerCampaignName, displayCampaignName);
-  campaignHeaderIconTargets.push(rulesetIcon, playerRulesetIcon, displayRulesetIcon);
-  campaignHeaderLinkTargets.push(rulesetLink, playerRulesetLink, displayRulesetLink);
+  campaignHeaderNameTargets.push(playerCampaignName, displayCampaignName);
+  campaignHeaderIconTargets.push(playerRulesetIcon, displayRulesetIcon);
+  campaignHeaderLinkTargets.push(playerRulesetLink, displayRulesetLink);
   campaignHeaderLicenseTargets.push(
-    { linkEl: rulesetLicense, wrapEl: rulesetLicenseWrap },
     { linkEl: playerRulesetLicense, wrapEl: playerRulesetLicenseWrap },
     { linkEl: displayRulesetLicense, wrapEl: displayRulesetLicenseWrap }
   );
@@ -1410,36 +1418,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     const selected = selectedCharacterId
       ? myCharacters.find((character) => character.id === selectedCharacterId)
       : null;
-    const canEditInventory = Boolean(selected);
-    const canEditMoney = Boolean(selected && currencySystem && currencySystem.units.length > 0);
-    if (inventoryCharacterBtn) {
-      inventoryCharacterBtn.classList.toggle('hidden', !canEditInventory);
-      inventoryCharacterBtn.disabled = !canEditInventory;
-      inventoryCharacterBtn.setAttribute('aria-disabled', (!canEditInventory).toString());
-    }
-    if (moneyCharacterBtn) {
-      moneyCharacterBtn.classList.toggle('hidden', !canEditMoney);
-      moneyCharacterBtn.disabled = !canEditMoney;
-      moneyCharacterBtn.setAttribute('aria-disabled', (!canEditMoney).toString());
-    }
-    const canRelease = Boolean(selected && selected.claimedSessionId === currentPlayerSessionId);
-    if (releaseCharacterBtn) {
-      releaseCharacterBtn.classList.toggle('hidden', !canRelease);
-      releaseCharacterBtn.disabled = !canRelease;
-      releaseCharacterBtn.setAttribute('aria-disabled', (!canRelease).toString());
-    }
-    if (removeCharacterBtn) {
-      const canRemove = Boolean(selected);
-      removeCharacterBtn.disabled = !canRemove;
-      removeCharacterBtn.setAttribute('aria-disabled', (!canRemove).toString());
-      removeCharacterBtn.classList.toggle('hidden', !canRemove);
-    }
-    if (characterOverflowToggle) {
-      const hasSelection = Boolean(selected);
-      characterOverflowToggle.classList.toggle('hidden', !hasSelection);
-      characterOverflowToggle.disabled = !hasSelection;
-      characterOverflowToggle.setAttribute('aria-disabled', (!hasSelection).toString());
-    }
     if (!selected) {
       closeCharacterOverflowMenu();
       closeCurrencyEditor();
@@ -3677,14 +3655,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
         button.setAttribute('aria-disabled', (!ownerName).toString());
       });
     }
-    if (detailsToggle) {
-      detailsToggle.disabled = !ownerName;
-      detailsToggle.setAttribute('aria-disabled', (!ownerName).toString());
-    }
-    if (conditionsToggle) {
-      conditionsToggle.disabled = !ownerName;
-      conditionsToggle.setAttribute('aria-disabled', (!ownerName).toString());
-    }
     updateReleaseButtonState();
     updateRollInitiativeButtonState();
   }
@@ -3717,17 +3687,13 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     document.title = `${campaignName} - ${ownerName || 'Player'}`;
   }
 
-  function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null, isMineTurn = false) {
+  function updateEncounterStateDisplay(round = 1, currentTurnPlayer = null) {
     const encounterText = formatEncounterStateText(encounterState, round, currentTurnPlayer);
     if (roundIndicator) {
       roundIndicator.textContent = `Round: ${round || 1}`;
       roundIndicator.classList.toggle('round-indicator-active', encounterState === 'active');
       roundIndicator.classList.toggle('round-indicator-suspended', encounterState === 'suspended');
       roundIndicator.classList.toggle('round-indicator-new', encounterState !== 'active' && encounterState !== 'suspended');
-    }
-    if (playerEncounterState) {
-      playerEncounterState.classList.toggle('player-encounter-state-mine', Boolean(isMineTurn));
-      playerEncounterState.textContent = encounterText;
     }
     if (displayEncounterState) {
       displayEncounterState.classList.remove('player-encounter-state-mine');
@@ -3829,70 +3795,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       if (!form.contains(document.activeElement)) {
         isEditingForm = false;
       }
-    });
-  }
-
-  if (detailsToggle && detailsPanel) {
-    detailsToggle.addEventListener('click', async () => {
-      const isOpen =
-        detailsPanel.classList.contains('details-panel-open') &&
-        !detailsPanel.classList.contains('hidden');
-      if (isOpen) {
-        if (!(await confirmDiscardChanges({
-          dirty: formDirty,
-          header: 'You have unsaved detail changes.',
-          message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
-          cancelLabel: 'Keep Editing',
-          onDiscard: revertSelectedCharacterDetails
-        }))) return;
-      } else if (conditionsToggle && conditionsPanel && conditionsPanel.classList.contains('conditions-panel-open')) {
-        if (!(await confirmDiscardChanges({
-          dirty: conditionsDirty,
-          header: 'You have unsaved condition changes.',
-          message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
-          cancelLabel: 'Return to Conditions',
-          onDiscard: revertSelectedConditions
-        }))) return;
-        setConditionsPanelOpen(false);
-      }
-      detailsPanel.classList.toggle('hidden', isOpen);
-      detailsPanel.classList.toggle('details-panel-open', !isOpen);
-      detailsPanel.classList.toggle('details-panel-collapsed', isOpen);
-      detailsToggle.setAttribute('aria-expanded', (!isOpen).toString());
-      detailsPanel.setAttribute('aria-hidden', isOpen.toString());
-      closeCharacterOverflowMenu();
-    });
-  }
-
-  if (conditionsToggle && conditionsPanel) {
-    conditionsToggle.addEventListener('click', async () => {
-      const isOpen =
-        conditionsPanel.classList.contains('conditions-panel-open') &&
-        !conditionsPanel.classList.contains('hidden');
-      if (isOpen) {
-        if (!(await confirmDiscardChanges({
-          dirty: conditionsDirty,
-          header: 'You have unsaved condition changes.',
-          message: 'Choose Discard Changes to lose them, or Return to Conditions to keep editing.',
-          cancelLabel: 'Return to Conditions',
-          onDiscard: revertSelectedConditions
-        }))) return;
-      } else if (detailsToggle && detailsPanel && detailsPanel.classList.contains('details-panel-open')) {
-        if (!(await confirmDiscardChanges({
-          dirty: formDirty,
-          header: 'You have unsaved detail changes.',
-          message: 'Choose Discard Changes to lose them, or Keep Editing to continue working.',
-          cancelLabel: 'Keep Editing',
-          onDiscard: revertSelectedCharacterDetails
-        }))) return;
-        detailsPanel.classList.remove('details-panel-open');
-        detailsPanel.classList.add('details-panel-collapsed');
-        detailsPanel.classList.add('hidden');
-        detailsToggle.setAttribute('aria-expanded', 'false');
-        detailsPanel.setAttribute('aria-hidden', 'true');
-      }
-      setConditionsPanelOpen(!isOpen);
-      closeCharacterOverflowMenu();
     });
   }
 
@@ -4255,7 +4157,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       delete visibilityState[character.id];
     }
     saveTempHpVisibility(ownerName, visibilityState);
-    renderCharacterList();
   }
 
   function draftKeyForOwner(ownerName) {
@@ -4559,7 +4460,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
           }
           if (preferPlayerView) {
             myCharacters = [];
-            renderCharacterList();
             updateConditionsAvailability();
             return;
           }
@@ -4582,7 +4482,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       if (selectedCharacterId === character.id) {
         clearCharacterSelection();
       }
-      renderCharacterList();
       updateConditionsAvailability();
       lastStateJson = null;
       await loadState();
@@ -4660,11 +4559,6 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     }
     updatePartyTreasureActionButtons();
     updatePartyTreasureMoneySummary();
-    if (moneyCharacterBtn) {
-      moneyCharacterBtn.classList.add('hidden');
-      moneyCharacterBtn.disabled = true;
-      moneyCharacterBtn.setAttribute('aria-disabled', 'true');
-    }
     buildStatsFields();
 
     if (normalizedEntries.length === 0) {
@@ -4990,134 +4884,6 @@ function getOwnerName() {
     return { overflow, openOverflowMenu };
   }
 
-  function renderCharacterList() {
-    if (!characterList) return;
-    characterList.innerHTML = '';
-
-    if (myCharacters.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'subtitle';
-      empty.textContent = 'No characters yet.';
-      characterList.appendChild(empty);
-      if (removeCharacterBtn) {
-        removeCharacterBtn.disabled = true;
-        removeCharacterBtn.setAttribute('aria-disabled', 'true');
-      }
-      updateTurnCompleteButtonState();
-      updateRollInitiativeButtonState();
-      return;
-    }
-
-    myCharacters.forEach((character) => {
-      const item = document.createElement('div');
-      item.className = 'character-item';
-      if (character.id === currentTurnId) {
-        item.classList.add('current-turn');
-      }
-
-      const row = document.createElement('div');
-      row.className = 'character-row';
-
-      const nameWrap = document.createElement('div');
-      nameWrap.className = 'character-name-wrap';
-      const nameHeader = document.createElement('div');
-      nameHeader.className = 'character-name-row';
-      const nameBlock = document.createElement('div');
-      nameBlock.className = 'character-name-block';
-      const name = document.createElement('div');
-      name.className = 'character-name';
-      name.textContent = character.name;
-      const meta = document.createElement('div');
-      meta.className = 'character-meta';
-      nameBlock.appendChild(name);
-      nameBlock.addEventListener('click', (event) => {
-        if (event.target instanceof Element && event.target.closest('button')) return;
-        event.stopPropagation();
-        openOverflowMenu();
-      });
-      const { overflow, openOverflowMenu } = buildCharacterOverflowControls(character);
-      nameHeader.appendChild(overflow);
-      nameHeader.appendChild(nameBlock);
-      nameWrap.appendChild(nameHeader);
-      nameWrap.appendChild(meta);
-      row.appendChild(nameWrap);
-
-      const statsWrap = document.createElement('div');
-      statsWrap.className = 'character-stats';
-      const stats = Array.isArray(character.stats) ? character.stats : [];
-      const statsByKey = new Map(stats.map((stat) => [stat.key, stat]));
-
-      const displayStatKeys = getCharacterStatKeys(character).filter((key) => key !== 'TempHP');
-      if (supportsTempHp && shouldShowTempHpForCharacter(character)) {
-        displayStatKeys.push('TempHP');
-      }
-
-      displayStatKeys.forEach((key) => {
-        const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
-        const line = document.createElement('div');
-        line.className = 'character-stat-line';
-        const label = document.createElement('span');
-        label.className = 'character-stat-label';
-        label.textContent = key;
-
-        const minus = document.createElement('button');
-        minus.type = 'button';
-        minus.className = 'hp-adjust';
-        minus.textContent = '−';
-        minus.addEventListener('click', (event) => {
-          event.stopPropagation();
-          adjustCharacterStat(character, key, -1);
-        });
-
-        const value = document.createElement('span');
-        value.className = 'character-hp-value';
-      const currentVal = Number.isFinite(stat.current) ? stat.current : 0;
-      const maxVal = Number.isFinite(stat.max) ? stat.max : 0;
-      value.textContent = key === 'TempHP' ? `${currentVal}` : `${currentVal}/${maxVal}`;
-
-        const plus = document.createElement('button');
-        plus.type = 'button';
-        plus.className = 'hp-adjust';
-        plus.textContent = '+';
-        plus.addEventListener('click', (event) => {
-          event.stopPropagation();
-          adjustCharacterStat(character, key, 1);
-        });
-
-        line.appendChild(label);
-        line.appendChild(minus);
-        line.appendChild(value);
-        line.appendChild(plus);
-        statsWrap.appendChild(line);
-      });
-
-      row.appendChild(statsWrap);
-
-      item.appendChild(row);
-
-      const conditionsList = buildEncounterConditionsList(character.conditions, conditionLookup);
-      const conditionsCell = document.createElement('div');
-      conditionsCell.className = 'character-card-conditions';
-      if (conditionsList) {
-        conditionsCell.appendChild(conditionsList);
-      } else {
-        conditionsCell.textContent = '—';
-      }
-      item.appendChild(conditionsCell);
-
-      characterList.appendChild(item);
-    });
-
-    if (removeCharacterBtn) {
-      const canRemove = Boolean(selectedCharacterId);
-      removeCharacterBtn.disabled = !canRemove;
-      removeCharacterBtn.setAttribute('aria-disabled', (!canRemove).toString());
-    }
-    updateReleaseButtonState();
-    updateTurnCompleteButtonState();
-    updateRollInitiativeButtonState();
-  }
-
   function clearPendingCharacterSaveTimers() {
     perCharacterSaveTimers.forEach((timer) => clearTimeout(timer));
     perCharacterSaveTimers.clear();
@@ -5132,7 +4898,6 @@ function getOwnerName() {
         ...character,
         initiative: null
       }));
-      renderCharacterList();
       if (
         !formDirty &&
         !conditionsDirty &&
@@ -5169,7 +4934,6 @@ function getOwnerName() {
       };
     });
     if (updated) {
-      renderCharacterList();
       if (
         !formDirty &&
         !conditionsDirty &&
@@ -5251,7 +5015,6 @@ function getOwnerName() {
         }
       }
     }
-    renderCharacterList();
     if (
       lastEncounterSnapshot &&
       Array.isArray(lastEncounterSnapshot.players) &&
@@ -5392,6 +5155,7 @@ function getOwnerName() {
           ariaLabel: activeElement.getAttribute('aria-label') || null
         }
       : null;
+    const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
     const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
     playersBody.innerHTML = '';
 
@@ -5693,11 +5457,7 @@ function getOwnerName() {
     applyDraftToForm(found);
     applySelectedConditions(found.conditions || []);
     formDirty = false;
-    renderCharacterList();
     updateConditionsAvailability();
-    if (conditionsCharacter) {
-      conditionsCharacter.textContent = found.name || 'this character';
-    }
     updateConditionsDialogTitle(found.name || 'this character');
   }
 
@@ -5722,10 +5482,6 @@ function getOwnerName() {
     updateInitiativeBonusAvailability();
     applySelectedConditions([]);
     formDirty = false;
-    renderCharacterList();
-    if (conditionsCharacter) {
-      conditionsCharacter.textContent = 'this character';
-    }
     updateConditionsDialogTitle('this character');
   }
 
@@ -5785,7 +5541,6 @@ function getOwnerName() {
     for (const character of charactersToRoll) {
       await handleInitiativeAction(character);
     }
-    renderCharacterList();
   }
 
   function showAddForm() {
@@ -5797,9 +5552,6 @@ function getOwnerName() {
     clearCharacterSelection();
     clearAddForm();
     updateConditionsAvailability();
-    if (conditionsCharacter) {
-      conditionsCharacter.textContent = addNameInput ? addNameInput.value.trim() || 'this character' : 'this character';
-    }
     updateConditionsDialogTitle(addNameInput ? addNameInput.value.trim() || 'this character' : 'this character');
   }
 
@@ -5813,17 +5565,20 @@ function getOwnerName() {
     clearAddForm();
     applySelectedConditions([]);
     updateConditionsAvailability();
-    if (conditionsCharacter) {
-      conditionsCharacter.textContent = 'this character';
-    }
     updateConditionsDialogTitle('this character');
   }
 
   async function loadCharactersForOwner(ownerName) {
+    if (displayOnly) {
+      myCharacters = [];
+      selectedCharacterId = null;
+      updateConditionsAvailability();
+      return;
+    }
+
     if (!ownerName) {
       myCharacters = [];
       selectedCharacterId = null;
-      renderCharacterList();
       updateConditionsAvailability();
       return;
     }
@@ -5831,7 +5586,6 @@ function getOwnerName() {
     if (!currentCampaignId) {
       myCharacters = [];
       selectedCharacterId = null;
-      renderCharacterList();
       updateConditionsAvailability();
       return;
     }
@@ -6416,72 +6170,12 @@ function getOwnerName() {
     if (!displayOnly) {
       addCharacterBtn.addEventListener('click', () => {
         showAddForm();
-        if (conditionsToggle && conditionsPanel) {
-          setConditionsPanelOpen(false);
-        }
       });
     } else {
       addCharacterBtn.style.display = 'none';
     }
   }
 
-  if (removeCharacterBtn) {
-    if (!displayOnly) {
-      removeCharacterBtn.addEventListener('click', () => {
-        closeCharacterOverflowMenu();
-        const selected = myCharacters.find((character) => character.id === selectedCharacterId);
-        if (!selected) return;
-        deleteMyCharacter(selected);
-      });
-    } else {
-      removeCharacterBtn.style.display = 'none';
-    }
-  }
-
-  if (releaseCharacterBtn) {
-    releaseCharacterBtn.addEventListener('click', async () => {
-      closeCharacterOverflowMenu();
-      const selected = selectedCharacterId
-        ? myCharacters.find((character) => character.id === selectedCharacterId)
-        : null;
-      if (!selected || selected.claimedSessionId !== currentPlayerSessionId) return;
-      await releaseClaimForCharacter(selected);
-    });
-  }
-
-  if (moneyCharacterBtn) {
-    moneyCharacterBtn.addEventListener('click', () => {
-      const selected = selectedCharacterId
-        ? myCharacters.find((character) => character.id === selectedCharacterId)
-        : null;
-      if (!selected || !currencySystem) return;
-      openCurrencyEditor(selected);
-    });
-  }
-
-  if (inventoryCharacterBtn) {
-    inventoryCharacterBtn.addEventListener('click', async () => {
-      const selected = selectedCharacterId
-        ? myCharacters.find((character) => character.id === selectedCharacterId)
-        : null;
-      if (!selected) return;
-      await openInventoryEditor(selected);
-    });
-  }
-
-  if (characterOverflowToggle) {
-    characterOverflowToggle.addEventListener('click', (event) => {
-      event.stopPropagation();
-      if (!selectedCharacterId) return;
-      toggleCharacterOverflowMenu();
-    });
-  }
-
-  if (characterOverflowMenu) {
-    characterOverflowMenu.addEventListener('click', (event) => {
-      event.stopPropagation();
-    });
-  }
 
   if (currencySaveBtn) {
     currencySaveBtn.addEventListener('click', async () => {
@@ -6906,7 +6600,6 @@ function getOwnerName() {
           selectedCharacterId = null;
           lastTurnId = null;
           lastStateJson = null;
-          renderCharacterList();
           updateRollInitiativeButtonState();
           if (playersBody) {
             playersBody.innerHTML = '';
@@ -6941,16 +6634,12 @@ function getOwnerName() {
         encounterState
       };
       const currentJson = JSON.stringify(normalized);
-      const isMineTurn = Boolean(
-        currentTurnId && myCharacters.some((character) => character.id === currentTurnId)
-      );
       lastEncounterSnapshot = {
         players,
         round,
         currentTurnId,
         currentTurnPlayer,
-        encounterState,
-        isMineTurn
+        encounterState
       };
 
       if (currentJson === lastStateJson) {
@@ -6959,7 +6648,7 @@ function getOwnerName() {
         // depends on local saved name (but that rarely changes)
       } else {
         lastStateJson = currentJson;
-        updateEncounterStateDisplay(round, currentTurnPlayer, isMineTurn);
+        updateEncounterStateDisplay(round, currentTurnPlayer);
 
         renderEncounterRows(lastEncounterSnapshot);
 
@@ -6974,7 +6663,6 @@ function getOwnerName() {
           }
         }
 
-        renderCharacterList();
         lastTurnId = currentTurnId;
       }
       updateTurnCompleteButtonState();
@@ -7300,9 +6988,6 @@ function getOwnerName() {
   }
   if (addNameInput) {
     addNameInput.addEventListener('input', () => {
-      if (conditionsCharacter && isCreatingCharacter) {
-        conditionsCharacter.textContent = addNameInput.value.trim() || 'this character';
-      }
       updateConditionsDialogTitle(addNameInput.value.trim() || 'this character');
     });
   }

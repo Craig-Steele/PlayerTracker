@@ -167,11 +167,8 @@ enum RuleSetLibraryLoader {
     }
 
     private static func repositoryConditionsDirectory() -> URL? {
-        let sourceURL = URL(fileURLWithPath: #filePath)
-        let repositoryRoot = sourceURL
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let directory = repositoryRoot.appendingPathComponent("Client-Web/rulesets", isDirectory: true)
+        let directory = AppPaths.webClientDirectory()
+            .appendingPathComponent("rulesets", isDirectory: true)
         return FileManager.default.fileExists(atPath: directory.path) ? directory : nil
     }
 

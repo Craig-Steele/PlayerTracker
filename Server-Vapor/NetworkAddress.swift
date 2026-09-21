@@ -1,4 +1,10 @@
 import Foundation
+#if os(Linux)
+import FoundationNetworking
+import Glibc
+#elseif canImport(Darwin)
+import Darwin
+#endif
 
 func getLocalIPv4Address() -> String {
     var address: String = "unknown"
@@ -13,15 +19,20 @@ func getLocalIPv4Address() -> String {
         let addr = ptr.pointee.ifa_addr.pointee
 
         // Only IPv4
-        if addr.sa_family == UInt8(AF_INET) {
+        if Int32(addr.sa_family) == AF_INET {
 
             // Ignore loopback interface
-            if (flags & IFF_LOOPBACK) == 0 {
+            if (flags & Int32(IFF_LOOPBACK)) == 0 {
 
                 var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                #if os(Linux)
+                let addressLength = socklen_t(MemoryLayout<sockaddr_in>.size)
+                #else
+                let addressLength = socklen_t(ptr.pointee.ifa_addr.pointee.sa_len)
+                #endif
                 let result = getnameinfo(
                     ptr.pointee.ifa_addr,
-                    socklen_t(ptr.pointee.ifa_addr.pointee.sa_len),
+                    addressLength,
                     &hostname,
                     socklen_t(hostname.count),
                     nil,

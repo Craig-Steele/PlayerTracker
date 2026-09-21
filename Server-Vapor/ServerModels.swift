@@ -25,17 +25,31 @@ struct CampaignSummary: Content {
 
 struct CampaignUserDataFileSummary: Content {
     let name: String
+    let rulesetId: String
+    let kind: String
     let selected: Bool
     let missing: Bool
 }
 
 struct CampaignUserDataResponse: Content {
     let rulesetId: String
+    let enabledRulesetIds: [String]
+    let rulesets: [RulesetSummary]
     let files: [CampaignUserDataFileSummary]
 }
 
 struct CampaignUserDataUpdateInput: Content {
     let files: [String]
+}
+
+struct CampaignUserDataFile: Codable, Content, Equatable {
+    let name: String
+    let rulesetId: String
+    let kind: String
+}
+
+struct CampaignUserDataRulesetUpdateInput: Content {
+    let enabledRulesetIds: [String]
 }
 
 struct CampaignInviteResponse: Content {
@@ -190,6 +204,23 @@ struct CreatureLibraryImportFile: Content {
 struct CreatureLibraryImportInput: Content {
     let files: [CreatureLibraryImportFile]
     let overwrite: Bool?
+
+    init(files: [CreatureLibraryImportFile], overwrite: Bool? = nil) {
+        self.files = files
+        self.overwrite = overwrite
+    }
+}
+
+struct CampaignLibraryImportInput: Content {
+    let rulesetId: String
+    let files: [CreatureLibraryImportFile]
+    let overwrite: Bool?
+
+    init(rulesetId: String, files: [CreatureLibraryImportFile], overwrite: Bool? = nil) {
+        self.rulesetId = rulesetId
+        self.files = files
+        self.overwrite = overwrite
+    }
 }
 
 struct CreatureLibraryImportResponse: Content {
@@ -214,6 +245,7 @@ struct CampaignState: Content {
     let claimTimeoutMinutes: Int
     let isInviteOnly: Bool
     let userdataFiles: [String]
+    let enabledRulesetIds: [String]
     let partyTreasure: [InventoryEntry]
     let currency: [CurrencyAmount]
     let selectedMapID: String?
@@ -227,6 +259,7 @@ struct CampaignState: Content {
         claimTimeoutMinutes: Int,
         isInviteOnly: Bool,
         userdataFiles: [String],
+        enabledRulesetIds: [String] = [],
         partyTreasure: [InventoryEntry],
         currency: [CurrencyAmount],
         selectedMapID: String? = nil
@@ -239,6 +272,7 @@ struct CampaignState: Content {
         self.claimTimeoutMinutes = claimTimeoutMinutes
         self.isInviteOnly = isInviteOnly
         self.userdataFiles = userdataFiles
+        self.enabledRulesetIds = enabledRulesetIds
         self.partyTreasure = partyTreasure
         self.currency = currency
         self.selectedMapID = selectedMapID
@@ -277,9 +311,23 @@ struct AuthLoginInput: Content {
     let password: String
 }
 
+struct OwnerTransferInput: Content {
+    let email: String
+}
+
+struct OwnerPasswordChangeInput: Content {
+    let currentPassword: String
+    let newPassword: String
+}
+
+struct OwnerEmailChangeInput: Content {
+    let email: String
+}
+
 struct AuthUserResponse: Content {
     let id: UUID
     let email: String
+    let isOwner: Bool
 }
 
 struct AuthSessionResponse: Content {
