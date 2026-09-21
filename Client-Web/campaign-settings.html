@@ -77,6 +77,22 @@
       </div>
     </div>
     <div class="campaign-settings-column">
+      <div class="form-section-title">Libraries and Rulesets</div>
+      <div class="form-section-block property-group">
+        <div class="subtitle">Upload creature or item JSON libraries, then choose which rulesets are active for this campaign.</div>
+        <label class="property-row">
+          <span class="property-label">Source ruleset</span>
+          <span class="property-control"><select id="campaign-settings-library-ruleset-select"></select></span>
+        </label>
+        <label class="property-row">
+          <span class="property-label">Library files</span>
+          <span class="property-control"><input type="file" id="campaign-settings-library-input" accept=".json,application/json" multiple /></span>
+        </label>
+        <div id="campaign-settings-library-status" class="subtitle"></div>
+        <div id="campaign-settings-ruleset-toggles"></div>
+      </div>
+    </div>
+    <div class="campaign-settings-column">
       <div class="form-section-title">Player Management</div>
       <div class="form-section-block property-group">
         <div class="campaign-settings-add-player-block">

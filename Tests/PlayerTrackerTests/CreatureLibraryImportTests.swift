@@ -1,9 +1,36 @@
 import Foundation
+import Vapor
 import Testing
 @testable import PlayerTracker
 
 @Suite(.serialized)
 struct CreatureLibraryImportTests {
+    @Test("campaign library validation accepts creature and item bundles")
+    func campaignLibraryValidationAcceptsCreatureAndItemBundles() throws {
+        let files = try CampaignLibraryImportService.validate(
+            [
+                CreatureLibraryImportFile(filename: "monsters.json", contents: "{\"creatures\":[{\"name\":\"Wolf\"}]}"),
+                CreatureLibraryImportFile(filename: "items.json", contents: "{\"items\":[{\"name\":\"Torch\"}]}"),
+            ],
+            rulesetId: "pathfinder"
+        )
+
+        #expect(files.map(\.kind) == ["creatures", "items"])
+    }
+
+    @Test("campaign library validation rejects unsupported JSON with a useful error")
+    func campaignLibraryValidationRejectsUnsupportedJSON() throws {
+        do {
+            _ = try CampaignLibraryImportService.validate(
+                [CreatureLibraryImportFile(filename: "bad.json", contents: "{\"unexpected\":true}")],
+                rulesetId: "pathfinder"
+            )
+            Issue.record("Expected invalid library data to be rejected")
+        } catch let error as Abort {
+            #expect(error.reason.contains("supported creature or item library"))
+        }
+    }
+
     @Test("ruleset initiative charts load from json")
     func rulesetInitiativeChartsLoadFromJson() throws {
         let traveller = try RuleSetLibraryLoader.loadLibrary(id: "traveller")

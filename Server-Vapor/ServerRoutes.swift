@@ -1579,11 +1579,17 @@ func routes(
     }
 
     app.get("creature-library") { req async throws -> CreatureLibraryResponse in
-        let library = await campaignStore.library()
+        let activeCampaign = try await requireActiveCampaign(campaignStore)
+        let requestedRulesetId = req.query[String.self, at: "rulesetId"] ?? activeCampaign.rulesetId
+        guard activeCampaign.enabledRulesetIds.contains(requestedRulesetId) else {
+            throw Abort(.forbidden, reason: "That ruleset is not enabled for the active campaign.")
+        }
+        let library = try RuleSetLibraryLoader.loadLibrary(id: requestedRulesetId)
         let query = req.query[String.self, at: "query"]
         let limit = req.query[Int.self, at: "limit"] ?? 50
-        let activeCampaign = await campaignStore.activeCampaign()
-        let selectedUserDataFiles = activeCampaign?.userdataFiles ?? []
+        let selectedUserDataFiles = (await campaignStore.userdataLibraries())
+            .filter { $0.rulesetId == requestedRulesetId && activeCampaign.enabledRulesetIds.contains($0.rulesetId) }
+            .map(\.name)
         return try await CreatureLibraryStore.shared.library(
             rulesetId: library.id,
             rulesetLabel: library.label,
@@ -1595,14 +1601,23 @@ func routes(
     }
 
     app.get("equipment-library") { req async throws -> EquipmentLibraryResponse in
-        let library = await campaignStore.library()
+        let activeCampaign = try await requireActiveCampaign(campaignStore)
+        let requestedRulesetId = req.query[String.self, at: "rulesetId"] ?? activeCampaign.rulesetId
+        guard activeCampaign.enabledRulesetIds.contains(requestedRulesetId) else {
+            throw Abort(.forbidden, reason: "That ruleset is not enabled for the active campaign.")
+        }
+        let library = try RuleSetLibraryLoader.loadLibrary(id: requestedRulesetId)
         let query = req.query[String.self, at: "query"]
         let limit = req.query[Int.self, at: "limit"] ?? 100
+        let selectedItemFiles = (await campaignStore.userdataLibraries())
+            .filter { $0.rulesetId == library.id && $0.kind == "items" && activeCampaign.enabledRulesetIds.contains($0.rulesetId) }
+            .map(\.name)
         return try await EquipmentLibraryStore.shared.library(
             rulesetId: library.id,
             rulesetLabel: library.label,
             query: query,
-            limit: limit
+            limit: limit,
+            selectedLocalItemFiles: selectedItemFiles
         )
     }
 
@@ -1714,32 +1729,37 @@ func routes(
 
     app.get("campaign", "userdata") { req async throws -> CampaignUserDataResponse in
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
-        let selected = Set(campaign.userdataFiles)
-        let available = try await CreatureLibraryStore.shared.availableLocalCreatureFiles(
+        let stored = await campaignStore.userdataLibraries()
+        var files = stored.map { file in
+            CampaignUserDataFileSummary(
+                name: file.name,
+                rulesetId: file.rulesetId,
+                kind: file.kind,
+                selected: file.rulesetId == campaign.rulesetId
+                    ? campaign.userdataFiles.contains(file.name)
+                    : campaign.enabledRulesetIds.contains(file.rulesetId),
+                missing: !FileManager.default.fileExists(atPath: AppPaths.userDataDirectory(rulesetId: file.rulesetId, application: req.application).appendingPathComponent(file.name).path)
+            )
+        }
+        let storedCurrentNames = Set(stored.filter { $0.rulesetId == campaign.rulesetId }.map(\.name))
+        let localFiles = try await CreatureLibraryStore.shared.availableLocalCreatureFiles(
             rulesetId: campaign.rulesetId,
             configuration: req.application.creatureLibraryConfiguration
         )
-        var seen = Set<String>()
-        let files = available.map { name -> CampaignUserDataFileSummary in
-            seen.insert(name)
-            return CampaignUserDataFileSummary(
-                name: name,
-                selected: selected.contains(name),
+        files += localFiles.filter { !storedCurrentNames.contains($0) }.map {
+            CampaignUserDataFileSummary(
+                name: $0,
+                rulesetId: campaign.rulesetId,
+                kind: "creatures",
+                selected: false,
                 missing: false
             )
         }
-        let missingFiles = campaign.userdataFiles
-            .filter { seen.contains($0) == false }
-            .map { name in
-                CampaignUserDataFileSummary(
-                    name: name,
-                    selected: true,
-                    missing: true
-                )
-            }
         return CampaignUserDataResponse(
             rulesetId: campaign.rulesetId,
-            files: files + missingFiles
+            enabledRulesetIds: campaign.enabledRulesetIds,
+            rulesets: RuleSetLibraryLoader.availableRulesets(),
+            files: files
         )
     }
 
@@ -1755,6 +1775,81 @@ func routes(
             event: "campaign-updated"
         )
         return updated
+    }
+
+    app.put("campaign", "userdata", "rulesets") { req async throws -> CampaignState in
+        let (_, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(CampaignUserDataRulesetUpdateInput.self)
+        let validRulesets = Set(RuleSetLibraryLoader.availableRulesets().map(\.id))
+        guard input.enabledRulesetIds.allSatisfy({ validRulesets.contains($0) }) else {
+            throw Abort(.badRequest, reason: "One or more selected rulesets are not available on this server.")
+        }
+        let updated = try await campaignStore.updateUserdataLibraries(
+            await campaignStore.userdataLibraries(),
+            enabledRulesetIds: input.enabledRulesetIds
+        )
+        await CreatureLibraryStore.shared.invalidate()
+        await EquipmentLibraryStore.shared.invalidate()
+        await publishCampaignUpdate(campaign: updated, userStore: userStore, eventHub: eventHub, event: "campaign-updated")
+        return updated
+    }
+
+    app.post("campaign", "libraries", "import") { req async throws -> CampaignUserDataResponse in
+        let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
+        let input = try req.content.decode(CampaignLibraryImportInput.self)
+        let validated = try CampaignLibraryImportService.validate(input.files, rulesetId: input.rulesetId)
+        let destination = AppPaths.userDataDirectory(rulesetId: input.rulesetId, application: req.application)
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+        let creatureFiles = validated.filter { $0.kind == "creatures" }.map(\.file)
+        if !creatureFiles.isEmpty {
+            _ = try CreatureLibraryImportService.importFiles(
+                creatureFiles,
+                into: destination,
+                overwrite: input.overwrite ?? false,
+                rulesetId: input.rulesetId
+            )
+        }
+        for entry in validated where entry.kind == "items" {
+            let filename = URL(fileURLWithPath: entry.file.filename).lastPathComponent
+            let url = destination.appendingPathComponent(filename)
+            if FileManager.default.fileExists(atPath: url.path), input.overwrite != true { continue }
+            guard let data = entry.file.contents.data(using: .utf8) else {
+                throw Abort(.unprocessableEntity, reason: "Unable to read \(filename).")
+            }
+            try data.write(to: url, options: [.atomic])
+        }
+        let newFiles = validated.map {
+            CampaignUserDataFile(
+                name: URL(fileURLWithPath: $0.file.filename).lastPathComponent,
+                rulesetId: input.rulesetId,
+                kind: $0.kind
+            )
+        }
+        let existing = await campaignStore.userdataLibraries()
+        let merged = existing.filter { old in
+            !newFiles.contains { $0.name == old.name && $0.rulesetId == old.rulesetId }
+        } + newFiles
+        let updated = try await campaignStore.updateUserdataLibraries(
+            merged,
+            enabledRulesetIds: await campaignStore.enabledRulesetIds() + [input.rulesetId]
+        )
+        await CreatureLibraryStore.shared.invalidate()
+        await EquipmentLibraryStore.shared.invalidate()
+        let summaries = merged.map {
+            CampaignUserDataFileSummary(
+                name: $0.name,
+                rulesetId: $0.rulesetId,
+                kind: $0.kind,
+                selected: updated.enabledRulesetIds.contains($0.rulesetId),
+                missing: false
+            )
+        }
+        return CampaignUserDataResponse(
+            rulesetId: campaign.rulesetId,
+            enabledRulesetIds: updated.enabledRulesetIds,
+            rulesets: RuleSetLibraryLoader.availableRulesets(),
+            files: summaries
+        )
     }
 
     app.post("campaign", "userdata", "open-folders") { req async throws -> HTTPStatus in

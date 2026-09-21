@@ -14,6 +14,8 @@ struct CampaignPersistenceState {
     let claimTimeoutMinutes: Int
     let isInviteOnly: Bool
     let userdataFiles: [String]
+    let userdataLibraries: [CampaignUserDataFile]
+    let enabledRulesetIds: [String]
     let partyTreasure: [InventoryEntry]
     let currency: [CurrencyAmount]
     let roundIndex: Int
@@ -622,19 +624,34 @@ enum DatabasePersistence {
         max(-1, campaign.claimTimeoutMinutes ?? defaultClaimTimeoutMinutes)
     }
 
-    private static func decodeUserDataFiles(_ json: String?) -> [String] {
-        guard let json,
-              let data = json.data(using: .utf8),
-              let files = try? JSONDecoder().decode([String].self, from: data) else {
-            return []
-        }
-        return normalizeUserDataFiles(files)
+    private struct CampaignUserDataStorage: Codable {
+        let files: [CampaignUserDataFile]
+        let enabledRulesetIds: [String]
     }
 
-    private static func encodeUserDataFiles(_ files: [String]) throws -> String? {
-        let normalized = normalizeUserDataFiles(files)
-        guard !normalized.isEmpty else { return nil }
-        let data = try JSONEncoder().encode(normalized)
+    private static func decodeUserDataLibraries(_ json: String?, defaultRulesetId: String) -> (files: [CampaignUserDataFile], enabledRulesetIds: [String]) {
+        guard let json,
+              let data = json.data(using: .utf8) else {
+            return ([], [defaultRulesetId])
+        }
+        if let storage = try? JSONDecoder().decode(CampaignUserDataStorage.self, from: data) {
+            return (storage.files, Array(Set(storage.enabledRulesetIds + [defaultRulesetId])).sorted())
+        }
+        if let names = try? JSONDecoder().decode([String].self, from: data) {
+            let files = normalizeUserDataFiles(names).map {
+                CampaignUserDataFile(name: $0, rulesetId: defaultRulesetId, kind: "creatures")
+            }
+            return (files, [defaultRulesetId])
+        }
+        return ([], [defaultRulesetId])
+    }
+
+    private static func encodeUserDataLibraries(_ files: [CampaignUserDataFile], enabledRulesetIds: [String]) throws -> String? {
+        let normalizedFiles = files.filter { !$0.name.isEmpty && !$0.rulesetId.isEmpty }
+        let normalizedRulesets = Array(Set(enabledRulesetIds.filter { !$0.isEmpty })).sorted()
+        guard !normalizedFiles.isEmpty || !normalizedRulesets.isEmpty else { return nil }
+        let storage = CampaignUserDataStorage(files: normalizedFiles, enabledRulesetIds: normalizedRulesets)
+        let data = try JSONEncoder().encode(storage)
         return String(decoding: data, as: UTF8.self)
     }
 
@@ -728,7 +745,32 @@ enum DatabasePersistence {
             .first() else {
             throw Abort(.notFound, reason: "Campaign not found.")
         }
-        campaign.userdataFilesJSON = try encodeUserDataFiles(files)
+        let existing = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+        let selected = Set(normalizeUserDataFiles(files))
+        let updatedFiles = existing.files.filter { $0.rulesetId != campaign.rulesetId } +
+            normalizeUserDataFiles(files).map {
+                CampaignUserDataFile(name: $0, rulesetId: campaign.rulesetId, kind: "creatures")
+            }
+        let filtered = updatedFiles.filter { $0.rulesetId != campaign.rulesetId || selected.contains($0.name) }
+        campaign.userdataFilesJSON = try encodeUserDataLibraries(
+            filtered,
+            enabledRulesetIds: existing.enabledRulesetIds
+        )
+        try await campaign.save(on: database)
+    }
+
+    static func updateCampaignUserDataLibraries(
+        campaignID: UUID,
+        files: [CampaignUserDataFile],
+        enabledRulesetIds: [String],
+        on database: any Database
+    ) async throws {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        campaign.userdataFilesJSON = try encodeUserDataLibraries(files, enabledRulesetIds: enabledRulesetIds)
         try await campaign.save(on: database)
     }
 
@@ -1414,7 +1456,8 @@ enum DatabasePersistence {
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
-        let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+        let userdata = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+        let userdataFiles = userdata.files.filter { $0.rulesetId == campaign.rulesetId }.map(\.name)
         let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
         let currency = decodeCurrencyAmounts(campaign.currencyJSON)
         let roundIndex = encounter?.roundIndex ?? 1
@@ -1428,6 +1471,8 @@ enum DatabasePersistence {
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
             userdataFiles: userdataFiles,
+            userdataLibraries: userdata.files,
+            enabledRulesetIds: userdata.enabledRulesetIds,
             partyTreasure: partyTreasure,
             currency: currency,
             roundIndex: roundIndex,
@@ -1456,7 +1501,8 @@ enum DatabasePersistence {
 
         let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
         let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
-        let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+        let userdata = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+        let userdataFiles = userdata.files.filter { $0.rulesetId == campaign.rulesetId }.map(\.name)
         let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
         let currency = decodeCurrencyAmounts(campaign.currencyJSON)
         let roundIndex = encounter?.roundIndex ?? 1
@@ -1470,6 +1516,8 @@ enum DatabasePersistence {
             claimTimeoutMinutes: claimTimeoutMinutes,
             isInviteOnly: campaign.isInviteOnly,
             userdataFiles: userdataFiles,
+            userdataLibraries: userdata.files,
+            enabledRulesetIds: userdata.enabledRulesetIds,
             partyTreasure: partyTreasure,
             currency: currency,
             roundIndex: roundIndex,
@@ -1491,7 +1539,8 @@ enum DatabasePersistence {
             let encounter = encountersByCampaign[campaignID]?.first
             let encounterState = encounter.flatMap { EncounterState(rawValue: $0.encounterState) } ?? .new
             let claimTimeoutMinutes = resolvedClaimTimeoutMinutes(campaign)
-            let userdataFiles = decodeUserDataFiles(campaign.userdataFilesJSON)
+            let userdata = decodeUserDataLibraries(campaign.userdataFilesJSON, defaultRulesetId: campaign.rulesetId)
+            let userdataFiles = userdata.files.filter { $0.rulesetId == campaign.rulesetId }.map(\.name)
             let partyTreasure = decodeInventoryEntries(campaign.partyTreasureJSON)
             let currency = decodeCurrencyAmounts(campaign.currencyJSON)
             let roundIndex = encounter?.roundIndex ?? 1
@@ -1505,6 +1554,8 @@ enum DatabasePersistence {
                 claimTimeoutMinutes: claimTimeoutMinutes,
                 isInviteOnly: campaign.isInviteOnly,
                 userdataFiles: userdataFiles,
+                userdataLibraries: userdata.files,
+                enabledRulesetIds: userdata.enabledRulesetIds,
                 partyTreasure: partyTreasure,
                 currency: currency,
                 roundIndex: roundIndex,
