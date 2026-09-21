@@ -551,6 +551,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       } catch (err) {
         setStatus(`Failed to restore player session: ${err.message}`, true);
+        setPlayerNameEditing(true);
       }
     }
 

@@ -59,6 +59,19 @@ struct ServerPlatformTests {
         #expect(normalizedPath.hasSuffix("TacticalTableTop/Initiative/data/app.sqlite3"))
     }
 
+    @Test("tactical map directory accepts an explicit packaged-runtime path")
+    func tacticalMapSourceUsesConfiguredDirectory() throws {
+        let directory = try makeTemporaryDirectory(prefix: "tactical-maps")
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let sourceURL = AppPaths.tacticalMapSourceURL(environment: [
+            "ROLL4INITIATIVE_TACTICAL_MAP_DIRECTORY": directory.path
+        ])
+
+        #expect(sourceURL.deletingLastPathComponent().standardizedFileURL == directory.standardizedFileURL)
+        #expect(sourceURL.lastPathComponent == "Arcane Library PZO30084E.map.json")
+    }
+
     @Test("legacy data directory variable remains supported")
     func legacyConfiguredDataDirectoryRemainsSupported() throws {
         let baseDirectory = try makeTemporaryDirectory(prefix: "legacy-data-base")

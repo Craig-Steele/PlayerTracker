@@ -18,8 +18,10 @@ RUN useradd --system --create-home --home-dir /home/playertracker playertracker 
 
 COPY --from=build /build/.build/release/PlayerTracker /app/PlayerTracker
 COPY Client-Web /app/Client-Web
+COPY --chown=playertracker:playertracker Images /app/Images
 
 ENV PLAYERTRACKER_DATA_DIR=/app/data \
+    ROLL4INITIATIVE_TACTICAL_MAP_DIRECTORY=/app/Images \
     PLAYERTRACKER_ENV=production \
     ROLL4INITIATIVE_LAUNCH_BROWSER=0 \
     ROLL4INITIATIVE_OPEN_LOCAL_FOLDERS=0

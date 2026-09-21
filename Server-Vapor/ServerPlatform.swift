@@ -135,7 +135,15 @@ enum AppPaths {
             ?? candidates[0]
     }
 
-    static func tacticalMapSourceURL() -> URL {
+    static func tacticalMapSourceURL(
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) -> URL {
+        if let configuredDirectory = environment["ROLL4INITIATIVE_TACTICAL_MAP_DIRECTORY"],
+           !configuredDirectory.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return URL(fileURLWithPath: configuredDirectory, isDirectory: true)
+                .appendingPathComponent("Arcane Library PZO30084E.map.json")
+        }
+
         let sourceURL = URL(fileURLWithPath: #filePath)
         return sourceURL
             .deletingLastPathComponent()
