@@ -282,7 +282,7 @@ window.TacticalRender = (() => {
         if (token.id === selectedTokenId) {
           context.beginPath();
           context.strokeStyle = '#d4af37';
-          context.lineWidth = Math.max(4 / view.scale, 2);
+          context.lineWidth = Math.max(2 / view.scale, 1);
           context.arc(
             centerX,
             centerY,
@@ -320,7 +320,7 @@ window.TacticalRender = (() => {
           context.fill();
           context.beginPath();
           context.strokeStyle = tokenColor;
-          context.lineWidth = Math.max(3 / view.scale, 1.5);
+          context.lineWidth = Math.max(1.5 / view.scale, 0.75);
           context.arc(centerX, centerY, emojiBackgroundRadius, 0, Math.PI * 2);
           context.stroke();
           const emojiSize = Math.min(squareWidth, squareHeight) * 0.72;
@@ -361,7 +361,7 @@ window.TacticalRender = (() => {
           context.fill();
           context.beginPath();
           context.strokeStyle = tokenColor;
-          context.lineWidth = Math.max(3 / view.scale, 1.5);
+          context.lineWidth = Math.max(1.5 / view.scale, 0.75);
           context.arc(centerX, centerY, tokenBackgroundRadius, 0, Math.PI * 2);
           context.stroke();
 

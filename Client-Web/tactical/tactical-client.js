@@ -94,6 +94,7 @@ const TacticalClient = (() => {
         events.addEventListener('turn-changed', refresh);
         events.addEventListener('map-changed', refresh);
         events.addEventListener('player-placement-changed', refresh);
+        events.addEventListener('state-updated', refresh);
         return events;
       },
       imageURL(cacheBust = '') {

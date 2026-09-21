@@ -4319,6 +4319,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     drafts[draftKey] = {
       id: character.id,
       name: character.name,
+      tokenDescription: character.tokenDescription || '',
       stats,
       revealStats: typeof character.revealStats === 'boolean' ? character.revealStats : null,
       autoSkipTurn: typeof character.autoSkipTurn === 'boolean' ? character.autoSkipTurn : null,
@@ -6787,7 +6788,7 @@ function getOwnerName() {
     if (!savedCharacter) return false;
     upsertMyCharacter(savedCharacter);
     formDirty = false;
-    updateDraftFromForm();
+    updateDraftForCharacter(savedCharacter);
     return true;
   }
 
