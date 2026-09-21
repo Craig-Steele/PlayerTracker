@@ -5156,7 +5156,6 @@ function getOwnerName() {
         }
       : null;
     const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
-    const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
     playersBody.innerHTML = '';
 
     if (players.length === 0) {
