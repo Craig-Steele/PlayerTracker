@@ -1238,6 +1238,31 @@ Acceptance:
 - exported `.map.zip` packages can be imported by the referee map selector
 - malformed or incomplete map packages receive actionable validation errors
 
+#### M9-05: Creature Token Footprints
+
+Goal: support tokens that occupy more than one grid square while keeping footprint rules configurable by ruleset and usable for systems without a standard size taxonomy.
+
+Planned behavior:
+
+- represent token footprint as grid width and height, independently of the token's center/anchor coordinate
+- retain a 1×1 footprint for existing tactical tokens and for characters with no known size
+- allow rulesets to define mappings from creature size labels to grid footprints; do not assume that size labels have identical meanings across games
+- provide Pathfinder and D&D mappings for their supported size categories, including sizes that occupy multiple squares
+- use an explicit per-token footprint override when a ruleset mapping is unavailable or does not fit the creature
+- keep Traveller usable without inventing a universal Traveller size mapping; default to 1×1 and allow referee-selected footprints for large creatures, vehicles, groups, or other tokens
+- have the server use the full footprint for map-boundary, blocked-square, occupancy, and player-placement-area validation
+- render, select, and hit-test tokens across their full occupied footprint on every tactical client
+- persist footprint data and include it in tactical snapshots and live updates
+
+Acceptance:
+
+- Pathfinder and D&D creatures with supported size labels receive the configured default footprint
+- a referee can override a token's footprint, including for Traveller encounters
+- legacy persisted tokens without footprint data load and behave as 1×1
+- placement is rejected if any square in a token's footprint is out of bounds, blocked, occupied, or outside the applicable player placement area
+- valid multi-square tokens render and can be selected across their full footprint
+- footprint data survives server restart and is present in snapshots and live updates
+
 Acceptance:
 
 - a referee can open an encounter in a desktop browser and see the 2D map
