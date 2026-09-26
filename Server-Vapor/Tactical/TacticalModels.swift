@@ -2,33 +2,60 @@ import Foundation
 import Vapor
 
 struct TacticalMapState: Content, Codable, Equatable {
+    static let formatIdentifier = "TacticalTableTop.Map"
+    static let currentFormatVersion = 1
+
+    let format: String
     let version: Int
     let imagePath: String
     let grid: TacticalMapGrid
     let blockedTiles: [TacticalMapPoint]
     let terrain: TacticalTerrainState
     let elevation: TacticalElevationState
+    let edges: [TacticalMapEdge]?
     let mapPresentation: TacticalMapPresentation
     let playerPlacement: TacticalPlayerPlacement?
 
     init(
-        version: Int,
+        format: String = TacticalMapState.formatIdentifier,
+        version: Int = TacticalMapState.currentFormatVersion,
         imagePath: String,
         grid: TacticalMapGrid,
         blockedTiles: [TacticalMapPoint],
         terrain: TacticalTerrainState,
         elevation: TacticalElevationState,
+        edges: [TacticalMapEdge]? = nil,
         mapPresentation: TacticalMapPresentation,
         playerPlacement: TacticalPlayerPlacement? = nil
     ) {
+        self.format = format
         self.version = version
         self.imagePath = imagePath
         self.grid = grid
         self.blockedTiles = blockedTiles
         self.terrain = terrain
         self.elevation = elevation
+        self.edges = edges
         self.mapPresentation = mapPresentation
         self.playerPlacement = playerPlacement
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case format, version, imagePath, grid, blockedTiles, terrain, elevation, edges, mapPresentation, playerPlacement
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        format = try container.decodeIfPresent(String.self, forKey: .format) ?? Self.formatIdentifier
+        version = try container.decodeIfPresent(Int.self, forKey: .version) ?? Self.currentFormatVersion
+        imagePath = try container.decode(String.self, forKey: .imagePath)
+        grid = try container.decode(TacticalMapGrid.self, forKey: .grid)
+        blockedTiles = try container.decode([TacticalMapPoint].self, forKey: .blockedTiles)
+        terrain = try container.decode(TacticalTerrainState.self, forKey: .terrain)
+        elevation = try container.decode(TacticalElevationState.self, forKey: .elevation)
+        edges = try container.decodeIfPresent([TacticalMapEdge].self, forKey: .edges)
+        mapPresentation = try container.decode(TacticalMapPresentation.self, forKey: .mapPresentation)
+        playerPlacement = try container.decodeIfPresent(TacticalPlayerPlacement.self, forKey: .playerPlacement)
     }
 }
 
@@ -129,6 +156,16 @@ struct TacticalElevationOverride: Content, Codable, Equatable {
     let width: Int
     let height: Int
     let heightFt: Double
+}
+
+struct TacticalMapEdge: Content, Codable, Equatable {
+    let axis: String
+    let x: Int
+    let y: Int
+    let type: String
+    let widthFt: Double?
+    let initialState: String?
+    let locked: Bool?
 }
 
 struct TacticalMapPresentation: Content, Codable, Equatable {

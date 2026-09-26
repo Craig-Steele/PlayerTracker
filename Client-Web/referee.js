@@ -4800,11 +4800,12 @@ window.addEventListener('DOMContentLoaded', () => {
   async function importEncounterMapArchive() {
     const archiveFile = encounterMapArchive?.files?.[0];
     if (!archiveFile) {
-      if (encounterMapStatus) encounterMapStatus.textContent = 'Choose a .map.zip file first.';
+      if (encounterMapStatus) encounterMapStatus.textContent = 'Choose a .tttm file first.';
       return;
     }
-    if (!archiveFile.name.toLowerCase().endsWith('.map.zip')) {
-      if (encounterMapStatus) encounterMapStatus.textContent = 'The map archive must use the .map.zip extension.';
+    const extension = archiveFile.name.toLowerCase();
+    if (!extension.endsWith('.tttm') && !extension.endsWith('.zmap') && !extension.endsWith('.map.zip')) {
+      if (encounterMapStatus) encounterMapStatus.textContent = 'The map package must use the .tttm extension.';
       return;
     }
     if (encounterMapArchiveImport) encounterMapArchiveImport.disabled = true;

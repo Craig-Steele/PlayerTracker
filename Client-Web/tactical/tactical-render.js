@@ -1,5 +1,5 @@
 window.TacticalRender = (() => {
-  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, playerPlacement = null, hideEnemyTokens = false, allowPlacementEdit = false, onPlayerPlacementSelect, tooltip, onTap, onTokenSelect }) {
+  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, playerPlacement = null, hideEnemyTokens = false, allowPlacementEdit = false, indicatorOpacity = 0.25, onPlayerPlacementSelect, tooltip, onTap, onTokenSelect }) {
     const context = canvas.getContext('2d');
     let currentMap = map;
     let currentImage = image;
@@ -20,6 +20,7 @@ window.TacticalRender = (() => {
     let selectedTokenId = null;
     let currentPlayerPlacement = playerPlacement;
     let currentHideEnemyTokens = hideEnemyTokens;
+    let currentIndicatorOpacity = Math.min(0.95, Math.max(0.05, Number(indicatorOpacity) || 0.25));
     let placementDrawMode = false;
     let placementDragStart = null;
     let placementDragEnd = null;
@@ -188,6 +189,33 @@ window.TacticalRender = (() => {
       drawInfiniteBackground(size);
       context.drawImage(currentImage, 0, 0);
 
+      context.globalAlpha = currentIndicatorOpacity;
+      const tileIcons = {
+        difficult: '⚠️',
+        water: '💧',
+        lava: '♨️',
+        impassible: '❌'
+      };
+      for (const tile of currentMap.terrain?.overrides || []) {
+        const row = grid.northSouthSquareCount - tile.y - tile.height;
+        const icon = tileIcons[tile.type];
+        if (!icon) continue;
+        for (let dx = 0; dx < tile.width; dx += 1) for (let dy = 0; dy < tile.height; dy += 1) {
+          drawTileIcon(context, icon, (tile.x + dx) * squareWidth, (row + tile.height - dy - 1) * squareHeight, squareWidth, squareHeight);
+        }
+      }
+      for (const tile of currentMap.elevation?.overrides || []) {
+        const row = grid.northSouthSquareCount - tile.y - tile.height;
+        context.fillStyle = '#9259be';
+        context.fillRect(tile.x * squareWidth, row * squareHeight, tile.width * squareWidth, tile.height * squareHeight);
+        context.fillStyle = '#28143b';
+        context.font = `bold ${Math.min(squareWidth, squareHeight) * 0.27}px sans-serif`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(`${tile.heightFt}′`, (tile.x + tile.width / 2) * squareWidth, (row + tile.height / 2) * squareHeight);
+      }
+      context.globalAlpha = 1;
+
       context.strokeStyle = getComputedStyle(canvas).getPropertyValue('--tactical-grid').trim();
       context.lineWidth = Math.max(1 / view.scale, 0.7);
       context.beginPath();
@@ -204,6 +232,20 @@ window.TacticalRender = (() => {
         context.lineTo(isInfiniteTerrain() ? visibleRight * squareWidth : size.width, y * squareHeight);
       }
       context.stroke();
+
+      context.globalAlpha = currentIndicatorOpacity;
+      if (currentMap.playerPlacement?.defaultBounds) {
+        const bounds = currentMap.playerPlacement.defaultBounds;
+        const left = bounds.west * squareWidth;
+        const top = (grid.northSouthSquareCount - 1 - bounds.north) * squareHeight;
+        const zoneWidth = (bounds.east - bounds.west + 1) * squareWidth;
+        const zoneHeight = (bounds.north - bounds.south + 1) * squareHeight;
+        context.fillStyle = '#1976d2';
+        context.fillRect(left, top, zoneWidth, zoneHeight);
+        context.strokeStyle = '#1976d2';
+        context.lineWidth = Math.max(2 / view.scale, 1);
+        context.strokeRect(left, top, zoneWidth, zoneHeight);
+      }
 
       if (!viewerIsReferee && currentPlayerPlacement) {
         const left = isInfiniteTerrain() ? visibleLeft * squareWidth : 0;
@@ -229,7 +271,7 @@ window.TacticalRender = (() => {
         const placementBottom = (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
         const placementLeft = currentPlayerPlacement.west * squareWidth;
         const placementRight = (currentPlayerPlacement.east + 1) * squareWidth;
-        context.fillStyle = 'rgba(25, 118, 210, 0.16)';
+        context.fillStyle = '#1976d2';
         context.fillRect(placementLeft, placementTop, placementRight - placementLeft, placementBottom - placementTop);
         context.strokeStyle = '#1976d2';
         context.lineWidth = Math.max(3 / view.scale, 1.5);
@@ -242,7 +284,7 @@ window.TacticalRender = (() => {
       if ((viewerIsReferee || allowPlacementEdit) && draft) {
         const draftTop = (grid.northSouthSquareCount - 1 - draft.north) * squareHeight;
         const draftBottom = (grid.northSouthSquareCount - draft.south) * squareHeight;
-        context.fillStyle = 'rgba(25, 118, 210, 0.18)';
+        context.fillStyle = '#1976d2';
         context.fillRect(
           draft.west * squareWidth,
           draftTop,
@@ -262,9 +304,40 @@ window.TacticalRender = (() => {
       context.fillStyle = 'rgba(0, 0, 0, 0.62)';
       for (const tile of currentMap.blockedTiles || []) {
         const row = grid.northSouthSquareCount - 1 - tile.y;
-        context.fillRect(tile.x * squareWidth, row * squareHeight, squareWidth, squareHeight);
+        drawTileIcon(context, '🪨', tile.x * squareWidth, row * squareHeight, squareWidth, squareHeight);
       }
 
+      for (const edge of currentMap.edges || []) {
+        const edgeX = edge.x * squareWidth;
+        const edgeY = (grid.northSouthSquareCount - edge.y) * squareHeight;
+        context.beginPath();
+        context.lineWidth = Math.max(4 / view.scale, Math.min(squareWidth, squareHeight) * 0.085);
+        context.lineCap = 'round';
+        if (edge.type === 'wall') context.strokeStyle = '#28201d';
+        else if (edge.type === 'door') context.strokeStyle = edge.initialState === 'open' ? '#a37735' : '#6b3e22';
+        else if (edge.type === 'doorway') {
+          context.strokeStyle = '#34a0a4';
+          context.setLineDash([5 / view.scale, 4 / view.scale]);
+        } else continue;
+        if (edge.axis === 'vertical') {
+          context.moveTo(edgeX, edgeY - squareHeight);
+          context.lineTo(edgeX, edgeY);
+        } else if (edge.axis === 'horizontal') {
+          context.moveTo(edgeX, edgeY);
+          context.lineTo(edgeX + squareWidth, edgeY);
+        } else continue;
+        context.stroke();
+        context.setLineDash([]);
+        if (edge.type === 'door') {
+          context.fillStyle = '#f4dfb6';
+          context.font = `bold ${Math.min(squareWidth, squareHeight) * 0.18}px sans-serif`;
+          context.textAlign = 'center';
+          context.textBaseline = 'middle';
+          context.fillText(edge.initialState === 'open' ? '↗' : 'D', edge.axis === 'vertical' ? edgeX : edgeX + squareWidth / 2, edge.axis === 'vertical' ? edgeY - squareHeight / 2 : edgeY);
+        }
+      }
+
+      context.globalAlpha = 1;
       for (const token of tokens) {
         if (!viewerIsReferee && (token.isHidden || (currentHideEnemyTokens && token.team === 'enemy'))) continue;
         const row = grid.northSouthSquareCount - 1 - token.y;
@@ -385,6 +458,28 @@ window.TacticalRender = (() => {
       canvas.width = canvas.clientWidth;
       canvas.height = canvas.clientHeight;
       fit();
+    }
+
+    function drawTileIcon(targetContext, icon, x, y, tileWidth, tileHeight) {
+      const size = Math.min(tileWidth, tileHeight);
+      const centered = icon === '🪨' || icon === '❌';
+      const centerX = x + tileWidth * (centered ? 0.5 : 0.82);
+      const centerY = y + tileHeight * (centered ? 0.5 : 0.82);
+      targetContext.save();
+      if (icon === '🪨') {
+        targetContext.beginPath();
+        targetContext.arc(centerX, centerY, size * 0.235, 0, Math.PI * 2);
+        targetContext.fillStyle = 'rgba(24, 27, 30, .82)';
+        targetContext.fill();
+        targetContext.strokeStyle = 'rgba(255, 255, 255, .96)';
+        targetContext.lineWidth = size * 0.035;
+        targetContext.stroke();
+      }
+      targetContext.font = `${size * 0.31}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      targetContext.textAlign = 'center';
+      targetContext.textBaseline = 'middle';
+      targetContext.fillText(icon, centerX, centerY);
+      targetContext.restore();
     }
 
     function mapPointAt(screenX, screenY) {
@@ -568,6 +663,10 @@ window.TacticalRender = (() => {
       },
       setHideEnemyTokens(hidden) {
         currentHideEnemyTokens = Boolean(hidden);
+        draw();
+      },
+      setIndicatorOpacity(opacity) {
+        currentIndicatorOpacity = Math.min(0.95, Math.max(0.05, Number(opacity) || 0.25));
         draw();
       },
       setPlacementDrawMode(enabled) {

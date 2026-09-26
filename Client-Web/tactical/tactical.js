@@ -1,5 +1,13 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const status = document.querySelector('[data-tactical-status]');
+  const indicatorOpacityInputs = [...document.querySelectorAll('[data-indicator-opacity]')];
+  const indicatorOpacityKey = 'roll4-tactical-indicator-opacity';
+  let indicatorOpacity = 25;
+  try {
+    const savedOpacity = Number(localStorage.getItem(indicatorOpacityKey));
+    if ([25, 50, 75].includes(savedOpacity)) indicatorOpacity = savedOpacity;
+  } catch (_) {}
+  indicatorOpacityInputs.forEach((input) => { input.checked = Number(input.value) === indicatorOpacity; });
   const canvas = document.querySelector('[data-tactical-canvas]');
   const resetButton = document.querySelector('[data-tactical-reset]');
   const zoomButton = document.querySelector('[data-tactical-zoom]');
@@ -46,6 +54,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       playerPlacement: playerPlacement.bounds,
       hideEnemyTokens: !session.player.isReferee && encounterState === 'new',
       allowPlacementEdit: session.player.isReferee,
+      indicatorOpacity: indicatorOpacity / 100,
+      indicatorOpacity: indicatorOpacity / 100,
       onPlayerPlacementSelect: (bounds) => {
         ['west', 'east', 'south', 'north'].forEach((key) => {
           const field = placementForm?.querySelector(`[data-placement-${key}]`);
@@ -77,6 +87,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     });
+    indicatorOpacityInputs.forEach((input) => input.addEventListener('change', () => {
+      if (!input.checked) return;
+      const value = Number(input.value);
+      viewport.setIndicatorOpacity(value / 100);
+      try { localStorage.setItem(indicatorOpacityKey, String(value)); } catch (_) {}
+    }));
     client.subscribeToEvents((updatedToken) => {
       const index = tokens.findIndex((token) => token.id === updatedToken.id);
       if (index >= 0) {

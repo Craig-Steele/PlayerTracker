@@ -109,8 +109,8 @@
           <span class="property-control"><input type="file" id="encounter-map-image" accept="image/png" /></span>
         </label>
         <label class="property-row" for="encounter-map-archive">
-          <span class="property-label">Import map ZIP</span>
-          <span class="property-control"><input type="file" id="encounter-map-archive" accept=".map.zip,application/zip" /></span>
+          <span class="property-label">Import map package</span>
+          <span class="property-control"><input type="file" id="encounter-map-archive" accept=".tttm,.zmap,.map.zip,.zip,application/zip,application/x-zip-compressed" /></span>
         </label>
         <label class="property-row" for="encounter-map-sidecar">
           <span class="property-label">Sidecar JSON (optional)</span>
@@ -124,7 +124,7 @@
           <label class="property-row"><span class="property-label">Blocked tiles (optional JSON)</span><span class="property-control"><textarea id="encounter-map-blocked-tiles" rows="3" placeholder="[{&quot;x&quot;:0,&quot;y&quot;:0}]"></textarea></span></label>
         </div>
         <button type="button" id="encounter-map-import" class="secondary">Import PNG Map</button>
-        <button type="button" id="encounter-map-archive-import" class="secondary">Import .map.zip</button>
+        <button type="button" id="encounter-map-archive-import" class="secondary">Import .tttm</button>
       </div>
     </div>
   </div>
@@ -491,6 +491,6 @@
   <script src="ruleset.js?v=3"></script>
   <script src="encounter.js?v=3"></script>
   <script src="referee-visibility.js?v=1"></script>
-  <script src="referee.js?v=95"></script>
+  <script src="referee.js?v=98"></script>
 </body>
 </html>

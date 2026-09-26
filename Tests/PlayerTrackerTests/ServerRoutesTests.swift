@@ -86,6 +86,79 @@ struct ServerRoutesTests {
     }
 
     @Test
+    func testMapPackagesOpenAsTTTMAndLegacyZMapAndRejectFutureVersions() async throws {
+        let dataDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tactical-map-package-tests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dataDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dataDirectory) }
+
+        let tester = try await makeTester(appDataDirectoryOverride: dataDirectory)
+        let referee = try await grantRefereeAccess(in: tester, displayName: "Map Package Referee")
+        let headers = HTTPHeaders([
+            ("Cookie", "roll4_player_session=\(referee)"),
+            ("Content-Type", "application/json")
+        ])
+        let image = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x01, 0x02, 0x03])
+        let sourceMap = try TacticalMapStore().load()
+        var sidecar = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(sourceMap)) as? [String: Any])
+        sidecar["imagePath"] = "Example.png"
+
+        var legacySidecar = sidecar
+        legacySidecar.removeValue(forKey: "format")
+        legacySidecar.removeValue(forKey: "version")
+
+        for (filename, mapObject) in [("Example.tttm", sidecar), ("Example.zmap", legacySidecar)] {
+            let archive = makeStoredMapArchive(sidecar: try JSONSerialization.data(withJSONObject: mapObject), image: image)
+            let response = try await tester.sendRequest(
+                .POST,
+                "/tactical/maps/import-archive",
+                headers: headers,
+                body: ByteBuffer(data: try JSONEncoder().encode(
+                    TacticalMapArchiveImportRequest(filename: filename, archiveBase64: archive.base64EncodedString())
+                ))
+            )
+            XCTAssertEqual(response.status, .ok, response.body.string)
+
+            let mapResponse = try await tester.sendRequest(
+                .GET,
+                "/tactical/map",
+                headers: HTTPHeaders([("Cookie", "roll4_player_session=\(referee)")])
+            )
+            XCTAssertEqual(mapResponse.status, .ok)
+            let importedMap = try mapResponse.content.decode(TacticalMapState.self)
+            XCTAssertEqual(importedMap.format, TacticalMapState.formatIdentifier)
+            XCTAssertEqual(importedMap.version, TacticalMapState.currentFormatVersion)
+            XCTAssertEqual(importedMap.imagePath, "Example.png")
+            XCTAssertEqual(importedMap.grid, sourceMap.grid)
+            XCTAssertEqual(importedMap.blockedTiles, sourceMap.blockedTiles)
+            XCTAssertEqual(importedMap.terrain, sourceMap.terrain)
+            XCTAssertEqual(importedMap.elevation, sourceMap.elevation)
+
+            let imageResponse = try await tester.sendRequest(
+                .GET,
+                "/tactical/map/image",
+                headers: HTTPHeaders([("Cookie", "roll4_player_session=\(referee)")])
+            )
+            XCTAssertEqual(imageResponse.status, .ok)
+            XCTAssertEqual(imageResponse.body.getData(at: imageResponse.body.readerIndex, length: imageResponse.body.readableBytes), image)
+        }
+
+        var futureSidecar = sidecar
+        futureSidecar["version"] = 2
+        let futureArchive = makeStoredMapArchive(sidecar: try JSONSerialization.data(withJSONObject: futureSidecar), image: image)
+        let futureResponse = try await tester.sendRequest(
+            .POST,
+            "/tactical/maps/import-archive",
+            headers: headers,
+            body: ByteBuffer(data: try JSONEncoder().encode(
+                TacticalMapArchiveImportRequest(filename: "Future.tttm", archiveBase64: futureArchive.base64EncodedString())
+            ))
+        )
+        XCTAssertEqual(futureResponse.status, .badRequest)
+        XCTAssertTrue(futureResponse.body.string.contains("Unsupported Tactical Table Top map version 2"))
+    }
+
+    @Test
     func testRefereeCanSelectBundledMapOnlyBeforeEncounterStarts() async throws {
         let tester = try await makeTester()
         let referee = try await grantRefereeAccess(in: tester, displayName: "Map Referee")

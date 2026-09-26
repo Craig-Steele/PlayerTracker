@@ -3,19 +3,23 @@
   "name": "TacticalMapState",
   "description": "Canonical 2D map projection shared with tactical clients.",
   "fields": {
+    "format": "TTT resource format identifier; map sidecars use TacticalTableTop.Map. Legacy sidecars may omit this field.",
     "version": "Integer map schema version.",
     "imagePath": "Map image path relative to the map asset directory.",
     "grid": {
       "eastWestSquareCount": "Number of squares from west to east.",
       "northSouthSquareCount": "Number of squares from north to south.",
       "squareSizeFt": "Physical size of each grid square in feet.",
+      "boundaryBehavior": "Optional map boundary mode: bounded maps restrict token placement to the image bounds without implying wall features; infinite maps allow placement beyond the image edge.",
       "coordinateConvention": {
         "origin": "Map corner from which positive coordinates increase inward."
       }
     },
     "blockedTiles": "Array of blocked square points with integer x and y coordinates.",
-    "terrain": "Terrain type defaults and rectangular overrides.",
+    "terrain": "Terrain type defaults and rectangular overrides, including impassible squares that cannot be entered.",
     "elevation": "Default elevation and rectangular elevation overrides.",
+    "edges": "Optional lattice-edge features. Each record has axis (vertical or horizontal), x, y, type (wall, doorway, or door), and optional widthFt, initialState, and locked fields. Coordinates use a southwest origin; widthFt applies to doorway or door openings.",
+    "playerPlacement": "Optional map-default inclusive player starting bounds: west, east, south, and north grid coordinates.",
     "mapPresentation": "Renderer-facing map appearance settings."
   },
   "deferred": [

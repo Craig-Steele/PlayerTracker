@@ -1142,7 +1142,7 @@ Implemented slice:
 - import a PNG with optional sidecar JSON, or collect minimum grid metadata when no sidecar is provided
 - serve the selected map and image through the tactical routes
 - reject map changes after the encounter starts
-- import a single `.map.zip` package containing the map JSON and image
+- import a single `.tttm` package containing the map JSON and image; continue accepting legacy `.zmap` packages
 - show a preview of the selected map during encounter setup
 - provide specific validation errors for malformed or incomplete map packages
 
@@ -1205,17 +1205,26 @@ Acceptance:
 
 #### M9-04: Map Authoring and Package Export
 
-Goal: provide a map-authoring tool so a referee can create and correct the metadata required by a portable `.map.zip` package.
+Goal: provide a map-authoring tool so a referee can create and correct the metadata required by a portable `.tttm` package.
+
+Tactical Table Top resource file extensions:
+
+- `.tttm` — Tactical Table Top Map
+- `.tttc` — Tactical Table Top Character (reserved; serialization is not implemented)
+- `.tttx` — Tactical Table Top aggregate/package for campaigns or collections (reserved; serialization is not implemented)
 
 Planned behavior:
 
+- make the map-authoring tool available to anyone without requiring campaign membership or referee privileges
+- keep in-progress authoring work private to the author; use browser-local draft storage for the initial tool so drafts are not visible to other server users, and make clear that drafts do not sync across browsers or devices
 - import a PNG as the map background
 - crop non-map borders from the imported image before grid alignment
 - define east-west and north-south grid measurements, square size, and coordinate origin
-- mark blocked tiles with click and drag
-- paint terrain types such as normal, difficult, water, and lava
-- mark walls on tile edges, separate from blocked tile occupancy
-- paint or enter elevation values independently from terrain type
+- paint obstacle squares that cannot be entered
+- paint terrain properties such as normal, difficult terrain, water, and lava, independently from impassable obstacles
+- paint elevation heights independently from terrain and obstacle data
+- author walls, doorways, and doors on grid edges
+- choose bounded or infinite map boundaries; bounded maps restrict placement to the map without adding wall data
 - provide eraser and undo controls
 - preview the final tactical rendering
 - validate the map before export
@@ -1223,19 +1232,38 @@ Planned behavior:
 
 Canonical data distinctions:
 
-- `blockedTiles` represent squares that cannot be entered
+- `blockedTiles` represent obstacle squares that cannot be entered
 - `terrain` represents movement or environmental properties of squares
-- `walls` represent barriers on the edges between squares
+- `edges` represent wall and door features on grid-line segments; an edge with no feature is open
 - `elevation` represents height independently from terrain
+
+Canonical edge representation:
+
+- encode each featured edge segment once using `axis`, `x`, `y`, and `type`
+- keep a wall stroke on the horizontal or vertical lattice axis selected at pointer-down; snap near-edge pointer input to the nearest lattice edge
+- use `grid.boundaryBehavior` to distinguish bounded placement from infinite placement; boundary behavior does not create or remove edge features
+- use the southwest grid origin: a vertical segment lies on grid line `x` between `y` and `y + 1`; a horizontal segment lies on grid line `y` between `x` and `x + 1`
+- support `wall`, `doorway`, and `door` edge types; a doorway records an intentional opening in a wall line, while a door records a closable feature in that opening
+- allow a door to specify `widthFt`, `initialState` (such as `open` or `closed`), and whether it is locked
+- store the map-authored initial door state in the sidecar; store door state changes made during play in encounter state
+- permit no more than one edge feature at a given axis and coordinate, and validate edge coordinates against map bounds
+- treat an omitted edge feature as open; use doorway width metadata where a passage clearance narrower than one full grid segment needs to be represented
+
+Squeezing is creature- and ruleset-dependent movement behavior, not a painted terrain or edge type. Map geometry, including edge features and optional doorway width, should provide inputs for later movement rules to determine whether a creature can squeeze through a passage.
 
 Acceptance:
 
-- a referee can crop an imported PNG when its border does not align to the grid
-- a referee can align a grid to the cropped map image
-- a referee can create blocked, terrain, wall, and elevation metadata without editing JSON by hand
+- any user can author a map without campaign membership or referee privileges
+- authoring drafts are private to the browser that created them and are not exposed to other server users
+- a user can crop an imported PNG when its border does not align to the grid
+- a user can align a grid to the cropped map image
+- a user can choose bounded or infinite map behavior; bounded maps restrict placement to map bounds without creating walls in `edges`
+- a user can create obstacle, terrain, edge-feature, and elevation metadata without editing JSON by hand
+- walls, doorways, and doors export with unambiguous lattice-edge coordinates; invalid or duplicate edge records receive actionable validation errors
+- exported door records include initial state, and encounter-time door changes do not alter the map package
 - the editor preview matches the tactical client’s coordinate convention
-- the preview and exported `.map.zip` package use the cropped image and matching grid coordinates
-- exported `.map.zip` packages can be imported by the referee map selector
+- the preview and exported `.tttm` package use the cropped image and matching grid coordinates
+- exported `.tttm` packages can be imported by the referee map selector; legacy `.zmap` packages remain importable
 - malformed or incomplete map packages receive actionable validation errors
 
 #### M9-05: Creature Token Footprints

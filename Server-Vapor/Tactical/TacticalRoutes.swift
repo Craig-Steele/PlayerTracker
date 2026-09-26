@@ -113,6 +113,9 @@ extension RoutesBuilder {
                   input.map.grid.squareSizeFt > 0 else {
                 throw Abort(.badRequest, reason: "The PNG and required map metadata are invalid.")
             }
+            if let reason = TacticalMapValidator.validationError(for: input.map) {
+                throw Abort(.badRequest, reason: reason)
+            }
             let name = input.filename.replacingOccurrences(of: ".png", with: "", options: [.caseInsensitive, .anchored])
             let imported = try await tacticalMapSelectionStore.importMap(
                 name: name,
@@ -136,7 +139,8 @@ extension RoutesBuilder {
                 throw Abort(.conflict, reason: "A map can only be imported during a new encounter.")
             }
             let input = try req.content.decode(TacticalMapArchiveImportRequest.self)
-            guard input.filename.lowercased().hasSuffix(".map.zip"),
+            let archiveFilename = input.filename.lowercased()
+            guard archiveFilename.hasSuffix(".tttm") || archiveFilename.hasSuffix(".zmap") || archiveFilename.hasSuffix(".map.zip"),
                   let archiveData = Data(base64Encoded: input.archiveBase64),
                   archiveData.count <= 35 * 1024 * 1024 else {
                 throw Abort(.badRequest, reason: "The map archive is invalid or too large.")
@@ -192,14 +196,19 @@ extension RoutesBuilder {
                   map.grid.squareSizeFt > 0 else {
                 throw Abort(.badRequest, reason: "The map sidecar must define positive grid dimensions and square size.")
             }
+            if let reason = TacticalMapValidator.validationError(for: map) {
+                throw Abort(.badRequest, reason: reason)
+            }
 
             map = TacticalMapState(
+                format: map.format,
                 version: map.version,
                 imagePath: imageURL.lastPathComponent,
                 grid: map.grid,
                 blockedTiles: map.blockedTiles,
                 terrain: map.terrain,
                 elevation: map.elevation,
+                edges: map.edges,
                 mapPresentation: map.mapPresentation,
                 playerPlacement: map.playerPlacement
             )
@@ -368,8 +377,12 @@ extension RoutesBuilder {
                (input.x < playerBounds.west || input.x > playerBounds.east || input.y < playerBounds.south || input.y > playerBounds.north) {
                 throw Abort(.forbidden, reason: "That square is outside the player placement area.")
             }
-            guard !map.blockedTiles.contains(where: { $0.x == input.x && $0.y == input.y }) else {
-                throw Abort(.conflict, reason: "That square is blocked.")
+            let terrainType = map.terrain.overrides.last(where: {
+                input.x >= $0.x && input.x < $0.x + $0.width &&
+                input.y >= $0.y && input.y < $0.y + $0.height
+            })?.type ?? map.terrain.defaultType
+            guard !map.blockedTiles.contains(where: { $0.x == input.x && $0.y == input.y }), terrainType != "impassible" else {
+                throw Abort(.conflict, reason: "That square is blocked or impassable.")
             }
             do {
                 let token = try await tacticalPlacementStore.place(

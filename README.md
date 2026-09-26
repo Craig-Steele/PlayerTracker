@@ -33,6 +33,14 @@ The current working architecture is a Vapor service running on a Mac and serving
 - loads creature and equipment library assets from the ruleset manifest files in `Client-Web/rulesets/*.json`
 - starts on port `8080`
 
+## Tactical Table Top resource file extensions
+
+- `.tttm` — Tactical Table Top Map; the current ZIP-based map package containing a PNG and map JSON sidecar.
+- `.tttc` — Tactical Table Top Character; reserved for a future character file format.
+- `.tttx` — Tactical Table Top aggregate/package; reserved for future campaign or collection packages.
+
+The map authoring tool exports `.tttm`. It continues to open legacy `.zmap` files (and earlier `.map.zip` packages); those files are not rewritten unless explicitly exported as a new `.tttm`.
+
 ## Requirements
 
 - macOS

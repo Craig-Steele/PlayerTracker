@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="tactical/tactical-styles.css?v=4">
+  <link rel="stylesheet" href="tactical/tactical-styles.css?v=6">
 </head>
 <body>
   <main class="tactical-shell">
@@ -22,6 +22,12 @@
         Character
         <select data-tactical-character aria-label="Character to place"></select>
       </label>
+      <fieldset class="tactical-indicator-control">
+        <legend>Indicator opacity</legend>
+        <label><input type="radio" name="tactical-indicator-opacity" value="25" data-indicator-opacity checked>25%</label>
+        <label><input type="radio" name="tactical-indicator-opacity" value="50" data-indicator-opacity>50%</label>
+        <label><input type="radio" name="tactical-indicator-opacity" value="75" data-indicator-opacity>75%</label>
+      </fieldset>
       <button type="button" data-tactical-reset>Reset view</button>
       <button type="button" data-tactical-zoom>Zoom</button>
     </div>
@@ -47,8 +53,8 @@
   </div>
   <script src="tactical/tactical-state.js?v=2"></script>
   <script src="tactical/tactical-client.js?v=4"></script>
-  <script src="tactical/tactical-render.js?v=6"></script>
+  <script src="tactical/tactical-render.js?v=12"></script>
   <script src="tactical/tactical-controls.js?v=2"></script>
-  <script src="tactical/tactical.js?v=5"></script>
+  <script src="tactical/tactical.js?v=7"></script>
 </body>
 </html>

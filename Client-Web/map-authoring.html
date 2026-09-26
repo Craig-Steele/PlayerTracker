@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Map Authoring</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="tactical/tactical-styles.css?v=6">
+  <link rel="stylesheet" href="map-authoring.css?v=11">
+</head>
+<body class="map-authoring-page">
+  <main class="tactical-shell map-authoring-shell">
+    <section class="authoring-workspace" data-authoring-workspace>
+      <div class="authoring-toolbar" role="toolbar" aria-label="Map painting tools">
+        <h1 class="authoring-title">Map Authoring</h1>
+        <details class="authoring-tool-group authoring-create-group" data-tool-category open>
+          <summary>Create Map</summary>
+          <div class="authoring-tool-items authoring-create-actions">
+            <button type="button" data-load-map-image aria-controls="authoring-map-image-file">Load Map Image</button>
+            <input id="authoring-map-image-file" type="file" accept="image/png,.png" data-authoring-file hidden>
+            <button type="button" data-load-map-package aria-controls="authoring-map-package-file">Load Map Package</button>
+            <input id="authoring-map-package-file" type="file" accept=".tttm,.zmap,.map.zip,application/zip" data-authoring-archive hidden>
+            <button type="button" class="secondary" data-new-blank-map>New Blank Map</button>
+            <button type="button" class="secondary" data-authoring-restore hidden>Restore saved draft</button>
+            <p class="authoring-note">Drafts stay in this browser. Export a .tttm package to share or use in a campaign. Choose a brush, then drag to paint. Shift-click or Shift-drag on a painting brush removes only that brush’s value. Use each category’s Erase control to remove that category from squares or edges. Edge strokes stay horizontal or vertical based on where the drag starts. Bounded maps restrict placement to the map; infinite maps allow play beyond its edge.</p>
+          </div>
+          <div class="authoring-tool-items authoring-settings-items">
+            <label>Map name <input type="text" data-map-name maxlength="80" value="Untitled map"></label>
+            <label>Squares east–west <input type="number" min="1" max="200" data-grid-width value="20"></label>
+            <label>Squares north–south <input type="number" min="1" max="200" data-grid-height value="20"></label>
+            <label>Square size (feet) <input type="number" min="0.1" step="0.1" data-square-size value="5"></label>
+            <label class="authoring-zone-toggle" title="Allow play beyond the image edge. When unchecked, placement is restricted to the map; boundaries are not walls."><input type="checkbox" data-infinite-canvas> Infinite canvas</label>
+          </div>
+        </details>
+        <details class="authoring-tool-group" data-tool-category open>
+          <summary>Edit</summary>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="pan" aria-pressed="true">Pan</button>
+            <button type="button" class="secondary" data-undo disabled>Undo</button>
+            <button type="button" class="secondary" data-fit>Fit map</button>
+          </div>
+        </details>
+        <details class="authoring-tool-group" data-tool-category>
+          <summary>Terrain</summary>
+          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="terrain"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="difficult" aria-pressed="false">⚠️ Difficult</button>
+            <button type="button" data-tool="water" aria-pressed="false">💧 Water</button>
+            <button type="button" data-tool="lava" aria-pressed="false">♨️ Hot / Lava</button>
+            <button type="button" data-tool="impassible" aria-pressed="false">❌ Impassible</button>
+            <button type="button" data-tool="erase-terrain" aria-pressed="false">Erase Terrain</button>
+          </div>
+        </details>
+        <details class="authoring-tool-group" data-tool-category>
+          <summary>Obstacles</summary>
+          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="obstacles"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="obstacle" aria-pressed="false">🪨 Obstacle</button>
+            <button type="button" data-tool="erase-obstacles" aria-pressed="false">Erase Obstacles</button>
+          </div>
+        </details>
+        <details class="authoring-tool-group" data-tool-category>
+          <summary>Elevation</summary>
+          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="elevation"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="elevation" aria-pressed="false">Paint height</button>
+            <button type="button" data-tool="erase-elevation" aria-pressed="false">Erase Elevation</button>
+            <label class="authoring-height">Feet <input type="number" step="1" value="5" data-elevation-value></label>
+          </div>
+        </details>
+        <details class="authoring-tool-group" data-tool-category>
+          <summary>Edges</summary>
+          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="edges"><option value="0">0%</option><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="wall" aria-pressed="false">Wall</button>
+            <button type="button" data-tool="door" aria-pressed="false">Door</button>
+            <button type="button" data-tool="erase-edges" aria-pressed="false">Erase Edges</button>
+            <label class="authoring-height">Width (ft) <input type="number" min="0.1" step="0.1" data-door-width value="5"></label>
+            <label class="authoring-height">Initial state
+              <select data-door-state><option value="closed">Closed</option><option value="open">Open</option></select>
+            </label>
+            <label class="authoring-height"><input type="checkbox" data-door-locked> Locked</label>
+          </div>
+        </details>
+        <details class="authoring-tool-group" data-tool-category>
+          <summary>Starting Zone</summary>
+          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="startingZone"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="starting-zone" aria-pressed="false">Draw Zone</button>
+            <button type="button" class="secondary" data-zone-clear>Clear Zone</button>
+          </div>
+        </details>
+        <div class="authoring-bottom-bar">
+          <div data-map-validation role="status"></div>
+          <div class="authoring-export-actions">
+            <button type="button" class="secondary" data-validate>Validate map</button>
+            <button type="button" data-export disabled>Export .tttm</button>
+          </div>
+        </div>
+        <div class="authoring-status" data-authoring-status role="status">Choose a map image or open a map package to begin.</div>
+      </div>
+
+      <div class="authoring-stage">
+        <section class="authoring-crop-panel" data-authoring-crop hidden>
+          <div class="authoring-section-heading"><h2>1. Crop the map image</h2><span>Drag a rectangle over the map area.</span></div>
+          <div class="authoring-crop-viewport"><canvas data-crop-canvas aria-label="Select map image crop"></canvas></div>
+          <div class="authoring-actions">
+            <button type="button" class="secondary" data-crop-reset>Use full image</button>
+            <button type="button" data-crop-apply>Apply crop and align grid</button>
+          </div>
+        </section>
+        <div class="tactical-viewport authoring-viewport" hidden><canvas class="tactical-canvas" data-map-canvas aria-label="Paint map features"></canvas></div>
+      </div>
+    </section>
+  </main>
+  <script src="map-package.js?v=1"></script>
+  <script src="map-authoring.js?v=38"></script>
+</body>
+</html>
