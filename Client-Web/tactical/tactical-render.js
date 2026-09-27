@@ -1,9 +1,11 @@
 window.TacticalRender = (() => {
-  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, playerPlacement = null, hideEnemyTokens = false, allowPlacementEdit = false, indicatorOpacity = 0.25, onPlayerPlacementSelect, tooltip, onTap, onTokenSelect }) {
+  const userAgent = navigator.userAgent || '';
+  const emojiVerticalOffset = /iPhone|iPod/i.test(userAgent) && /Safari/i.test(userAgent) && !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent) ? 0 : 0.12;
+
+  function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, playerPlacement = null, hideEnemyTokens = false, allowPlacementEdit = false, indicatorOpacity = 0.25, gridOpacity = 0.6, onPlayerPlacementSelect, tooltip, onTap, onTokenSelect }) {
     const context = canvas.getContext('2d');
     let currentMap = map;
     let currentImage = image;
-    const emojiTokenCache = new Map();
     const graphemeSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
       ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
       : null;
@@ -20,7 +22,13 @@ window.TacticalRender = (() => {
     let selectedTokenId = null;
     let currentPlayerPlacement = playerPlacement;
     let currentHideEnemyTokens = hideEnemyTokens;
-    let currentIndicatorOpacity = Math.min(0.95, Math.max(0.05, Number(indicatorOpacity) || 0.25));
+    let currentIndicatorOpacity = clampOpacity(indicatorOpacity, 0.25);
+    let currentGridOpacity = clampOpacity(gridOpacity, 0.6);
+
+    function clampOpacity(value, fallback) {
+      const opacity = Number(value);
+      return Math.min(1, Math.max(0, Number.isFinite(opacity) ? opacity : fallback));
+    }
     let placementDrawMode = false;
     let placementDragStart = null;
     let placementDragEnd = null;
@@ -225,7 +233,7 @@ window.TacticalRender = (() => {
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         // Emoji fonts often include extra vertical whitespace above the visible glyph.
-        context.fillText(sticker.emoji, centerX, centerY + fontSize * 0.12);
+        context.fillText(sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset);
         context.restore();
       }
 
@@ -244,7 +252,9 @@ window.TacticalRender = (() => {
         context.moveTo(isInfiniteTerrain() ? visibleLeft * squareWidth : 0, y * squareHeight);
         context.lineTo(isInfiniteTerrain() ? visibleRight * squareWidth : size.width, y * squareHeight);
       }
+      context.globalAlpha = currentGridOpacity;
       context.stroke();
+      context.globalAlpha = 1;
 
       context.globalAlpha = currentIndicatorOpacity;
       if (currentMap.playerPlacement?.defaultBounds) {
@@ -402,68 +412,52 @@ window.TacticalRender = (() => {
           (isKeycapEmoji || /\p{Extended_Pictographic}/u.test(trimmedTokenLabel));
         if (isSingleEmoji) {
           const emojiBackgroundRadius = Math.min(squareWidth, squareHeight) * 0.46;
+          context.save();
           context.beginPath();
-          context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          context.globalAlpha = 0.25;
+          context.fillStyle = tokenColor;
           context.arc(centerX, centerY, emojiBackgroundRadius, 0, Math.PI * 2);
           context.fill();
+          context.restore();
           context.beginPath();
           context.strokeStyle = tokenColor;
           context.lineWidth = Math.max(1.5 / view.scale, 0.75);
           context.arc(centerX, centerY, emojiBackgroundRadius, 0, Math.PI * 2);
           context.stroke();
-          const emojiSize = Math.min(squareWidth, squareHeight) * 0.72;
-          if (isKeycapEmoji) {
-            context.save();
-            context.font = `${emojiSize}px system-ui, "Apple Color Emoji", sans-serif`;
-            context.textAlign = 'left';
-            context.textBaseline = 'alphabetic';
-            const emojiOrigin = centeredTextOrigin(context, trimmedTokenLabel, centerX, centerY);
-            context.fillText(trimmedTokenLabel, emojiOrigin.x, emojiOrigin.y);
-            context.restore();
-            continue;
-          }
-          const cacheKey = `${tokenLabel}:${tokenColor}`;
-          let emojiImage = emojiTokenCache.get(cacheKey);
-          if (!emojiImage) {
-            const emojiCanvas = document.createElement('canvas');
-            emojiCanvas.width = 128;
-            emojiCanvas.height = 128;
-            const emojiContext = emojiCanvas.getContext('2d');
-            emojiContext.font = '96px system-ui, "Apple Color Emoji", sans-serif';
-            emojiContext.textAlign = 'left';
-            emojiContext.textBaseline = 'alphabetic';
-            const emojiOrigin = centeredTextOrigin(emojiContext, trimmedTokenLabel, 64, 64);
-            emojiContext.fillText(trimmedTokenLabel, emojiOrigin.x, emojiOrigin.y);
-            emojiContext.globalCompositeOperation = 'source-in';
-            emojiContext.fillStyle = tokenColor;
-            emojiContext.fillRect(0, 0, 128, 128);
-            emojiImage = emojiCanvas;
-            emojiTokenCache.set(cacheKey, emojiImage);
-          }
-          context.drawImage(emojiImage, centerX - emojiSize / 2, centerY - emojiSize / 2, emojiSize, emojiSize);
+          const emojiSize = Math.min(squareWidth, squareHeight) * 0.576;
+          context.save();
+          context.font = `${emojiSize}px system-ui, "Apple Color Emoji", sans-serif`;
+          context.textAlign = 'left';
+          context.textBaseline = 'alphabetic';
+          const emojiOrigin = centeredTextOrigin(context, trimmedTokenLabel, centerX, centerY + emojiSize * emojiVerticalOffset);
+          context.fillText(trimmedTokenLabel, emojiOrigin.x, emojiOrigin.y);
+          context.restore();
         } else {
           const tokenBackgroundRadius = Math.min(squareWidth, squareHeight) * 0.46;
+          context.save();
           context.beginPath();
-          context.fillStyle = 'rgba(0, 0, 0, 0.5)';
+          context.globalAlpha = 0.25;
+          context.fillStyle = tokenColor;
           context.arc(centerX, centerY, tokenBackgroundRadius, 0, Math.PI * 2);
           context.fill();
+          context.restore();
           context.beginPath();
           context.strokeStyle = tokenColor;
           context.lineWidth = Math.max(1.5 / view.scale, 0.75);
           context.arc(centerX, centerY, tokenBackgroundRadius, 0, Math.PI * 2);
           context.stroke();
 
-          const initialFontSize = Math.min(squareWidth, squareHeight) * 0.68;
+          const initialFontSize = Math.min(squareWidth, squareHeight) * 0.544;
           context.font = `bold ${initialFontSize}px sans-serif`;
           const initialWidth = context.measureText(initials).width;
           const fittedFontSize = initialWidth > initialFontSize * 1.35
             ? initialFontSize * (initialFontSize * 1.35 / initialWidth)
             : initialFontSize;
           context.font = `bold ${fittedFontSize}px sans-serif`;
-          context.fillStyle = tokenColor;
+          context.fillStyle = '#000';
           context.textAlign = 'center';
           context.textBaseline = 'middle';
-          context.fillText(initials, centerX, centerY);
+          context.fillText(initials, centerX, centerY + fittedFontSize * 0.12);
         }
       }
       context.restore();
@@ -681,7 +675,11 @@ window.TacticalRender = (() => {
         draw();
       },
       setIndicatorOpacity(opacity) {
-        currentIndicatorOpacity = Math.min(0.95, Math.max(0.05, Number(opacity) || 0.25));
+        currentIndicatorOpacity = clampOpacity(opacity, 0.25);
+        draw();
+      },
+      setGridOpacity(opacity) {
+        currentGridOpacity = clampOpacity(opacity, 0.6);
         draw();
       },
       setPlacementDrawMode(enabled) {

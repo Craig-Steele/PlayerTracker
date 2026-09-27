@@ -1,5 +1,7 @@
 (() => {
   const $ = (selector) => document.querySelector(selector);
+  const userAgent = navigator.userAgent || '';
+  const emojiVerticalOffset = /iPhone|iPod/i.test(userAgent) && /Safari/i.test(userAgent) && !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent) ? 0 : 0.12;
   const fileInput = $('[data-authoring-file]');
   const archiveInput = $('[data-authoring-archive]');
   const status = $('[data-authoring-status]');
@@ -25,6 +27,8 @@
   let strokeSnapshot = null;
   let lastPainted = '';
   let pointerMode = '';
+  const activePointers = new Map();
+  let pinchStart = null;
   let strokeEdgeAxis = '';
   let strokeClearing = false;
   let lastPointer = null;
@@ -37,7 +41,7 @@
   let draftAvailable = false;
 
   function syncCanvasCursor() {
-    canvas.style.cursor = pointerMode === 'pan' ? 'grabbing' : (spacePan || tool === 'pan' ? 'grab' : 'crosshair');
+    canvas.style.cursor = pointerMode === 'pan' || pointerMode === 'pinch' ? 'grabbing' : (spacePan || tool === 'pan' ? 'grab' : 'crosshair');
   }
 
   const tileIcons = {
@@ -53,6 +57,48 @@
     water: '#168bd2',
     lava: '#e53935'
   };
+  const blankBackgroundPreset = $('[data-blank-background-preset]');
+  const blankBackgroundColor = $('[data-blank-background-color]');
+
+  async function applyBlankBackground(color) {
+    if (!/^#[0-9a-f]{6}$/i.test(color) || !map?.mapPresentation?.blankBackgroundColor) return;
+    const width = mapImage?.naturalWidth || map.grid.eastWestSquareCount * 64;
+    const height = mapImage?.naturalHeight || map.grid.northSouthSquareCount * 64;
+    const background = document.createElement('canvas');
+    background.width = width;
+    background.height = height;
+    const backgroundContext = background.getContext('2d');
+    backgroundContext.fillStyle = color;
+    backgroundContext.fillRect(0, 0, width, height);
+    const blob = await new Promise((resolve, reject) => background.toBlob((result) => result ? resolve(result) : reject(new Error('Could not update the blank map background.')), 'image/png'));
+    imageBlob = blob;
+    mapImage = await loadImage(blob);
+    mapEdgeColor = color;
+    map.mapPresentation.blankBackgroundColor = color;
+    draw();
+    refreshValidation();
+    scheduleSave();
+  }
+
+  function syncBlankBackgroundControls() {
+    const color = map?.mapPresentation?.blankBackgroundColor;
+    if (!/^#[0-9a-f]{6}$/i.test(color || '')) return;
+    blankBackgroundColor.value = color;
+    blankBackgroundPreset.value = [...blankBackgroundPreset.options].some((option) => option.value === color) ? color : 'custom';
+  }
+
+  blankBackgroundPreset.addEventListener('change', () => {
+    if (blankBackgroundPreset.value === 'custom') return;
+    blankBackgroundColor.value = blankBackgroundPreset.value;
+    applyBlankBackground(blankBackgroundColor.value).catch((error) => { status.textContent = error.message; });
+  });
+  blankBackgroundColor.addEventListener('input', () => {
+    const isPreset = [...blankBackgroundPreset.options].some((option) => option.value === blankBackgroundColor.value);
+    blankBackgroundPreset.value = isPreset ? blankBackgroundColor.value : 'custom';
+  });
+  blankBackgroundColor.addEventListener('change', () => {
+    applyBlankBackground(blankBackgroundColor.value).catch((error) => { status.textContent = error.message; });
+  });
 
   const layerOpacityInputs = [...document.querySelectorAll('[data-layer-opacity]')];
   $('[data-load-map-image]').addEventListener('click', () => fileInput.click());
@@ -74,11 +120,12 @@
       blankCanvas.width = columns * pixelsPerSquare;
       blankCanvas.height = rows * pixelsPerSquare;
       const blankContext = blankCanvas.getContext('2d');
-      blankContext.fillStyle = '#fff';
+      const backgroundColor = blankBackgroundColor.value;
+      blankContext.fillStyle = backgroundColor;
       blankContext.fillRect(0, 0, blankCanvas.width, blankCanvas.height);
       imageBlob = await new Promise((resolve, reject) => blankCanvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Could not create the blank map image.')), 'image/png'));
       mapImage = await loadImage(imageBlob);
-      mapEdgeColor = '#fff';
+      mapEdgeColor = backgroundColor;
       const name = $('[data-map-name]').value.trim() || 'Untitled map';
       map = {
         format: TacticalMapPackage.FORMAT_IDENTIFIER,
@@ -96,7 +143,7 @@
         terrain: { defaultType: 'normal', overrides: [] },
         elevation: { defaultHeightFt: 0, overrides: [] },
         edges: [],
-        mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } }
+        mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 }, blankBackgroundColor: backgroundColor }
       };
       sourceImage = null;
       cropRect = null;
@@ -349,6 +396,8 @@
       map.edges ||= [];
       map.mapPresentation ||= { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } };
       map.mapPresentation.sideWallColor ||= { r: 0, g: 0, b: 0, a: 1 };
+      syncBlankBackgroundControls();
+      if (map.mapPresentation.blankBackgroundColor) mapEdgeColor = map.mapPresentation.blankBackgroundColor;
       $('[data-grid-width]').value = map.grid.eastWestSquareCount;
       $('[data-grid-height]').value = map.grid.northSouthSquareCount;
       $('[data-square-size]').value = map.grid.squareSizeFt;
@@ -695,9 +744,34 @@
     draw(); scheduleSave(); refreshValidation();
   });
 
+  function startPinch() {
+    const [first, second] = [...activePointers.values()].slice(0, 2);
+    if (!first || !second) return;
+    const rect = canvas.getBoundingClientRect();
+    const center = { x: (first.x + second.x) / 2 - rect.left, y: (first.y + second.y) / 2 - rect.top };
+    pinchStart = {
+      distance: Math.max(1, Math.hypot(first.x - second.x, first.y - second.y)),
+      scale: view.scale,
+      worldX: (center.x - view.x) / view.scale,
+      worldY: (center.y - view.y) / view.scale
+    };
+  }
+
   canvas.addEventListener('pointerdown', (event) => {
     if (!mapImage) return;
     canvas.setPointerCapture(event.pointerId);
+    activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (activePointers.size >= 2) {
+      if (pointerMode === 'paint' || pointerMode === 'edge' || pointerMode === 'zone') endStroke();
+      placementDragStart = null;
+      placementDragEnd = null;
+      pointerMode = 'pinch';
+      lastPaintPoint = null;
+      startPinch();
+      syncCanvasCursor();
+      draw();
+      return;
+    }
     strokeClearing = event.shiftKey;
     lastPointer = { x: event.clientX, y: event.clientY };
     if (spacePan || tool === 'pan') { pointerMode = 'pan'; syncCanvasCursor(); return; }
@@ -722,6 +796,19 @@
     if (cell) { paintCell(cell); lastPaintPoint = { x: cell.mapX, y: cell.mapY }; }
   });
   canvas.addEventListener('pointermove', (event) => {
+    if (activePointers.has(event.pointerId)) activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointerMode === 'pinch') {
+      const [first, second] = [...activePointers.values()].slice(0, 2);
+      if (!first || !second || !pinchStart) return;
+      const rect = canvas.getBoundingClientRect();
+      const center = { x: (first.x + second.x) / 2 - rect.left, y: (first.y + second.y) / 2 - rect.top };
+      const distance = Math.hypot(first.x - second.x, first.y - second.y);
+      view.scale = Math.min(8, Math.max(.15, pinchStart.scale * distance / pinchStart.distance));
+      view.x = center.x - pinchStart.worldX * view.scale;
+      view.y = center.y - pinchStart.worldY * view.scale;
+      draw();
+      return;
+    }
     if (!pointerMode) return;
     if (pointerMode === 'edge') {
       const edge = edgeAtPoint(event.clientX, event.clientY, strokeEdgeAxis);
@@ -755,7 +842,28 @@
     }
     lastPaintPoint = { x: cell.mapX, y: cell.mapY };
   });
-  function finishPointer() {
+  function finishPointer(event) {
+    activePointers.delete(event.pointerId);
+    if (pointerMode === 'pinch') {
+      if (activePointers.size >= 2) {
+        startPinch();
+      } else if (activePointers.size === 1) {
+        pinchStart = null;
+        pointerMode = 'pan';
+        lastPointer = [...activePointers.values()][0];
+      } else {
+        pinchStart = null;
+        pointerMode = '';
+        lastPointer = null;
+      }
+      syncCanvasCursor();
+      draw();
+      return;
+    }
+    if (pointerMode === 'pan' && activePointers.size > 0) {
+      lastPointer = [...activePointers.values()][0];
+      return;
+    }
     if (pointerMode === 'paint' || pointerMode === 'edge') endStroke();
     if (pointerMode === 'zone' && placementDragStart && placementDragEnd) {
       map.playerPlacement = { defaultBounds: {
@@ -913,7 +1021,7 @@
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       // Emoji fonts often include extra vertical whitespace above the visible glyph.
-      ctx.fillText(sticker.emoji, centerX, centerY + fontSize * .12);
+      ctx.fillText(sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset);
       ctx.restore();
     }
     ctx.restore();
@@ -1059,7 +1167,9 @@
         status.textContent = `Saved ${saveHandle.name}.`;
       } else {
         stage = 'starting the download';
-        const url = URL.createObjectURL(zip);
+        // Safari may append .zip based on application/zip even when downloadName ends in .tttm.
+        const downloadBlob = new Blob([zip], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(downloadBlob);
         const link = document.createElement('a');
         link.href = url; link.download = downloadName;
         link.hidden = true;
@@ -1099,6 +1209,8 @@
     map.elevation.overrides ||= [];
     map.mapPresentation ||= { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } };
     map.mapPresentation.sideWallColor ||= { r: 0, g: 0, b: 0, a: 1 };
+    syncBlankBackgroundControls();
+    if (map.mapPresentation.blankBackgroundColor) mapEdgeColor = map.mapPresentation.blankBackgroundColor;
     if (map.playerPlacement && !Object.keys(map.playerPlacement).length) delete map.playerPlacement;
     $('[data-map-name]').value = draft.name || 'Untitled map';
     $('[data-grid-width]').value = map.grid.eastWestSquareCount;

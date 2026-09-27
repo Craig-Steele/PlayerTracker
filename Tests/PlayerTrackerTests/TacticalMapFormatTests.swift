@@ -22,6 +22,21 @@ struct TacticalMapFormatTests {
     }
 
     @Test
+    func blankMapBackgroundColorRoundTripsInMapPresentation() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["mapPresentation"] = [
+            "sideWallColor": ["r": 0, "g": 0, "b": 0, "a": 1],
+            "blankBackgroundColor": "#7cba5b"
+        ]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(map.mapPresentation.blankBackgroundColor == "#7cba5b")
+
+        let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(map)) as? [String: Any]
+        let presentation = try #require(encoded?["mapPresentation"] as? [String: Any])
+        #expect(presentation["blankBackgroundColor"] as? String == "#7cba5b")
+    }
+
+    @Test
     func unsupportedMapFormatVersionHasUsefulValidationError() throws {
         let map = try JSONDecoder().decode(TacticalMapState.self, from: mapJSON(version: 2))
 

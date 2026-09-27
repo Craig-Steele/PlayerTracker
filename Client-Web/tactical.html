@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="tactical/tactical-styles.css?v=6">
+  <link rel="stylesheet" href="tactical/tactical-styles.css?v=7">
 </head>
 <body>
   <main class="tactical-shell">
@@ -22,12 +22,14 @@
         Character
         <select data-tactical-character aria-label="Character to place"></select>
       </label>
-      <fieldset class="tactical-indicator-control">
-        <legend>Indicator opacity</legend>
-        <label><input type="radio" name="tactical-indicator-opacity" value="25" data-indicator-opacity checked>25%</label>
-        <label><input type="radio" name="tactical-indicator-opacity" value="50" data-indicator-opacity>50%</label>
-        <label><input type="radio" name="tactical-indicator-opacity" value="75" data-indicator-opacity>75%</label>
-      </fieldset>
+      <div class="tactical-opacity-controls">
+        <label class="tactical-opacity-control">Indicator opacity
+          <span><input type="range" min="0" max="100" step="1" value="25" data-indicator-opacity><output data-indicator-opacity-value>25%</output></span>
+        </label>
+        <label class="tactical-opacity-control">Grid opacity
+          <span><input type="range" min="0" max="100" step="1" value="60" data-grid-opacity><output data-grid-opacity-value>60%</output></span>
+        </label>
+      </div>
       <button type="button" data-tactical-reset>Reset view</button>
       <button type="button" data-tactical-zoom>Zoom</button>
     </div>
@@ -53,8 +55,8 @@
   </div>
   <script src="tactical/tactical-state.js?v=2"></script>
   <script src="tactical/tactical-client.js?v=4"></script>
-  <script src="tactical/tactical-render.js?v=17"></script>
+  <script src="tactical/tactical-render.js?v=23"></script>
   <script src="tactical/tactical-controls.js?v=2"></script>
-  <script src="tactical/tactical.js?v=7"></script>
+  <script src="tactical/tactical.js?v=8"></script>
 </body>
 </html>

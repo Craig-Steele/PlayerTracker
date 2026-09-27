@@ -184,15 +184,18 @@ struct TacticalMapPresentation: Content, Codable, Equatable {
     let sideWallColor: TacticalColor
     let outsideMapFill: String?
     let terrainBoundary: String?
+    let blankBackgroundColor: String?
 
     init(
         sideWallColor: TacticalColor,
         outsideMapFill: String? = nil,
-        terrainBoundary: String? = nil
+        terrainBoundary: String? = nil,
+        blankBackgroundColor: String? = nil
     ) {
         self.sideWallColor = sideWallColor
         self.outsideMapFill = outsideMapFill
         self.terrainBoundary = terrainBoundary
+        self.blankBackgroundColor = blankBackgroundColor
     }
 }
 

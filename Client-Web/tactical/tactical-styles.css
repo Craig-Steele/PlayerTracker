@@ -1,5 +1,5 @@
 .tactical-shell {
-  --tactical-grid: rgba(39, 109, 173, 0.58);
+  --tactical-grid: rgb(39, 109, 173);
   --tactical-viewport: #f5f8fb;
   --tactical-status: #425466;
   --tactical-error: #a12622;
@@ -17,23 +17,15 @@
   justify-content: space-between;
 }
 
-.tactical-indicator-control,
-.authoring-opacity {
-  align-items: center;
-  border: 0;
+.tactical-opacity-controls {
   display: flex;
-  gap: .55rem;
-  margin: 0;
-  min-width: 0;
-  padding: 0;
-  white-space: nowrap;
+  flex-direction: column;
+  gap: .2rem;
 }
-.tactical-indicator-control legend,
-.authoring-opacity legend { float: left; font-size: .85rem; padding: 0; }
-.tactical-indicator-control label,
-.authoring-opacity label { align-items: center; display: inline-flex; font-size: .85rem; gap: .2rem; margin: 0; }
-.tactical-indicator-control input[type="radio"],
-.authoring-opacity input[type="radio"] { margin: 0; width: auto; }
+.tactical-opacity-control { display: grid; font-size: .8rem; gap: .1rem; white-space: nowrap; }
+.tactical-opacity-control span { align-items: center; display: flex; gap: .4rem; }
+.tactical-opacity-control input[type="range"] { margin: 0; width: 8rem; }
+.tactical-opacity-control output { font-variant-numeric: tabular-nums; min-width: 2.5rem; }
 
 .tactical-viewport {
   background: var(--tactical-viewport);
@@ -106,7 +98,7 @@
 
 @media (prefers-color-scheme: dark) {
   .tactical-shell {
-    --tactical-grid: rgba(104, 177, 232, 0.64);
+    --tactical-grid: rgb(104, 177, 232);
     --tactical-viewport: #20252b;
     --tactical-status: var(--text-secondary);
     --tactical-error: var(--text-danger);

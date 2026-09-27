@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="tactical/tactical-styles.css?v=6">
-  <link rel="stylesheet" href="map-authoring.css?v=12">
+  <link rel="stylesheet" href="map-authoring.css?v=14">
 </head>
 <body class="map-authoring-page">
   <main class="tactical-shell map-authoring-shell">
@@ -31,6 +31,18 @@
             <label>Squares east–west <input type="number" min="1" max="200" data-grid-width value="20"></label>
             <label>Squares north–south <input type="number" min="1" max="200" data-grid-height value="20"></label>
             <label>Square size (feet) <input type="number" min="0.1" step="0.1" data-square-size value="5"></label>
+            <label>Blank map background
+              <span class="authoring-background-picker">
+                <select data-blank-background-preset aria-label="Preset blank map background">
+                  <option value="#ffffff">White</option>
+                  <option value="#d3d3d3">Light gray</option>
+                  <option value="#7cba5b">Grassy green</option>
+                  <option value="#9a6846">Dirt brown</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <input type="color" value="#ffffff" data-blank-background-color aria-label="Custom blank map background color">
+              </span>
+            </label>
             <label class="authoring-zone-toggle" title="Allow play beyond the image edge. When unchecked, placement is restricted to the map; boundaries are not walls."><input type="checkbox" data-infinite-canvas> Infinite canvas</label>
           </div>
         </details>
@@ -126,6 +138,6 @@
     </section>
   </main>
   <script src="map-package.js?v=1"></script>
-  <script src="map-authoring.js?v=42"></script>
+  <script src="map-authoring.js?v=46"></script>
 </body>
 </html>
