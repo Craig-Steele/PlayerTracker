@@ -324,7 +324,7 @@ window.TacticalRender = (() => {
         );
       }
 
-      context.fillStyle = 'rgba(0, 0, 0, 0.62)';
+      context.fillStyle = 'rgba(255, 255, 255, 0.62)';
       for (const tile of currentMap.blockedTiles || []) {
         const row = grid.northSouthSquareCount - 1 - tile.y;
         drawTileIcon(context, '🪨', tile.x * squareWidth, row * squareHeight, squareWidth, squareHeight);
