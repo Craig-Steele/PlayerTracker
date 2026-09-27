@@ -1100,7 +1100,7 @@
       const errors = refreshValidation();
       const message = errors.length ? `Map is not valid: ${errors.join(' ')}` : 'Map data is valid and ready to export.';
       validation.textContent = message;
-      status.textContent = message;
+      status.textContent = '';
     } catch (error) {
       validation.classList.add('error');
       validation.textContent = 'Validation could not complete. Check that the restored draft has valid map data.';

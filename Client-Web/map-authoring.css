@@ -49,6 +49,7 @@
 .authoring-bottom-bar [data-map-validation].error { color: var(--text-danger); }
 .authoring-export-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .authoring-status { border-top: 1px solid var(--border-default); color: var(--text-secondary); font-size: .82rem; margin-top: auto; padding: .5rem .15rem .2rem; }
+.authoring-status:empty { display: none; }
 @media (max-width: 900px) {
   .map-authoring-page { height: auto; min-height: 100vh; min-height: 100dvh; overflow-y: auto; }
   .map-authoring-shell { height: auto; min-height: 100vh; min-height: 100dvh; }
