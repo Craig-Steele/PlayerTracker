@@ -197,19 +197,37 @@
 
   async function saveDraft() {
     if (!map || !imageBlob) return;
+    const imageBytes = await imageBlob.arrayBuffer();
     const db = await openDraftDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction('drafts', 'readwrite');
-      tx.objectStore('drafts').put({ map, imageBlob, name: $('[data-map-name]').value }, 'active');
-      tx.oncomplete = () => { db.close(); draftAvailable = true; $('[data-authoring-restore]').hidden = false; resolve(); };
-      tx.onerror = () => { db.close(); reject(tx.error); };
+      const write = tx.objectStore('drafts').put({ map, imageBytes, name: $('[data-map-name]').value }, 'active');
+      let settled = false;
+      const fail = (error) => {
+        if (settled) return;
+        settled = true;
+        db.close();
+        reject(error || new Error('The browser aborted saving the map draft.'));
+      };
+      tx.oncomplete = () => {
+        if (settled) return;
+        settled = true;
+        db.close();
+        draftAvailable = true;
+        $('[data-authoring-restore]').hidden = false;
+        resolve();
+      };
+      write.onerror = () => fail(write.error || tx.error);
+      tx.onerror = () => fail(tx.error || write.error);
+      tx.onabort = () => fail(tx.error || write.error);
     });
   }
 
   function scheduleSave() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => saveDraft().catch(() => {
+    saveTimer = setTimeout(() => saveDraft().catch((error) => {
       status.textContent = 'This browser could not save the draft locally. Export your map to keep a copy.';
+      console.error('Map draft save failed:', error);
     }), 250);
   }
 
@@ -1192,7 +1210,11 @@
   async function restoreDraft() {
     const draft = await readDraft();
     if (!draft) return;
-    map = draft.map; imageBlob = draft.imageBlob;
+    map = draft.map;
+    imageBlob = draft.imageBlob instanceof Blob
+      ? draft.imageBlob
+      : draft.imageBytes ? new Blob([draft.imageBytes], { type: 'image/png' }) : null;
+    if (!imageBlob) throw new Error('The saved map image is unavailable.');
     TacticalMapPackage.normalizeMetadata(map);
     map.grid ||= { eastWestSquareCount: 20, northSouthSquareCount: 20, squareSizeFt: 5 };
     map.grid.eastWestSquareCount ||= 20;

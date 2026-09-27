@@ -19,3 +19,7 @@ xcuserdata/
 .netrc
 *.log
 .aider*
+
+node_modules/
+test-results/
+playwright-report/

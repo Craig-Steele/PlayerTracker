@@ -1,0 +1,11 @@
+{
+  "name": "roll4initiative-map2d-tests",
+  "private": true,
+  "scripts": {
+    "test:web": "node --test Client-Web/*.test.js",
+    "test:map-authoring": "playwright test --config=playwright.map-authoring.config.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
