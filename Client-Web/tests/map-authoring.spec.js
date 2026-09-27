@@ -65,6 +65,24 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/map-authoring.html');
 });
 
+test('common sticker emoji pickers populate the emoji field', async ({ page }) => {
+  await page.locator('summary').filter({ hasText: 'Stickers' }).click();
+  const emojiInput = page.locator('[data-sticker-emoji]');
+  const pickers = page.locator('[data-sticker-picker]');
+  await expect(pickers).toHaveCount(4);
+
+  for (const [index, emoji] of ['🟦', '🌳', '🪑', '🌈'].entries()) {
+    await pickers.nth(index).selectOption(emoji);
+    await expect(emojiInput).toHaveValue(emoji);
+  }
+
+  await pickers.nth(0).selectOption('🟦');
+  await pickers.nth(1).selectOption('🌳');
+  await expect(emojiInput).toHaveValue('🌳');
+  await pickers.nth(0).dispatchEvent('pointerdown');
+  await expect(emojiInput).toHaveValue('🟦');
+});
+
 test('blank-map preset and custom colors survive draft restore and package export/reopen', async ({ page }) => {
   const preset = page.locator('[data-blank-background-preset]');
   await expect(preset).toHaveValue('#ffffff');

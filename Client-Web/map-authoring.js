@@ -101,6 +101,15 @@
   });
 
   const layerOpacityInputs = [...document.querySelectorAll('[data-layer-opacity]')];
+  const stickerEmojiInput = $('[data-sticker-emoji]');
+  document.querySelectorAll('[data-sticker-picker]').forEach((picker) => {
+    const syncStickerEmoji = () => {
+      if (picker.value) stickerEmojiInput.value = picker.value;
+    };
+    picker.addEventListener('pointerdown', syncStickerEmoji);
+    picker.addEventListener('focus', syncStickerEmoji);
+    picker.addEventListener('change', syncStickerEmoji);
+  });
   $('[data-load-map-image]').addEventListener('click', () => fileInput.click());
   $('[data-load-map-package]').addEventListener('click', () => archiveInput.click());
   $('[data-new-blank-map]').addEventListener('click', async (event) => {
@@ -994,7 +1003,7 @@
       const x = tile.x * cellW;
       const y = (map.grid.northSouthSquareCount - 1 - tile.y) * cellH;
       if (detailedObstacles) {
-        ctx.fillStyle = '#85898d';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
         ctx.fillRect(x, y, cellW, cellH);
       } else {
         drawTileIcon(tileIcons.obstacle, x, y, cellW, cellH);

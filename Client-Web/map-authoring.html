@@ -78,6 +78,20 @@
           <label class="authoring-layer-opacity">New sticker opacity <select data-layer-opacity="stickers"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
           <div class="authoring-tool-items">
             <label>Emoji <input type="text" maxlength="16" placeholder="Enter any emoji" value="✨" data-sticker-emoji></label>
+            <div class="authoring-sticker-pickers">
+              <select data-sticker-picker aria-label="Shapes and colors">
+                <option value="🟥">🟥</option><option value="🟧">🟧</option><option value="🟨">🟨</option><option value="🟩">🟩</option><option value="🟦">🟦</option><option value="🟪">🟪</option><option value="🟫">🟫</option><option value="⬛">⬛</option><option value="⬜">⬜</option><option value="🔴">🔴</option><option value="🟠">🟠</option><option value="🟡">🟡</option><option value="🟢">🟢</option><option value="🔵">🔵</option><option value="🟣">🟣</option><option value="🟤">🟤</option><option value="⚫">⚫</option><option value="⚪">⚪</option>
+              </select>
+              <select data-sticker-picker aria-label="Trees and bushes">
+                <option value="🌳">🌳</option><option value="🌲">🌲</option><option value="🌴">🌴</option><option value="🌵">🌵</option><option value="🪴">🪴</option><option value="🌱">🌱</option><option value="🌿">🌿</option><option value="🍃">🍃</option><option value="🎄">🎄</option>
+              </select>
+              <select data-sticker-picker aria-label="Furniture">
+                <option value="🪑">🪑</option><option value="🛋️">🛋️</option><option value="🛏️">🛏️</option><option value="🪞">🪞</option><option value="🚪">🚪</option><option value="🪟">🪟</option><option value="🪜">🪜</option><option value="🧺">🧺</option>
+              </select>
+              <select data-sticker-picker aria-label="Magic and effects">
+                <option value="✨">✨</option><option value="🌈">🌈</option><option value="🔮">🔮</option><option value="⭐">⭐</option><option value="🌟">🌟</option><option value="💫">💫</option><option value="🪄">🪄</option><option value="⚡">⚡</option><option value="🔥">🔥</option><option value="💎">💎</option><option value="☄️">☄️</option>
+              </select>
+            </div>
             <label>Size (% of square) <input type="number" min="33" max="500" step="1" value="100" data-sticker-size></label>
             <button type="button" data-tool="sticker" aria-pressed="false">Place Sticker</button>
             <button type="button" data-tool="erase-stickers" aria-pressed="false">Erase Stickers</button>
@@ -138,6 +152,6 @@
     </section>
   </main>
   <script src="map-package.js?v=1"></script>
-  <script src="map-authoring.js?v=50"></script>
+  <script src="map-authoring.js?v=54"></script>
 </body>
 </html>
