@@ -16,6 +16,21 @@ enum TacticalMapValidator {
         for tile in map.blockedTiles where tile.x < 0 || tile.x >= columns || tile.y < 0 || tile.y >= rows {
             return "An obstacle square is outside the map grid."
         }
+        for sticker in map.stickers ?? [] {
+            guard sticker.x >= 0, sticker.x < columns, sticker.y >= 0, sticker.y < rows else {
+                return "A map sticker is outside the map grid."
+            }
+            guard (33...500).contains(sticker.sizePercent) else {
+                return "A map sticker size must be between 33% and 500% of a square."
+            }
+            if let opacity = sticker.opacityPercent, !(0...100).contains(opacity) {
+                return "A map sticker opacity must be between 0% and 100%."
+            }
+            guard !sticker.emoji.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  sticker.emoji.count <= 8 else {
+                return "A map sticker must contain an emoji."
+            }
+        }
         for tile in map.terrain.overrides where !contains(tile.x, tile.y, tile.width, tile.height, columns: columns, rows: rows) {
             return "A terrain override is outside the map grid or has invalid dimensions."
         }

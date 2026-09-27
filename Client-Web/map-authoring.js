@@ -32,7 +32,7 @@
   let placementDragStart = null;
   let placementDragEnd = null;
   let view = { scale: 1, x: 0, y: 0 };
-  const layerOpacity = { terrain: 25, obstacles: 25, elevation: 25, edges: 25, startingZone: 25 };
+  const layerOpacity = { terrain: 25, obstacles: 25, elevation: 25, edges: 25, startingZone: 25, stickers: 25 };
   let saveTimer = null;
   let draftAvailable = false;
 
@@ -92,6 +92,7 @@
           boundaryBehavior: $('[data-infinite-canvas]').checked ? 'infinite' : 'bounded'
         },
         blockedTiles: [],
+        stickers: [],
         terrain: { defaultType: 'normal', overrides: [] },
         elevation: { defaultHeightFt: 0, overrides: [] },
         edges: [],
@@ -339,6 +340,7 @@
       map.grid.squareSizeFt ||= 5;
       map.grid.boundaryBehavior ||= 'bounded';
       map.blockedTiles ||= [];
+      map.stickers ||= [];
       map.terrain ||= { defaultType: 'normal', overrides: [] };
       map.terrain.defaultType ||= 'normal';
       map.terrain.overrides ||= [];
@@ -389,7 +391,7 @@
       version: TacticalMapPackage.FORMAT_VERSION,
       imagePath: `${safeStem($('[data-map-name]').value)}.png`,
       grid: { eastWestSquareCount: 20, northSouthSquareCount: 20, squareSizeFt: 5, coordinateConvention: { origin: 'southwest' }, boundaryBehavior: 'bounded' },
-      blockedTiles: [], terrain: { defaultType: 'normal', overrides: [] },
+      blockedTiles: [], stickers: [], terrain: { defaultType: 'normal', overrides: [] },
       elevation: { defaultHeightFt: 0, overrides: [] }, edges: [],
       mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } }
     };
@@ -430,6 +432,7 @@
     map.grid.squareSizeFt = squareFt;
     const keepTile = ({ x, y }) => x >= 0 && x < columns && y >= 0 && y < rows;
     map.blockedTiles = map.blockedTiles.filter(keepTile);
+    map.stickers = (map.stickers || []).filter(keepTile);
     map.terrain.overrides = map.terrain.overrides.filter((tile) => keepTile(tile));
     map.elevation.overrides = map.elevation.overrides.filter((tile) => keepTile(tile));
     map.edges = map.edges.filter((edge) => edge.axis === 'vertical'
@@ -451,7 +454,7 @@
   });
 
   function snapshot() {
-    return JSON.stringify({ blockedTiles: map.blockedTiles, terrain: map.terrain, elevation: map.elevation, edges: map.edges, boundaryBehavior: map.grid.boundaryBehavior, playerPlacement: map.playerPlacement || null });
+    return JSON.stringify({ blockedTiles: map.blockedTiles, stickers: map.stickers || [], terrain: map.terrain, elevation: map.elevation, edges: map.edges, boundaryBehavior: map.grid.boundaryBehavior, playerPlacement: map.playerPlacement || null });
   }
   function beginStroke() {
     if (!strokeSnapshot) strokeSnapshot = snapshot();
@@ -558,6 +561,23 @@
         blocked.add(id);
         map.blockedTiles = [...blocked].map((key) => { const [x, y] = key.split(',').map(Number); return { x, y }; });
       }
+    } else if (tool === 'sticker') {
+      const sticker = {
+        x: cell.x,
+        y: cell.y,
+        emoji: $('[data-sticker-emoji]').value.trim(),
+        sizePercent: Number($('[data-sticker-size]').value),
+        opacityPercent: layerOpacity.stickers
+      };
+      map.stickers ||= [];
+      if (strokeClearing) {
+        map.stickers = map.stickers.filter((item) => item.x !== cell.x || item.y !== cell.y || item.emoji !== sticker.emoji);
+      } else {
+        map.stickers = map.stickers.filter((item) => item.x !== cell.x || item.y !== cell.y);
+        map.stickers.push(sticker);
+      }
+    } else if (tool === 'erase-stickers') {
+      map.stickers = (map.stickers || []).filter((item) => item.x !== cell.x || item.y !== cell.y);
     } else if (['difficult', 'water', 'lava', 'impassible'].includes(tool)) {
       map.terrain.overrides = rewriteOverridesAtCell(map.terrain.overrides, cell, (tile) => !strokeClearing || tile.type === tool);
       if (!strokeClearing) map.terrain.overrides.push({ x: cell.x, y: cell.y, width: 1, height: 1, type: tool });
@@ -882,7 +902,20 @@
         ctx.fillText(edge.initialState === 'open' ? '↗' : edge.locked ? '🔒' : 'D', edge.axis === 'vertical' ? x1 : x1 + cellW / 2, edge.axis === 'vertical' ? y1 - cellH / 2 : y1);
       }
     }
-    ctx.globalAlpha = 1;
+    for (const sticker of map.stickers || []) {
+      if (!sticker.emoji) continue;
+      ctx.save();
+      ctx.globalAlpha = (sticker.opacityPercent ?? 100) / 100;
+      const centerX = (sticker.x + .5) * cellW;
+      const centerY = (map.grid.northSouthSquareCount - sticker.y - .5) * cellH;
+      const fontSize = Math.min(cellW, cellH) * .9 * sticker.sizePercent / 100;
+      ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // Emoji fonts often include extra vertical whitespace above the visible glyph.
+      ctx.fillText(sticker.emoji, centerX, centerY + fontSize * .12);
+      ctx.restore();
+    }
     ctx.restore();
   }
 
@@ -930,6 +963,12 @@
     }
     for (const tile of map.blockedTiles) {
       if (tile.x < 0 || tile.x >= cols || tile.y < 0 || tile.y >= rows) errors.push(`Obstacle at ${tile.x}, ${tile.y} is outside the grid.`);
+    }
+    for (const sticker of map.stickers || []) {
+      if (sticker.x < 0 || sticker.x >= cols || sticker.y < 0 || sticker.y >= rows) errors.push(`Sticker at ${sticker.x}, ${sticker.y} is outside the grid.`);
+      if (typeof sticker.emoji !== 'string' || !sticker.emoji.trim() || sticker.emoji.length > 32) errors.push(`Sticker at ${sticker.x}, ${sticker.y} needs an emoji.`);
+      if (!Number.isInteger(sticker.sizePercent) || sticker.sizePercent < 33 || sticker.sizePercent > 500) errors.push(`Sticker at ${sticker.x}, ${sticker.y} must be sized from 33% to 500%.`);
+      if (sticker.opacityPercent !== undefined && (!Number.isInteger(sticker.opacityPercent) || sticker.opacityPercent < 0 || sticker.opacityPercent > 100)) errors.push(`Sticker at ${sticker.x}, ${sticker.y} must have opacity from 0% to 100%.`);
     }
     if (map.playerPlacement?.defaultBounds) {
       const b = map.playerPlacement.defaultBounds;
@@ -1052,6 +1091,7 @@
     map.grid.boundaryBehavior ||= 'bounded';
     map.imagePath ||= `${safeStem(draft.name || 'Untitled map')}.png`;
     map.blockedTiles ||= [];
+    map.stickers ||= [];
     map.terrain ||= { defaultType: 'normal', overrides: [] };
     map.terrain.defaultType ||= 'normal';
     map.terrain.overrides ||= [];

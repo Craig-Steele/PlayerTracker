@@ -102,6 +102,7 @@ struct ServerRoutesTests {
         let sourceMap = try TacticalMapStore().load()
         var sidecar = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(sourceMap)) as? [String: Any])
         sidecar["imagePath"] = "Example.png"
+        sidecar["stickers"] = [["x": 0, "y": 0, "emoji": "🌳", "sizePercent": 300, "opacityPercent": 50]]
 
         var legacySidecar = sidecar
         legacySidecar.removeValue(forKey: "format")
@@ -133,6 +134,9 @@ struct ServerRoutesTests {
             XCTAssertEqual(importedMap.blockedTiles, sourceMap.blockedTiles)
             XCTAssertEqual(importedMap.terrain, sourceMap.terrain)
             XCTAssertEqual(importedMap.elevation, sourceMap.elevation)
+            XCTAssertEqual(importedMap.stickers?.first?.emoji, "🌳")
+            XCTAssertEqual(importedMap.stickers?.first?.sizePercent, 300)
+            XCTAssertEqual(importedMap.stickers?.first?.opacityPercent, 50)
 
             let imageResponse = try await tester.sendRequest(
                 .GET,

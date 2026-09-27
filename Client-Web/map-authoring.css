@@ -28,6 +28,7 @@
 .authoring-tool-group[open] > summary::before { content: '▾'; }
 .authoring-tool-items { border-left: 1px solid var(--border-default); display: grid; gap: .22rem; margin: 0 0 .35rem .55rem; padding: .05rem 0 .05rem .55rem; }
 .authoring-tool-items > label { margin: .12rem 0; }
+.authoring-tool-items input[data-sticker-emoji], .authoring-tool-items input[data-sticker-size] { box-sizing: border-box; width: 100%; }
 .authoring-layer-opacity { align-items: center; display: flex; font-size: .82rem; gap: .5rem; justify-content: space-between; margin: 0 .2rem .25rem .75rem; white-space: nowrap; }
 .authoring-layer-opacity select { box-sizing: border-box; min-width: 5rem; padding: .12rem .25rem; }
 .authoring-create-group .authoring-tool-items { gap: .35rem; }

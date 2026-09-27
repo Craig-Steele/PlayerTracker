@@ -210,7 +210,8 @@ extension RoutesBuilder {
                 elevation: map.elevation,
                 edges: map.edges,
                 mapPresentation: map.mapPresentation,
-                playerPlacement: map.playerPlacement
+                playerPlacement: map.playerPlacement,
+                stickers: map.stickers
             )
             let imported = try await tacticalMapSelectionStore.importMap(
                 name: imageURL.deletingPathExtension().lastPathComponent,

@@ -15,6 +15,7 @@ struct TacticalMapState: Content, Codable, Equatable {
     let edges: [TacticalMapEdge]?
     let mapPresentation: TacticalMapPresentation
     let playerPlacement: TacticalPlayerPlacement?
+    let stickers: [TacticalMapSticker]?
 
     init(
         format: String = TacticalMapState.formatIdentifier,
@@ -26,7 +27,8 @@ struct TacticalMapState: Content, Codable, Equatable {
         elevation: TacticalElevationState,
         edges: [TacticalMapEdge]? = nil,
         mapPresentation: TacticalMapPresentation,
-        playerPlacement: TacticalPlayerPlacement? = nil
+        playerPlacement: TacticalPlayerPlacement? = nil,
+        stickers: [TacticalMapSticker]? = nil
     ) {
         self.format = format
         self.version = version
@@ -38,10 +40,11 @@ struct TacticalMapState: Content, Codable, Equatable {
         self.edges = edges
         self.mapPresentation = mapPresentation
         self.playerPlacement = playerPlacement
+        self.stickers = stickers
     }
 
     private enum CodingKeys: String, CodingKey {
-        case format, version, imagePath, grid, blockedTiles, terrain, elevation, edges, mapPresentation, playerPlacement
+        case format, version, imagePath, grid, blockedTiles, terrain, elevation, edges, mapPresentation, playerPlacement, stickers
     }
 
     init(from decoder: Decoder) throws {
@@ -56,6 +59,7 @@ struct TacticalMapState: Content, Codable, Equatable {
         edges = try container.decodeIfPresent([TacticalMapEdge].self, forKey: .edges)
         mapPresentation = try container.decode(TacticalMapPresentation.self, forKey: .mapPresentation)
         playerPlacement = try container.decodeIfPresent(TacticalPlayerPlacement.self, forKey: .playerPlacement)
+        stickers = try container.decodeIfPresent([TacticalMapSticker].self, forKey: .stickers)
     }
 }
 
@@ -130,6 +134,14 @@ struct TacticalCoordinateConvention: Content, Codable, Equatable {
 struct TacticalMapPoint: Content, Codable, Equatable, Hashable {
     let x: Int
     let y: Int
+}
+
+struct TacticalMapSticker: Content, Codable, Equatable {
+    let x: Int
+    let y: Int
+    let emoji: String
+    let sizePercent: Int
+    let opacityPercent: Int?
 }
 
 struct TacticalTerrainState: Content, Codable, Equatable {

@@ -214,7 +214,20 @@ window.TacticalRender = (() => {
         context.textBaseline = 'middle';
         context.fillText(`${tile.heightFt}′`, (tile.x + tile.width / 2) * squareWidth, (row + tile.height / 2) * squareHeight);
       }
-      context.globalAlpha = 1;
+      for (const sticker of currentMap.stickers || []) {
+        if (!sticker.emoji) continue;
+        context.save();
+        context.globalAlpha = (sticker.opacityPercent ?? 100) / 100;
+        const centerX = (sticker.x + 0.5) * squareWidth;
+        const centerY = (grid.northSouthSquareCount - sticker.y - 0.5) * squareHeight;
+        const fontSize = Math.min(squareWidth, squareHeight) * 0.9 * (sticker.sizePercent ?? 100) / 100;
+        context.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        // Emoji fonts often include extra vertical whitespace above the visible glyph.
+        context.fillText(sticker.emoji, centerX, centerY + fontSize * 0.12);
+        context.restore();
+      }
 
       context.strokeStyle = getComputedStyle(canvas).getPropertyValue('--tactical-grid').trim();
       context.lineWidth = Math.max(1 / view.scale, 0.7);
@@ -307,6 +320,8 @@ window.TacticalRender = (() => {
         drawTileIcon(context, '🪨', tile.x * squareWidth, row * squareHeight, squareWidth, squareHeight);
       }
 
+      // Wall and door edge markings are structural map features, not indicators.
+      context.globalAlpha = 1;
       for (const edge of currentMap.edges || []) {
         const edgeX = edge.x * squareWidth;
         const edgeY = (grid.northSouthSquareCount - edge.y) * squareHeight;

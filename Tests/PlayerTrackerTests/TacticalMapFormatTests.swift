@@ -35,6 +35,53 @@ struct TacticalMapFormatTests {
         #expect(TacticalMapValidator.validationError(for: map) == "Unsupported map format 'TacticalTableTop.Character'. Expected TacticalTableTop.Map.")
     }
 
+    @Test
+    func decorativeEmojiStickersDecodeEncodeAndValidate() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [["x": 1, "y": 0, "emoji": "🌳", "sizePercent": 300, "opacityPercent": 50]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        let sticker = try #require(map.stickers?.first)
+
+        #expect(sticker.emoji == "🌳")
+        #expect(sticker.sizePercent == 300)
+        #expect(sticker.opacityPercent == 50)
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+
+        let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(map)) as? [String: Any]
+        let encodedSticker = try #require((encoded?["stickers"] as? [[String: Any]])?.first)
+        #expect(encodedSticker["emoji"] as? String == "🌳")
+        #expect(encodedSticker["sizePercent"] as? Int == 300)
+        #expect(encodedSticker["opacityPercent"] as? Int == 50)
+    }
+
+    @Test
+    func legacyDecorativeStickerWithoutOpacityRemainsValid() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [["x": 0, "y": 0, "emoji": "✨", "sizePercent": 100]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+
+        #expect(map.stickers?.first?.opacityPercent == nil)
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+    }
+
+    @Test
+    func decorativeStickerRejectsInvalidSize() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [["x": 0, "y": 0, "emoji": "✨", "sizePercent": 501]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+
+        #expect(TacticalMapValidator.validationError(for: map) == "A map sticker size must be between 33% and 500% of a square.")
+    }
+
+    @Test
+    func decorativeStickerRejectsInvalidOpacity() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [["x": 0, "y": 0, "emoji": "✨", "sizePercent": 100, "opacityPercent": 101]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+
+        #expect(TacticalMapValidator.validationError(for: map) == "A map sticker opacity must be between 0% and 100%.")
+    }
+
     private func mapJSON(format: String? = nil, version: Int? = nil) throws -> Data {
         var object: [String: Any] = [
             "imagePath": "test.png",
