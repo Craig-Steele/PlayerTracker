@@ -478,7 +478,7 @@ window.TacticalRender = (() => {
       if (icon === '🪨') {
         targetContext.beginPath();
         targetContext.arc(centerX, centerY, size * 0.235, 0, Math.PI * 2);
-        targetContext.fillStyle = 'rgba(24, 27, 30, .82)';
+        targetContext.fillStyle = 'rgba(255, 255, 255, 0.62)';
         targetContext.fill();
         targetContext.strokeStyle = 'rgba(255, 255, 255, .96)';
         targetContext.lineWidth = size * 0.035;

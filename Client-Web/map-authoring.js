@@ -1063,7 +1063,7 @@
     if (icon === tileIcons.obstacle) {
       ctx.beginPath();
       ctx.arc(centerX, centerY, size * 0.235, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(24, 27, 30, .82)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
       ctx.fill();
       ctx.strokeStyle = 'rgba(255, 255, 255, .96)';
       ctx.lineWidth = size * 0.035;
