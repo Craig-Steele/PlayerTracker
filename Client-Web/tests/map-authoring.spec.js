@@ -83,6 +83,21 @@ test('common sticker emoji pickers populate the emoji field', async ({ page }) =
   await expect(emojiInput).toHaveValue('🟦');
 });
 
+test('grid opacity slider updates its value and persists across reloads', async ({ page }) => {
+  const slider = page.locator('[data-grid-opacity]');
+  const value = page.locator('[data-grid-opacity-value]');
+  await expect(slider).toHaveValue('100');
+  await slider.evaluate((element) => {
+    element.value = '37';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await expect(value).toHaveText('37%');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('roll4-map-authoring-layer-opacity')).grid)).toBe(37);
+  await page.reload();
+  await expect(slider).toHaveValue('37');
+  await expect(value).toHaveText('37%');
+});
+
 test('blank-map preset and custom colors survive draft restore and package export/reopen', async ({ page }) => {
   const preset = page.locator('[data-blank-background-preset]');
   await expect(preset).toHaveValue('#ffffff');

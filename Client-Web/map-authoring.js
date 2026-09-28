@@ -36,7 +36,7 @@
   let placementDragStart = null;
   let placementDragEnd = null;
   let view = { scale: 1, x: 0, y: 0 };
-  const layerOpacity = { terrain: 25, obstacles: 25, elevation: 25, edges: 25, startingZone: 25, stickers: 25 };
+  const layerOpacity = { terrain: 25, obstacles: 25, elevation: 25, edges: 25, startingZone: 25, stickers: 25, grid: 100 };
   let saveTimer = null;
   let draftAvailable = false;
 
@@ -101,6 +101,18 @@
   });
 
   const layerOpacityInputs = [...document.querySelectorAll('[data-layer-opacity]')];
+  const gridOpacityInput = $('[data-grid-opacity]');
+  const gridOpacityValue = $('[data-grid-opacity-value]');
+  const updateGridOpacity = () => {
+    layerOpacity.grid = Number(gridOpacityInput.value);
+    gridOpacityValue.value = `${layerOpacity.grid}%`;
+    gridOpacityValue.textContent = `${layerOpacity.grid}%`;
+    try { localStorage.setItem(layerOpacityKey, JSON.stringify(layerOpacity)); } catch (_) {}
+    draw();
+  };
+  gridOpacityInput.value = String(layerOpacity.grid);
+  gridOpacityValue.value = `${layerOpacity.grid}%`;
+  gridOpacityInput.addEventListener('input', updateGridOpacity);
   const stickerEmojiInput = $('[data-sticker-emoji]');
   document.querySelectorAll('[data-sticker-picker]').forEach((picker) => {
     const syncStickerEmoji = () => {
@@ -174,9 +186,17 @@
   try {
     const savedOpacity = JSON.parse(localStorage.getItem(layerOpacityKey) || '{}');
     Object.keys(layerOpacity).forEach((layer) => {
-      if ([0, 25, 50, 75].includes(Number(savedOpacity[layer]))) layerOpacity[layer] = Number(savedOpacity[layer]);
+      const savedValue = Number(savedOpacity[layer]);
+      if (layer === 'grid') {
+        if (Number.isInteger(savedValue) && savedValue >= 0 && savedValue <= 100) layerOpacity.grid = savedValue;
+      } else if ([0, 25, 50, 75].includes(savedValue)) {
+        layerOpacity[layer] = savedValue;
+      }
     });
   } catch (_) {}
+  gridOpacityInput.value = String(layerOpacity.grid);
+  gridOpacityValue.value = `${layerOpacity.grid}%`;
+  gridOpacityValue.textContent = `${layerOpacity.grid}%`;
   layerOpacityInputs.forEach((input) => {
     input.value = String(layerOpacity[input.dataset.layerOpacity]);
     input.addEventListener('change', () => {
@@ -1010,12 +1030,14 @@
       }
     }
     ctx.globalAlpha = 1;
+    ctx.globalAlpha = layerOpacity.grid / 100;
     ctx.strokeStyle = 'rgba(40, 112, 172, .7)';
     ctx.lineWidth = Math.max(.7, 1 / view.scale);
     ctx.beginPath();
     for (let x = 0; x <= map.grid.eastWestSquareCount; x += 1) { ctx.moveTo(x * cellW, 0); ctx.lineTo(x * cellW, size.height); }
     for (let row = 0; row <= map.grid.northSouthSquareCount; row += 1) { ctx.moveTo(0, row * cellH); ctx.lineTo(size.width, row * cellH); }
     ctx.stroke();
+    ctx.globalAlpha = 1;
     ctx.globalAlpha = layerOpacity.edges / 100;
     for (const edge of map.edges) {
       const x1 = edge.axis === 'vertical' ? edge.x * cellW : edge.x * cellW;

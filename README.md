@@ -41,6 +41,8 @@ The current working architecture is a Vapor service running on a Mac and serving
 
 The map authoring tool exports `.tttm`. It continues to open legacy `.zmap` files (and earlier `.map.zip` packages); those files are not rewritten unless explicitly exported as a new `.tttm`.
 
+See [TTTM_FORMAT.md](Docs/TTTM_FORMAT.md) for the package schema and guidance for generating maps from source material.
+
 ## Requirements
 
 - macOS
