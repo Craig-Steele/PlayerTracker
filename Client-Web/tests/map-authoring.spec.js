@@ -84,6 +84,14 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/map-authoring.html');
 });
 
+test('validation and authoring messages use the single lower status area', async ({ page }) => {
+  await createBlankMap(page);
+  await expect(page.locator('[data-map-validation]')).toHaveCount(0);
+  await expect(page.locator('[data-authoring-status]')).toHaveCount(1);
+  await page.locator('[data-validate]').click();
+  await expect(page.locator('[data-authoring-status]')).toHaveText('Map data is valid and ready to export.');
+});
+
 test('common sticker emoji pickers populate the emoji field', async ({ page }) => {
   await page.locator('summary').filter({ hasText: 'Stickers' }).click();
   const emojiInput = page.locator('[data-sticker-emoji]');

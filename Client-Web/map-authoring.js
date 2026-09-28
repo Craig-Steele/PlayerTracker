@@ -5,11 +5,14 @@
   const fileInput = $('[data-authoring-file]');
   const archiveInput = $('[data-authoring-archive]');
   const status = $('[data-authoring-status]');
+  const setStatus = (message, isError = false) => {
+    status.textContent = message;
+    status.classList.toggle('error', isError);
+  };
   const cropPanel = $('[data-authoring-crop]');
   const cropCanvas = $('[data-crop-canvas]');
   const canvas = $('[data-map-canvas]');
   const mapViewport = canvas.parentElement;
-  const validation = $('[data-map-validation]');
   const validateButton = $('[data-validate]');
   const exportButton = $('[data-export]');
   const undoButton = $('[data-undo]');
@@ -90,14 +93,14 @@
   blankBackgroundPreset.addEventListener('change', () => {
     if (blankBackgroundPreset.value === 'custom') return;
     blankBackgroundColor.value = blankBackgroundPreset.value;
-    applyBlankBackground(blankBackgroundColor.value).catch((error) => { status.textContent = error.message; });
+    applyBlankBackground(blankBackgroundColor.value).catch((error) => { setStatus(error.message, true); });
   });
   blankBackgroundColor.addEventListener('input', () => {
     const isPreset = [...blankBackgroundPreset.options].some((option) => option.value === blankBackgroundColor.value);
     blankBackgroundPreset.value = isPreset ? blankBackgroundColor.value : 'custom';
   });
   blankBackgroundColor.addEventListener('change', () => {
-    applyBlankBackground(blankBackgroundColor.value).catch((error) => { status.textContent = error.message; });
+    applyBlankBackground(blankBackgroundColor.value).catch((error) => { setStatus(error.message, true); });
   });
 
   const layerOpacityInputs = [...document.querySelectorAll('[data-layer-opacity]')];
@@ -152,9 +155,7 @@
     const { columns, rows, squareFt } = gridValues();
     if (!Number.isInteger(columns) || columns < 1 || columns > 200 || !Number.isInteger(rows) || rows < 1 || rows > 200 || !Number.isFinite(squareFt) || squareFt <= 0) {
       const message = 'Set valid grid dimensions (1–200 squares) and a positive square size before creating a blank map.';
-      validation.classList.add('error');
-      validation.textContent = message;
-      status.textContent = message;
+      setStatus(message, true);
       return;
     }
     const button = event.currentTarget;
@@ -199,9 +200,9 @@
       fitMap();
       refreshValidation();
       scheduleSave();
-      status.textContent = 'Created a new blank map.';
+      setStatus('Created a new blank map.');
     } catch (error) {
-      status.textContent = `Could not create a blank map: ${error.message || error}`;
+      setStatus(`Could not create a blank map: ${error.message || error}`, true);
     } finally {
       button.disabled = false;
     }
@@ -289,7 +290,7 @@
   function scheduleSave() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => saveDraft().catch((error) => {
-      status.textContent = 'This browser could not save the draft locally. Export your map to keep a copy.';
+      setStatus('This browser could not save the draft locally. Export your map to keep a copy.', true);
       console.error('Map draft save failed:', error);
     }), 250);
   }
@@ -368,7 +369,7 @@
     const file = fileInput.files?.[0];
     if (!file) return;
     if (!file.name.toLowerCase().endsWith('.png') || (file.type && file.type !== 'image/png') || file.size > 20 * 1024 * 1024) {
-      status.textContent = 'Choose a PNG image no larger than 20 MB.';
+    setStatus('Choose a PNG image no larger than 20 MB.', true);
       return;
     }
     sourceImage = await loadImage(file);
@@ -376,7 +377,7 @@
     $('[data-map-name]').value = file.name.replace(/\.png$/i, '');
     cropPanel.hidden = false;
     mapViewport.hidden = true;
-    status.textContent = `${sourceImage.naturalWidth} × ${sourceImage.naturalHeight} px. Select the map area, then apply the crop.`;
+    setStatus(`${sourceImage.naturalWidth} × ${sourceImage.naturalHeight} px. Select the map area, then apply the crop.`);
     requestAnimationFrame(renderCrop);
   });
 
@@ -456,7 +457,7 @@
   archiveInput.addEventListener('change', async () => {
     const file = archiveInput.files?.[0];
     if (!file) return;
-    status.textContent = 'Opening map package…';
+    setStatus('Opening map package…');
     try {
       const loaded = await readMapArchive(file);
       map = loaded.map;
@@ -490,10 +491,10 @@
       fitMap();
       refreshValidation();
       scheduleSave();
-      status.textContent = 'Map package opened. Edit the map and export a new package when ready.';
+      setStatus('Map package opened. Edit the map and export a new package when ready.');
       archiveInput.value = '';
     } catch (error) {
-      status.textContent = `Unable to open map package: ${error.message || error}`;
+      setStatus(`Unable to open map package: ${error.message || error}`, true);
     }
   });
 
@@ -552,8 +553,7 @@
     if (!map) return;
     const { columns, rows, squareFt } = gridValues();
     if (!Number.isInteger(columns) || columns < 1 || columns > 200 || !Number.isInteger(rows) || rows < 1 || rows > 200 || !Number.isFinite(squareFt) || squareFt <= 0) {
-      validation.textContent = 'Grid dimensions must be 1–200 squares and square size must be positive.';
-      validation.classList.add('error');
+      setStatus('Grid dimensions must be 1–200 squares and square size must be positive.', true);
       exportButton.disabled = true;
       return;
     }
@@ -1186,8 +1186,7 @@
     if (!map) return [];
     const errors = validateMap();
     if (imageBlob?.size > 20 * 1024 * 1024) errors.push('The cropped PNG exceeds the 20 MB import limit.');
-    validation.classList.toggle('error', errors.length > 0);
-    validation.textContent = errors.length ? errors[0] : 'Map data is valid and ready to export.';
+    setStatus(errors.length ? errors[0] : 'Map data is valid and ready to export.', errors.length > 0);
     exportButton.disabled = errors.length > 0;
     return errors;
   }
@@ -1196,12 +1195,9 @@
     try {
       const errors = refreshValidation();
       const message = errors.length ? `Map is not valid: ${errors.join(' ')}` : 'Map data is valid and ready to export.';
-      validation.textContent = message;
-      status.textContent = '';
+      setStatus(message, errors.length > 0);
     } catch (error) {
-      validation.classList.add('error');
-      validation.textContent = 'Validation could not complete. Check that the restored draft has valid map data.';
-      status.textContent = validation.textContent;
+      setStatus('Validation could not complete. Check that the restored draft has valid map data.', true);
       console.error('Map validation failed:', error);
     }
   });
@@ -1233,7 +1229,7 @@
     try {
       const errors = refreshValidation();
       if (errors.length) {
-        status.textContent = `Export blocked: ${errors.join(' ')}`;
+        setStatus(`Export blocked: ${errors.join(' ')}`, true);
         return;
       }
       const suggestedName = TacticalMapPackage.packageFilename($('[data-map-name]').value);
@@ -1261,7 +1257,7 @@
         const writable = await saveHandle.createWritable();
         await writable.write(zip);
         await writable.close();
-        status.textContent = `Saved ${saveHandle.name}.`;
+        setStatus(`Saved ${saveHandle.name}.`);
       } else {
         stage = 'starting the download';
         // Safari may append .zip based on application/zip even when downloadName ends in .tttm.
@@ -1274,14 +1270,14 @@
         link.click();
         link.remove();
         setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        status.textContent = `Downloading ${downloadName}.`;
+        setStatus(`Downloading ${downloadName}.`);
       }
     } catch (error) {
       if (error?.name === 'AbortError' && ['opening the save dialog', 'writing the selected file'].includes(stage)) {
-        status.textContent = 'Save canceled.';
+      setStatus('Save canceled.');
         return;
       }
-      status.textContent = `Export failed while ${stage}: ${error?.message || error}`;
+      setStatus(`Export failed while ${stage}: ${error?.message || error}`, true);
       console.error(`Map export failed while ${stage}:`, error);
     }
   });
@@ -1324,10 +1320,10 @@
     cropPanel.hidden = true; mapViewport.hidden = false;
     history = []; undoButton.disabled = true;
     fitMap(); refreshValidation();
-    status.textContent = 'Restored your browser-local draft.';
+    setStatus('Restored your browser-local draft.');
   }
   $('[data-authoring-restore]').addEventListener('click', () => restoreDraft().catch(() => {
-    status.textContent = 'Unable to restore the saved draft in this browser.';
+    setStatus('Unable to restore the saved draft in this browser.', true);
   }));
   readDraft().then((draft) => {
     draftAvailable = Boolean(draft);
