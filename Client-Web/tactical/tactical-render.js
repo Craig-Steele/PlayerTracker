@@ -277,6 +277,8 @@ window.TacticalRender = (() => {
         const bottom = isInfiniteTerrain() ? visibleBottom * squareHeight : size.height;
         const placementTop = (grid.northSouthSquareCount - 1 - currentPlayerPlacement.north) * squareHeight;
         const placementBottom = (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
+        context.save();
+        context.globalAlpha = 1;
         context.fillStyle = '#000';
         context.beginPath();
         context.rect(left, top, right - left, bottom - top);
@@ -287,6 +289,7 @@ window.TacticalRender = (() => {
           placementBottom - placementTop
         );
         context.fill('evenodd');
+        context.restore();
       }
 
       if (viewerIsReferee && currentPlayerPlacement) {
@@ -333,12 +336,14 @@ window.TacticalRender = (() => {
       // Wall and door edge markings are structural map features, not indicators.
       context.globalAlpha = 1;
       for (const edge of currentMap.edges || []) {
+        if (!viewerIsReferee && currentPlayerPlacement && !edgeTouchesPlacementArea(edge, currentPlayerPlacement)) continue;
         const edgeX = edge.x * squareWidth;
         const edgeY = (grid.northSouthSquareCount - edge.y) * squareHeight;
         context.beginPath();
         context.lineWidth = Math.max(4 / view.scale, Math.min(squareWidth, squareHeight) * 0.085);
         context.lineCap = 'round';
         if (edge.type === 'wall') context.strokeStyle = '#28201d';
+        else if (edge.type === 'secretDoor') context.strokeStyle = viewerIsReferee ? '#ff00ff' : '#28201d';
         else if (edge.type === 'door') context.strokeStyle = edge.initialState === 'open' ? '#a37735' : '#6b3e22';
         else if (edge.type === 'doorway') {
           context.strokeStyle = '#34a0a4';
@@ -516,6 +521,18 @@ window.TacticalRender = (() => {
         south: Math.min(first.y, second.y),
         north: Math.max(first.y, second.y)
       };
+    }
+
+    function edgeTouchesPlacementArea(edge, bounds) {
+      if (edge.axis === 'vertical') {
+        return (edge.x - 1 >= bounds.west && edge.x - 1 <= bounds.east && edge.y >= bounds.south && edge.y <= bounds.north) ||
+          (edge.x >= bounds.west && edge.x <= bounds.east && edge.y >= bounds.south && edge.y <= bounds.north);
+      }
+      if (edge.axis === 'horizontal') {
+        return (edge.x >= bounds.west && edge.x <= bounds.east && edge.y - 1 >= bounds.south && edge.y - 1 <= bounds.north) ||
+          (edge.x >= bounds.west && edge.x <= bounds.east && edge.y >= bounds.south && edge.y <= bounds.north);
+      }
+      return false;
     }
 
     canvas.addEventListener('wheel', (event) => {

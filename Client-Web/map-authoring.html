@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="tactical/tactical-styles.css?v=6">
-  <link rel="stylesheet" href="map-authoring.css?v=15">
+  <link rel="stylesheet" href="map-authoring.css?v=16">
 </head>
 <body class="map-authoring-page">
   <main class="tactical-shell map-authoring-shell">
@@ -57,7 +57,7 @@
         </details>
         <details class="authoring-tool-group" data-tool-category>
           <summary>Terrain</summary>
-          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="terrain"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <label class="authoring-layer-opacity">Opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="terrain" aria-label="Terrain opacity"><output data-layer-opacity-value="terrain">25%</output></label>
           <div class="authoring-tool-items">
             <button type="button" data-tool="difficult" aria-pressed="false">⚠️ Difficult</button>
             <button type="button" data-tool="water" aria-pressed="false">💧 Water</button>
@@ -68,7 +68,7 @@
         </details>
         <details class="authoring-tool-group" data-tool-category>
           <summary>Obstacles</summary>
-          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="obstacles"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <label class="authoring-layer-opacity">Opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="obstacles" aria-label="Obstacle opacity"><output data-layer-opacity-value="obstacles">25%</output></label>
           <div class="authoring-tool-items">
             <button type="button" data-tool="obstacle" aria-pressed="false">🪨 Obstacle</button>
             <button type="button" data-tool="erase-obstacles" aria-pressed="false">Erase Obstacles</button>
@@ -76,7 +76,7 @@
         </details>
         <details class="authoring-tool-group" data-tool-category>
           <summary>Stickers</summary>
-          <label class="authoring-layer-opacity">New sticker opacity <select data-layer-opacity="stickers"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <label class="authoring-layer-opacity">New sticker opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="stickers" aria-label="New sticker opacity"><output data-layer-opacity-value="stickers">25%</output></label>
           <div class="authoring-tool-items">
             <label>Emoji <input type="text" maxlength="16" placeholder="Enter any emoji" value="✨" data-sticker-emoji></label>
             <div class="authoring-sticker-pickers">
@@ -100,7 +100,7 @@
         </details>
         <details class="authoring-tool-group" data-tool-category>
           <summary>Elevation</summary>
-          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="elevation"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <label class="authoring-layer-opacity">Opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="elevation" aria-label="Elevation opacity"><output data-layer-opacity-value="elevation">25%</output></label>
           <div class="authoring-tool-items">
             <button type="button" data-tool="elevation" aria-pressed="false">Paint height</button>
             <button type="button" data-tool="erase-elevation" aria-pressed="false">Erase Elevation</button>
@@ -109,21 +109,25 @@
         </details>
         <details class="authoring-tool-group" data-tool-category>
           <summary>Edges</summary>
-          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="edges"><option value="0">0%</option><option value="25">25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <label class="authoring-layer-opacity">Opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="edges" aria-label="Edge opacity"><output data-layer-opacity-value="edges">25%</output></label>
           <div class="authoring-tool-items">
             <button type="button" data-tool="wall" aria-pressed="false">Wall</button>
             <button type="button" data-tool="door" aria-pressed="false">Door</button>
+            <button type="button" data-tool="secretDoor" aria-pressed="false">Secret Door</button>
+            <button type="button" data-tool="window" aria-pressed="false">Window</button>
             <button type="button" data-tool="erase-edges" aria-pressed="false">Erase Edges</button>
-            <label class="authoring-height">Width (ft) <input type="number" min="0.1" step="0.1" data-door-width value="5"></label>
-            <label class="authoring-height">Initial state
-              <select data-door-state><option value="closed">Closed</option><option value="open">Open</option></select>
+            <label class="authoring-height">Door and Window Width (ft) <input type="number" min="0.1" step="0.1" data-door-window-width value="5"></label>
+            <label class="authoring-height">Door Initial State
+              <select data-door-state><option value="closed">Closed</option><option value="closed-locked">Closed and Locked</option><option value="open">Open</option></select>
             </label>
-            <label class="authoring-height"><input type="checkbox" data-door-locked> Locked</label>
+            <label class="authoring-height">Window initial state
+              <select data-window-state><option value="uninspected">Uninspected</option><option value="inspected">Inspected</option><option value="open">Open</option></select>
+            </label>
           </div>
         </details>
         <details class="authoring-tool-group" data-tool-category>
           <summary>Starting Zone</summary>
-          <label class="authoring-layer-opacity">Opacity <select data-layer-opacity="startingZone"><option value="0">0%</option><option value="25" selected>25%</option><option value="50">50%</option><option value="75">75%</option></select></label>
+          <label class="authoring-layer-opacity">Opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="startingZone" aria-label="Starting zone opacity"><output data-layer-opacity-value="startingZone">25%</output></label>
           <div class="authoring-tool-items">
             <button type="button" data-tool="starting-zone" aria-pressed="false">Draw Zone</button>
             <button type="button" class="secondary" data-zone-clear>Clear Zone</button>
@@ -153,6 +157,6 @@
     </section>
   </main>
   <script src="map-package.js?v=1"></script>
-  <script src="map-authoring.js?v=56"></script>
+  <script src="map-authoring.js?v=59"></script>
 </body>
 </html>

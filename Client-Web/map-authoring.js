@@ -101,6 +101,7 @@
   });
 
   const layerOpacityInputs = [...document.querySelectorAll('[data-layer-opacity]')];
+  const layerOpacityOutputs = [...document.querySelectorAll('[data-layer-opacity-value]')];
   const gridOpacityInput = $('[data-grid-opacity]');
   const gridOpacityValue = $('[data-grid-opacity-value]');
   const updateGridOpacity = () => {
@@ -112,7 +113,30 @@
   };
   gridOpacityInput.value = String(layerOpacity.grid);
   gridOpacityValue.value = `${layerOpacity.grid}%`;
-  gridOpacityInput.addEventListener('input', updateGridOpacity);
+  function wireOpacitySlider(input, onInput) {
+    let pointerStart = null;
+    input.addEventListener('pointerdown', (event) => {
+      pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, dragged: false };
+    });
+    input.addEventListener('pointermove', (event) => {
+      if (!pointerStart || pointerStart.id !== event.pointerId) return;
+      if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 4) pointerStart.dragged = true;
+    });
+    input.addEventListener('pointerup', (event) => {
+      if (!pointerStart || pointerStart.id !== event.pointerId) return;
+      if (!pointerStart.dragged) {
+        const snappedValue = Math.round(Number(input.value) / 25) * 25;
+        if (Number(input.value) !== snappedValue) {
+          input.value = String(snappedValue);
+          onInput();
+        }
+      }
+      pointerStart = null;
+    });
+    input.addEventListener('pointercancel', () => { pointerStart = null; });
+    input.addEventListener('input', onInput);
+  }
+  wireOpacitySlider(gridOpacityInput, updateGridOpacity);
   const stickerEmojiInput = $('[data-sticker-emoji]');
   document.querySelectorAll('[data-sticker-picker]').forEach((picker) => {
     const syncStickerEmoji = () => {
@@ -189,7 +213,7 @@
       const savedValue = Number(savedOpacity[layer]);
       if (layer === 'grid') {
         if (Number.isInteger(savedValue) && savedValue >= 0 && savedValue <= 100) layerOpacity.grid = savedValue;
-      } else if ([0, 25, 50, 75].includes(savedValue)) {
+      } else if (Number.isInteger(savedValue) && savedValue >= 0 && savedValue <= 100) {
         layerOpacity[layer] = savedValue;
       }
     });
@@ -199,8 +223,18 @@
   gridOpacityValue.textContent = `${layerOpacity.grid}%`;
   layerOpacityInputs.forEach((input) => {
     input.value = String(layerOpacity[input.dataset.layerOpacity]);
-    input.addEventListener('change', () => {
-      layerOpacity[input.dataset.layerOpacity] = Number(input.value);
+    const layer = input.dataset.layerOpacity;
+    const output = layerOpacityOutputs.find((candidate) => candidate.dataset.layerOpacityValue === layer);
+    if (output) {
+      output.value = `${layerOpacity[layer]}%`;
+      output.textContent = `${layerOpacity[layer]}%`;
+    }
+    wireOpacitySlider(input, () => {
+      layerOpacity[layer] = Number(input.value);
+      if (output) {
+        output.value = `${layerOpacity[layer]}%`;
+        output.textContent = `${layerOpacity[layer]}%`;
+      }
       try { localStorage.setItem(layerOpacityKey, JSON.stringify(layerOpacity)); } catch (_) {}
       draw();
     });
@@ -751,11 +785,13 @@
       map.edges = map.edges.filter((candidate) => `${candidate.axis}:${candidate.x}:${candidate.y}` !== id || candidate.type !== tool);
     } else {
       const item = { ...edge, type: tool };
-      if (tool === 'door') item.widthFt = Number($('[data-door-width]').value) || map.grid.squareSizeFt;
+      if (tool === 'door' || tool === 'window') item.widthFt = Number($('[data-door-window-width]').value) || map.grid.squareSizeFt;
       if (tool === 'door') {
-        item.initialState = $('[data-door-state]').value;
-        item.locked = $('[data-door-locked]').checked;
+        const doorState = $('[data-door-state]').value;
+        item.initialState = doorState === 'open' ? 'open' : 'closed';
+        item.locked = doorState === 'closed-locked';
       }
+      if (tool === 'window') item.initialState = $('[data-window-state]').value;
       map.edges = map.edges.filter((candidate) => `${candidate.axis}:${candidate.x}:${candidate.y}` !== id);
       map.edges.push(item);
     }
@@ -828,7 +864,7 @@
       beginStroke();
       pointerMode = 'zone'; placementDragStart = cell; placementDragEnd = cell; draw(); return;
     }
-    if (['wall', 'door', 'erase-edges'].includes(tool)) {
+    if (['wall', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool)) {
       const edge = edgeAtPoint(event.clientX, event.clientY);
       if (!edge) return;
       pointerMode = 'edge';
@@ -1044,11 +1080,13 @@
       const y1 = edge.axis === 'vertical' ? (map.grid.northSouthSquareCount - edge.y) * cellH : (map.grid.northSouthSquareCount - edge.y) * cellH;
       ctx.beginPath();
       const baseEdgeWidth = Math.max(4 / view.scale, Math.min(cellW, cellH) * .085);
-      const editingEdges = ['wall', 'door', 'erase-edges'].includes(tool);
+      const editingEdges = ['wall', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool);
       ctx.lineWidth = baseEdgeWidth * (editingEdges ? 3 : 1);
       ctx.lineCap = 'round';
       if (edge.type === 'wall') ctx.strokeStyle = '#28201d';
+      else if (edge.type === 'secretDoor') ctx.strokeStyle = '#ff00ff';
       else if (edge.type === 'door') ctx.strokeStyle = edge.initialState === 'open' ? '#a37735' : '#6b3e22';
+      else if (edge.type === 'window') ctx.strokeStyle = edge.initialState === 'open' ? '#24a148' : edge.initialState === 'inspected' ? '#2584c7' : '#d49b16';
       else { ctx.strokeStyle = '#34a0a4'; ctx.setLineDash([5 / view.scale, 4 / view.scale]); }
       if (edge.axis === 'vertical') { ctx.moveTo(x1, y1 - cellH); ctx.lineTo(x1, y1); }
       else { ctx.moveTo(x1, y1); ctx.lineTo(x1 + cellW, y1); }
@@ -1057,6 +1095,15 @@
         ctx.fillStyle = '#f4dfb6'; ctx.font = `bold ${Math.min(cellW, cellH) * .18}px sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(edge.initialState === 'open' ? '↗' : edge.locked ? '🔒' : 'D', edge.axis === 'vertical' ? x1 : x1 + cellW / 2, edge.axis === 'vertical' ? y1 - cellH / 2 : y1);
+      }
+      if (edge.type === 'window') {
+        ctx.fillStyle = '#fff'; ctx.strokeStyle = '#222'; ctx.lineWidth = Math.max(2 / view.scale, cellW * .025);
+        ctx.font = `bold ${Math.min(cellW, cellH) * .16}px sans-serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const label = edge.initialState === 'open' ? 'O' : edge.initialState === 'inspected' ? 'I' : '?';
+        const labelX = edge.axis === 'vertical' ? x1 : x1 + cellW / 2;
+        const labelY = edge.axis === 'vertical' ? y1 - cellH / 2 : y1;
+        ctx.strokeText(label, labelX, labelY); ctx.fillText(label, labelX, labelY);
       }
     }
     for (const sticker of map.stickers || []) {
@@ -1107,7 +1154,7 @@
     const seen = new Set();
     for (const edge of map.edges) {
       const validAxis = edge.axis === 'vertical' || edge.axis === 'horizontal';
-      const validType = ['wall', 'doorway', 'door'].includes(edge.type);
+      const validType = ['wall', 'doorway', 'door', 'secretDoor', 'window'].includes(edge.type);
       const validPosition = edge.axis === 'vertical'
         ? edge.x >= 0 && edge.x <= cols && edge.y >= 0 && edge.y < rows
         : edge.x >= 0 && edge.x < cols && edge.y >= 0 && edge.y <= rows;
@@ -1116,7 +1163,8 @@
       if (seen.has(id)) errors.push(`More than one feature is defined at ${id}.`);
       seen.add(id);
       if (edge.widthFt !== undefined && (!Number.isFinite(edge.widthFt) || edge.widthFt <= 0)) errors.push(`Opening at ${id} needs a positive width.`);
-      if (edge.type === 'door' && !Number.isFinite(edge.widthFt)) errors.push(`Door at ${id} needs a positive width.`);
+      if (['door', 'window'].includes(edge.type) && !Number.isFinite(edge.widthFt)) errors.push(`Door or window at ${id} needs a positive width.`);
+      if (edge.type === 'window' && !['uninspected', 'inspected', 'open'].includes(edge.initialState)) errors.push(`Window at ${id} needs an initial state of uninspected, inspected, or open.`);
     }
     for (const tile of map.blockedTiles) {
       if (tile.x < 0 || tile.x >= cols || tile.y < 0 || tile.y >= rows) errors.push(`Obstacle at ${tile.x}, ${tile.y} is outside the grid.`);

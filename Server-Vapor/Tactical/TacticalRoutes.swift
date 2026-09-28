@@ -1,5 +1,29 @@
 import Vapor
 
+private func mapForTacticalViewer(_ map: TacticalMapState, revealSecretDoors: Bool) -> TacticalMapState {
+    guard !revealSecretDoors, let edges = map.edges,
+          edges.contains(where: { $0.type == "secretDoor" }) else {
+        return map
+    }
+    let playerEdges = edges.map { edge in
+        guard edge.type == "secretDoor" else { return edge }
+        return TacticalMapEdge(axis: edge.axis, x: edge.x, y: edge.y, type: "wall", widthFt: nil, initialState: nil, locked: nil)
+    }
+    return TacticalMapState(
+        format: map.format,
+        version: map.version,
+        imagePath: map.imagePath,
+        grid: map.grid,
+        blockedTiles: map.blockedTiles,
+        terrain: map.terrain,
+        elevation: map.elevation,
+        edges: playerEdges,
+        mapPresentation: map.mapPresentation,
+        playerPlacement: map.playerPlacement,
+        stickers: map.stickers
+    )
+}
+
 extension RoutesBuilder {
     func registerTacticalRoutes(
         campaignStore: CampaignStore,
@@ -18,16 +42,19 @@ extension RoutesBuilder {
         }
 
         tactical.get("map") { req async throws -> TacticalMapState in
-            let (campaign, _) = try await requireActiveCampaignParticipantSession(
+            let (campaign, session) = try await requireActiveCampaignParticipantSession(
                 req,
                 campaignStore: campaignStore
             )
             let defaultMapID = tacticalMapStore.mapSourceURL.lastPathComponent
             let mapID = await tacticalMapSelectionStore.selectedMapID(for: campaign.id, persistedMapID: campaign.selectedMapID, defaultMapID: defaultMapID)
-            if let imported = await tacticalMapSelectionStore.importedMap(mapID: mapID, for: campaign.id) {
-                return imported.map
+            let map = if let imported = await tacticalMapSelectionStore.importedMap(mapID: mapID, for: campaign.id) {
+                imported.map
+            } else {
+                try tacticalMapStore.load(mapID: mapID)
             }
-            return try tacticalMapStore.load(mapID: mapID)
+            let referee = try await isRefereeSession(session, in: campaign.id, on: req.db)
+            return mapForTacticalViewer(map, revealSecretDoors: referee)
         }
 
         tactical.get("maps") { req async throws -> [TacticalMapSummary] in

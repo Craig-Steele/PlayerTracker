@@ -1127,6 +1127,17 @@ Work:
 - connect tactical updates to the existing Server-Sent Events strategy, with reload/polling fallback where necessary
 - validate the same player workflow on desktop, iPhone, and Android browsers
 
+Overall M9 acceptance:
+
+- a referee can open an encounter in a desktop browser and see the 2D map
+- a player can open the same tactical view from an iPhone or Android browser
+- the player sees their own token, visible party tokens, and visible enemy tokens with the correct team presentation
+- tapping a token opens visibility-filtered creature information
+- a player can move one square in any of eight directions when the server permits it
+- illegal movement returns a client-readable rejection and does not alter the snapshot
+- accepted movement updates all connected tactical views through the existing live-update model
+- tactical state survives server restart through the existing campaign persistence boundary
+
 #### M9-02: Referee Map Selection
 
 Goal: let the referee choose the map during New Encounter setup before the encounter becomes active.
@@ -1177,6 +1188,7 @@ Planned behavior:
 - the referee remains unrestricted when placing controlled creatures or characters
 - the server enforces the rectangle; clients use it for visual guidance only
 - non-permitted areas are blacked out on the player tactical view
+- show player-facing wall/door edges only when the edge borders at least one square in the player's permitted starting area; the referee continues to see every edge
 - the referee sees the entire map and is not affected by the blackout
 - changing maps clears the encounter override and applies the newly selected map's default bounds
 
@@ -1201,6 +1213,7 @@ Acceptance:
 - a player receives a typed rejection when attempting placement outside the rectangle
 - the referee can place tokens outside the rectangle
 - non-permitted areas are blacked out for players
+- player-facing edges are limited to edge segments adjacent to at least one permitted starting-area square
 - changing maps applies the new map's default bounds and removes the previous encounter override
 
 #### M9-04: Map Authoring and Package Export
@@ -1223,7 +1236,7 @@ Planned behavior:
 - paint obstacle squares that cannot be entered
 - paint terrain properties such as normal, difficult terrain, water, and lava, independently from impassable obstacles
 - paint elevation heights independently from terrain and obstacle data
-- author walls, doorways, and doors on grid edges
+- author walls, doors, secret doors, and windows on grid edges; window metadata supports uninspected, inspected, and open initial states
 - choose bounded or infinite map boundaries; bounded maps restrict placement to the map without adding wall data
 - provide eraser and undo controls
 - preview the final tactical rendering
@@ -1234,7 +1247,7 @@ Canonical data distinctions:
 
 - `blockedTiles` represent obstacle squares that cannot be entered
 - `terrain` represents movement or environmental properties of squares
-- `edges` represent wall and door features on grid-line segments; an edge with no feature is open
+- `edges` represent wall, door, secret-door, and window features on grid-line segments; an edge with no feature is open
 - `elevation` represents height independently from terrain
 
 Canonical edge representation:
@@ -1243,9 +1256,11 @@ Canonical edge representation:
 - keep a wall stroke on the horizontal or vertical lattice axis selected at pointer-down; snap near-edge pointer input to the nearest lattice edge
 - use `grid.boundaryBehavior` to distinguish bounded placement from infinite placement; boundary behavior does not create or remove edge features
 - use the southwest grid origin: a vertical segment lies on grid line `x` between `y` and `y + 1`; a horizontal segment lies on grid line `y` between `x` and `x + 1`
-- support `wall`, `doorway`, and `door` edge types; a doorway records an intentional opening in a wall line, while a door records a closable feature in that opening
-- allow a door to specify `widthFt`, `initialState` (such as `open` or `closed`), and whether it is locked
+- support `wall`, `doorway`, `door`, `secretDoor`, and `window` edge types; a doorway records an intentional opening in a wall line, while a door records a closable feature in that opening
+- require doors and windows to specify a positive `widthFt`, authored through the shared “Door and Window Width” control
+- define the door initial-state choices as Closed, Closed and Locked, and Open, mapping to `initialState` and the existing `locked` metadata without adding a new field
 - store the map-authored initial door state in the sidecar; store door state changes made during play in encounter state
+- require a window `initialState`: `uninspected` (no visibility into the area beyond; impassable), `inspected` (visibility into the area beyond; impassable), or `open` (visibility into the area beyond; passable); this milestone covers authoring, validation, and package serialization only, not tactical visibility/line-of-sight, movement enforcement, or runtime state transitions
 - permit no more than one edge feature at a given axis and coordinate, and validate edge coordinates against map bounds
 - treat an omitted edge feature as open; use doorway width metadata where a passage clearance narrower than one full grid segment needs to be represented
 
@@ -1259,7 +1274,7 @@ Acceptance:
 - a user can align a grid to the cropped map image
 - a user can choose bounded or infinite map behavior; bounded maps restrict placement to map bounds without creating walls in `edges`
 - a user can create obstacle, terrain, edge-feature, and elevation metadata without editing JSON by hand
-- walls, doorways, and doors export with unambiguous lattice-edge coordinates; invalid or duplicate edge records receive actionable validation errors
+- walls, doorways, doors, secret doors, and windows export with unambiguous lattice-edge coordinates; window states are validated and invalid or duplicate edge records receive actionable validation errors
 - exported door records include initial state, and encounter-time door changes do not alter the map package
 - the editor preview matches the tactical client’s coordinate convention
 - the preview and exported `.tttm` package use the cropped image and matching grid coordinates
@@ -1291,17 +1306,35 @@ Acceptance:
 - valid multi-square tokens render and can be selected across their full footprint
 - footprint data survives server restart and is present in snapshots and live updates
 
+#### M9-06: Shared Tactical Zone Discovery
+
+Goal: reveal map areas to players as visibility paths through doors and windows become available, while retaining shared party exploration.
+
+Status: planned
+
+Planned behavior:
+
+- seed the initial revealed area from the player starting area, and expand it with a grid flood fill limited by edge visibility
+- treat walls and secret doors as visibility-blocking edges for players; use current door/window encounter state to determine whether visibility can pass each edge
+- keep visibility separate from movement passability: an inspected but closed window permits visibility through it while remaining impassable; an open window permits both
+- show the entire flood-filled area at full brightness while a visibility path from an active player remains open
+- retain discoveries for the encounter and share them across all players
+- shade previously discovered areas with a 50% black overlay when no active player has a visibility path to them; keep never-discovered areas fully blacked out
+- let opening a door or changing a window to a visibility-permitting state reveal the connected area, bounded by the next visibility-blocking edges
+- restore full visibility to a discovered area when a player regains a visibility path to it
+- persist discovery and runtime door/window states as encounter state, separate from map-authored initial states
+- preserve referee full-map visibility
+
 Acceptance:
 
-- a referee can open an encounter in a desktop browser and see the 2D map
-- a player can open the same tactical view from an iPhone or Android browser
-- the player sees their own token, visible party tokens, and visible enemy tokens with the correct team presentation
-- tapping a token opens visibility-filtered creature information
-- a player can move one square in any of eight directions when the server permits it
-- illegal movement returns a client-readable rejection and does not alter the snapshot
-- accepted movement updates all connected tactical views through the existing live-update model
-- tactical state survives server restart through the existing campaign persistence boundary
-- the Web client does not depend on Unity, a Unity scene, or a native Android client
+- players initially see only their starting area and edges attached to its squares
+- opening a door reveals the connected area up to visibility-blocking edges
+- inspected windows reveal areas beyond without permitting movement through them; open windows permit visibility and passage
+- players share discoveries, including discoveries made in separate player sessions
+- previously discovered areas without a current visibility path appear under a 50% black shadow; undiscovered areas remain fully black
+- closing a door or window shadows disconnected discovered areas without erasing their discovery
+- reopening a visibility path restores full brightness to the previously discovered area
+- referee view and existing player-placement enforcement remain unchanged
 
 ### M10: Legacy Anonymous Migration
 

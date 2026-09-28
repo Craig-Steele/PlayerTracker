@@ -51,6 +51,41 @@ struct TacticalMapFormatTests {
     }
 
     @Test
+    func secretDoorIsAValidMapEdge() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["edges"] = [["axis": "vertical", "x": 1, "y": 0, "type": "secretDoor"]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+
+        #expect(map.edges?.first?.type == "secretDoor")
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+    }
+
+    @Test
+    func windowEdgesRequireAndAcceptSupportedInitialStates() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["edges"] = [
+            ["axis": "vertical", "x": 0, "y": 0, "type": "window", "widthFt": 3, "initialState": "uninspected"],
+            ["axis": "vertical", "x": 1, "y": 0, "type": "window", "widthFt": 4, "initialState": "inspected"],
+            ["axis": "horizontal", "x": 0, "y": 0, "type": "window", "widthFt": 5, "initialState": "open"]
+        ]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(map.edges?.map(\.initialState) == ["uninspected", "inspected", "open"])
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+
+        object["edges"] = [["axis": "vertical", "x": 1, "y": 0, "type": "window", "widthFt": 5, "initialState": "broken"]]
+        let invalidMap = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(TacticalMapValidator.validationError(for: invalidMap) == "A window's initial state must be uninspected, inspected, or open.")
+
+        object["edges"] = [["axis": "vertical", "x": 1, "y": 0, "type": "window", "widthFt": 5]]
+        let missingStateMap = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(TacticalMapValidator.validationError(for: missingStateMap) == "Each window must define an initial state.")
+
+        object["edges"] = [["axis": "vertical", "x": 1, "y": 0, "type": "window", "initialState": "open"]]
+        let missingWidthMap = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(TacticalMapValidator.validationError(for: missingWidthMap) == "Each door or window must define its opening width.")
+    }
+
+    @Test
     func decorativeEmojiStickersDecodeEncodeAndValidate() throws {
         var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
         object["stickers"] = [["x": 1, "y": 0, "emoji": "🌳", "sizePercent": 300, "opacityPercent": 50]]

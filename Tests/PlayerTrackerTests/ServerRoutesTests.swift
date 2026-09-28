@@ -250,8 +250,9 @@ struct ServerRoutesTests {
                 coordinateConvention: sourceMap.grid.coordinateConvention
             ),
             blockedTiles: [],
-            terrain: sourceMap.terrain,
-            elevation: sourceMap.elevation,
+            terrain: TacticalTerrainState(defaultType: "normal", overrides: []),
+            elevation: TacticalElevationState(defaultHeightFt: 0, overrides: []),
+            edges: [TacticalMapEdge(axis: "vertical", x: 1, y: 0, type: "secretDoor", widthFt: nil, initialState: nil, locked: nil)],
             mapPresentation: sourceMap.mapPresentation
         )
         let pngData = Data([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
@@ -283,6 +284,16 @@ struct ServerRoutesTests {
         )
         XCTAssertEqual(selectedMapResponse.status, .ok)
         XCTAssertEqual(try selectedMapResponse.content.decode(TacticalMapState.self), map)
+
+        let player = try await join(displayName: "Map Player", in: tester)
+        let playerMapResponse = try await tester.sendRequest(
+            .GET,
+            "/tactical/map",
+            headers: HTTPHeaders([("Cookie", "roll4_player_session=\(player.cookieToken)")])
+        )
+        XCTAssertEqual(playerMapResponse.status, .ok)
+        let playerMap = try playerMapResponse.content.decode(TacticalMapState.self)
+        XCTAssertEqual(playerMap.edges?.first?.type, "wall", "Secret doors must not be disclosed in player map data.")
 
         let character = try await createMemberCharacter(
             in: tester,

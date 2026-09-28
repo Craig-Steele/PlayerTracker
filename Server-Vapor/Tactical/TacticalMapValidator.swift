@@ -55,17 +55,23 @@ enum TacticalMapValidator {
             default: validPosition = false
             }
             guard validPosition else { return "An edge feature is outside the map grid or has an invalid axis." }
-            guard ["wall", "doorway", "door"].contains(edge.type) else {
-                return "An edge feature must be a wall, doorway, or door."
+            guard ["wall", "doorway", "door", "secretDoor", "window"].contains(edge.type) else {
+                return "An edge feature must be a wall, doorway, door, secret door, or window."
             }
             if let width = edge.widthFt, !width.isFinite || width <= 0 {
-                return "Door and doorway widths must be positive."
+                return "Door, doorway, and window widths must be positive."
             }
-            if edge.type == "door", edge.widthFt == nil {
-                return "Each door must define its opening width."
+            if ["door", "window"].contains(edge.type), edge.widthFt == nil {
+                return "Each door or window must define its opening width."
             }
             if let state = edge.initialState, edge.type == "door", !["open", "closed"].contains(state) {
                 return "A door's initial state must be open or closed."
+            }
+            if edge.type == "window", let state = edge.initialState, !["uninspected", "inspected", "open"].contains(state) {
+                return "A window's initial state must be uninspected, inspected, or open."
+            }
+            if edge.type == "window", edge.initialState == nil {
+                return "Each window must define an initial state."
             }
         }
         return nil

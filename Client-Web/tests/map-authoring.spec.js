@@ -54,6 +54,25 @@ async function clickGridCell(page, x, topRow, columns = 8, rows = 8) {
   expect(box).not.toBeNull();
 }
 
+async function clickGridEdge(page, lineX, topRow, columns = 8, rows = 8) {
+  const canvas = page.locator('[data-map-canvas]');
+  const box = await canvas.boundingBox();
+  const dimensions = await canvas.evaluate((element) => ({ width: element.clientWidth, height: element.clientHeight }));
+  const pixelsPerSquare = Math.min(64, Math.floor(2048 / Math.max(columns, rows)));
+  const mapWidth = columns * pixelsPerSquare;
+  const mapHeight = rows * pixelsPerSquare;
+  const scale = Math.min(dimensions.width / mapWidth, dimensions.height / mapHeight) * 0.94;
+  const offsetX = (dimensions.width - mapWidth * scale) / 2;
+  const offsetY = (dimensions.height - mapHeight * scale) / 2;
+  await canvas.click({
+    position: {
+      x: offsetX + lineX * pixelsPerSquare * scale,
+      y: offsetY + (topRow + 0.5) * pixelsPerSquare * scale
+    }
+  });
+  expect(box).not.toBeNull();
+}
+
 async function sidecarFrom(entries) {
   const sidecarName = [...entries.keys()].find((name) => name.endsWith('.map.json'));
   expect(sidecarName).toBeTruthy();
@@ -96,6 +115,134 @@ test('grid opacity slider updates its value and persists across reloads', async 
   await page.reload();
   await expect(slider).toHaveValue('37');
   await expect(value).toHaveText('37%');
+});
+
+test('opacity sliders snap clicks to quarter steps but preserve dragged values', async ({ page }) => {
+  await page.locator('summary').filter({ hasText: 'Terrain' }).click();
+  const slider = page.locator('[data-layer-opacity="terrain"]');
+  const value = page.locator('[data-layer-opacity-value="terrain"]');
+  await expect(page.locator('[data-layer-opacity]')).toHaveCount(6);
+  await expect(slider).toHaveAttribute('type', 'range');
+
+  await slider.evaluate((element) => {
+    element.value = '37';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 10, clientY: 10 }));
+    element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 10, clientY: 10 }));
+  });
+  await expect(slider).toHaveValue('25');
+  await expect(value).toHaveText('25%');
+
+  await slider.evaluate((element) => {
+    element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 2, clientX: 10, clientY: 10 }));
+    element.value = '42';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 2, clientX: 20, clientY: 10 }));
+    element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 2, clientX: 20, clientY: 10 }));
+  });
+  await expect(slider).toHaveValue('42');
+  await expect(value).toHaveText('42%');
+});
+
+test('tactical player placement blackout is opaque and only attached edges remain visible', async ({ page }) => {
+  await page.addScriptTag({ url: '/tactical/tactical-render.js' });
+  const pixel = await page.evaluate(async () => {
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:fixed;left:0;top:0;width:200px;height:200px';
+    document.body.append(canvas);
+    const imageCanvas = document.createElement('canvas');
+    imageCanvas.width = 100;
+    imageCanvas.height = 100;
+    const imageContext = imageCanvas.getContext('2d');
+    imageContext.fillStyle = '#fff';
+    imageContext.fillRect(0, 0, 100, 100);
+    const image = new Image();
+    image.src = imageCanvas.toDataURL();
+    await image.decode();
+    window.TacticalRender.render({
+      canvas,
+      image,
+      map: {
+        grid: { eastWestSquareCount: 2, northSouthSquareCount: 2 },
+        edges: [
+          { axis: 'vertical', x: 1, y: 0, type: 'wall' },
+          { axis: 'vertical', x: 1, y: 1, type: 'wall' }
+        ]
+      },
+      status: document.createElement('div'),
+      playerPlacement: { west: 0, east: 0, south: 0, north: 0 },
+      viewerIsReferee: false,
+      indicatorOpacity: 0.25,
+      gridOpacity: 0
+    });
+    const context = canvas.getContext('2d');
+    return {
+      blackout: [...context.getImageData(77, 31, 1, 1).data],
+      attachedEdge: [...context.getImageData(100, 75, 1, 1).data],
+      remoteEdgeArea: [...context.getImageData(100, 31, 1, 1).data]
+    };
+  });
+  expect(pixel.blackout).toEqual([0, 0, 0, 255]);
+  expect(pixel.attachedEdge[0]).toBeLessThan(100);
+  expect(pixel.remoteEdgeArea).toEqual([0, 0, 0, 255]);
+});
+
+test('secret doors paint and export as secret wall edges', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('summary').filter({ hasText: 'Edges' }).click();
+  await page.locator('[data-tool="secretDoor"]').click();
+  await clickGridEdge(page, 3, 3);
+
+  const exported = await exportPackage(page, 'Secret-Door.tttm');
+  const sidecar = await sidecarFrom(exported.entries);
+  expect(sidecar.edges).toContainEqual({ axis: 'vertical', x: 3, y: 4, type: 'secretDoor' });
+});
+
+test('window edges export all supported initial states', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('summary').filter({ hasText: 'Edges' }).click();
+  const states = ['uninspected', 'inspected', 'open'];
+  for (const [index, state] of states.entries()) {
+    await page.locator('[data-window-state]').selectOption(state);
+    await page.locator('[data-tool="window"]').click();
+    await clickGridEdge(page, index + 2, 3);
+  }
+
+  const exported = await exportPackage(page, 'Windows.tttm');
+  const sidecar = await sidecarFrom(exported.entries);
+  for (const [index, initialState] of states.entries()) {
+    expect(sidecar.edges).toContainEqual({ axis: 'vertical', x: index + 2, y: 4, type: 'window', widthFt: 5, initialState });
+  }
+});
+
+test('door and window width control exports widths and door state choices', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('summary').filter({ hasText: 'Edges' }).click();
+  const width = page.locator('[data-door-window-width]');
+  await expect(width).toHaveValue('5');
+  await width.fill('3');
+  const doorStates = [
+    ['closed', 'closed', false],
+    ['closed-locked', 'closed', true],
+    ['open', 'open', false]
+  ];
+  for (const [index, [choice, initialState, locked]] of doorStates.entries()) {
+    await page.locator('[data-door-state]').selectOption(choice);
+    await page.locator('[data-tool="door"]').click();
+    await clickGridEdge(page, index + 2, 2);
+  }
+
+  await width.fill('4');
+  await page.locator('[data-window-state]').selectOption('inspected');
+  await page.locator('[data-tool="window"]').click();
+  await clickGridEdge(page, 2, 3);
+
+  const exported = await exportPackage(page, 'Door-Window-Widths.tttm');
+  const sidecar = await sidecarFrom(exported.entries);
+  for (const [index, [, initialState, locked]] of doorStates.entries()) {
+    expect(sidecar.edges).toContainEqual({ axis: 'vertical', x: index + 2, y: 5, type: 'door', widthFt: 3, initialState, locked });
+  }
+  expect(sidecar.edges).toContainEqual({ axis: 'vertical', x: 2, y: 4, type: 'window', widthFt: 4, initialState: 'inspected' });
 });
 
 test('blank-map preset and custom colors survive draft restore and package export/reopen', async ({ page }) => {
@@ -188,7 +335,10 @@ test('terrain painting, erase, undo, and sticker erasing round-trip through expo
   const stickersGroup = page.locator('[data-tool-category]').nth(4);
   await stickersGroup.locator('summary').click();
   await page.locator('[data-sticker-emoji]').fill('🟫');
-  await page.locator('[data-layer-opacity="stickers"]').selectOption('50');
+  await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {
+    element.value = '50';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
   await page.locator('[data-tool="sticker"]').click();
   await clickGridCell(page, 4, 2);
   await page.locator('[data-tool="erase-stickers"]').click();
