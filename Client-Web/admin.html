@@ -73,10 +73,29 @@
       <div class="admin-auth-footer-row">
         <div id="admin-auth-summary" class="player-campaign-meta">Not signed in.</div>
         <div id="admin-auth-session-actions" class="admin-toolbar admin-auth-toolbar hidden">
+          <button type="button" id="admin-auth-change-password" class="secondary" aria-expanded="false">Change Password</button>
           <button type="button" id="admin-auth-logout" class="secondary" disabled>Log Out</button>
           <button type="button" id="admin-auth-shutdown" class="secondary" disabled>Shutdown</button>
         </div>
       </div>
+      <section id="admin-auth-password-panel" class="admin-password-panel hidden" aria-labelledby="admin-password-title">
+        <h3 id="admin-password-title">Change Admin Password</h3>
+        <div class="form-section-block property-group">
+          <label class="property-row">
+            <span class="property-label">Current password</span>
+            <span class="property-control"><input type="password" id="admin-password-current" autocomplete="current-password"></span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">New password</span>
+            <span class="property-control"><input type="password" id="admin-password-new" autocomplete="new-password"></span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Confirm new password</span>
+            <span class="property-control"><input type="password" id="admin-password-confirm" autocomplete="new-password"></span>
+          </label>
+        </div>
+        <button type="button" id="admin-password-change">Save New Password</button>
+      </section>
     </div>
     <div id="admin-auth-status" class="subtitle"></div>
   </div>
