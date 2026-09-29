@@ -84,6 +84,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const authShutdownBtn = document.getElementById('admin-auth-shutdown');
   const authCredentials = document.getElementById('admin-auth-credentials');
   const authSessionActions = document.getElementById('admin-auth-session-actions');
+  const authPasswordPanel = document.getElementById('admin-auth-password-panel');
+  const changePasswordBtn = document.getElementById('admin-password-change');
+  const currentPasswordInput = document.getElementById('admin-password-current');
+  const newPasswordInput = document.getElementById('admin-password-new');
+  const confirmPasswordInput = document.getElementById('admin-password-confirm');
   const signupModal = document.getElementById('admin-signup-modal');
   const signupModalStatus = document.getElementById('admin-signup-modal-status');
   const signupModalSummary = document.getElementById('admin-signup-modal-summary');
@@ -296,6 +301,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (authSessionActions) {
       authSessionActions.classList.toggle('hidden', !authUser);
+    }
+    if (authPasswordPanel) {
+      authPasswordPanel.classList.toggle('hidden', !authUser);
     }
     setCampaignUiEnabled(Boolean(authUser));
   }
@@ -994,6 +1002,42 @@ window.addEventListener('DOMContentLoaded', () => {
     clearCampaignState();
   }
 
+  async function changeOwnerPassword() {
+    if (!authUser) return;
+    const currentPassword = currentPasswordInput?.value || '';
+    const newPassword = newPasswordInput?.value || '';
+    const confirmPassword = confirmPasswordInput?.value || '';
+    if (!currentPassword || !newPassword) {
+      setAuthStatus('Enter your current password and a new password.', true);
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setAuthStatus('The new passwords do not match.', true);
+      return;
+    }
+    if (changePasswordBtn) changePasswordBtn.disabled = true;
+    try {
+      await fetchVoid('/admin/owner/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      if (currentPasswordInput) currentPasswordInput.value = '';
+      if (newPasswordInput) newPasswordInput.value = '';
+      if (confirmPasswordInput) confirmPasswordInput.value = '';
+      if (authPasswordInput) authPasswordInput.value = '';
+      authUser = null;
+      updateAuthUi();
+      clearCampaignState();
+      setAuthStatus('Password changed. Sign in again with your new password.');
+    } catch (err) {
+      if (currentPasswordInput) currentPasswordInput.value = '';
+      setAuthStatus(`Password change failed: ${err.message}`, true);
+    } finally {
+      if (changePasswordBtn) changePasswordBtn.disabled = false;
+    }
+  }
+
   async function shutdownServer() {
     if (!authUser || !allowLocalAdminActions) return;
     const confirmed = await showConfirmDialog({
@@ -1200,6 +1244,10 @@ window.addEventListener('DOMContentLoaded', () => {
     authShutdownBtn.addEventListener('click', () => {
       shutdownServer();
     });
+  }
+
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', changeOwnerPassword);
   }
 
   if (authEmailInput) {

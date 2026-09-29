@@ -68,6 +68,62 @@ struct AuthRoutesTests {
         #expect(loginSession.user.email == "owner@example.com")
     }
 
+    @Test("server owner can change password and is required to sign in again")
+    func serverOwnerCanChangePassword() async throws {
+        let app = try await makeApp()
+        defer { shutdownApplicationSynchronously(app) }
+        let tester = try app.testing()
+
+        let signup = try await sendRequest(
+            tester,
+            .POST,
+            "/auth/signup",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(AuthSignupInput(email: "owner@example.com", password: "old-password")))
+        )
+        #expect(signup.status == .ok)
+        let cookie = try #require(signup.headers[.setCookie].first(where: { $0.hasPrefix("roll4_session=") }))
+        let token = try #require(cookie.split(separator: ";").first?.split(separator: "=").last)
+        let sessionCookie = "roll4_session=\(token)"
+
+        let wrongCurrent = try await sendRequest(
+            tester,
+            .POST,
+            "/admin/owner/password",
+            headers: ["Content-Type": "application/json", "Cookie": sessionCookie],
+            body: ByteBuffer(data: try JSONEncoder().encode(OwnerPasswordChangeInput(currentPassword: "wrong-password", newPassword: "new-password")))
+        )
+        #expect(wrongCurrent.status == .unauthorized)
+
+        let changed = try await sendRequest(
+            tester,
+            .POST,
+            "/admin/owner/password",
+            headers: ["Content-Type": "application/json", "Cookie": sessionCookie],
+            body: ByteBuffer(data: try JSONEncoder().encode(OwnerPasswordChangeInput(currentPassword: "old-password", newPassword: "new-password")))
+        )
+        #expect(changed.status == .ok)
+
+        let oldSession = try await sendRequest(tester, .GET, "/auth/session", headers: ["Cookie": sessionCookie])
+        #expect(oldSession.status == .unauthorized)
+        let oldLogin = try await sendRequest(
+            tester,
+            .POST,
+            "/auth/login",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(AuthLoginInput(email: "owner@example.com", password: "old-password")))
+        )
+        #expect(oldLogin.status == .unauthorized)
+        let newLogin = try await sendRequest(
+            tester,
+            .POST,
+            "/auth/login",
+            headers: ["Content-Type": "application/json"],
+            body: ByteBuffer(data: try JSONEncoder().encode(AuthLoginInput(email: "owner@example.com", password: "new-password")))
+        )
+        #expect(newLogin.status == .ok)
+    }
+
     @Test("duplicate signup is rejected")
     func duplicateSignupIsRejected() async throws {
         let app = try await makeApp()

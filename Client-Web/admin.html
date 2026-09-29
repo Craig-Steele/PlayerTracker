@@ -77,6 +77,24 @@
           <button type="button" id="admin-auth-shutdown" class="secondary" disabled>Shutdown</button>
         </div>
       </div>
+      <section id="admin-auth-password-panel" class="admin-password-panel hidden" aria-labelledby="admin-password-title">
+        <h3 id="admin-password-title">Change Admin Password</h3>
+        <div class="form-section-block property-group">
+          <label class="property-row">
+            <span class="property-label">Current password</span>
+            <span class="property-control"><input type="password" id="admin-password-current" autocomplete="current-password"></span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">New password</span>
+            <span class="property-control"><input type="password" id="admin-password-new" autocomplete="new-password"></span>
+          </label>
+          <label class="property-row">
+            <span class="property-label">Confirm new password</span>
+            <span class="property-control"><input type="password" id="admin-password-confirm" autocomplete="new-password"></span>
+          </label>
+        </div>
+        <button type="button" id="admin-password-change">Change Password</button>
+      </section>
     </div>
     <div id="admin-auth-status" class="subtitle"></div>
   </div>
@@ -185,6 +203,6 @@
   <script src="shared.js?v=3"></script>
   <script src="campaign-settings.js?v=2"></script>
   <script src="ruleset.js?v=2"></script>
-  <script src="admin.js?v=12"></script>
+  <script src="admin.js?v=13"></script>
 </body>
 </html>
