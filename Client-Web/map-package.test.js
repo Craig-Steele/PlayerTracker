@@ -22,7 +22,7 @@ const map = {
   imagePath: 'old-name.png',
   grid: { eastWestSquareCount: 2, northSouthSquareCount: 1, squareSizeFt: 5 },
   blockedTiles: [],
-  stickers: [{ x: 1, y: 0, emoji: '🌳', sizePercent: 300, opacityPercent: 50 }],
+  stickers: [{ x: 1.5, y: 0.5, emoji: '🌳', sizePercent: 300, opacityPercent: 50 }],
   terrain: { defaultType: 'normal', overrides: [] },
   elevation: { defaultHeightFt: 0, overrides: [] },
   edges: [],
@@ -41,7 +41,7 @@ test('new map packages save as .tttm and preserve the image and JSON sidecar', a
   assert.equal(sidecar.format, 'TacticalTableTop.Map');
   assert.equal(sidecar.version, 1);
   assert.equal(sidecar.imagePath, 'Hall.png');
-  assert.deepEqual(sidecar.stickers, [{ x: 1, y: 0, emoji: '🌳', sizePercent: 300, opacityPercent: 50 }]);
+  assert.deepEqual(sidecar.stickers, [{ x: 1.5, y: 0.5, emoji: '🌳', sizePercent: 300, opacityPercent: 50 }]);
   assert.deepEqual(sidecar.grid, { eastWestSquareCount: 2, northSouthSquareCount: 1, squareSizeFt: 5, coordinateConvention: { origin: 'southwest' } });
 });
 

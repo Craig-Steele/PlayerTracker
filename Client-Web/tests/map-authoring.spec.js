@@ -54,6 +54,20 @@ async function clickGridCell(page, x, topRow, columns = 8, rows = 8) {
   expect(box).not.toBeNull();
 }
 
+async function gridPointClientPosition(page, x, y, columns = 8, rows = 8) {
+  const canvas = page.locator('[data-map-canvas]');
+  const box = await canvas.boundingBox();
+  const dimensions = await canvas.evaluate((element) => ({ width: element.clientWidth, height: element.clientHeight }));
+  const pixelsPerSquare = Math.min(64, Math.floor(2048 / Math.max(columns, rows)));
+  const mapWidth = columns * pixelsPerSquare;
+  const mapHeight = rows * pixelsPerSquare;
+  const scale = Math.min(dimensions.width / mapWidth, dimensions.height / mapHeight) * 0.94;
+  return {
+    x: box.x + (dimensions.width - mapWidth * scale) / 2 + x * pixelsPerSquare * scale,
+    y: box.y + (dimensions.height - mapHeight * scale) / 2 + (rows - y) * pixelsPerSquare * scale
+  };
+}
+
 async function clickGridEdge(page, lineX, topRow, columns = 8, rows = 8) {
   const canvas = page.locator('[data-map-canvas]');
   const box = await canvas.boundingBox();
@@ -84,7 +98,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/map-authoring.html');
 });
 
-test('Create Map info is tucked under the info icon and grid modes show their own controls', async ({ page }) => {
+test('Create Map info is tucked under the info icon and blank-map grid controls remain editable', async ({ page }) => {
   const createGroup = page.locator('.authoring-create-group');
   await expect(createGroup.locator('[data-grid-width]')).toHaveCount(0);
   await expect(createGroup.locator('[data-square-size]')).toHaveCount(0);
@@ -94,11 +108,11 @@ test('Create Map info is tucked under the info icon and grid modes show their ow
   await expect(page.locator('.authoring-info .authoring-note')).toBeVisible();
   await page.locator('.authoring-info summary').click();
 
-  await expect(page.locator('[data-image-grid-controls]')).toBeVisible();
-  await expect(page.locator('[data-calibrated-grid-controls]')).toBeHidden();
-  await page.locator('[data-grid-mode][value="calibrated"]').check();
-  await expect(page.locator('[data-image-grid-controls]')).toBeHidden();
-  await expect(page.locator('[data-calibrated-grid-controls]')).toBeVisible();
+  await expect(page.locator('[data-grid-count-controls]')).toBeVisible();
+  await expect(page.locator('[data-grid-mode]')).toHaveCount(0);
+  await expect(page.locator('[data-calibration-controls]')).toBeHidden();
+  await expect(page.locator('[data-grid-width]')).toBeEditable();
+  await expect(page.locator('[data-grid-height]')).toBeEditable();
   await expect(page.locator('[data-grid-opacity]')).toBeVisible();
 });
 
@@ -110,8 +124,9 @@ test('Edit controls put Fit Map first and show Pan as a hand tool', async ({ pag
 
 test('blank-map grid counts resize the image proportionally and hide calibration', async ({ page }) => {
   await createBlankMap(page);
-  await expect(page.locator('[data-calibrated-grid-option]')).toBeHidden();
-  await expect(page.locator('[data-grid-mode][value="image"]')).toBeChecked();
+  await expect(page.locator('[data-grid-mode]')).toHaveCount(0);
+  await expect(page.locator('[data-calibration-controls]')).toBeHidden();
+  await expect(page.locator('[data-grid-width]')).toBeEditable();
   await page.locator('[data-grid-width]').fill('12');
   await page.locator('[data-grid-width]').press('Tab');
   await page.locator('[data-grid-height]').fill('6');
@@ -151,6 +166,86 @@ test('common sticker emoji pickers populate the emoji field', async ({ page }) =
   await expect(emojiInput).toHaveValue('🌳');
   await pickers.nth(0).dispatchEvent('pointerdown');
   await expect(emojiInput).toHaveValue('🟦');
+});
+
+test('stickers can be placed at continuous coordinates, selected, dragged, and edited in place', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('[data-tool-category]').nth(5).locator('summary').click();
+  await page.locator('[data-sticker-emoji]').fill('🌳');
+  await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {
+    element.value = '75';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.locator('[data-tool="sticker-circle"]').click();
+  const initial = await gridPointClientPosition(page, 1.5, 2.5);
+  const radiusPoint = await gridPointClientPosition(page, 2.5, 2.5);
+  await page.mouse.move(initial.x, initial.y); await page.mouse.down(); await page.mouse.move(radiusPoint.x, radiusPoint.y); await page.mouse.up();
+  await expect(page.locator('[data-sticker-edit-state]')).toHaveText('New sticker settings');
+
+  await page.locator('[data-tool="sticker-select"]').click();
+  await page.locator('[data-map-canvas]').click({ position: { x: initial.x - (await page.locator('[data-map-canvas]').boundingBox()).x, y: initial.y - (await page.locator('[data-map-canvas]').boundingBox()).y } });
+  await expect(page.locator('[data-sticker-edit-state]')).toHaveText('Editing selected sticker');
+  await page.locator('[data-sticker-emoji]').fill('🪑');
+  await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {
+    element.value = '35';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+
+  const target = await gridPointClientPosition(page, 3.25, 4.75);
+  await page.mouse.move(initial.x, initial.y);
+  await page.mouse.down();
+  await page.mouse.move(target.x, target.y, { steps: 4 });
+  await page.mouse.up();
+
+  const { entries } = await exportPackage(page, 'Sticker-object.tttm');
+  const sidecar = await sidecarFrom(entries);
+  expect(sidecar.stickers).toHaveLength(1);
+  expect(sidecar.stickers[0].x).toBeCloseTo(3.25, 1);
+  expect(sidecar.stickers[0].y).toBeCloseTo(4.75, 1);
+  expect(sidecar.stickers[0]).toMatchObject({ shape: 'circle', emoji: '🪑', opacityPercent: 35 });
+  expect(sidecar.stickers[0].radius).toBeCloseTo(1, 1);
+
+  await page.keyboard.press('Delete');
+  const deleted = await exportPackage(page, 'Sticker-object.tttm');
+  expect((await sidecarFrom(deleted.entries)).stickers).toEqual([]);
+});
+
+test('sticker controls set placement defaults outside Select Sticker mode', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('[data-tool-category]').nth(5).locator('summary').click();
+  const start = await gridPointClientPosition(page, 1.5, 1.5);
+  const edge = await gridPointClientPosition(page, 2, 1.5);
+  await page.locator('[data-tool="sticker-circle"]').click();
+  await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(edge.x, edge.y); await page.mouse.up();
+
+  await page.locator('[data-tool="sticker-circle"]').click();
+  await page.locator('[data-sticker-emoji]').fill('🔥');
+  await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {
+    element.value = '75'; element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const second = await gridPointClientPosition(page, 4.5, 4.5);
+  const secondEdge = await gridPointClientPosition(page, 5, 4.5);
+  await page.mouse.move(second.x, second.y); await page.mouse.down(); await page.mouse.move(secondEdge.x, secondEdge.y); await page.mouse.up();
+
+  const { entries } = await exportPackage(page, 'Sticker-defaults.tttm');
+  const sidecar = await sidecarFrom(entries);
+  expect(sidecar.stickers).toHaveLength(2);
+  expect(sidecar.stickers[0]).toMatchObject({ emoji: '✨', opacityPercent: 25 });
+  expect(sidecar.stickers[1]).toMatchObject({ emoji: '🔥', opacityPercent: 75 });
+});
+
+test('Clear Zone is enabled only while a starting zone exists', async ({ page }) => {
+  await createBlankMap(page);
+  const clearZone = page.locator('[data-zone-clear]');
+  await expect(clearZone).toBeDisabled();
+  await page.locator('summary').filter({ hasText: 'Starting Zone' }).click();
+  await page.locator('[data-tool="starting-zone"]').click();
+  const start = await gridPointClientPosition(page, 1.5, 1.5);
+  const end = await gridPointClientPosition(page, 3.5, 3.5);
+  await page.mouse.move(start.x, start.y); await page.mouse.down(); await page.mouse.move(end.x, end.y); await page.mouse.up();
+  await expect(clearZone).toBeEnabled();
+  await clearZone.click();
+  await expect(clearZone).toBeDisabled();
 });
 
 test('grid opacity slider updates its value and persists across reloads', async ({ page }) => {
@@ -343,8 +438,11 @@ test('image upload opens calibration directly and pads the PNG to an image-align
   await expect(page.locator('[data-map-canvas]')).toBeVisible();
   await expect(page.locator('[data-authoring-crop]')).toHaveCount(0);
   await expect(page.locator('[data-tool="grid-calibrate"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-calibration-controls]')).toBeVisible();
+  await expect(page.locator('[data-grid-width]')).toHaveAttribute('readonly', '');
+  await expect(page.locator('[data-grid-height]')).toHaveAttribute('readonly', '');
+  await expect(page.locator('[data-tool="grid-calibrate"]')).toHaveText('Recalibrate');
   await page.locator('[data-map-name]').fill('Calibrated');
-  await page.locator('[data-grid-mode][value="calibrated"]').check();
   await page.locator('[data-tool="grid-calibrate"]').click();
   const canvas = page.locator('[data-map-canvas]');
   const box = await canvas.boundingBox();
@@ -386,6 +484,28 @@ test('image upload opens calibration directly and pads the PNG to an image-align
     return [...context.getImageData(5, 5, 1, 1).data];
   }, [...image]);
   expect(paddingPixel).toEqual([52, 86, 120, 255]);
+});
+
+test('recalibrating a painted map requires confirmation', async ({ page }) => {
+  const base64 = await page.evaluate(() => {
+    const image = document.createElement('canvas'); image.width = 512; image.height = 512;
+    image.getContext('2d').fillRect(0, 0, image.width, image.height);
+    return image.toDataURL('image/png').split(',')[1];
+  });
+  await page.locator('[data-authoring-file]').setInputFiles({ name: 'Recalibrate.png', mimeType: 'image/png', buffer: Buffer.from(base64, 'base64') });
+  await page.locator('summary').filter({ hasText: 'Terrain' }).click();
+  await page.locator('[data-tool="difficult"]').click();
+  await clickGridCell(page, 3, 3, 20, 20);
+  await page.evaluate(() => {
+    window.confirm = (message) => { window.__recalibrationPrompt = message; return false; };
+  });
+  await page.locator('[data-tool="grid-calibrate"]').click();
+  await expect(page.locator('[data-tool="difficult"]')).toHaveAttribute('aria-pressed', 'true');
+  expect(await page.evaluate(() => window.__recalibrationPrompt)).toContain('Painted terrain');
+
+  await page.evaluate(() => { window.confirm = () => true; });
+  await page.locator('[data-tool="grid-calibrate"]').click();
+  await expect(page.locator('[data-tool="grid-calibrate"]')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('blank-map preset and custom colors survive draft restore and package export/reopen', async ({ page }) => {
@@ -482,14 +602,23 @@ test('terrain painting, erase, undo, and sticker erasing round-trip through expo
     element.value = '50';
     element.dispatchEvent(new Event('input', { bubbles: true }));
   });
-  await page.locator('[data-tool="sticker"]').click();
-  await clickGridCell(page, 4, 2);
+  await page.locator('[data-tool="sticker-rectangle"]').click();
+  const rectStart = await gridPointClientPosition(page, 4, 5);
+  const rectEnd = await gridPointClientPosition(page, 5, 6);
+  await page.mouse.move(rectStart.x, rectStart.y); await page.mouse.down(); await page.mouse.move(rectEnd.x, rectEnd.y); await page.mouse.up();
   await page.locator('[data-tool="erase-stickers"]').click();
   await clickGridCell(page, 4, 2);
   await undo.click();
   exported = await exportPackage(page, 'Terrain.tttm');
   sidecar = await sidecarFrom(exported.entries);
-  expect(sidecar.stickers).toContainEqual({ x: 4, y: 5, emoji: '🟫', sizePercent: 100, opacityPercent: 50 });
+  const sticker = sidecar.stickers.find((item) => item.emoji === '🟫');
+  expect(sticker).toMatchObject({ emoji: '🟫', shape: 'rectangle', opacityPercent: 50 });
+  expect(sticker.x1).toBeCloseTo(4, 1);
+  expect(sticker.y1).toBeCloseTo(5, 1);
+  expect(sticker.x2).toBeCloseTo(5, 1);
+  expect(sticker.y2).toBeCloseTo(6, 1);
+  expect(sticker.x).toBeCloseTo(4.5, 1);
+  expect(sticker.y).toBeCloseTo(5.5, 1);
   expect(canvas).toBeVisible();
 });
 

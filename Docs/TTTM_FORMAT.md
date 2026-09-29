@@ -76,7 +76,7 @@ The following is a complete minimal example. Optional fields may be omitted as d
     "defaultBounds": { "west": 1, "east": 4, "south": 1, "north": 3 }
   },
   "stickers": [
-    { "x": 5, "y": 4, "emoji": "🌳", "sizePercent": 200, "opacityPercent": 75 }
+    { "shape": "circle", "x": 5.5, "y": 4.5, "radius": 1.2, "emoji": "🌳", "opacityPercent": 75 }
   ]
 }
 ```
@@ -84,7 +84,7 @@ The following is a complete minimal example. Optional fields may be omitted as d
 ### Coordinates and grid
 
 - Grid indices are zero-based integers. `x` increases west-to-east; `y` increases south-to-north. The origin is the southwest corner (`coordinateConvention.origin` is `southwest`).
-- A square point `{ "x": 0, "y": 0 }` is the bottom-left cell. The image is conventionally viewed from above with its first pixel row at the top; convert between image rows and map `y` using `imageRow = northSouthSquareCount - 1 - y`.
+- Integer cell indices are zero-based: `x` increases west-to-east and `y` increases south-to-north. Stickers use continuous grid-point coordinates, where `(0,0)` is the southwest image corner and `(columns,rows)` is the northeast corner; `(1.5,2.5)` centers a sticker in square `(1,2)`. The image is viewed from above with its first pixel row at the top.
 - `eastWestSquareCount` and `northSouthSquareCount` are positive counts, not maximum indices. Valid cell coordinates are `0 <= x < columns`, `0 <= y < rows`.
 - `squareSizeFt` is the physical side length represented by one grid square, in feet. Do not guess it from artwork scale when the adventure provides no scale. Use an explicit, clearly reported assumption only when the workflow requires one.
 - The PNG's bounds align to the declared grid: its full width and height represent the declared column and row counts. During authoring, calibration uses a 5×5 or 10×10 patch; once accepted, the image is expanded on each side to the nearest full grid boundaries using the map's infinite-fill color. This preserves the source pixels while making the resulting package use ordinary image-edge alignment. Grid offsets are not serialized or used by tactical rendering.
@@ -104,7 +104,7 @@ Each layer has a separate meaning. Do not collapse all visual markings into one 
   - `secretDoor` is a secret wall-edge feature with no door state fields. It is magenta in authoring and referee tactical views. The server serializes it as an ordinary `wall` in player map responses so its identity is not disclosed in the player's map JSON.
   - `window` requires a positive `widthFt` and `initialState`: `uninspected` means no visibility through to the area inside and is impassable; `inspected` means visibility through and is impassable; `open` means visibility through and passable. These states describe authored starting metadata. The current authoring/package support does not implement tactical visibility/line-of-sight, movement enforcement, or runtime state transitions.
 - `playerPlacement.defaultBounds`: optional inclusive rectangle with `west`, `east`, `south`, and `north` cell coordinates. It is a suggested/default player start area, not a wall or an obstacle.
-- `stickers`: optional visual-only emoji objects with cell anchor `x`,`y`, `emoji`, `sizePercent` (33–500% of a square), and optional `opacityPercent` (0–100; omitted legacy value defaults to 100%). Stickers are decorative and must not encode collision or movement rules.
+- `stickers`: optional visual-only emoji objects using continuous grid-point coordinates, with southwest `(0,0)` and northeast `(eastWestSquareCount,northSouthSquareCount)`. A circle stores `shape: "circle"`, center `x`,`y`, and `radius` in grid-coordinate units. A rectangle stores `shape: "rectangle"`, opposing grid-coordinate corners `x1`,`y1`,`x2`,`y2`, plus center `x`,`y`; its emoji is stretched to fill the rectangle. Both may include `opacityPercent` (0–100; omitted legacy value defaults to 100%). Older stickers using `sizePercent` (33–500) remain readable. Stickers are decorative and must not encode collision or movement rules.
 - `mapPresentation`: renderer appearance metadata. `sideWallColor` is a required RGBA object (`r`,`g`,`b`,`a`, each normalized 0–1) in current models. `outsideMapFill`, `terrainBoundary`, and `blankBackgroundColor` are optional renderer-facing values; `blankBackgroundColor` is a `#RRGGBB` color for a generated solid-color map background.
 
 Rectangular overrides are a compact encoding of repeated cells. Prefer non-overlapping rectangles and merge adjacent equal values when doing so preserves the source meaning. If an override covers one cell, use `width: 1` and `height: 1`.
@@ -130,7 +130,7 @@ An agent creating a `.tttm` from source material should use this order and prese
 - Grid counts and square size are positive; origin is `southwest`; image and grid align.
 - Cell positions are in range; rectangle widths/heights are positive and remain within the grid.
 - Edges use valid axes/types and coordinates, are unique by axis/x/y, and doors have a positive width and valid initial state.
-- Sticker content is non-empty and within size/opacity limits.
+- Sticker content is non-empty; new circle/rectangle geometry must be valid, and opacity is within 0–100. Legacy `sizePercent` values remain supported.
 - Source-derived interpretation notes accompany uncertain PDF readings; they are not silently embedded as unsupported JSON fields.
 - ZIP can be imported by a current TTT referee map selector. Legacy `.zmap` inputs remain readable but should not be renamed or rewritten without an explicit export.
 

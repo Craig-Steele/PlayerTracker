@@ -2,6 +2,20 @@
   const $ = (selector) => document.querySelector(selector);
   const userAgent = navigator.userAgent || '';
   const emojiVerticalOffset = /iPhone|iPod/i.test(userAgent) && /Safari/i.test(userAgent) && !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent) ? 0 : 0.12;
+  function isPlainStickerText(symbol) {
+    const text = String(symbol).replace(/(?:[#*0-9]\uFE0F?\u20E3)/gu, '').replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\p{Cf}\uFE0E\uFE0F]/gu, '').trim();
+    return text.length > 0;
+  }
+  function drawStickerSymbol(context, symbol, x, y, fontSize) {
+    if (isPlainStickerText(symbol)) {
+      context.lineJoin = 'round';
+      context.lineWidth = Math.max(2, fontSize * 0.12);
+      context.strokeStyle = '#fff';
+      context.strokeText(symbol, x, y);
+      context.fillStyle = '#000';
+    }
+    context.fillText(symbol, x, y);
+  }
   const fileInput = $('[data-authoring-file]');
   const archiveInput = $('[data-authoring-archive]');
   const status = $('[data-authoring-status]');
@@ -14,6 +28,7 @@
   const validateButton = $('[data-validate]');
   const exportButton = $('[data-export]');
   const undoButton = $('[data-undo]');
+  const zoneClearButton = $('[data-zone-clear]');
   const ctx = canvas.getContext('2d');
   let imageBlob = null;
   let map = null;
@@ -35,6 +50,11 @@
   let placementDragEnd = null;
   let calibrationDragStart = null;
   let calibrationDragEnd = null;
+  let selectedStickerIndex = null;
+  let stickerDragStart = null;
+  let stickerDragEnd = null;
+  let stickerDragOrigin = null;
+  let stickerDragMoved = false;
   let view = { scale: 1, x: 0, y: 0 };
   const layerOpacity = { terrain: 25, obstacles: 25, elevation: 25, edges: 25, startingZone: 25, stickers: 25, grid: 100 };
   let saveTimer = null;
@@ -43,7 +63,8 @@
   let blankImageResizePending = false;
 
   function syncCanvasCursor() {
-    canvas.style.cursor = pointerMode === 'pan' || pointerMode === 'pinch' ? 'grabbing' : (spacePan || tool === 'pan' ? 'grab' : 'crosshair');
+    canvas.style.cursor = pointerMode === 'pan' || pointerMode === 'pinch' ? 'grabbing' :
+      (spacePan || tool === 'pan' ? 'grab' : (tool === 'sticker-select' ? 'pointer' : 'crosshair'));
   }
 
   const tileIcons = {
@@ -129,26 +150,16 @@
   const layerOpacityOutputs = [...document.querySelectorAll('[data-layer-opacity-value]')];
   const gridOpacityInput = $('[data-grid-opacity]');
   const gridOpacityValue = $('[data-grid-opacity-value]');
-  const gridModeInputs = [...document.querySelectorAll('[data-grid-mode]')];
-  const imageGridControls = $('[data-image-grid-controls]');
-  const calibratedGridControls = $('[data-calibrated-grid-controls]');
-  const calibratedGridOption = $('[data-calibrated-grid-option]');
-  function setGridMode(mode) {
+  const calibratedGridControls = $('[data-calibration-controls]');
+  function syncGridControls() {
     const blankMap = Boolean(map?.mapPresentation?.blankBackgroundColor);
-    if (blankMap && mode === 'calibrated') mode = 'image';
-    calibratedGridOption.hidden = blankMap;
-    gridModeInputs.forEach((input) => { input.checked = input.value === mode; });
-    imageGridControls.hidden = mode !== 'image';
-    calibratedGridControls.hidden = mode !== 'calibrated';
+    const hasMap = Boolean(map && mapImage);
+    const countsAreCalculated = hasMap && !blankMap;
+    $('[data-grid-width]').readOnly = countsAreCalculated;
+    $('[data-grid-height]').readOnly = countsAreCalculated;
+    calibratedGridControls.hidden = !hasMap || blankMap;
   }
-  setGridMode('image');
-  gridModeInputs.forEach((input) => input.addEventListener('change', () => {
-    if (!input.checked) return;
-    setGridMode(input.value);
-    if (input.value === 'calibrated' && map && !map.mapPresentation?.blankBackgroundColor) {
-      setStatus('Choose Calibrate grid, then drag a 5 × 5 or 10 × 10 patch over the map image.');
-    }
-  }));
+  syncGridControls();
   const updateGridOpacity = () => {
     layerOpacity.grid = Number(gridOpacityInput.value);
     gridOpacityValue.value = `${layerOpacity.grid}%`;
@@ -198,9 +209,57 @@
   }
   wireOpacitySlider(gridOpacityInput, updateGridOpacity);
   const stickerEmojiInput = $('[data-sticker-emoji]');
+  const stickerOpacityInput = $('[data-layer-opacity="stickers"]');
+  const stickerOpacityOutput = $('[data-layer-opacity-value="stickers"]');
+  const stickerEditState = $('[data-sticker-edit-state]');
+  const stickerDeleteButton = $('[data-sticker-delete]');
+  function selectedSticker() {
+    return Number.isInteger(selectedStickerIndex) ? map?.stickers?.[selectedStickerIndex] || null : null;
+  }
+  function syncStickerEditor() {
+    const sticker = selectedSticker();
+    stickerDeleteButton.disabled = !sticker;
+    const editingSelection = tool === 'sticker-select' && sticker;
+    stickerEditState.textContent = editingSelection ? 'Editing selected sticker' : 'New sticker settings';
+    if (!editingSelection) return;
+    stickerEmojiInput.value = sticker.emoji;
+    layerOpacity.stickers = sticker.opacityPercent ?? 100;
+    stickerOpacityInput.value = String(layerOpacity.stickers);
+    stickerOpacityOutput.value = `${layerOpacity.stickers}%`;
+    stickerOpacityOutput.textContent = `${layerOpacity.stickers}%`;
+  }
+  function selectSticker(index) {
+    selectedStickerIndex = Number.isInteger(index) && map?.stickers?.[index] ? index : null;
+    syncStickerEditor();
+    draw();
+  }
+  function editSelectedSticker(patch) {
+    const sticker = selectedSticker();
+    if (!sticker) return;
+    const previous = snapshot();
+    Object.assign(sticker, patch);
+    if (previous !== snapshot()) pushUndo(previous);
+    draw();
+    refreshValidation();
+    scheduleSave();
+  }
+  stickerEmojiInput.addEventListener('input', () => {
+    if (tool === 'sticker-select') editSelectedSticker({ emoji: stickerEmojiInput.value.trim() });
+  });
+  function deleteSelectedSticker() {
+    if (!selectedSticker()) return;
+    beginStroke();
+    map.stickers.splice(selectedStickerIndex, 1);
+    selectSticker(null);
+    endStroke();
+  }
+  stickerDeleteButton.addEventListener('click', deleteSelectedSticker);
   document.querySelectorAll('[data-sticker-picker]').forEach((picker) => {
     const syncStickerEmoji = () => {
-      if (picker.value) stickerEmojiInput.value = picker.value;
+      if (picker.value) {
+        stickerEmojiInput.value = picker.value;
+        stickerEmojiInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     };
     picker.addEventListener('pointerdown', syncStickerEmoji);
     picker.addEventListener('focus', syncStickerEmoji);
@@ -248,7 +307,9 @@
         edges: [],
         mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 }, blankBackgroundColor: backgroundColor }
       };
-      setGridMode('image');
+      selectedStickerIndex = null;
+      syncStickerEditor();
+      syncGridControls();
       mapViewport.hidden = false;
       history = [];
       undoButton.disabled = true;
@@ -286,7 +347,15 @@
       output.textContent = `${layerOpacity[layer]}%`;
     }
     wireOpacitySlider(input, () => {
+      const editsSelection = layer === 'stickers' && tool === 'sticker-select' && selectedSticker();
+      const previous = editsSelection ? snapshot() : null;
       layerOpacity[layer] = Number(input.value);
+      if (editsSelection) {
+        selectedSticker().opacityPercent = layerOpacity.stickers;
+        if (previous !== snapshot()) pushUndo(previous);
+        scheduleSave();
+        refreshValidation();
+      }
       if (output) {
         output.value = `${layerOpacity[layer]}%`;
         output.textContent = `${layerOpacity[layer]}%`;
@@ -381,7 +450,9 @@
         elevation: { defaultHeightFt: 0, overrides: [] }, edges: [],
         mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } }
       };
-      setGridMode('calibrated');
+      selectedStickerIndex = null;
+      syncStickerEditor();
+      syncGridControls();
       $('[data-grid-width]').value = 20;
       $('[data-grid-height]').value = 20;
       $('[data-square-size]').value = 5;
@@ -478,6 +549,7 @@
     try {
       const loaded = await readMapArchive(file);
       map = loaded.map;
+      selectedStickerIndex = null;
       imageBlob = loaded.imageBlob;
       mapImage = loaded.image;
       mapEdgeColor = averageImageEdgeColor(mapImage);
@@ -495,8 +567,9 @@
       map.edges ||= [];
       map.mapPresentation ||= { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } };
       map.mapPresentation.sideWallColor ||= { r: 0, g: 0, b: 0, a: 1 };
+      syncStickerEditor();
       delete map.grid.imageCalibration;
-      setGridMode('image');
+      syncGridControls();
       syncBlankBackgroundControls();
       if (map.mapPresentation.blankBackgroundColor) mapEdgeColor = map.mapPresentation.blankBackgroundColor;
       $('[data-grid-width]').value = map.grid.eastWestSquareCount;
@@ -542,7 +615,9 @@
     map.grid.squareSizeFt = squareFt;
     const keepTile = ({ x, y }) => x >= 0 && x < columns && y >= 0 && y < rows;
     map.blockedTiles = map.blockedTiles.filter(keepTile);
-    map.stickers = (map.stickers || []).filter(keepTile);
+    map.stickers = (map.stickers || []).filter((sticker) =>
+      Number.isFinite(sticker.x) && Number.isFinite(sticker.y) &&
+      sticker.x >= 0 && sticker.x <= columns && sticker.y >= 0 && sticker.y <= rows);
     map.terrain.overrides = map.terrain.overrides.filter((tile) => keepTile(tile));
     map.elevation.overrides = map.elevation.overrides.filter((tile) => keepTile(tile));
     map.edges = map.edges.filter((edge) => edge.axis === 'vertical'
@@ -573,11 +648,15 @@
   function beginStroke() {
     if (!strokeSnapshot) strokeSnapshot = snapshot();
   }
+  function pushUndo(state) {
+    if (!state) return;
+    history.push(state);
+    if (history.length > 50) history.shift();
+    undoButton.disabled = false;
+  }
   function endStroke() {
     if (strokeSnapshot && strokeSnapshot !== snapshot()) {
-      history.push(strokeSnapshot);
-      if (history.length > 50) history.shift();
-      undoButton.disabled = false;
+      pushUndo(strokeSnapshot);
       scheduleSave();
       refreshValidation();
     }
@@ -590,19 +669,34 @@
     const restored = JSON.parse(state);
     const { boundaryBehavior, ...restoredMapState } = restored;
     Object.assign(map, restoredMapState);
+    selectedStickerIndex = null;
+    syncStickerEditor();
     if (boundaryBehavior) map.grid.boundaryBehavior = boundaryBehavior;
     $('[data-infinite-canvas]').checked = map.grid.boundaryBehavior === 'infinite';
     if (restored.playerPlacement) map.playerPlacement = restored.playerPlacement;
     else delete map.playerPlacement;
+    if (!selectedSticker()) selectedStickerIndex = null;
+    syncStickerEditor();
     undoButton.disabled = history.length === 0;
     draw();
     scheduleSave();
     refreshValidation();
   });
 
+  function hasPaintedFeatures() {
+    return Boolean(map && (
+      (map.blockedTiles || []).length || (map.stickers || []).length ||
+      (map.terrain?.overrides || []).length || (map.elevation?.overrides || []).length ||
+      (map.edges || []).length || map.playerPlacement?.defaultBounds
+    ));
+  }
   document.querySelectorAll('[data-tool]').forEach((button) => button.addEventListener('click', () => {
-    tool = button.dataset.tool;
+    const nextTool = button.dataset.tool;
+    if (nextTool === 'grid-calibrate' && hasPaintedFeatures() && !window.confirm('Recalibrating changes the grid and image alignment. Painted terrain, obstacles, elevation, edges, stickers, and the starting zone may no longer line up. Continue?')) return;
+    tool = nextTool;
     document.querySelectorAll('[data-tool]').forEach((other) => other.setAttribute('aria-pressed', String(other === button)));
+    if (tool === 'grid-calibrate') setStatus('Drag a 5 × 5 or 10 × 10 calibration patch over the map image.');
+    syncStickerEditor();
     syncCanvasCursor();
     draw();
   }));
@@ -699,8 +793,33 @@
     if (x < 0 || x >= map.grid.eastWestSquareCount || row < 0 || row >= map.grid.northSouthSquareCount) return null;
     return { x, y, row, mapX, mapY };
   }
+  function stickerPositionAt(clientX, clientY) {
+    const point = imagePointAt(clientX, clientY);
+    const { size, cellW, cellH } = gridMetrics();
+    return {
+      x: point.x / cellW,
+      y: map.grid.northSouthSquareCount - point.y / cellH,
+      imageX: point.x,
+      imageY: point.y,
+      inside: point.x >= 0 && point.x <= size.width && point.y >= 0 && point.y <= size.height
+    };
+  }
+  function stickerAtPosition(point) {
+    const { cellW, cellH } = gridMetrics();
+    for (let index = (map.stickers || []).length - 1; index >= 0; index -= 1) {
+      const sticker = map.stickers[index];
+      const centerX = sticker.x * cellW;
+      const centerY = (map.grid.northSouthSquareCount - sticker.y) * cellH;
+      const width = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x));
+      const height = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y));
+      const halfW = width ? width * cellW / 2 : Math.min(cellW, cellH) * .3;
+      const halfH = height ? height * cellH / 2 : Math.min(cellW, cellH) * .3;
+      if (Math.abs(point.imageX - centerX) <= halfW && Math.abs(point.imageY - centerY) <= halfH) return index;
+    }
+    return null;
+  }
 
-  $('[data-zone-clear]').addEventListener('click', () => {
+  zoneClearButton.addEventListener('click', () => {
     if (!map) return;
     delete map.playerPlacement;
     draw(); scheduleSave(); refreshValidation();
@@ -717,23 +836,6 @@
         blocked.add(id);
         map.blockedTiles = [...blocked].map((key) => { const [x, y] = key.split(',').map(Number); return { x, y }; });
       }
-    } else if (tool === 'sticker') {
-      const sticker = {
-        x: cell.x,
-        y: cell.y,
-        emoji: $('[data-sticker-emoji]').value.trim(),
-        sizePercent: Number($('[data-sticker-size]').value),
-        opacityPercent: layerOpacity.stickers
-      };
-      map.stickers ||= [];
-      if (strokeClearing) {
-        map.stickers = map.stickers.filter((item) => item.x !== cell.x || item.y !== cell.y || item.emoji !== sticker.emoji);
-      } else {
-        map.stickers = map.stickers.filter((item) => item.x !== cell.x || item.y !== cell.y);
-        map.stickers.push(sticker);
-      }
-    } else if (tool === 'erase-stickers') {
-      map.stickers = (map.stickers || []).filter((item) => item.x !== cell.x || item.y !== cell.y);
     } else if (['difficult', 'water', 'lava', 'impassible'].includes(tool)) {
       map.terrain.overrides = rewriteOverridesAtCell(map.terrain.overrides, cell, (tile) => !strokeClearing || tile.type === tool);
       if (!strokeClearing) map.terrain.overrides.push({ x: cell.x, y: cell.y, width: 1, height: 1, type: tool });
@@ -872,9 +974,12 @@
     canvas.setPointerCapture(event.pointerId);
     activePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (activePointers.size >= 2) {
-      if (pointerMode === 'paint' || pointerMode === 'edge' || pointerMode === 'zone') endStroke();
+      if (pointerMode === 'paint' || pointerMode === 'edge' || pointerMode === 'zone' || (pointerMode === 'sticker-select' && strokeSnapshot)) endStroke();
       placementDragStart = null;
       placementDragEnd = null;
+      stickerDragStart = null;
+      stickerDragEnd = null;
+      stickerDragOrigin = null;
       pointerMode = 'pinch';
       lastPaintPoint = null;
       startPinch();
@@ -889,6 +994,51 @@
       const point = imagePointAt(event.clientX, event.clientY);
       calibrationDragStart = point; calibrationDragEnd = point;
       pointerMode = 'calibrate'; draw(); return;
+    }
+    if (tool === 'sticker-select') {
+      const point = stickerPositionAt(event.clientX, event.clientY);
+      const index = stickerAtPosition(point);
+      selectSticker(index);
+      pointerMode = 'sticker-select';
+      stickerDragMoved = false;
+      if (index !== null) {
+        stickerDragStart = point;
+        stickerDragOrigin = { x: map.stickers[index].x, y: map.stickers[index].y, clientX: event.clientX, clientY: event.clientY };
+      } else {
+        stickerDragStart = null;
+        stickerDragOrigin = null;
+      }
+      return;
+    }
+    if (tool === 'sticker-circle' || tool === 'sticker-rectangle' || tool === 'erase-stickers') {
+      const point = stickerPositionAt(event.clientX, event.clientY);
+      const hitIndex = stickerAtPosition(point);
+      if (!point.inside) return;
+      if (tool === 'erase-stickers' || strokeClearing) {
+        if (hitIndex === null) return;
+        beginStroke();
+        map.stickers.splice(hitIndex, 1);
+        if (selectedStickerIndex === hitIndex) selectSticker(null);
+        else {
+          if (selectedStickerIndex !== null && selectedStickerIndex > hitIndex) selectedStickerIndex -= 1;
+          syncStickerEditor();
+        }
+      } else {
+        const emoji = stickerEmojiInput.value.trim();
+        if (!emoji) {
+          setStatus('Enter an emoji before placing a sticker.', true);
+          return;
+        }
+        stickerDragStart = point;
+        stickerDragEnd = point;
+        stickerDragOrigin = { emoji, opacityPercent: layerOpacity.stickers };
+        pointerMode = tool === 'sticker-circle' ? 'sticker-place-circle' : 'sticker-place-rectangle';
+        draw();
+        return;
+      }
+      pointerMode = 'sticker-object';
+      draw();
+      return;
     }
     if (tool === 'starting-zone') {
       const cell = cellAt(event.clientX, event.clientY);
@@ -932,6 +1082,27 @@
     }
     if (pointerMode === 'zone') {
       placementDragEnd = cellAt(event.clientX, event.clientY) || placementDragEnd;
+      draw();
+      return;
+    }
+    if (pointerMode === 'sticker-select') {
+      if (selectedSticker() && stickerDragStart && stickerDragOrigin) {
+        if (Math.hypot(event.clientX - stickerDragOrigin.clientX, event.clientY - stickerDragOrigin.clientY) > 3) {
+          const sticker = selectedSticker();
+          const point = stickerPositionAt(event.clientX, event.clientY);
+          if (!stickerDragMoved) {
+            beginStroke();
+            stickerDragMoved = true;
+          }
+          sticker.x = Math.max(0, Math.min(map.grid.eastWestSquareCount, stickerDragOrigin.x + point.x - stickerDragStart.x));
+          sticker.y = Math.max(0, Math.min(map.grid.northSouthSquareCount, stickerDragOrigin.y + point.y - stickerDragStart.y));
+          draw();
+        }
+      }
+      return;
+    }
+    if (pointerMode === 'sticker-place-circle' || pointerMode === 'sticker-place-rectangle') {
+      stickerDragEnd = stickerPositionAt(event.clientX, event.clientY);
       draw();
       return;
     }
@@ -983,7 +1154,22 @@
       lastPointer = [...activePointers.values()][0];
       return;
     }
-    if (pointerMode === 'paint' || pointerMode === 'edge') endStroke();
+    if (pointerMode === 'paint' || pointerMode === 'edge' || pointerMode === 'sticker-object' || (pointerMode === 'sticker-select' && strokeSnapshot)) endStroke();
+    if ((pointerMode === 'sticker-place-circle' || pointerMode === 'sticker-place-rectangle') && stickerDragStart && stickerDragEnd) {
+      const start = stickerDragStart;
+      const end = stickerDragEnd;
+      const emoji = stickerDragOrigin?.emoji;
+      if (emoji && Math.hypot(end.x - start.x, end.y - start.y) > 0.02) {
+        beginStroke();
+        map.stickers ||= [];
+        const sticker = pointerMode === 'sticker-place-circle'
+          ? { shape: 'circle', x: start.x, y: start.y, radius: Math.hypot(end.x - start.x, end.y - start.y), emoji, opacityPercent: stickerDragOrigin.opacityPercent }
+          : { shape: 'rectangle', x1: start.x, y1: start.y, x2: end.x, y2: end.y, x: (start.x + end.x) / 2, y: (start.y + end.y) / 2, emoji, opacityPercent: stickerDragOrigin.opacityPercent };
+        map.stickers.push(sticker);
+        selectSticker(map.stickers.length - 1);
+        endStroke(); scheduleSave(); refreshValidation();
+      }
+    }
     if (pointerMode === 'zone' && placementDragStart && placementDragEnd) {
       map.playerPlacement = { defaultBounds: {
         west: Math.min(placementDragStart.x, placementDragEnd.x), east: Math.max(placementDragStart.x, placementDragEnd.x),
@@ -1008,7 +1194,7 @@
       if (width >= squares * 2 && height >= squares * 2 && left >= 0 && top >= 0 && left + width <= size.width && top + height <= size.height && calibratedColumns >= 1 && calibratedRows >= 1 && calibratedColumns <= 200 && calibratedRows <= 200) {
         try {
           await bakeImageCalibration({ cellWidthPx, cellHeightPx, offsetXPx, offsetYPx });
-          setGridMode('image');
+          syncGridControls();
           $('[data-tool="pan"]').click();
           history = [];
           undoButton.disabled = true;
@@ -1020,6 +1206,7 @@
       } else setStatus('The calibration patch must be inside the image and produce a grid of 1–200 squares per side.', true);
     }
     placementDragStart = null; placementDragEnd = null;
+    stickerDragStart = null; stickerDragEnd = null; stickerDragOrigin = null; stickerDragMoved = false;
     calibrationDragStart = null; calibrationDragEnd = null;
     pointerMode = ''; strokeEdgeAxis = ''; strokeClearing = false; lastPointer = null; lastPaintPoint = null; syncCanvasCursor(); draw();
   }
@@ -1038,6 +1225,7 @@
   }, { passive: false });
 
   function draw() {
+    zoneClearButton.disabled = !map?.playerPlacement?.defaultBounds;
     if (!map || !mapImage || !canvas.clientWidth) return;
     if (canvas.width !== canvas.clientWidth || canvas.height !== canvas.clientHeight) {
       canvas.width = canvas.clientWidth;
@@ -1175,14 +1363,51 @@
       if (!sticker.emoji) continue;
       ctx.save();
       ctx.globalAlpha = (sticker.opacityPercent ?? 100) / 100;
-      const centerX = offsetX + (sticker.x + .5) * cellW;
-      const centerY = offsetY + (map.grid.northSouthSquareCount - sticker.y - .5) * cellH;
-      const fontSize = Math.min(cellW, cellH) * .9 * sticker.sizePercent / 100;
+      const centerX = offsetX + sticker.x * cellW;
+      const centerY = offsetY + (map.grid.northSouthSquareCount - sticker.y) * cellH;
+      const width = sticker.shape === 'circle' ? sticker.radius * 2 : Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x));
+      const height = sticker.shape === 'circle' ? sticker.radius * 2 : Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y));
+      const fontSize = width && height ? Math.min(width * cellW, height * cellH) * .9 : Math.min(cellW, cellH) * .9 * (sticker.sizePercent ?? 100) / 100;
       ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       // Emoji fonts often include extra vertical whitespace above the visible glyph.
-      ctx.fillText(sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset);
+      if (sticker.shape === 'rectangle' && width > 0 && height > 0) {
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(width * cellW * .9 / fontSize, height * cellH * .9 / fontSize);
+        drawStickerSymbol(ctx, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
+        ctx.restore();
+      } else drawStickerSymbol(ctx, sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset, fontSize);
+      if ((map.stickers || [])[selectedStickerIndex] === sticker) {
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#48a8ff';
+        ctx.lineWidth = Math.max(2 / view.scale, Math.min(cellW, cellH) * .025);
+        ctx.setLineDash([Math.max(3 / view.scale, 5), Math.max(2 / view.scale, 3)]);
+        ctx.strokeRect(centerX - (width ? width * cellW : fontSize * 1.1) / 2, centerY - (height ? height * cellH : fontSize * 1.1) / 2, width ? width * cellW : fontSize * 1.1, height ? height * cellH : fontSize * 1.1);
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+    }
+    if ((pointerMode === 'sticker-place-circle' || pointerMode === 'sticker-place-rectangle') && stickerDragStart && stickerDragEnd) {
+      const a = stickerDragStart, b = stickerDragEnd;
+      const circle = pointerMode === 'sticker-place-circle';
+      const radius = Math.hypot(b.x - a.x, b.y - a.y);
+      const cx = (circle ? a.x : (a.x + b.x) / 2) * cellW;
+      const cy = (map.grid.northSouthSquareCount - (circle ? a.y : (a.y + b.y) / 2)) * cellH;
+      const rx = circle ? radius * cellW : Math.abs(b.x - a.x) * cellW / 2;
+      const ry = circle ? radius * cellH : Math.abs(b.y - a.y) * cellH / 2;
+      ctx.save(); ctx.globalAlpha = (stickerDragOrigin?.opacityPercent ?? 100) / 100;
+      const fontSize = Math.max(1, Math.min(rx * 2, ry * 2) * .9);
+      ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if (!circle && fontSize > 0) {
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(rx * 2 * .9 / fontSize, ry * 2 * .9 / fontSize);
+        drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', 0, fontSize * emojiVerticalOffset, fontSize); ctx.restore();
+      } else drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', cx, cy + fontSize * emojiVerticalOffset, fontSize);
+      ctx.globalAlpha = .8; ctx.strokeStyle = '#48a8ff'; ctx.lineWidth = Math.max(2 / view.scale, 2);
+      if (circle) ctx.beginPath(), ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2), ctx.stroke();
+      else ctx.strokeRect(cx - rx, cy - ry, rx * 2, ry * 2);
       ctx.restore();
     }
     if (pointerMode === 'calibrate' && calibrationDragStart && calibrationDragEnd) {
@@ -1251,9 +1476,10 @@
       if (tile.x < 0 || tile.x >= cols || tile.y < 0 || tile.y >= rows) errors.push(`Obstacle at ${tile.x}, ${tile.y} is outside the grid.`);
     }
     for (const sticker of map.stickers || []) {
-      if (sticker.x < 0 || sticker.x >= cols || sticker.y < 0 || sticker.y >= rows) errors.push(`Sticker at ${sticker.x}, ${sticker.y} is outside the grid.`);
+      if (!Number.isFinite(sticker.x) || !Number.isFinite(sticker.y) || sticker.x < 0 || sticker.x > cols || sticker.y < 0 || sticker.y > rows) errors.push(`Sticker at ${sticker.x}, ${sticker.y} is outside the grid.`);
       if (typeof sticker.emoji !== 'string' || !sticker.emoji.trim() || sticker.emoji.length > 32) errors.push(`Sticker at ${sticker.x}, ${sticker.y} needs an emoji.`);
-      if (!Number.isInteger(sticker.sizePercent) || sticker.sizePercent < 33 || sticker.sizePercent > 500) errors.push(`Sticker at ${sticker.x}, ${sticker.y} must be sized from 33% to 500%.`);
+      const validShape = sticker.shape === 'circle' ? Number.isFinite(sticker.radius) && sticker.radius > 0 : sticker.shape === 'rectangle' ? Number.isFinite(sticker.x1) && Number.isFinite(sticker.y1) && Number.isFinite(sticker.x2) && Number.isFinite(sticker.y2) && sticker.x1 !== sticker.x2 && sticker.y1 !== sticker.y2 : Number.isInteger(sticker.sizePercent) && sticker.sizePercent >= 33 && sticker.sizePercent <= 500;
+      if (!validShape) errors.push(`Sticker at ${sticker.x}, ${sticker.y} needs a valid placement shape.`);
       if (sticker.opacityPercent !== undefined && (!Number.isInteger(sticker.opacityPercent) || sticker.opacityPercent < 0 || sticker.opacityPercent > 100)) errors.push(`Sticker at ${sticker.x}, ${sticker.y} must have opacity from 0% to 100%.`);
     }
     if (map.playerPlacement?.defaultBounds) {
@@ -1368,6 +1594,7 @@
     const draft = await readDraft();
     if (!draft) return;
     map = draft.map;
+    selectedStickerIndex = null;
     imageBlob = draft.imageBlob instanceof Blob
       ? draft.imageBlob
       : draft.imageBytes ? new Blob([draft.imageBytes], { type: 'image/png' }) : null;
@@ -1379,7 +1606,7 @@
     map.grid.squareSizeFt ||= 5;
     map.grid.boundaryBehavior ||= 'bounded';
     delete map.grid.imageCalibration;
-    setGridMode('image');
+    syncGridControls();
     map.imagePath ||= `${safeStem(draft.name || 'Untitled map')}.png`;
     map.blockedTiles ||= [];
     map.stickers ||= [];
@@ -1398,9 +1625,11 @@
     $('[data-grid-height]').value = map.grid.northSouthSquareCount;
     $('[data-square-size]').value = map.grid.squareSizeFt;
     map.edges ||= [];
+    syncStickerEditor();
     $('[data-infinite-canvas]').checked = map.grid.boundaryBehavior === 'infinite';
     mapImage = await loadImage(imageBlob);
     mapEdgeColor = averageImageEdgeColor(mapImage);
+    syncGridControls();
     mapViewport.hidden = false;
     history = []; undoButton.disabled = true;
     fitMap(); refreshValidation();
@@ -1418,6 +1647,11 @@
     const target = event.target;
     const isFormField = target instanceof Element && target.closest('input, textarea, select, [contenteditable="true"]');
     if (isFormField) return;
+    if ((event.key === 'Delete' || event.key === 'Backspace') && selectedSticker()) {
+      event.preventDefault();
+      deleteSelectedSticker();
+      return;
+    }
     if (event.code === 'Space' && !mapViewport.hidden && mapImage) {
       event.preventDefault();
       if (!event.repeat) {

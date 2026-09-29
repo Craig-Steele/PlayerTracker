@@ -105,6 +105,47 @@ struct TacticalMapFormatTests {
     }
 
     @Test
+    func circularAndRectangularStickersDecodeAndValidate() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [
+            ["shape": "circle", "x": 0.5, "y": 0.5, "radius": 0.25, "emoji": "🌳"],
+            ["shape": "rectangle", "x": 0.5, "y": 0.5, "x1": 0.25, "y1": 0.25, "x2": 0.75, "y2": 0.75, "emoji": "🪑"]
+        ]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(map.stickers?.count == 2)
+        #expect(map.stickers?.first?.radius == 0.25)
+        #expect(map.stickers?.last?.x1 == 0.25)
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+    }
+
+    @Test
+    func decorativeStickersUseContinuousSouthwestGridCoordinatesIncludingMapCorners() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        var grid = try #require(object["grid"] as? [String: Any])
+        grid["northSouthSquareCount"] = 3
+        object["grid"] = grid
+        object["stickers"] = [
+            ["x": 1.5, "y": 2.5, "emoji": "🌳", "sizePercent": 100],
+            ["x": 0, "y": 0, "emoji": "✨", "sizePercent": 100],
+            ["x": 2, "y": 3, "emoji": "⭐", "sizePercent": 100]
+        ]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+
+        #expect(map.stickers?.first?.x == 1.5)
+        #expect(map.stickers?.first?.y == 2.5)
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+    }
+
+    @Test
+    func decorativeStickersRejectOutOfBoundsCoordinates() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [["x": 2.1, "y": 0.5, "emoji": "✨", "sizePercent": 100]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+
+        #expect(TacticalMapValidator.validationError(for: map) == "A map sticker must be positioned within the southwest (0, 0) and northeast grid corners.")
+    }
+
+    @Test
     func legacyDecorativeStickerWithoutOpacityRemainsValid() throws {
         var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
         object["stickers"] = [["x": 0, "y": 0, "emoji": "✨", "sizePercent": 100]]

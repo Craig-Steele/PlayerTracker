@@ -17,11 +17,26 @@ enum TacticalMapValidator {
             return "An obstacle square is outside the map grid."
         }
         for sticker in map.stickers ?? [] {
-            guard sticker.x >= 0, sticker.x < columns, sticker.y >= 0, sticker.y < rows else {
-                return "A map sticker is outside the map grid."
+            guard sticker.x.isFinite, sticker.y.isFinite,
+                  sticker.x >= 0, sticker.x <= Double(columns),
+                  sticker.y >= 0, sticker.y <= Double(rows) else {
+                return "A map sticker must be positioned within the southwest (0, 0) and northeast grid corners."
             }
-            guard (33...500).contains(sticker.sizePercent) else {
-                return "A map sticker size must be between 33% and 500% of a square."
+            if sticker.shape == "circle" {
+                guard let radius = sticker.radius, radius.isFinite, radius > 0 else { return "A circular map sticker must have a positive radius." }
+            } else if sticker.shape == "rectangle" {
+                guard let x1 = sticker.x1, let y1 = sticker.y1, let x2 = sticker.x2, let y2 = sticker.y2,
+                      x1.isFinite, y1.isFinite, x2.isFinite, y2.isFinite,
+                      x1 >= 0, x1 <= Double(columns), x2 >= 0, x2 <= Double(columns),
+                      y1 >= 0, y1 <= Double(rows), y2 >= 0, y2 <= Double(rows), x1 != x2, y1 != y2 else {
+                    return "A rectangular map sticker must have two distinct corners."
+                }
+            } else if sticker.shape == nil {
+                guard let size = sticker.sizePercent, (33...500).contains(size) else {
+                    return "A map sticker size must be between 33% and 500% of a square."
+                }
+            } else {
+                return "A map sticker must define a circle, rectangle, or valid legacy size."
             }
             if let opacity = sticker.opacityPercent, !(0...100).contains(opacity) {
                 return "A map sticker opacity must be between 0% and 100%."

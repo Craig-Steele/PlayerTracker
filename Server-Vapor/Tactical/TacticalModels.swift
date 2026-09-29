@@ -137,10 +137,16 @@ struct TacticalMapPoint: Content, Codable, Equatable, Hashable {
 }
 
 struct TacticalMapSticker: Content, Codable, Equatable {
-    let x: Int
-    let y: Int
+    let x: Double
+    let y: Double
     let emoji: String
-    let sizePercent: Int
+    let shape: String?
+    let radius: Double?
+    let x1: Double?
+    let y1: Double?
+    let x2: Double?
+    let y2: Double?
+    let sizePercent: Int?
     let opacityPercent: Int?
 }
 

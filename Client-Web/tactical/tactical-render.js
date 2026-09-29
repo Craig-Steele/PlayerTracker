@@ -1,6 +1,20 @@
 window.TacticalRender = (() => {
   const userAgent = navigator.userAgent || '';
   const emojiVerticalOffset = /iPhone|iPod/i.test(userAgent) && /Safari/i.test(userAgent) && !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent) ? 0 : 0.12;
+  function isPlainStickerText(symbol) {
+    const text = String(symbol).replace(/(?:[#*0-9]\uFE0F?\u20E3)/gu, '').replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\p{Cf}\uFE0E\uFE0F]/gu, '').trim();
+    return text.length > 0;
+  }
+  function drawStickerSymbol(context, symbol, x, y, fontSize) {
+    if (isPlainStickerText(symbol)) {
+      context.lineJoin = 'round';
+      context.lineWidth = Math.max(2, fontSize * 0.12);
+      context.strokeStyle = '#fff';
+      context.strokeText(symbol, x, y);
+      context.fillStyle = '#000';
+    }
+    context.fillText(symbol, x, y);
+  }
 
   function render({ canvas, map, image, status, tokens = [], viewerId, viewerIsReferee = false, playerPlacement = null, hideEnemyTokens = false, allowPlacementEdit = false, indicatorOpacity = 0.25, gridOpacity = 0.6, onPlayerPlacementSelect, tooltip, onTap, onTokenSelect }) {
     const context = canvas.getContext('2d');
@@ -232,14 +246,20 @@ window.TacticalRender = (() => {
         if (!sticker.emoji) continue;
         context.save();
         context.globalAlpha = (sticker.opacityPercent ?? 100) / 100;
-        const centerX = offsetX + (sticker.x + 0.5) * squareWidth;
-        const centerY = offsetY + (grid.northSouthSquareCount - sticker.y - 0.5) * squareHeight;
-        const fontSize = Math.min(squareWidth, squareHeight) * 0.9 * (sticker.sizePercent ?? 100) / 100;
+        const centerX = offsetX + sticker.x * squareWidth;
+        const centerY = offsetY + (grid.northSouthSquareCount - sticker.y) * squareHeight;
+        const width = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x)) : (sticker.sizePercent ?? 100) / 100;
+        const height = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y)) : (sticker.sizePercent ?? 100) / 100;
+        const fontSize = Math.min(squareWidth * width, squareHeight * height) * 0.9;
         context.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         // Emoji fonts often include extra vertical whitespace above the visible glyph.
-        context.fillText(sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset);
+        if (sticker.shape === 'rectangle' && width > 0 && height > 0) {
+          context.translate(centerX, centerY);
+          context.scale(width * squareWidth * 0.9 / fontSize, height * squareHeight * 0.9 / fontSize);
+          drawStickerSymbol(context, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
+        } else drawStickerSymbol(context, sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset, fontSize);
         context.restore();
       }
 
