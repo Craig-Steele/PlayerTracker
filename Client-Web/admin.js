@@ -85,7 +85,8 @@ window.addEventListener('DOMContentLoaded', () => {
   const authCredentials = document.getElementById('admin-auth-credentials');
   const authSessionActions = document.getElementById('admin-auth-session-actions');
   const authPasswordPanel = document.getElementById('admin-auth-password-panel');
-  const changePasswordBtn = document.getElementById('admin-password-change');
+  const changePasswordActionBtn = document.getElementById('admin-auth-change-password');
+  const passwordSubmitBtn = document.getElementById('admin-password-change');
   const currentPasswordInput = document.getElementById('admin-password-current');
   const newPasswordInput = document.getElementById('admin-password-new');
   const confirmPasswordInput = document.getElementById('admin-password-confirm');
@@ -150,6 +151,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let refreshToken = 0;
   let authRefreshToken = 0;
   let authUser = null;
+  let passwordFormOpen = false;
   let campaignEventSource = null;
   const defaultClaimTimeoutMinutes = 5;
   const adminEmailStorageKey = 'adminEmail';
@@ -282,6 +284,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateAuthUi() {
+    if (!authUser) passwordFormOpen = false;
     updateAuthSummary();
     if (authLogoutBtn) {
       authLogoutBtn.disabled = !authUser;
@@ -303,7 +306,10 @@ window.addEventListener('DOMContentLoaded', () => {
       authSessionActions.classList.toggle('hidden', !authUser);
     }
     if (authPasswordPanel) {
-      authPasswordPanel.classList.toggle('hidden', !authUser);
+      authPasswordPanel.classList.toggle('hidden', !authUser || !passwordFormOpen);
+    }
+    if (changePasswordActionBtn) {
+      changePasswordActionBtn.setAttribute('aria-expanded', String(Boolean(authUser && passwordFormOpen)));
     }
     setCampaignUiEnabled(Boolean(authUser));
   }
@@ -1015,7 +1021,7 @@ window.addEventListener('DOMContentLoaded', () => {
       setAuthStatus('The new passwords do not match.', true);
       return;
     }
-    if (changePasswordBtn) changePasswordBtn.disabled = true;
+    if (passwordSubmitBtn) passwordSubmitBtn.disabled = true;
     try {
       await fetchVoid('/admin/owner/password', {
         method: 'POST',
@@ -1026,6 +1032,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (newPasswordInput) newPasswordInput.value = '';
       if (confirmPasswordInput) confirmPasswordInput.value = '';
       if (authPasswordInput) authPasswordInput.value = '';
+      passwordFormOpen = false;
       authUser = null;
       updateAuthUi();
       clearCampaignState();
@@ -1034,7 +1041,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (currentPasswordInput) currentPasswordInput.value = '';
       setAuthStatus(`Password change failed: ${err.message}`, true);
     } finally {
-      if (changePasswordBtn) changePasswordBtn.disabled = false;
+      if (passwordSubmitBtn) passwordSubmitBtn.disabled = false;
     }
   }
 
@@ -1246,8 +1253,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (changePasswordBtn) {
-    changePasswordBtn.addEventListener('click', changeOwnerPassword);
+  if (changePasswordActionBtn) {
+    changePasswordActionBtn.addEventListener('click', () => {
+      passwordFormOpen = !passwordFormOpen;
+      updateAuthUi();
+    });
+  }
+  if (passwordSubmitBtn) {
+    passwordSubmitBtn.addEventListener('click', changeOwnerPassword);
   }
 
   if (authEmailInput) {
