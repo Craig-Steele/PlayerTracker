@@ -84,6 +84,49 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/map-authoring.html');
 });
 
+test('Create Map info is tucked under the info icon and grid modes show their own controls', async ({ page }) => {
+  const createGroup = page.locator('.authoring-create-group');
+  await expect(createGroup.locator('[data-grid-width]')).toHaveCount(0);
+  await expect(createGroup.locator('[data-square-size]')).toHaveCount(0);
+  await expect(page.locator('.authoring-info summary')).toHaveText('ⓘ Info');
+  await expect(page.locator('.authoring-info .authoring-note')).toBeHidden();
+  await page.locator('.authoring-info summary').click();
+  await expect(page.locator('.authoring-info .authoring-note')).toBeVisible();
+  await page.locator('.authoring-info summary').click();
+
+  await expect(page.locator('[data-image-grid-controls]')).toBeVisible();
+  await expect(page.locator('[data-calibrated-grid-controls]')).toBeHidden();
+  await page.locator('[data-grid-mode][value="calibrated"]').check();
+  await expect(page.locator('[data-image-grid-controls]')).toBeHidden();
+  await expect(page.locator('[data-calibrated-grid-controls]')).toBeVisible();
+  await expect(page.locator('[data-grid-opacity]')).toBeVisible();
+});
+
+test('Edit controls put Fit Map first and show Pan as a hand tool', async ({ page }) => {
+  const editGroup = page.locator('.authoring-tool-group').filter({ has: page.locator('summary', { hasText: 'Edit' }) });
+  expect(await editGroup.locator('.authoring-tool-items button').allTextContents()).toEqual(['Fit Map', '🖐️ Pan', 'Undo']);
+  await expect(editGroup.locator('[data-tool="pan"]')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('blank-map grid counts resize the image proportionally and hide calibration', async ({ page }) => {
+  await createBlankMap(page);
+  await expect(page.locator('[data-calibrated-grid-option]')).toBeHidden();
+  await expect(page.locator('[data-grid-mode][value="image"]')).toBeChecked();
+  await page.locator('[data-grid-width]').fill('12');
+  await page.locator('[data-grid-width]').press('Tab');
+  await page.locator('[data-grid-height]').fill('6');
+  await page.locator('[data-grid-height]').press('Tab');
+  await expect(page.locator('[data-authoring-status]')).toHaveText('Map data is valid and ready to export.');
+
+  const { entries } = await exportPackage(page, 'Proportional.tttm');
+  const sidecar = await sidecarFrom(entries);
+  expect(sidecar.grid).toMatchObject({ eastWestSquareCount: 12, northSouthSquareCount: 6 });
+  expect(sidecar.grid.imageCalibration).toBeUndefined();
+  const imageName = [...entries.keys()].find((name) => name.endsWith('.png'));
+  const image = entries.get(imageName);
+  expect(image.readUInt32BE(16) / image.readUInt32BE(20)).toBe(2);
+});
+
 test('validation and authoring messages use the single lower status area', async ({ page }) => {
   await createBlankMap(page);
   await expect(page.locator('[data-map-validation]')).toHaveCount(0);
@@ -142,14 +185,47 @@ test('opacity sliders snap clicks to quarter steps but preserve dragged values',
   await expect(value).toHaveText('25%');
 
   await slider.evaluate((element) => {
-    element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 2, clientX: 10, clientY: 10 }));
+    element.value = '37';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 3, clientX: 10, clientY: 10 }));
+    element.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 3, clientX: 16, clientY: 10 }));
+    element.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true, pointerId: 3, clientX: 16, clientY: 10 }));
+  });
+  await expect(slider).toHaveValue('25');
+
+  await slider.evaluate((element) => {
+    element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 4, clientX: 10, clientY: 10 }));
     element.value = '42';
     element.dispatchEvent(new Event('input', { bubbles: true }));
-    element.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 2, clientX: 20, clientY: 10 }));
-    element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 2, clientX: 20, clientY: 10 }));
+    element.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerId: 4, clientX: 20, clientY: 10 }));
+    element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 4, clientX: 20, clientY: 10 }));
   });
   await expect(slider).toHaveValue('42');
   await expect(value).toHaveText('42%');
+});
+
+test('tapping the opacity slider track snaps to a quarter step', async ({ page }) => {
+  await page.locator('summary').filter({ hasText: 'Terrain' }).click();
+  const slider = page.locator('[data-layer-opacity="terrain"]');
+  const box = await slider.boundingBox();
+  await page.touchscreen.tap(box.x + box.width * 0.56, box.y + box.height / 2);
+  await expect(slider).toHaveValue('50');
+});
+
+test('clicking the opacity slider track with a mouse snaps to a quarter step', async ({ page }) => {
+  await page.locator('summary').filter({ hasText: 'Terrain' }).click();
+  const slider = page.locator('[data-layer-opacity="terrain"]');
+  const box = await slider.boundingBox();
+  await page.mouse.click(box.x + box.width * 0.56, box.y + box.height / 2);
+  await expect(slider).toHaveValue('50');
+
+  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.63, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.up();
+  const draggedValue = Number(await slider.inputValue());
+  expect(draggedValue).toBeGreaterThan(50);
+  expect(draggedValue).toBeLessThan(75);
 });
 
 test('tactical player placement blackout is opaque and only attached edges remain visible', async ({ page }) => {
@@ -253,6 +329,65 @@ test('door and window width control exports widths and door state choices', asyn
   expect(sidecar.edges).toContainEqual({ axis: 'vertical', x: 2, y: 4, type: 'window', widthFt: 4, initialState: 'inspected' });
 });
 
+test('image upload opens calibration directly and pads the PNG to an image-aligned grid', async ({ page }) => {
+  const base64 = await page.evaluate(() => {
+    const image = document.createElement('canvas');
+    image.width = 512; image.height = 512;
+    image.getContext('2d').fillStyle = '#345678';
+    image.getContext('2d').fillRect(0, 0, image.width, image.height);
+    return image.toDataURL('image/png').split(',')[1];
+  });
+  await page.locator('[data-authoring-file]').setInputFiles({
+    name: 'Calibration.png', mimeType: 'image/png', buffer: Buffer.from(base64, 'base64')
+  });
+  await expect(page.locator('[data-map-canvas]')).toBeVisible();
+  await expect(page.locator('[data-authoring-crop]')).toHaveCount(0);
+  await expect(page.locator('[data-tool="grid-calibrate"]')).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('[data-map-name]').fill('Calibrated');
+  await page.locator('[data-grid-mode][value="calibrated"]').check();
+  await page.locator('[data-tool="grid-calibrate"]').click();
+  const canvas = page.locator('[data-map-canvas]');
+  const box = await canvas.boundingBox();
+  const dimensions = await canvas.evaluate((element) => ({ width: element.clientWidth, height: element.clientHeight }));
+  const scale = Math.min(dimensions.width / 512, dimensions.height / 512) * 0.94;
+  const originX = (dimensions.width - 512 * scale) / 2;
+  const originY = (dimensions.height - 512 * scale) / 2;
+  const from = { x: box.x + originX + 10 * scale, y: box.y + originY + 10 * scale };
+  const to = { x: box.x + originX + 310 * scale, y: box.y + originY + 310 * scale };
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 5 });
+  const patchFill = await canvas.evaluate((element, point) => {
+    const x = Math.round(point.x * element.width / element.clientWidth);
+    const y = Math.round(point.y * element.height / element.clientHeight);
+    return [...element.getContext('2d').getImageData(x, y, 1, 1).data];
+  }, { x: originX + 40 * scale, y: originY + 40 * scale });
+  expect(patchFill[0]).toBeLessThan(245);
+  expect(patchFill[2]).toBeGreaterThan(120);
+  await page.mouse.up();
+  const { entries } = await exportPackage(page, 'Calibrated.tttm');
+  const sidecar = JSON.parse(entries.get('Calibrated.map.json').toString('utf8'));
+  expect(sidecar.grid.imageCalibration).toBeUndefined();
+  expect(sidecar.grid.eastWestSquareCount).toBe(10);
+  expect(sidecar.grid.northSouthSquareCount).toBe(10);
+  const image = entries.get('Calibrated.png');
+  expect(image.readUInt32BE(16)).toBe(600);
+  expect(image.readUInt32BE(20)).toBe(600);
+  const paddingPixel = await page.evaluate(async (bytes) => {
+    const blob = new Blob([new Uint8Array(bytes)], { type: 'image/png' });
+    const decoded = new Image();
+    decoded.src = URL.createObjectURL(blob);
+    await decoded.decode();
+    const sample = document.createElement('canvas');
+    sample.width = decoded.naturalWidth;
+    sample.height = decoded.naturalHeight;
+    const context = sample.getContext('2d');
+    context.drawImage(decoded, 0, 0);
+    return [...context.getImageData(5, 5, 1, 1).data];
+  }, [...image]);
+  expect(paddingPixel).toEqual([52, 86, 120, 255]);
+});
+
 test('blank-map preset and custom colors survive draft restore and package export/reopen', async ({ page }) => {
   const preset = page.locator('[data-blank-background-preset]');
   await expect(preset).toHaveValue('#ffffff');
@@ -315,7 +450,7 @@ test('blank-map preset and custom colors survive draft restore and package expor
 
 test('terrain painting, erase, undo, and sticker erasing round-trip through export', async ({ page }) => {
   await createBlankMap(page);
-  const terrainGroup = page.locator('[data-tool-category]').nth(2);
+  const terrainGroup = page.locator('[data-tool-category]').nth(3);
   await terrainGroup.locator('summary').click();
   const canvas = page.locator('[data-map-canvas]');
   const undo = page.locator('[data-undo]');
@@ -340,7 +475,7 @@ test('terrain painting, erase, undo, and sticker erasing round-trip through expo
   sidecar = await sidecarFrom(exported.entries);
   expect(sidecar.terrain.overrides).toEqual([]);
 
-  const stickersGroup = page.locator('[data-tool-category]').nth(4);
+  const stickersGroup = page.locator('[data-tool-category]').nth(5);
   await stickersGroup.locator('summary').click();
   await page.locator('[data-sticker-emoji]').fill('🟫');
   await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {

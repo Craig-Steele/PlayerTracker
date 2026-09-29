@@ -9,23 +9,18 @@
     status.textContent = message;
     status.classList.toggle('error', isError);
   };
-  const cropPanel = $('[data-authoring-crop]');
-  const cropCanvas = $('[data-crop-canvas]');
   const canvas = $('[data-map-canvas]');
   const mapViewport = canvas.parentElement;
   const validateButton = $('[data-validate]');
   const exportButton = $('[data-export]');
   const undoButton = $('[data-undo]');
   const ctx = canvas.getContext('2d');
-  let sourceImage = null;
   let imageBlob = null;
   let map = null;
   let mapImage = null;
   let mapEdgeColor = '#f5f8fb';
   let tool = 'pan';
   let spacePan = false;
-  let cropRect = null;
-  let cropDrag = null;
   let history = [];
   let strokeSnapshot = null;
   let lastPainted = '';
@@ -38,10 +33,14 @@
   let lastPaintPoint = null;
   let placementDragStart = null;
   let placementDragEnd = null;
+  let calibrationDragStart = null;
+  let calibrationDragEnd = null;
   let view = { scale: 1, x: 0, y: 0 };
   const layerOpacity = { terrain: 25, obstacles: 25, elevation: 25, edges: 25, startingZone: 25, stickers: 25, grid: 100 };
   let saveTimer = null;
   let draftAvailable = false;
+  let blankImageUpdateID = 0;
+  let blankImageResizePending = false;
 
   function syncCanvasCursor() {
     canvas.style.cursor = pointerMode === 'pan' || pointerMode === 'pinch' ? 'grabbing' : (spacePan || tool === 'pan' ? 'grab' : 'crosshair');
@@ -63,24 +62,47 @@
   const blankBackgroundPreset = $('[data-blank-background-preset]');
   const blankBackgroundColor = $('[data-blank-background-color]');
 
-  async function applyBlankBackground(color) {
-    if (!/^#[0-9a-f]{6}$/i.test(color) || !map?.mapPresentation?.blankBackgroundColor) return;
-    const width = mapImage?.naturalWidth || map.grid.eastWestSquareCount * 64;
-    const height = mapImage?.naturalHeight || map.grid.northSouthSquareCount * 64;
+  function blankPixelsPerSquare(columns, rows) {
+    return Math.max(1, Math.min(64, Math.floor(2048 / Math.max(columns, rows))));
+  }
+
+  async function rebuildBlankMapImage(color, columns, rows) {
+    const targetMap = map;
+    const updateID = ++blankImageUpdateID;
+    blankImageResizePending = true;
+    refreshValidation();
+    const pixelsPerSquare = blankPixelsPerSquare(columns, rows);
+    const width = columns * pixelsPerSquare;
+    const height = rows * pixelsPerSquare;
     const background = document.createElement('canvas');
     background.width = width;
     background.height = height;
     const backgroundContext = background.getContext('2d');
     backgroundContext.fillStyle = color;
     backgroundContext.fillRect(0, 0, width, height);
-    const blob = await new Promise((resolve, reject) => background.toBlob((result) => result ? resolve(result) : reject(new Error('Could not update the blank map background.')), 'image/png'));
-    imageBlob = blob;
-    mapImage = await loadImage(blob);
-    mapEdgeColor = color;
-    map.mapPresentation.blankBackgroundColor = color;
-    draw();
-    refreshValidation();
-    scheduleSave();
+    try {
+      const blob = await new Promise((resolve, reject) => background.toBlob((result) => result ? resolve(result) : reject(new Error('Could not update the blank map image.')), 'image/png'));
+      const image = await loadImage(blob);
+      if (updateID !== blankImageUpdateID || map !== targetMap) return;
+      imageBlob = blob;
+      mapImage = image;
+      mapEdgeColor = color;
+      map.mapPresentation.blankBackgroundColor = color;
+      blankBackgroundColor.value = color;
+      blankBackgroundPreset.value = [...blankBackgroundPreset.options].some((option) => option.value === color) ? color : 'custom';
+      fitMap();
+      scheduleSave();
+    } finally {
+      if (updateID === blankImageUpdateID) {
+        blankImageResizePending = false;
+        refreshValidation();
+      }
+    }
+  }
+
+  async function applyBlankBackground(color) {
+    if (!/^#[0-9a-f]{6}$/i.test(color) || !map?.mapPresentation?.blankBackgroundColor) return;
+    return rebuildBlankMapImage(color, map.grid.eastWestSquareCount, map.grid.northSouthSquareCount);
   }
 
   function syncBlankBackgroundControls() {
@@ -107,6 +129,26 @@
   const layerOpacityOutputs = [...document.querySelectorAll('[data-layer-opacity-value]')];
   const gridOpacityInput = $('[data-grid-opacity]');
   const gridOpacityValue = $('[data-grid-opacity-value]');
+  const gridModeInputs = [...document.querySelectorAll('[data-grid-mode]')];
+  const imageGridControls = $('[data-image-grid-controls]');
+  const calibratedGridControls = $('[data-calibrated-grid-controls]');
+  const calibratedGridOption = $('[data-calibrated-grid-option]');
+  function setGridMode(mode) {
+    const blankMap = Boolean(map?.mapPresentation?.blankBackgroundColor);
+    if (blankMap && mode === 'calibrated') mode = 'image';
+    calibratedGridOption.hidden = blankMap;
+    gridModeInputs.forEach((input) => { input.checked = input.value === mode; });
+    imageGridControls.hidden = mode !== 'image';
+    calibratedGridControls.hidden = mode !== 'calibrated';
+  }
+  setGridMode('image');
+  gridModeInputs.forEach((input) => input.addEventListener('change', () => {
+    if (!input.checked) return;
+    setGridMode(input.value);
+    if (input.value === 'calibrated' && map && !map.mapPresentation?.blankBackgroundColor) {
+      setStatus('Choose Calibrate grid, then drag a 5 × 5 or 10 × 10 patch over the map image.');
+    }
+  }));
   const updateGridOpacity = () => {
     layerOpacity.grid = Number(gridOpacityInput.value);
     gridOpacityValue.value = `${layerOpacity.grid}%`;
@@ -118,25 +160,40 @@
   gridOpacityValue.value = `${layerOpacity.grid}%`;
   function wireOpacitySlider(input, onInput) {
     let pointerStart = null;
+    let lastGestureWasDrag = false;
+    const snapToQuarter = () => {
+      const snappedValue = Math.round(Number(input.value) / 25) * 25;
+      if (Number(input.value) === snappedValue) return;
+      input.value = String(snappedValue);
+      onInput();
+    };
     input.addEventListener('pointerdown', (event) => {
       pointerStart = { id: event.pointerId, x: event.clientX, y: event.clientY, dragged: false };
+      lastGestureWasDrag = false;
     });
     input.addEventListener('pointermove', (event) => {
       if (!pointerStart || pointerStart.id !== event.pointerId) return;
-      if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 4) pointerStart.dragged = true;
+      if (Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) > 8) pointerStart.dragged = true;
     });
     input.addEventListener('pointerup', (event) => {
       if (!pointerStart || pointerStart.id !== event.pointerId) return;
-      if (!pointerStart.dragged) {
-        const snappedValue = Math.round(Number(input.value) / 25) * 25;
-        if (Number(input.value) !== snappedValue) {
-          input.value = String(snappedValue);
-          onInput();
-        }
-      }
+      lastGestureWasDrag = pointerStart.dragged;
+      if (!pointerStart.dragged) snapToQuarter();
       pointerStart = null;
     });
-    input.addEventListener('pointercancel', () => { pointerStart = null; });
+    input.addEventListener('pointercancel', (event) => {
+      if (!pointerStart || pointerStart.id !== event.pointerId) return;
+      lastGestureWasDrag = pointerStart.dragged;
+      if (!pointerStart.dragged) snapToQuarter();
+      pointerStart = null;
+    });
+    input.addEventListener('click', (event) => {
+      if (event.detail === 0) return;
+      const wasDrag = pointerStart?.dragged ?? lastGestureWasDrag;
+      if (!wasDrag) snapToQuarter();
+      pointerStart = null;
+      lastGestureWasDrag = false;
+    });
     input.addEventListener('input', onInput);
   }
   wireOpacitySlider(gridOpacityInput, updateGridOpacity);
@@ -161,7 +218,7 @@
     const button = event.currentTarget;
     button.disabled = true;
     try {
-      const pixelsPerSquare = Math.min(64, Math.floor(2048 / Math.max(columns, rows)));
+      const pixelsPerSquare = blankPixelsPerSquare(columns, rows);
       const blankCanvas = document.createElement('canvas');
       blankCanvas.width = columns * pixelsPerSquare;
       blankCanvas.height = rows * pixelsPerSquare;
@@ -191,9 +248,7 @@
         edges: [],
         mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 }, blankBackgroundColor: backgroundColor }
       };
-      sourceImage = null;
-      cropRect = null;
-      cropPanel.hidden = true;
+      setGridMode('image');
       mapViewport.hidden = false;
       history = [];
       undoButton.disabled = true;
@@ -304,67 +359,6 @@
     });
   }
 
-  function renderCrop() {
-    const width = cropCanvas.clientWidth;
-    const height = cropCanvas.clientHeight;
-    if (!width || !height || !sourceImage) return;
-    cropCanvas.width = width;
-    cropCanvas.height = height;
-    const context = cropCanvas.getContext('2d');
-    const scale = Math.min(width / sourceImage.naturalWidth, height / sourceImage.naturalHeight);
-    const drawWidth = sourceImage.naturalWidth * scale;
-    const drawHeight = sourceImage.naturalHeight * scale;
-    const x = (width - drawWidth) / 2;
-    const y = (height - drawHeight) / 2;
-    cropCanvas.dataset.scale = scale;
-    cropCanvas.dataset.offsetX = x;
-    cropCanvas.dataset.offsetY = y;
-    context.clearRect(0, 0, width, height);
-    context.drawImage(sourceImage, x, y, drawWidth, drawHeight);
-    const rect = cropRect || { x: 0, y: 0, width: sourceImage.naturalWidth, height: sourceImage.naturalHeight };
-    const sx = x + rect.x * scale;
-    const sy = y + rect.y * scale;
-    const sw = rect.width * scale;
-    const sh = rect.height * scale;
-    context.fillStyle = 'rgba(0,0,0,.48)';
-    context.fillRect(x, y, drawWidth, drawHeight);
-    context.clearRect(sx, sy, sw, sh);
-    context.drawImage(sourceImage, rect.x, rect.y, rect.width, rect.height, sx, sy, sw, sh);
-    context.strokeStyle = '#fff';
-    context.lineWidth = 2;
-    context.setLineDash([7, 4]);
-    context.strokeRect(sx, sy, sw, sh);
-    context.setLineDash([]);
-  }
-
-  function cropPoint(event) {
-    const scale = Number(cropCanvas.dataset.scale);
-    const offsetX = Number(cropCanvas.dataset.offsetX);
-    const offsetY = Number(cropCanvas.dataset.offsetY);
-    const rect = cropCanvas.getBoundingClientRect();
-    return {
-      x: Math.max(0, Math.min(sourceImage.naturalWidth, (event.clientX - rect.left - offsetX) / scale)),
-      y: Math.max(0, Math.min(sourceImage.naturalHeight, (event.clientY - rect.top - offsetY) / scale))
-    };
-  }
-
-  cropCanvas.addEventListener('pointerdown', (event) => {
-    if (!sourceImage) return;
-    cropDrag = cropPoint(event);
-    cropRect = { x: cropDrag.x, y: cropDrag.y, width: 1, height: 1 };
-    cropCanvas.setPointerCapture(event.pointerId);
-  });
-  cropCanvas.addEventListener('pointermove', (event) => {
-    if (!cropDrag) return;
-    const point = cropPoint(event);
-    cropRect = {
-      x: Math.min(cropDrag.x, point.x), y: Math.min(cropDrag.y, point.y),
-      width: Math.max(1, Math.abs(point.x - cropDrag.x)), height: Math.max(1, Math.abs(point.y - cropDrag.y))
-    };
-    renderCrop();
-  });
-  cropCanvas.addEventListener('pointerup', () => { cropDrag = null; });
-
   fileInput.addEventListener('change', async () => {
     const file = fileInput.files?.[0];
     if (!file) return;
@@ -372,13 +366,36 @@
     setStatus('Choose a PNG image no larger than 20 MB.', true);
       return;
     }
-    sourceImage = await loadImage(file);
-    cropRect = { x: 0, y: 0, width: sourceImage.naturalWidth, height: sourceImage.naturalHeight };
-    $('[data-map-name]').value = file.name.replace(/\.png$/i, '');
-    cropPanel.hidden = false;
-    mapViewport.hidden = true;
-    setStatus(`${sourceImage.naturalWidth} × ${sourceImage.naturalHeight} px. Select the map area, then apply the crop.`);
-    requestAnimationFrame(renderCrop);
+    try {
+      mapImage = await loadImage(file);
+      imageBlob = file;
+      mapEdgeColor = averageImageEdgeColor(mapImage);
+      const name = file.name.replace(/\.png$/i, '');
+      $('[data-map-name]').value = name;
+      map = {
+        format: TacticalMapPackage.FORMAT_IDENTIFIER,
+        version: TacticalMapPackage.FORMAT_VERSION,
+        imagePath: `${safeStem(name)}.png`,
+        grid: { eastWestSquareCount: 20, northSouthSquareCount: 20, squareSizeFt: 5, coordinateConvention: { origin: 'southwest' }, boundaryBehavior: 'bounded' },
+        blockedTiles: [], stickers: [], terrain: { defaultType: 'normal', overrides: [] },
+        elevation: { defaultHeightFt: 0, overrides: [] }, edges: [],
+        mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } }
+      };
+      setGridMode('calibrated');
+      $('[data-grid-width]').value = 20;
+      $('[data-grid-height]').value = 20;
+      $('[data-square-size]').value = 5;
+      mapViewport.hidden = false;
+      history = [];
+      undoButton.disabled = true;
+      $('[data-tool="grid-calibrate"]').click();
+      fitMap();
+      refreshValidation();
+      scheduleSave();
+      setStatus(`${mapImage.naturalWidth} × ${mapImage.naturalHeight} px. Drag a 5 × 5 or 10 × 10 calibration patch on the map.`);
+    } catch (error) {
+      setStatus(`Unable to load map image: ${error.message || error}`, true);
+    }
   });
 
   async function inflateZipEntry(compressedBytes, method) {
@@ -478,6 +495,8 @@
       map.edges ||= [];
       map.mapPresentation ||= { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } };
       map.mapPresentation.sideWallColor ||= { r: 0, g: 0, b: 0, a: 1 };
+      delete map.grid.imageCalibration;
+      setGridMode('image');
       syncBlankBackgroundControls();
       if (map.mapPresentation.blankBackgroundColor) mapEdgeColor = map.mapPresentation.blankBackgroundColor;
       $('[data-grid-width]').value = map.grid.eastWestSquareCount;
@@ -486,7 +505,6 @@
       $('[data-infinite-canvas]').checked = map.grid.boundaryBehavior === 'infinite';
       history = [];
       undoButton.disabled = true;
-      cropPanel.hidden = true;
       mapViewport.hidden = false;
       fitMap();
       refreshValidation();
@@ -496,45 +514,6 @@
     } catch (error) {
       setStatus(`Unable to open map package: ${error.message || error}`, true);
     }
-  });
-
-  $('[data-crop-reset]').addEventListener('click', () => {
-    if (!sourceImage) return;
-    cropRect = { x: 0, y: 0, width: sourceImage.naturalWidth, height: sourceImage.naturalHeight };
-    renderCrop();
-  });
-
-  $('[data-crop-apply]').addEventListener('click', async () => {
-    if (!sourceImage || !cropRect) return;
-    const x = Math.round(cropRect.x);
-    const y = Math.round(cropRect.y);
-    const width = Math.max(1, Math.round(cropRect.width));
-    const height = Math.max(1, Math.round(cropRect.height));
-    const output = document.createElement('canvas');
-    output.width = width;
-    output.height = height;
-    output.getContext('2d').drawImage(sourceImage, x, y, width, height, 0, 0, width, height);
-    imageBlob = await new Promise((resolve) => output.toBlob(resolve, 'image/png'));
-    mapImage = await loadImage(imageBlob);
-    mapEdgeColor = averageImageEdgeColor(mapImage);
-    map = {
-      format: TacticalMapPackage.FORMAT_IDENTIFIER,
-      version: TacticalMapPackage.FORMAT_VERSION,
-      imagePath: `${safeStem($('[data-map-name]').value)}.png`,
-      grid: { eastWestSquareCount: 20, northSouthSquareCount: 20, squareSizeFt: 5, coordinateConvention: { origin: 'southwest' }, boundaryBehavior: 'bounded' },
-      blockedTiles: [], stickers: [], terrain: { defaultType: 'normal', overrides: [] },
-      elevation: { defaultHeightFt: 0, overrides: [] }, edges: [],
-      mapPresentation: { sideWallColor: { r: 0, g: 0, b: 0, a: 1 } }
-    };
-    history = [];
-    $('[data-grid-width]').value = 20;
-    $('[data-grid-height]').value = 20;
-    $('[data-square-size]').value = 5;
-    cropPanel.hidden = true;
-    mapViewport.hidden = false;
-    syncGrid();
-    fitMap();
-    scheduleSave();
   });
 
   function safeStem(value) {
@@ -557,6 +536,7 @@
       exportButton.disabled = true;
       return;
     }
+    const dimensionsChanged = map.grid.eastWestSquareCount !== columns || map.grid.northSouthSquareCount !== rows;
     map.grid.eastWestSquareCount = columns;
     map.grid.northSouthSquareCount = rows;
     map.grid.squareSizeFt = squareFt;
@@ -575,9 +555,13 @@
       bounds.south = Math.min(bounds.south, rows - 1);
       bounds.north = Math.min(bounds.north, rows - 1);
     }
-    draw();
-    refreshValidation();
-    scheduleSave();
+    if (dimensionsChanged && map.mapPresentation?.blankBackgroundColor) {
+      rebuildBlankMapImage(map.mapPresentation.blankBackgroundColor, columns, rows).catch((error) => setStatus(error.message, true));
+    } else {
+      draw();
+      refreshValidation();
+      scheduleSave();
+    }
   }
   ['[data-grid-width]', '[data-grid-height]', '[data-square-size]'].forEach((selector) => {
     $(selector).addEventListener('change', syncGrid);
@@ -646,6 +630,44 @@
       return '#f5f8fb';
     }
   }
+
+  async function bakeImageCalibration(calibration) {
+    if (!calibration || !mapImage) return false;
+    const size = imageSize();
+    const cellW = calibration.cellWidthPx;
+    const cellH = calibration.cellHeightPx;
+    const phaseX = calibration.offsetXPx || 0;
+    const phaseY = calibration.offsetYPx || 0;
+    const padLeft = phaseX > 0.01 ? cellW - phaseX : 0;
+    const padTop = phaseY > 0.01 ? cellH - phaseY : 0;
+    const columns = Math.ceil((size.width + padLeft) / cellW);
+    const rows = Math.ceil((size.height + padTop) / cellH);
+    if (columns < 1 || rows < 1 || columns > 200 || rows > 200) throw new Error('The calibrated grid must contain 1–200 squares per side.');
+    const width = Math.ceil(columns * cellW);
+    const height = Math.ceil(rows * cellH);
+    const output = document.createElement('canvas');
+    output.width = width;
+    output.height = height;
+    const outputContext = output.getContext('2d');
+    outputContext.fillStyle = mapEdgeColor;
+    outputContext.fillRect(0, 0, width, height);
+    const left = Math.round(padLeft);
+    const top = Math.round(padTop);
+    outputContext.drawImage(mapImage, left, top);
+    const blob = await new Promise((resolve) => output.toBlob(resolve, 'image/png'));
+    if (!blob || blob.size > 20 * 1024 * 1024) throw new Error('The calibrated map image could not be created or exceeds the 20 MB limit.');
+    const image = await loadImage(blob);
+
+    imageBlob = blob;
+    mapImage = image;
+    map.grid.eastWestSquareCount = columns;
+    map.grid.northSouthSquareCount = rows;
+    $('[data-grid-width]').value = columns;
+    $('[data-grid-height]').value = rows;
+    mapEdgeColor = averageImageEdgeColor(mapImage);
+    fitMap();
+    return true;
+  }
   function fitMap() {
     const size = imageSize();
     if (!size.width || !canvas.clientWidth || !canvas.clientHeight) return;
@@ -659,13 +681,18 @@
   function gridMetrics() {
     const size = imageSize();
     const grid = map.grid;
-    return { size, cellW: size.width / grid.eastWestSquareCount, cellH: size.height / grid.northSouthSquareCount };
+    return { size, cellW: size.width / grid.eastWestSquareCount,
+      cellH: size.height / grid.northSouthSquareCount, offsetX: 0, offsetY: 0 };
+  }
+  function imagePointAt(clientX, clientY) {
+    const bounds = canvas.getBoundingClientRect();
+    return { x: (clientX - bounds.left - view.x) / view.scale, y: (clientY - bounds.top - view.y) / view.scale };
   }
   function cellAt(clientX, clientY) {
-    const bounds = canvas.getBoundingClientRect();
-    const mapX = (clientX - bounds.left - view.x) / view.scale;
-    const mapY = (clientY - bounds.top - view.y) / view.scale;
-    const { cellW, cellH } = gridMetrics();
+    const point = imagePointAt(clientX, clientY);
+    const { cellW, cellH, offsetX, offsetY } = gridMetrics();
+    const mapX = point.x - offsetX;
+    const mapY = point.y - offsetY;
     const x = Math.floor(mapX / cellW);
     const row = Math.floor(mapY / cellH);
     const y = map.grid.northSouthSquareCount - 1 - row;
@@ -678,7 +705,6 @@
     delete map.playerPlacement;
     draw(); scheduleSave(); refreshValidation();
   });
-
   function paintCell(cell) {
     const id = `${cell.x},${cell.y}`;
     if (id === lastPainted) return;
@@ -758,20 +784,21 @@
     const bounds = canvas.getBoundingClientRect();
     const mapX = (clientX - bounds.left - view.x) / view.scale;
     const mapY = (clientY - bounds.top - view.y) / view.scale;
-    const { size, cellW, cellH } = gridMetrics();
+    const { size, cellW, cellH, offsetX, offsetY } = gridMetrics();
     const tolerance = Math.min(cellW, cellH) * 0.55;
-    if (mapX < -tolerance || mapX > size.width + tolerance || mapY < -tolerance || mapY > size.height + tolerance) return null;
-    const verticalLine = Math.max(0, Math.min(map.grid.eastWestSquareCount, Math.round(mapX / cellW)));
-    const verticalDistance = Math.abs(mapX - verticalLine * cellW);
-    const horizontalLineFromTop = Math.max(0, Math.min(map.grid.northSouthSquareCount, Math.round(mapY / cellH)));
-    const horizontalDistance = Math.abs(mapY - horizontalLineFromTop * cellH);
+    const gx = mapX - offsetX; const gy = mapY - offsetY;
+    if (gx < -tolerance || gx > map.grid.eastWestSquareCount * cellW + tolerance || gy < -tolerance || gy > map.grid.northSouthSquareCount * cellH + tolerance) return null;
+    const verticalLine = Math.max(0, Math.min(map.grid.eastWestSquareCount, Math.round(gx / cellW)));
+    const verticalDistance = Math.abs(gx - verticalLine * cellW);
+    const horizontalLineFromTop = Math.max(0, Math.min(map.grid.northSouthSquareCount, Math.round(gy / cellH)));
+    const horizontalDistance = Math.abs(gy - horizontalLineFromTop * cellH);
     const chosenAxis = axis || (verticalDistance <= horizontalDistance ? 'vertical' : 'horizontal');
     if ((chosenAxis === 'vertical' ? verticalDistance : horizontalDistance) > tolerance) return null;
     if (chosenAxis === 'vertical') {
-      const row = Math.max(0, Math.min(map.grid.northSouthSquareCount - 1, Math.floor(mapY / cellH)));
+      const row = Math.max(0, Math.min(map.grid.northSouthSquareCount - 1, Math.floor(gy / cellH)));
       return { axis: chosenAxis, x: verticalLine, y: map.grid.northSouthSquareCount - 1 - row };
     }
-    const column = Math.max(0, Math.min(map.grid.eastWestSquareCount - 1, Math.floor(mapX / cellW)));
+    const column = Math.max(0, Math.min(map.grid.eastWestSquareCount - 1, Math.floor(gx / cellW)));
     return { axis: chosenAxis, x: column, y: map.grid.northSouthSquareCount - horizontalLineFromTop };
   }
 
@@ -858,6 +885,11 @@
     strokeClearing = event.shiftKey;
     lastPointer = { x: event.clientX, y: event.clientY };
     if (spacePan || tool === 'pan') { pointerMode = 'pan'; syncCanvasCursor(); return; }
+    if (tool === 'grid-calibrate') {
+      const point = imagePointAt(event.clientX, event.clientY);
+      calibrationDragStart = point; calibrationDragEnd = point;
+      pointerMode = 'calibrate'; draw(); return;
+    }
     if (tool === 'starting-zone') {
       const cell = cellAt(event.clientX, event.clientY);
       if (!cell) return;
@@ -903,6 +935,10 @@
       draw();
       return;
     }
+    if (pointerMode === 'calibrate') {
+      calibrationDragEnd = imagePointAt(event.clientX, event.clientY);
+      draw(); return;
+    }
     if (pointerMode === 'pan') {
       view.x += event.clientX - lastPointer.x;
       view.y += event.clientY - lastPointer.y;
@@ -925,7 +961,7 @@
     }
     lastPaintPoint = { x: cell.mapX, y: cell.mapY };
   });
-  function finishPointer(event) {
+  async function finishPointer(event) {
     activePointers.delete(event.pointerId);
     if (pointerMode === 'pinch') {
       if (activePointers.size >= 2) {
@@ -955,7 +991,36 @@
       } };
       endStroke(); scheduleSave(); refreshValidation();
     }
+    if (pointerMode === 'calibrate' && calibrationDragStart && calibrationDragEnd) {
+      const squares = Number($('[data-calibration-size]').value);
+      const left = Math.min(calibrationDragStart.x, calibrationDragEnd.x);
+      const top = Math.min(calibrationDragStart.y, calibrationDragEnd.y);
+      const width = Math.abs(calibrationDragEnd.x - calibrationDragStart.x);
+      const height = Math.abs(calibrationDragEnd.y - calibrationDragStart.y);
+      const cellWidthPx = width / squares; const cellHeightPx = height / squares;
+      const offsetXPx = ((left % cellWidthPx) + cellWidthPx) % cellWidthPx;
+      const offsetYPx = ((top % cellHeightPx) + cellHeightPx) % cellHeightPx;
+      const size = imageSize();
+      const padLeft = offsetXPx > 0.01 ? cellWidthPx - offsetXPx : 0;
+      const padTop = offsetYPx > 0.01 ? cellHeightPx - offsetYPx : 0;
+      const calibratedColumns = Math.ceil((size.width + padLeft) / cellWidthPx);
+      const calibratedRows = Math.ceil((size.height + padTop) / cellHeightPx);
+      if (width >= squares * 2 && height >= squares * 2 && left >= 0 && top >= 0 && left + width <= size.width && top + height <= size.height && calibratedColumns >= 1 && calibratedRows >= 1 && calibratedColumns <= 200 && calibratedRows <= 200) {
+        try {
+          await bakeImageCalibration({ cellWidthPx, cellHeightPx, offsetXPx, offsetYPx });
+          setGridMode('image');
+          $('[data-tool="pan"]').click();
+          history = [];
+          undoButton.disabled = true;
+          scheduleSave(); refreshValidation();
+          setStatus(`Grid calibrated. The image was padded to ${calibratedColumns} × ${calibratedRows} image-aligned squares.`);
+        } catch (error) {
+          setStatus(`Could not finish grid calibration: ${error.message || error}`, true);
+        }
+      } else setStatus('The calibration patch must be inside the image and produce a grid of 1–200 squares per side.', true);
+    }
     placementDragStart = null; placementDragEnd = null;
+    calibrationDragStart = null; calibrationDragEnd = null;
     pointerMode = ''; strokeEdgeAxis = ''; strokeClearing = false; lastPointer = null; lastPaintPoint = null; syncCanvasCursor(); draw();
   }
   canvas.addEventListener('pointerup', finishPointer);
@@ -982,7 +1047,7 @@
     ctx.save();
     ctx.translate(view.x, view.y);
     ctx.scale(view.scale, view.scale);
-    const { size, cellW, cellH } = gridMetrics();
+    const { size, cellW, cellH, offsetX, offsetY } = gridMetrics();
     if (map.grid.boundaryBehavior === 'infinite') {
       const left = Math.min(0, -view.x / view.scale);
       const right = Math.max(size.width, (canvas.width - view.x) / view.scale);
@@ -999,8 +1064,8 @@
     } : bounds;
     ctx.globalAlpha = layerOpacity.startingZone / 100;
     if (zone) {
-      const left = zone.west * cellW;
-      const top = (map.grid.northSouthSquareCount - 1 - zone.north) * cellH;
+      const left = offsetX + zone.west * cellW;
+      const top = offsetY + (map.grid.northSouthSquareCount - 1 - zone.north) * cellH;
       const width = (zone.east - zone.west + 1) * cellW;
       const height = (zone.north - zone.south + 1) * cellH;
       ctx.fillStyle = '#1976d2'; ctx.fillRect(left, top, width, height);
@@ -1014,10 +1079,10 @@
       const row = map.grid.northSouthSquareCount - tile.y - tile.height;
       if (detailedTerrain) {
         ctx.fillStyle = terrainTints[tile.type];
-        ctx.fillRect(tile.x * cellW, row * cellH, tile.width * cellW, tile.height * cellH);
+        ctx.fillRect(offsetX + tile.x * cellW, offsetY + row * cellH, tile.width * cellW, tile.height * cellH);
       } else {
         for (let dx = 0; dx < tile.width; dx += 1) for (let dy = 0; dy < tile.height; dy += 1) {
-          drawTileIcon(icon, (tile.x + dx) * cellW, (row + tile.height - dy - 1) * cellH, cellW, cellH);
+          drawTileIcon(icon, offsetX + (tile.x + dx) * cellW, offsetY + (row + tile.height - dy - 1) * cellH, cellW, cellH);
         }
       }
     }
@@ -1026,8 +1091,8 @@
     for (const tile of map.elevation.overrides) {
       const row = map.grid.northSouthSquareCount - tile.y - tile.height;
       for (let dx = 0; dx < tile.width; dx += 1) for (let dy = 0; dy < tile.height; dy += 1) {
-        const x = (tile.x + dx) * cellW;
-        const y = (row + tile.height - dy - 1) * cellH;
+        const x = offsetX + (tile.x + dx) * cellW;
+        const y = offsetY + (row + tile.height - dy - 1) * cellH;
         if (detailedElevation) {
           ctx.fillStyle = '#9259be';
           ctx.fillRect(x, y, cellW, cellH);
@@ -1056,8 +1121,8 @@
     ctx.globalAlpha = layerOpacity.obstacles / 100;
     const detailedObstacles = tool === 'obstacle' || tool === 'erase-obstacles';
     for (const tile of map.blockedTiles) {
-      const x = tile.x * cellW;
-      const y = (map.grid.northSouthSquareCount - 1 - tile.y) * cellH;
+      const x = offsetX + tile.x * cellW;
+      const y = offsetY + (map.grid.northSouthSquareCount - 1 - tile.y) * cellH;
       if (detailedObstacles) {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
         ctx.fillRect(x, y, cellW, cellH);
@@ -1070,14 +1135,14 @@
     ctx.strokeStyle = 'rgba(40, 112, 172, .7)';
     ctx.lineWidth = Math.max(.7, 1 / view.scale);
     ctx.beginPath();
-    for (let x = 0; x <= map.grid.eastWestSquareCount; x += 1) { ctx.moveTo(x * cellW, 0); ctx.lineTo(x * cellW, size.height); }
-    for (let row = 0; row <= map.grid.northSouthSquareCount; row += 1) { ctx.moveTo(0, row * cellH); ctx.lineTo(size.width, row * cellH); }
+    for (let x = 0; x <= map.grid.eastWestSquareCount; x += 1) { ctx.moveTo(offsetX + x * cellW, offsetY); ctx.lineTo(offsetX + x * cellW, offsetY + map.grid.northSouthSquareCount * cellH); }
+    for (let row = 0; row <= map.grid.northSouthSquareCount; row += 1) { ctx.moveTo(offsetX, offsetY + row * cellH); ctx.lineTo(offsetX + map.grid.eastWestSquareCount * cellW, offsetY + row * cellH); }
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.globalAlpha = layerOpacity.edges / 100;
     for (const edge of map.edges) {
-      const x1 = edge.axis === 'vertical' ? edge.x * cellW : edge.x * cellW;
-      const y1 = edge.axis === 'vertical' ? (map.grid.northSouthSquareCount - edge.y) * cellH : (map.grid.northSouthSquareCount - edge.y) * cellH;
+      const x1 = offsetX + edge.x * cellW;
+      const y1 = offsetY + (map.grid.northSouthSquareCount - edge.y) * cellH;
       ctx.beginPath();
       const baseEdgeWidth = Math.max(4 / view.scale, Math.min(cellW, cellH) * .085);
       const editingEdges = ['wall', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool);
@@ -1110,8 +1175,8 @@
       if (!sticker.emoji) continue;
       ctx.save();
       ctx.globalAlpha = (sticker.opacityPercent ?? 100) / 100;
-      const centerX = (sticker.x + .5) * cellW;
-      const centerY = (map.grid.northSouthSquareCount - sticker.y - .5) * cellH;
+      const centerX = offsetX + (sticker.x + .5) * cellW;
+      const centerY = offsetY + (map.grid.northSouthSquareCount - sticker.y - .5) * cellH;
       const fontSize = Math.min(cellW, cellH) * .9 * sticker.sizePercent / 100;
       ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
       ctx.textAlign = 'center';
@@ -1119,6 +1184,22 @@
       // Emoji fonts often include extra vertical whitespace above the visible glyph.
       ctx.fillText(sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset);
       ctx.restore();
+    }
+    if (pointerMode === 'calibrate' && calibrationDragStart && calibrationDragEnd) {
+      const count = Number($('[data-calibration-size]').value);
+      const left = Math.min(calibrationDragStart.x, calibrationDragEnd.x);
+      const top = Math.min(calibrationDragStart.y, calibrationDragEnd.y);
+      const width = Math.abs(calibrationDragEnd.x - calibrationDragStart.x);
+      const height = Math.abs(calibrationDragEnd.y - calibrationDragStart.y);
+      ctx.save(); ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(0, 210, 255, .12)'; ctx.fillRect(left, top, width, height);
+      ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = Math.max(2 / view.scale, 1);
+      ctx.beginPath();
+      for (let index = 0; index <= count; index += 1) {
+        const x = left + width * index / count; const y = top + height * index / count;
+        ctx.moveTo(x, top); ctx.lineTo(x, top + height);
+        ctx.moveTo(left, y); ctx.lineTo(left + width, y);
+      }
+      ctx.stroke(); ctx.restore();
     }
     ctx.restore();
   }
@@ -1179,13 +1260,14 @@
       const b = map.playerPlacement.defaultBounds;
       if (b.west < 0 || b.south < 0 || b.east >= cols || b.north >= rows || b.west > b.east || b.south > b.north) errors.push('Starting-zone bounds are invalid for the current grid.');
     }
-    if (!imageBlob || !map.imagePath) errors.push('A cropped PNG image is required.');
+    if (!imageBlob || !map.imagePath) errors.push('A PNG map image is required.');
+    if (blankImageResizePending) errors.push('The blank map image is still resizing.');
     return errors;
   }
   function refreshValidation() {
     if (!map) return [];
     const errors = validateMap();
-    if (imageBlob?.size > 20 * 1024 * 1024) errors.push('The cropped PNG exceeds the 20 MB import limit.');
+    if (imageBlob?.size > 20 * 1024 * 1024) errors.push('The map PNG exceeds the 20 MB import limit.');
     setStatus(errors.length ? errors[0] : 'Map data is valid and ready to export.', errors.length > 0);
     exportButton.disabled = errors.length > 0;
     return errors;
@@ -1296,6 +1378,8 @@
     map.grid.northSouthSquareCount ||= 20;
     map.grid.squareSizeFt ||= 5;
     map.grid.boundaryBehavior ||= 'bounded';
+    delete map.grid.imageCalibration;
+    setGridMode('image');
     map.imagePath ||= `${safeStem(draft.name || 'Untitled map')}.png`;
     map.blockedTiles ||= [];
     map.stickers ||= [];
@@ -1317,7 +1401,7 @@
     $('[data-infinite-canvas]').checked = map.grid.boundaryBehavior === 'infinite';
     mapImage = await loadImage(imageBlob);
     mapEdgeColor = averageImageEdgeColor(mapImage);
-    cropPanel.hidden = true; mapViewport.hidden = false;
+    mapViewport.hidden = false;
     history = []; undoButton.disabled = true;
     fitMap(); refreshValidation();
     setStatus('Restored your browser-local draft.');
@@ -1359,14 +1443,12 @@
   });
 
   const resizeAuthoringViewports = () => {
-    renderCrop();
     if (!mapViewport.hidden && mapImage) fitMap();
     else draw();
   };
   if ('ResizeObserver' in window) {
     const viewportObserver = new ResizeObserver(resizeAuthoringViewports);
     viewportObserver.observe(canvas.parentElement);
-    viewportObserver.observe(cropCanvas.parentElement);
   } else {
     window.addEventListener('resize', resizeAuthoringViewports);
   }

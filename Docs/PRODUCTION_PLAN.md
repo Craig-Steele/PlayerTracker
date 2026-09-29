@@ -1231,7 +1231,8 @@ Planned behavior:
 - make the map-authoring tool available to anyone without requiring campaign membership or referee privileges
 - keep in-progress authoring work private to the author; use browser-local draft storage for the initial tool so drafts are not visible to other server users, and make clear that drafts do not sync across browsers or devices
 - import a PNG as the map background
-- crop non-map borders from the imported image before grid alignment
+- load an imported image directly into grid calibration; drag a 5×5 or 10×10 grid patch over visible grid intersections and display the patch's internal grid while dragging
+- after calibration, expand the image to full grid boundaries using the infinite-fill color, derive square counts from the expanded raster, and serialize ordinary image-edge-aligned grid metadata without offsets
 - define east-west and north-south grid measurements, square size, and coordinate origin
 - paint obstacle squares that cannot be entered
 - paint terrain properties such as normal, difficult terrain, water, and lava, independently from impassable obstacles
@@ -1241,7 +1242,7 @@ Planned behavior:
 - provide eraser and undo controls
 - preview the final tactical rendering
 - validate the map before export
-- export a package containing the cropped PNG and canonical map JSON
+- export a package containing the grid-aligned PNG and canonical map JSON
 
 Canonical data distinctions:
 
@@ -1270,14 +1271,15 @@ Acceptance:
 
 - any user can author a map without campaign membership or referee privileges
 - authoring drafts are private to the browser that created them and are not exposed to other server users
-- a user can crop an imported PNG when its border does not align to the grid
-- a user can align a grid to the cropped map image
+- loading an imported PNG proceeds directly to grid calibration
+- a user can align a grid to the imported map image and confirm the internal calibration patch before the PNG is padded
+- calibration pads the image with the infinite-fill color so the saved PNG bounds align with the grid and no grid offset is needed by the file format or tactical renderer
 - a user can choose bounded or infinite map behavior; bounded maps restrict placement to map bounds without creating walls in `edges`
 - a user can create obstacle, terrain, edge-feature, and elevation metadata without editing JSON by hand
 - walls, doorways, doors, secret doors, and windows export with unambiguous lattice-edge coordinates; window states are validated and invalid or duplicate edge records receive actionable validation errors
 - exported door records include initial state, and encounter-time door changes do not alter the map package
 - the editor preview matches the tactical client’s coordinate convention
-- the preview and exported `.tttm` package use the cropped image and matching grid coordinates
+- the preview and exported `.tttm` package use the padded image and matching image-aligned grid coordinates
 - exported `.tttm` packages can be imported by the referee map selector; legacy `.zmap` packages remain importable
 - malformed or incomplete map packages receive actionable validation errors
 

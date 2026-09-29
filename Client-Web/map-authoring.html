@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="tactical/tactical-styles.css?v=6">
-  <link rel="stylesheet" href="map-authoring.css?v=17">
+  <link rel="stylesheet" href="map-authoring.css?v=19">
 </head>
 <body class="map-authoring-page">
   <main class="tactical-shell map-authoring-shell">
@@ -24,13 +24,9 @@
             <input id="authoring-map-package-file" type="file" accept=".tttm,.zmap,.map.zip,application/zip" data-authoring-archive hidden>
             <button type="button" class="secondary" data-new-blank-map>New Blank Map</button>
             <button type="button" class="secondary" data-authoring-restore hidden>Restore saved draft</button>
-            <p class="authoring-note">Drafts stay in this browser. Export a .tttm package to share or use in a campaign. Choose a brush, then drag to paint. Shift-click or Shift-drag on a painting brush removes only that brush’s value. Use each category’s Erase control to remove that category from squares or edges. Edge strokes stay horizontal or vertical based on where the drag starts. Bounded maps restrict placement to the map; infinite maps allow play beyond its edge.</p>
           </div>
           <div class="authoring-tool-items authoring-settings-items">
             <label>Map name <input type="text" data-map-name maxlength="80" value="Untitled map"></label>
-            <label>Squares east–west <input type="number" min="1" max="200" data-grid-width value="20"></label>
-            <label>Squares north–south <input type="number" min="1" max="200" data-grid-height value="20"></label>
-            <label>Square size (feet) <input type="number" min="0.1" step="0.1" data-square-size value="5"></label>
             <label>Blank map background
               <span class="authoring-background-picker">
                 <select data-blank-background-preset aria-label="Preset blank map background">
@@ -43,16 +39,39 @@
                 <input type="color" value="#ffffff" data-blank-background-color aria-label="Custom blank map background color">
               </span>
             </label>
+          </div>
+          <details class="authoring-info">
+            <summary aria-label="Map authoring information" title="Map authoring information">ⓘ Info</summary>
+            <p class="authoring-note">Drafts stay in this browser. Export a .tttm package to share or use in a campaign. Choose a brush, then drag to paint. Shift-click or Shift-drag on a painting brush removes only that brush’s value. Use each category’s Erase control to remove that category from squares or edges. Edge strokes stay horizontal or vertical based on where the drag starts. Bounded maps restrict placement to the map; infinite maps allow play beyond its edge.</p>
+          </details>
+        </details>
+        <details class="authoring-tool-group" data-tool-category open>
+          <summary>Map Grid</summary>
+          <fieldset class="authoring-grid-modes">
+            <legend>Grid alignment</legend>
+            <label><input type="radio" name="grid-alignment" value="image" data-grid-mode checked> Image edges</label>
+            <label data-calibrated-grid-option><input type="radio" name="grid-alignment" value="calibrated" data-grid-mode> Calibrated grid</label>
+          </fieldset>
+          <div class="authoring-tool-items authoring-grid-alignment-controls" data-image-grid-controls>
+            <label>Squares east–west <input type="number" min="1" max="200" data-grid-width value="20"></label>
+            <label>Squares north–south <input type="number" min="1" max="200" data-grid-height value="20"></label>
+          </div>
+          <div class="authoring-tool-items authoring-grid-alignment-controls" data-calibrated-grid-controls hidden>
+            <label>Calibration patch <select data-calibration-size aria-label="Calibration patch size"><option value="5">5 × 5 squares</option><option value="10">10 × 10 squares</option></select></label>
+            <button type="button" data-tool="grid-calibrate" aria-pressed="false" title="Set grid spacing and extend the square counts across the image">Calibrate grid</button>
+          </div>
+          <div class="authoring-tool-items authoring-grid-alignment-controls">
+            <label>Square size (feet) <input type="number" min="0.1" step="0.1" data-square-size value="5"></label>
             <label class="authoring-zone-toggle" title="Allow play beyond the image edge. When unchecked, placement is restricted to the map; boundaries are not walls."><input type="checkbox" data-infinite-canvas> Infinite canvas</label>
           </div>
+          <label class="authoring-layer-opacity authoring-grid-opacity">Grid opacity <input type="range" min="0" max="100" step="1" value="100" data-grid-opacity aria-label="Grid line opacity"><output data-grid-opacity-value>100%</output></label>
         </details>
         <details class="authoring-tool-group" data-tool-category open>
           <summary>Edit</summary>
           <div class="authoring-tool-items">
-            <button type="button" data-tool="pan" aria-pressed="true">Pan</button>
+            <button type="button" class="secondary" data-fit>Fit Map</button>
+            <button type="button" data-tool="pan" aria-pressed="true" title="Pan tool"><span aria-hidden="true">🖐️</span> Pan</button>
             <button type="button" class="secondary" data-undo disabled>Undo</button>
-            <button type="button" class="secondary" data-fit>Fit map</button>
-            <label class="authoring-layer-opacity authoring-grid-opacity">Grid opacity <input type="range" min="0" max="100" step="1" value="100" data-grid-opacity aria-label="Grid line opacity"><output data-grid-opacity-value>100%</output></label>
           </div>
         </details>
         <details class="authoring-tool-group" data-tool-category>
@@ -63,7 +82,7 @@
             <button type="button" data-tool="water" aria-pressed="false">💧 Water</button>
             <button type="button" data-tool="lava" aria-pressed="false">♨️ Hot / Lava</button>
             <button type="button" data-tool="impassible" aria-pressed="false">❌ Impassible</button>
-            <button type="button" data-tool="erase-terrain" aria-pressed="false">Erase Terrain</button>
+            <button type="button" data-tool="erase-terrain" aria-pressed="false">Erase Terrain Painting</button>
           </div>
         </details>
         <details class="authoring-tool-group" data-tool-category>
@@ -143,19 +162,11 @@
       </div>
 
       <div class="authoring-stage">
-        <section class="authoring-crop-panel" data-authoring-crop hidden>
-          <div class="authoring-section-heading"><h2>1. Crop the map image</h2><span>Drag a rectangle over the map area.</span></div>
-          <div class="authoring-crop-viewport"><canvas data-crop-canvas aria-label="Select map image crop"></canvas></div>
-          <div class="authoring-actions">
-            <button type="button" class="secondary" data-crop-reset>Use full image</button>
-            <button type="button" data-crop-apply>Apply crop and align grid</button>
-          </div>
-        </section>
         <div class="tactical-viewport authoring-viewport" hidden><canvas class="tactical-canvas" data-map-canvas aria-label="Paint map features"></canvas></div>
       </div>
     </section>
   </main>
   <script src="map-package.js?v=1"></script>
-  <script src="map-authoring.js?v=60"></script>
+  <script src="map-authoring.js?v=65"></script>
 </body>
 </html>

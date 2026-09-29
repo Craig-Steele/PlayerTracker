@@ -49,6 +49,15 @@ window.TacticalRender = (() => {
       return { width: currentImage.naturalWidth, height: currentImage.naturalHeight };
     }
 
+    function gridMetrics(size = mapSize()) {
+      return {
+        squareWidth: size.width / currentMap.grid.eastWestSquareCount,
+        squareHeight: size.height / currentMap.grid.northSouthSquareCount,
+        offsetX: 0,
+        offsetY: 0
+      };
+    }
+
     function isInfiniteTerrain() {
       return currentMap.grid.boundaryBehavior === 'infinite' ||
         currentMap.mapPresentation?.terrainBoundary === 'infinite';
@@ -103,13 +112,12 @@ window.TacticalRender = (() => {
       const mapX = (screenX - view.x) / view.scale;
       const mapY = (screenY - view.y) / view.scale;
       const grid = currentMap.grid;
-      const squareWidth = size.width / grid.eastWestSquareCount;
-      const squareHeight = size.height / grid.northSouthSquareCount;
+      const { squareWidth, squareHeight, offsetX, offsetY } = gridMetrics(size);
       return tokens.find((token) => {
         if (!viewerIsReferee && (token.isHidden || (currentHideEnemyTokens && token.team === 'enemy'))) return false;
         const row = grid.northSouthSquareCount - 1 - token.y;
-        const centerX = (token.x + 0.5) * squareWidth;
-        const centerY = (row + 0.5) * squareHeight;
+        const centerX = offsetX + (token.x + 0.5) * squareWidth;
+        const centerY = offsetY + (row + 0.5) * squareHeight;
         const radius = Math.min(squareWidth, squareHeight) * 0.5;
         return Math.hypot(mapX - centerX, mapY - centerY) <= radius;
       });
@@ -159,11 +167,10 @@ window.TacticalRender = (() => {
       const size = mapSize();
       if (size.width <= 0 || size.height <= 0) return false;
       const grid = currentMap.grid;
-      const squareWidth = size.width / grid.eastWestSquareCount;
-      const squareHeight = size.height / grid.northSouthSquareCount;
+      const { squareWidth, squareHeight, offsetX, offsetY } = gridMetrics(size);
       const row = grid.northSouthSquareCount - 1 - token.y;
-      const centerX = (token.x + 0.5) * squareWidth;
-      const centerY = (row + 0.5) * squareHeight;
+      const centerX = offsetX + (token.x + 0.5) * squareWidth;
+      const centerY = offsetY + (row + 0.5) * squareHeight;
       const squareSpan = 12;
       view.scale = Math.min(
         8,
@@ -192,8 +199,7 @@ window.TacticalRender = (() => {
       context.scale(view.scale, view.scale);
 
       const grid = currentMap.grid;
-      const squareWidth = size.width / grid.eastWestSquareCount;
-      const squareHeight = size.height / grid.northSouthSquareCount;
+      const { squareWidth, squareHeight, offsetX, offsetY } = gridMetrics(size);
       drawInfiniteBackground(size);
       context.drawImage(currentImage, 0, 0);
 
@@ -209,25 +215,25 @@ window.TacticalRender = (() => {
         const icon = tileIcons[tile.type];
         if (!icon) continue;
         for (let dx = 0; dx < tile.width; dx += 1) for (let dy = 0; dy < tile.height; dy += 1) {
-          drawTileIcon(context, icon, (tile.x + dx) * squareWidth, (row + tile.height - dy - 1) * squareHeight, squareWidth, squareHeight);
+          drawTileIcon(context, icon, offsetX + (tile.x + dx) * squareWidth, offsetY + (row + tile.height - dy - 1) * squareHeight, squareWidth, squareHeight);
         }
       }
       for (const tile of currentMap.elevation?.overrides || []) {
         const row = grid.northSouthSquareCount - tile.y - tile.height;
         context.fillStyle = '#9259be';
-        context.fillRect(tile.x * squareWidth, row * squareHeight, tile.width * squareWidth, tile.height * squareHeight);
+        context.fillRect(offsetX + tile.x * squareWidth, offsetY + row * squareHeight, tile.width * squareWidth, tile.height * squareHeight);
         context.fillStyle = '#28143b';
         context.font = `bold ${Math.min(squareWidth, squareHeight) * 0.27}px sans-serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.fillText(`${tile.heightFt}′`, (tile.x + tile.width / 2) * squareWidth, (row + tile.height / 2) * squareHeight);
+        context.fillText(`${tile.heightFt}′`, offsetX + (tile.x + tile.width / 2) * squareWidth, offsetY + (row + tile.height / 2) * squareHeight);
       }
       for (const sticker of currentMap.stickers || []) {
         if (!sticker.emoji) continue;
         context.save();
         context.globalAlpha = (sticker.opacityPercent ?? 100) / 100;
-        const centerX = (sticker.x + 0.5) * squareWidth;
-        const centerY = (grid.northSouthSquareCount - sticker.y - 0.5) * squareHeight;
+        const centerX = offsetX + (sticker.x + 0.5) * squareWidth;
+        const centerY = offsetY + (grid.northSouthSquareCount - sticker.y - 0.5) * squareHeight;
         const fontSize = Math.min(squareWidth, squareHeight) * 0.9 * (sticker.sizePercent ?? 100) / 100;
         context.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
         context.textAlign = 'center';
@@ -240,17 +246,17 @@ window.TacticalRender = (() => {
       context.strokeStyle = getComputedStyle(canvas).getPropertyValue('--tactical-grid').trim();
       context.lineWidth = Math.max(1 / view.scale, 0.7);
       context.beginPath();
-      const visibleLeft = isInfiniteTerrain() ? Math.floor((-view.x) / view.scale / squareWidth) - 1 : 0;
+      const visibleLeft = isInfiniteTerrain() ? Math.floor(((-view.x) / view.scale - offsetX) / squareWidth) - 1 : 0;
       const visibleRight = isInfiniteTerrain() ? Math.ceil((canvas.clientWidth - view.x) / view.scale / squareWidth) + 1 : grid.eastWestSquareCount;
-      const visibleTop = isInfiniteTerrain() ? Math.floor((-view.y) / view.scale / squareHeight) - 1 : 0;
+      const visibleTop = isInfiniteTerrain() ? Math.floor(((-view.y) / view.scale - offsetY) / squareHeight) - 1 : 0;
       const visibleBottom = isInfiniteTerrain() ? Math.ceil((canvas.clientHeight - view.y) / view.scale / squareHeight) + 1 : grid.northSouthSquareCount;
       for (let x = visibleLeft; x <= visibleRight; x += 1) {
-        context.moveTo(x * squareWidth, isInfiniteTerrain() ? visibleTop * squareHeight : 0);
-        context.lineTo(x * squareWidth, isInfiniteTerrain() ? visibleBottom * squareHeight : size.height);
+        context.moveTo(offsetX + x * squareWidth, isInfiniteTerrain() ? offsetY + visibleTop * squareHeight : offsetY);
+        context.lineTo(offsetX + x * squareWidth, isInfiniteTerrain() ? offsetY + visibleBottom * squareHeight : offsetY + grid.northSouthSquareCount * squareHeight);
       }
       for (let y = visibleTop; y <= visibleBottom; y += 1) {
-        context.moveTo(isInfiniteTerrain() ? visibleLeft * squareWidth : 0, y * squareHeight);
-        context.lineTo(isInfiniteTerrain() ? visibleRight * squareWidth : size.width, y * squareHeight);
+        context.moveTo(isInfiniteTerrain() ? offsetX + visibleLeft * squareWidth : offsetX, offsetY + y * squareHeight);
+        context.lineTo(isInfiniteTerrain() ? offsetX + visibleRight * squareWidth : offsetX + grid.eastWestSquareCount * squareWidth, offsetY + y * squareHeight);
       }
       context.globalAlpha = currentGridOpacity;
       context.stroke();
@@ -259,8 +265,8 @@ window.TacticalRender = (() => {
       context.globalAlpha = currentIndicatorOpacity;
       if (currentMap.playerPlacement?.defaultBounds) {
         const bounds = currentMap.playerPlacement.defaultBounds;
-        const left = bounds.west * squareWidth;
-        const top = (grid.northSouthSquareCount - 1 - bounds.north) * squareHeight;
+        const left = offsetX + bounds.west * squareWidth;
+        const top = offsetY + (grid.northSouthSquareCount - 1 - bounds.north) * squareHeight;
         const zoneWidth = (bounds.east - bounds.west + 1) * squareWidth;
         const zoneHeight = (bounds.north - bounds.south + 1) * squareHeight;
         context.fillStyle = '#1976d2';
@@ -271,19 +277,19 @@ window.TacticalRender = (() => {
       }
 
       if (!viewerIsReferee && currentPlayerPlacement) {
-        const left = isInfiniteTerrain() ? visibleLeft * squareWidth : 0;
-        const right = isInfiniteTerrain() ? visibleRight * squareWidth : size.width;
-        const top = isInfiniteTerrain() ? visibleTop * squareHeight : 0;
-        const bottom = isInfiniteTerrain() ? visibleBottom * squareHeight : size.height;
-        const placementTop = (grid.northSouthSquareCount - 1 - currentPlayerPlacement.north) * squareHeight;
-        const placementBottom = (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
+        const left = isInfiniteTerrain() ? offsetX + visibleLeft * squareWidth : offsetX;
+        const right = isInfiniteTerrain() ? offsetX + visibleRight * squareWidth : offsetX + grid.eastWestSquareCount * squareWidth;
+        const top = isInfiniteTerrain() ? offsetY + visibleTop * squareHeight : offsetY;
+        const bottom = isInfiniteTerrain() ? offsetY + visibleBottom * squareHeight : offsetY + grid.northSouthSquareCount * squareHeight;
+        const placementTop = offsetY + (grid.northSouthSquareCount - 1 - currentPlayerPlacement.north) * squareHeight;
+        const placementBottom = offsetY + (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
         context.save();
         context.globalAlpha = 1;
         context.fillStyle = '#000';
         context.beginPath();
         context.rect(left, top, right - left, bottom - top);
         context.rect(
-          currentPlayerPlacement.west * squareWidth,
+          offsetX + currentPlayerPlacement.west * squareWidth,
           placementTop,
           (currentPlayerPlacement.east - currentPlayerPlacement.west + 1) * squareWidth,
           placementBottom - placementTop
@@ -293,10 +299,10 @@ window.TacticalRender = (() => {
       }
 
       if (viewerIsReferee && currentPlayerPlacement) {
-        const placementTop = (grid.northSouthSquareCount - 1 - currentPlayerPlacement.north) * squareHeight;
-        const placementBottom = (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
-        const placementLeft = currentPlayerPlacement.west * squareWidth;
-        const placementRight = (currentPlayerPlacement.east + 1) * squareWidth;
+        const placementTop = offsetY + (grid.northSouthSquareCount - 1 - currentPlayerPlacement.north) * squareHeight;
+        const placementBottom = offsetY + (grid.northSouthSquareCount - currentPlayerPlacement.south) * squareHeight;
+        const placementLeft = offsetX + currentPlayerPlacement.west * squareWidth;
+        const placementRight = offsetX + (currentPlayerPlacement.east + 1) * squareWidth;
         context.fillStyle = '#1976d2';
         context.fillRect(placementLeft, placementTop, placementRight - placementLeft, placementBottom - placementTop);
         context.strokeStyle = '#1976d2';
@@ -308,11 +314,11 @@ window.TacticalRender = (() => {
         ? placementBounds(placementDragStart, placementDragEnd)
         : null;
       if ((viewerIsReferee || allowPlacementEdit) && draft) {
-        const draftTop = (grid.northSouthSquareCount - 1 - draft.north) * squareHeight;
-        const draftBottom = (grid.northSouthSquareCount - draft.south) * squareHeight;
+        const draftTop = offsetY + (grid.northSouthSquareCount - 1 - draft.north) * squareHeight;
+        const draftBottom = offsetY + (grid.northSouthSquareCount - draft.south) * squareHeight;
         context.fillStyle = '#1976d2';
         context.fillRect(
-          draft.west * squareWidth,
+          offsetX + draft.west * squareWidth,
           draftTop,
           (draft.east - draft.west + 1) * squareWidth,
           draftBottom - draftTop
@@ -320,7 +326,7 @@ window.TacticalRender = (() => {
         context.strokeStyle = '#1976d2';
         context.lineWidth = Math.max(3 / view.scale, 1.5);
         context.strokeRect(
-          draft.west * squareWidth,
+          offsetX + draft.west * squareWidth,
           draftTop,
           (draft.east - draft.west + 1) * squareWidth,
           draftBottom - draftTop
@@ -330,15 +336,15 @@ window.TacticalRender = (() => {
       context.fillStyle = 'rgba(255, 255, 255, 0.62)';
       for (const tile of currentMap.blockedTiles || []) {
         const row = grid.northSouthSquareCount - 1 - tile.y;
-        drawTileIcon(context, '🪨', tile.x * squareWidth, row * squareHeight, squareWidth, squareHeight);
+        drawTileIcon(context, '🪨', offsetX + tile.x * squareWidth, offsetY + row * squareHeight, squareWidth, squareHeight);
       }
 
       // Wall and door edge markings are structural map features, not indicators.
       context.globalAlpha = 1;
       for (const edge of currentMap.edges || []) {
         if (!viewerIsReferee && currentPlayerPlacement && !edgeTouchesPlacementArea(edge, currentPlayerPlacement)) continue;
-        const edgeX = edge.x * squareWidth;
-        const edgeY = (grid.northSouthSquareCount - edge.y) * squareHeight;
+        const edgeX = offsetX + edge.x * squareWidth;
+        const edgeY = offsetY + (grid.northSouthSquareCount - edge.y) * squareHeight;
         context.beginPath();
         context.lineWidth = Math.max(4 / view.scale, Math.min(squareWidth, squareHeight) * 0.085);
         context.lineCap = 'round';
@@ -371,8 +377,8 @@ window.TacticalRender = (() => {
       for (const token of tokens) {
         if (!viewerIsReferee && (token.isHidden || (currentHideEnemyTokens && token.team === 'enemy'))) continue;
         const row = grid.northSouthSquareCount - 1 - token.y;
-        const centerX = (token.x + 0.5) * squareWidth;
-        const centerY = (row + 0.5) * squareHeight;
+        const centerX = offsetX + (token.x + 0.5) * squareWidth;
+        const centerY = offsetY + (row + 0.5) * squareHeight;
         const tokenColor = token.ownerId
           ? token.ownerId === viewerId
             ? '#1976d2'
@@ -501,10 +507,9 @@ window.TacticalRender = (() => {
       const mapX = (screenX - view.x) / view.scale;
       const mapY = (screenY - view.y) / view.scale;
       const grid = currentMap.grid;
-      const squareWidth = size.width / grid.eastWestSquareCount;
-      const squareHeight = size.height / grid.northSouthSquareCount;
-      const column = Math.floor(mapX / squareWidth);
-      const row = Math.floor(mapY / squareHeight);
+      const { squareWidth, squareHeight, offsetX, offsetY } = gridMetrics(size);
+      const column = Math.floor((mapX - offsetX) / squareWidth);
+      const row = Math.floor((mapY - offsetY) / squareHeight);
       if (!isInfiniteTerrain() && (column < 0 || column >= grid.eastWestSquareCount || row < 0 || row >= grid.northSouthSquareCount)) {
         return null;
       }
