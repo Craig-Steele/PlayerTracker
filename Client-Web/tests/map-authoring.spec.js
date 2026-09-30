@@ -354,6 +354,21 @@ test('Place in Square adds a centered sticker on a single click', async ({ page 
   expect(sidecar.stickers).toEqual([{ x: 3.5, y: 3.5, sizePercent: 100, emoji: '🌳', opacityPercent: 60 }]);
 });
 
+test('legacy emoji sticker selection uses the rendered glyph bounds', async ({ page }) => {
+  await createBlankMap(page);
+  const stickersGroup = page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) });
+  await stickersGroup.locator('summary').click();
+  await page.locator('[data-sticker-emoji]').fill('🛏️');
+  await page.locator('[data-tool="sticker-square"]').click();
+  await clickGridCell(page, 3, 4);
+
+  await page.locator('[data-tool="sticker-select"]').click();
+  const offsetPoint = await gridPointClientPosition(page, 3.85, 3.5);
+  const box = await page.locator('[data-map-canvas]').boundingBox();
+  await page.locator('[data-map-canvas]').click({ position: { x: offsetPoint.x - box.x, y: offsetPoint.y - box.y } });
+  await expect(page.locator('[data-sticker-edit-state]')).toHaveText('Editing selected sticker');
+});
+
 test('selected stickers can be rotated and mirrored', async ({ page }) => {
   await createBlankMap(page);
   const stickersGroup = page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) });

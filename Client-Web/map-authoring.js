@@ -916,10 +916,9 @@
       const sticker = map.stickers[index];
       const centerX = sticker.x * cellW;
       const centerY = (map.grid.northSouthSquareCount - sticker.y) * cellH;
-      const width = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x));
-      const height = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y));
-      const halfW = width ? width * cellW / 2 : Math.min(cellW, cellH) * .3;
-      const halfH = height ? height * cellH / 2 : Math.min(cellW, cellH) * .3;
+      const { selectionWidth, selectionHeight } = mapLayers.stickerMetrics(ctx, sticker, cellW, cellH);
+      const halfW = selectionWidth / 2;
+      const halfH = selectionHeight / 2;
       if (Math.abs(point.imageX - centerX) <= halfW && Math.abs(point.imageY - centerY) <= halfH) return index;
     }
     return null;
@@ -1438,11 +1437,9 @@
     mapLayers.drawStickers(ctx, map, layerMetrics, { opacity: layerOpacity.stickers / 100 });
     for (const sticker of map.stickers || []) {
       if ((map.stickers || [])[selectedStickerIndex] !== sticker) continue;
-      const width = sticker.shape === 'circle' ? sticker.radius * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x)) : 0;
-      const height = sticker.shape === 'circle' ? sticker.radius * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y)) : 0;
       const centerX = offsetX + sticker.x * cellW;
       const centerY = offsetY + (map.grid.northSouthSquareCount - sticker.y) * cellH;
-      const fontSize = width && height ? Math.min(width * cellW, height * cellH) * .9 : Math.min(cellW, cellH) * .9 * (sticker.sizePercent ?? 100) / 100;
+      const { fontSize, selectionWidth, selectionHeight } = mapLayers.stickerMetrics(ctx, sticker, cellW, cellH);
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate((sticker.rotationDegrees || 0) * Math.PI / 180);
@@ -1450,7 +1447,7 @@
       ctx.globalAlpha = 1; ctx.strokeStyle = '#48a8ff';
       ctx.lineWidth = Math.max(2 / view.scale, Math.min(cellW, cellH) * .025);
       ctx.setLineDash([Math.max(3 / view.scale, 5), Math.max(2 / view.scale, 3)]);
-      ctx.strokeRect(-(width ? width * cellW : fontSize * 1.1) / 2, -(height ? height * cellH : fontSize * 1.1) / 2, width ? width * cellW : fontSize * 1.1, height ? height * cellH : fontSize * 1.1);
+      ctx.strokeRect(-selectionWidth / 2, -selectionHeight / 2, selectionWidth, selectionHeight);
       ctx.setLineDash([]); ctx.restore();
     }
     if ((pointerMode === 'sticker-place-circle' || pointerMode === 'sticker-place-rectangle') && stickerDragStart && stickerDragEnd) {

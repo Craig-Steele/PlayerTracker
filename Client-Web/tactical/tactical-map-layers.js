@@ -53,6 +53,31 @@ window.TacticalMapLayers = (() => {
     context.restore();
   }
 
+  function stickerMetrics(context, sticker, cellW, cellH) {
+    const width = sticker.shape === 'circle'
+      ? (sticker.radius || 0) * 2
+      : sticker.shape === 'rectangle'
+        ? Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x))
+        : (sticker.sizePercent ?? 100) / 100;
+    const height = sticker.shape === 'circle'
+      ? (sticker.radius || 0) * 2
+      : sticker.shape === 'rectangle'
+        ? Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y))
+        : (sticker.sizePercent ?? 100) / 100;
+    const fontSize = Math.min(cellW * width, cellH * height) * 0.9;
+    let selectionWidth = width * cellW;
+    let selectionHeight = height * cellH;
+    if (!sticker.shape) {
+      context.save();
+      context.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+      const measured = context.measureText(sticker.emoji || '');
+      selectionWidth = Math.max(fontSize * 1.1, measured.width + fontSize * 0.08);
+      selectionHeight = Math.max(fontSize * 1.1, (measured.actualBoundingBoxAscent || fontSize * 0.8) + (measured.actualBoundingBoxDescent || fontSize * 0.2) + fontSize * 0.08);
+      context.restore();
+    }
+    return { width, height, fontSize, selectionWidth, selectionHeight };
+  }
+
   function drawTerrain(context, map, metrics, { opacity = 1, detailed = false } = {}) {
     const { cellW, cellH, offsetX, offsetY, rows } = metrics;
     context.save();
@@ -116,9 +141,7 @@ window.TacticalMapLayers = (() => {
       context.globalAlpha = opacity * (sticker.opacityPercent ?? 100) / 100;
       const centerX = offsetX + sticker.x * cellW;
       const centerY = offsetY + (rows - sticker.y) * cellH;
-      const width = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x)) : (sticker.sizePercent ?? 100) / 100;
-      const height = sticker.shape === 'circle' ? (sticker.radius || 0) * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y)) : (sticker.sizePercent ?? 100) / 100;
-      const fontSize = Math.min(cellW * width, cellH * height) * 0.9;
+      const { width, height, fontSize } = stickerMetrics(context, sticker, cellW, cellH);
       context.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
@@ -202,5 +225,5 @@ window.TacticalMapLayers = (() => {
     context.restore();
   }
 
-  return { drawTerrain, drawElevation, drawStickers, drawObstacles, drawEdges, drawStickerSymbol, drawTileIcon, emojiVerticalOffset, tileIcons };
+  return { drawTerrain, drawElevation, drawStickers, drawObstacles, drawEdges, drawStickerSymbol, drawTileIcon, stickerMetrics, emojiVerticalOffset, tileIcons };
 })();
