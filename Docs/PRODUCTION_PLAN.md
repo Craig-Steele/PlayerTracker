@@ -1257,7 +1257,7 @@ Canonical edge representation:
 - keep a wall stroke on the horizontal or vertical lattice axis selected at pointer-down; snap near-edge pointer input to the nearest lattice edge
 - use `grid.boundaryBehavior` to distinguish bounded placement from infinite placement; boundary behavior does not create or remove edge features
 - use the southwest grid origin: a vertical segment lies on grid line `x` between `y` and `y + 1`; a horizontal segment lies on grid line `y` between `x` and `x + 1`
-- support `wall`, `doorway`, `door`, `secretDoor`, and `window` edge types; a doorway records an intentional opening in a wall line, while a door records a closable feature in that opening
+- support `wall`, `fence`, `doorway`, `door`, `secretDoor`, and `window` edge types; fence is marked `⦙`, always permits visibility through, and blocks movement like a wall; a doorway records an intentional opening in a wall line, while a door records a closable feature in that opening
 - require doors and windows to specify a positive `widthFt`, authored through the shared “Door and Window Width” control
 - define the door initial-state choices as Closed, Closed and Locked, and Open, mapping to `initialState` and the existing `locked` metadata without adding a new field
 - store the map-authored initial door state in the sidecar; store door state changes made during play in encounter state
@@ -1276,7 +1276,7 @@ Acceptance:
 - calibration pads the image with the infinite-fill color so the saved PNG bounds align with the grid and no grid offset is needed by the file format or tactical renderer
 - a user can choose bounded or infinite map behavior; bounded maps restrict placement to map bounds without creating walls in `edges`
 - a user can create obstacle, terrain, edge-feature, and elevation metadata without editing JSON by hand
-- walls, doorways, doors, secret doors, and windows export with unambiguous lattice-edge coordinates; window states are validated and invalid or duplicate edge records receive actionable validation errors
+- walls, fences, doorways, doors, secret doors, and windows export with unambiguous lattice-edge coordinates; window states are validated and invalid or duplicate edge records receive actionable validation errors
 - exported door records include initial state, and encounter-time door changes do not alter the map package
 - the editor preview matches the tactical client’s coordinate convention
 - the preview and exported `.tttm` package use the padded image and matching image-aligned grid coordinates
@@ -1317,8 +1317,9 @@ Status: planned
 Planned behavior:
 
 - seed the initial revealed area from the player starting area, and expand it with a grid flood fill limited by edge visibility
-- treat walls and secret doors as visibility-blocking edges for players; use current door/window encounter state to determine whether visibility can pass each edge
+- treat walls and secret doors as visibility-blocking edges for players; fences always permit visibility while blocking movement; use current door/window encounter state to determine whether visibility can pass each edge
 - keep visibility separate from movement passability: an inspected but closed window permits visibility through it while remaining impassable; an open window permits both
+- keep fence visibility and movement semantics distinct: flood fill passes through fences, but movement remains blocked as by a wall
 - show the entire flood-filled area at full brightness while a visibility path from an active player remains open
 - retain discoveries for the encounter and share them across all players
 - shade previously discovered areas with a 50% black overlay when no active player has a visibility path to them; keep never-discovered areas fully blacked out

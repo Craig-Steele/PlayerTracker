@@ -34,6 +34,14 @@
 .authoring-layer-opacity input[type="range"] { flex: 1; min-width: 0; width: 5rem; }
 .authoring-layer-opacity output { font-variant-numeric: tabular-nums; min-width: 2.5em; text-align: right; }
 .authoring-create-group .authoring-tool-items { gap: .35rem; }
+.authoring-blank-painting-group > label { display: block; font-size: .82rem; margin: .12rem .2rem .3rem .75rem; }
+.authoring-blank-painting-group .blank-custom-color { align-items: center; display: flex; gap: .4rem; }
+.blank-custom-color input[type="color"] { height: 1.7rem; padding: .1rem; width: 2.5rem; }
+.sticker-mirror-mode { border: 0; display: flex; flex-wrap: wrap; gap: .3rem .75rem; margin: .15rem 0; padding: 0; }
+.sticker-mirror-mode legend { font-size: .82rem; margin-bottom: .15rem; }
+.sticker-mirror-mode label { align-items: center; display: inline-flex; font-size: .82rem; gap: .25rem; margin: 0; }
+.sticker-mirror-mode input[type="radio"] { margin: 0; width: auto; }
+.blank-paint-swatch { border: 1px solid rgba(255,255,255,.55); border-radius: 2px; display: inline-block; height: .9em; margin-right: .2em; vertical-align: -.08em; width: .9em; }
 .authoring-info { margin: .1rem .15rem .35rem; }
 .authoring-info summary { color: var(--text-secondary); cursor: pointer; font-family: sans-serif; font-size: 1.15rem; font-weight: 400; line-height: 1; list-style: none; width: fit-content; }
 .authoring-info summary::-webkit-details-marker { display: none; }

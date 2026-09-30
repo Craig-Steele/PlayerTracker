@@ -41,6 +41,9 @@ enum TacticalMapValidator {
             if let opacity = sticker.opacityPercent, !(0...100).contains(opacity) {
                 return "A map sticker opacity must be between 0% and 100%."
             }
+            if let rotation = sticker.rotationDegrees, !rotation.isFinite || !(0.0...360.0).contains(rotation) {
+                return "A map sticker rotation must be between 0 and 360 degrees."
+            }
             guard !sticker.emoji.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                   sticker.emoji.count <= 8 else {
                 return "A map sticker must contain an emoji."
@@ -70,8 +73,8 @@ enum TacticalMapValidator {
             default: validPosition = false
             }
             guard validPosition else { return "An edge feature is outside the map grid or has an invalid axis." }
-            guard ["wall", "doorway", "door", "secretDoor", "window"].contains(edge.type) else {
-                return "An edge feature must be a wall, doorway, door, secret door, or window."
+            guard ["wall", "fence", "doorway", "door", "secretDoor", "window"].contains(edge.type) else {
+                return "An edge feature must be a wall, fence, doorway, door, secret door, or window."
             }
             if let width = edge.widthFt, !width.isFinite || width <= 0 {
                 return "Door, doorway, and window widths must be positive."

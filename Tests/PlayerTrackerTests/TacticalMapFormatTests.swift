@@ -61,6 +61,16 @@ struct TacticalMapFormatTests {
     }
 
     @Test
+    func fenceIsAValidMapEdgeWithoutDoorStateOrWidth() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["edges"] = [["axis": "horizontal", "x": 0, "y": 1, "type": "fence"]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+
+        #expect(map.edges?.first?.type == "fence")
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+    }
+
+    @Test
     func windowEdgesRequireAndAcceptSupportedInitialStates() throws {
         var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
         object["edges"] = [
@@ -116,6 +126,35 @@ struct TacticalMapFormatTests {
         #expect(map.stickers?.first?.radius == 0.25)
         #expect(map.stickers?.last?.x1 == 0.25)
         #expect(TacticalMapValidator.validationError(for: map) == nil)
+    }
+
+    @Test
+    func stickerMirroringAndRotationDecodeEncodeAndValidate() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [[
+            "x": 0.5, "y": 0.5, "emoji": "🌳", "sizePercent": 100,
+            "rotationDegrees": 360, "flipHorizontal": true, "flipVertical": false
+        ]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        let sticker = try #require(map.stickers?.first)
+        #expect(sticker.rotationDegrees == 360)
+        #expect(sticker.flipHorizontal == true)
+        #expect(sticker.flipVertical == false)
+        #expect(TacticalMapValidator.validationError(for: map) == nil)
+
+        let encoded = try JSONSerialization.jsonObject(with: JSONEncoder().encode(map)) as? [String: Any]
+        let encodedSticker = try #require((encoded?["stickers"] as? [[String: Any]])?.first)
+        #expect(encodedSticker["rotationDegrees"] as? Double == 360)
+        #expect(encodedSticker["flipHorizontal"] as? Bool == true)
+        #expect(encodedSticker["flipVertical"] as? Bool == false)
+    }
+
+    @Test
+    func stickerRejectsInvalidRotation() throws {
+        var object = try #require(JSONSerialization.jsonObject(with: mapJSON()) as? [String: Any])
+        object["stickers"] = [["x": 1, "y": 1, "emoji": "🌳", "sizePercent": 100, "rotationDegrees": 361]]
+        let map = try JSONDecoder().decode(TacticalMapState.self, from: JSONSerialization.data(withJSONObject: object))
+        #expect(TacticalMapValidator.validationError(for: map) == "A map sticker rotation must be between 0 and 360 degrees.")
     }
 
     @Test

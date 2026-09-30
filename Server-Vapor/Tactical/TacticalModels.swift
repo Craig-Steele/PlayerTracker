@@ -148,6 +148,9 @@ struct TacticalMapSticker: Content, Codable, Equatable {
     let y2: Double?
     let sizePercent: Int?
     let opacityPercent: Int?
+    let rotationDegrees: Double?
+    let flipHorizontal: Bool?
+    let flipVertical: Bool?
 }
 
 struct TacticalTerrainState: Content, Codable, Equatable {

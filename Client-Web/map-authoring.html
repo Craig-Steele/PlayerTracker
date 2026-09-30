@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="tactical/tactical-styles.css?v=6">
-  <link rel="stylesheet" href="map-authoring.css?v=19">
+  <link rel="stylesheet" href="map-authoring.css?v=20">
 </head>
 <body class="map-authoring-page">
   <main class="tactical-shell map-authoring-shell">
@@ -27,23 +27,37 @@
           </div>
           <div class="authoring-tool-items authoring-settings-items">
             <label>Map name <input type="text" data-map-name maxlength="80" value="Untitled map"></label>
-            <label>Blank map background
-              <span class="authoring-background-picker">
-                <select data-blank-background-preset aria-label="Preset blank map background">
-                  <option value="#ffffff">White</option>
-                  <option value="#d3d3d3">Light gray</option>
-                  <option value="#7cba5b">Grassy green</option>
-                  <option value="#9a6846">Dirt brown</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <input type="color" value="#ffffff" data-blank-background-color aria-label="Custom blank map background color">
-              </span>
-            </label>
           </div>
           <details class="authoring-info">
             <summary aria-label="Map authoring information" title="Map authoring information">ⓘ Info</summary>
             <p class="authoring-note">Drafts stay in this browser. Export a .tttm package to share or use in a campaign. Choose a brush, then drag to paint. Shift-click or Shift-drag on a painting brush removes only that brush’s value. Use each category’s Erase control to remove that category from squares or edges. Edge strokes stay horizontal or vertical based on where the drag starts. Bounded maps restrict placement to the map; infinite maps allow play beyond its edge.</p>
           </details>
+        </details>
+        <details class="authoring-tool-group authoring-blank-painting-group" data-blank-map-painting hidden open>
+          <summary>Blank Map Painting</summary>
+          <label>Default map color
+            <span class="authoring-background-picker">
+              <select data-blank-background-preset aria-label="Preset blank map background">
+                <option value="#ffffff">White</option>
+                <option value="#d3d3d3">Light gray</option>
+                <option value="#7cba5b">Grassy green</option>
+                <option value="#9a6846">Dirt brown</option>
+                <option value="custom">Custom</option>
+              </select>
+              <input type="color" value="#ffffff" data-blank-background-color aria-label="Custom blank map background color">
+            </span>
+          </label>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="blank-map-dirt" aria-pressed="false"><span class="blank-paint-swatch" style="--blank-paint-color:#8b5a2b" aria-hidden="true"></span> Dirt</button>
+            <button type="button" data-tool="blank-map-grass" aria-pressed="false"><span class="blank-paint-swatch" style="--blank-paint-color:#74a94e" aria-hidden="true"></span> Grass</button>
+            <button type="button" data-tool="blank-map-stone" aria-pressed="false"><span class="blank-paint-swatch" style="--blank-paint-color:#92979b" aria-hidden="true"></span> Stone</button>
+            <button type="button" data-tool="blank-map-water" aria-pressed="false"><span class="blank-paint-swatch" style="--blank-paint-color:#4299d1" aria-hidden="true"></span> Water</button>
+            <button type="button" data-tool="blank-map-swamp" aria-pressed="false"><span class="blank-paint-swatch" style="--blank-paint-color:#697a43" aria-hidden="true"></span> Swamp / Marsh</button>
+            <button type="button" data-tool="blank-map-wood" aria-pressed="false"><span class="blank-paint-swatch" style="--blank-paint-color:#c8a878" aria-hidden="true"></span> Wood</button>
+            <label class="blank-custom-color">Custom paint color <input type="color" value="#9b59b6" data-blank-paint-color aria-label="Custom paint color"></label>
+            <button type="button" data-tool="blank-map-custom" aria-pressed="false"><span class="blank-paint-swatch" data-custom-paint-swatch style="--blank-paint-color:#9b59b6" aria-hidden="true"></span> Custom Color</button>
+            <button type="button" data-tool="blank-map-erase" aria-pressed="false"><span aria-hidden="true">🧽</span> Erase Painting</button>
+          </div>
         </details>
         <details class="authoring-tool-group" data-tool-category open>
           <summary>Map Grid</summary>
@@ -67,6 +81,25 @@
             <button type="button" class="secondary" data-fit>Fit Map</button>
             <button type="button" data-tool="pan" aria-pressed="true" title="Pan tool"><span aria-hidden="true">🖐️</span> Pan</button>
             <button type="button" class="secondary" data-undo disabled>Undo</button>
+          </div>
+        </details>
+        <details class="authoring-tool-group" data-tool-category>
+          <summary>Walls &amp; Doors</summary>
+          <label class="authoring-layer-opacity">Opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="edges" aria-label="Edge opacity"><output data-layer-opacity-value="edges">25%</output></label>
+          <div class="authoring-tool-items">
+            <button type="button" data-tool="wall" aria-pressed="false"><span aria-hidden="true">━</span> Wall</button>
+            <button type="button" data-tool="fence" aria-pressed="false"><span aria-hidden="true">⦙</span> Fence</button>
+            <button type="button" data-tool="door" aria-pressed="false"><span aria-hidden="true">🚪</span> Door</button>
+            <button type="button" data-tool="secretDoor" aria-pressed="false"><span aria-hidden="true">🆂</span> Secret Door</button>
+            <button type="button" data-tool="window" aria-pressed="false"><span aria-hidden="true">🪟</span> Window</button>
+            <button type="button" data-tool="erase-edges" aria-pressed="false"><span aria-hidden="true">🧽</span> Erase Edges</button>
+            <label class="authoring-height">Door and Window Width (ft) <input type="number" min="0.1" step="0.1" data-door-window-width value="5"></label>
+            <label class="authoring-height">Door Initial State
+              <select data-door-state><option value="closed">Closed</option><option value="closed-locked">Closed and Locked</option><option value="open">Open</option></select>
+            </label>
+            <label class="authoring-height">Window initial state
+              <select data-window-state><option value="uninspected">Uninspected</option><option value="inspected">Inspected</option><option value="open">Open</option></select>
+            </label>
           </div>
         </details>
         <details class="authoring-tool-group" data-tool-category>
@@ -109,10 +142,24 @@
               </select>
             </div>
             <button type="button" data-tool="sticker-select" aria-pressed="false"><span aria-hidden="true">↖</span> Select and Modify Sticker</button>
+            <button type="button" data-tool="sticker-square" aria-pressed="false"><span aria-hidden="true">⌖</span> Place in Square</button>
             <button type="button" data-tool="sticker-circle" aria-pressed="false"><span aria-hidden="true">◯</span> Center and Radius</button>
             <button type="button" data-tool="sticker-rectangle" aria-pressed="false"><span aria-hidden="true">□</span> Rectangular Region</button>
             <button type="button" data-tool="erase-stickers" aria-pressed="false"><span aria-hidden="true">🧽</span> Erase Stickers</button>
             <button type="button" class="secondary" data-sticker-delete disabled>Delete Selected Sticker</button>
+            <label>Rotation <input type="range" min="0" max="360" step="1" value="0" data-sticker-rotation disabled><output data-sticker-rotation-value>0°</output></label>
+            <fieldset class="sticker-mirror-mode">
+              <legend>Horizontal</legend>
+              <label><input type="radio" name="sticker-mirror-horizontal" value="normal" data-sticker-mirror data-axis="horizontal" checked> Normal</label>
+              <label><input type="radio" name="sticker-mirror-horizontal" value="mirror" data-sticker-mirror data-axis="horizontal"> Mirror</label>
+              <label><input type="radio" name="sticker-mirror-horizontal" value="random" data-sticker-mirror data-axis="horizontal"> Random</label>
+            </fieldset>
+            <fieldset class="sticker-mirror-mode">
+              <legend>Vertical</legend>
+              <label><input type="radio" name="sticker-mirror-vertical" value="normal" data-sticker-mirror data-axis="vertical" checked> Normal</label>
+              <label><input type="radio" name="sticker-mirror-vertical" value="mirror" data-sticker-mirror data-axis="vertical"> Mirror</label>
+              <label><input type="radio" name="sticker-mirror-vertical" value="random" data-sticker-mirror data-axis="vertical"> Random</label>
+            </fieldset>
           </div>
         </details>
         <details class="authoring-tool-group" data-tool-category>
@@ -122,24 +169,6 @@
             <button type="button" data-tool="elevation" aria-pressed="false"><span aria-hidden="true">↕</span> Paint height</button>
             <button type="button" data-tool="erase-elevation" aria-pressed="false"><span aria-hidden="true">─</span> Erase Elevation</button>
             <label class="authoring-height">Feet <input type="number" step="1" value="5" data-elevation-value></label>
-          </div>
-        </details>
-        <details class="authoring-tool-group" data-tool-category>
-          <summary>Edges</summary>
-          <label class="authoring-layer-opacity">Opacity <input type="range" min="0" max="100" step="1" value="25" data-layer-opacity="edges" aria-label="Edge opacity"><output data-layer-opacity-value="edges">25%</output></label>
-          <div class="authoring-tool-items">
-            <button type="button" data-tool="wall" aria-pressed="false"><span aria-hidden="true">━</span> Wall</button>
-            <button type="button" data-tool="door" aria-pressed="false"><span aria-hidden="true">🚪</span> Door</button>
-            <button type="button" data-tool="secretDoor" aria-pressed="false"><span aria-hidden="true">🆂</span> Secret Door</button>
-            <button type="button" data-tool="window" aria-pressed="false"><span aria-hidden="true">🪟</span> Window</button>
-            <button type="button" data-tool="erase-edges" aria-pressed="false"><span aria-hidden="true">🧽</span> Erase Edges</button>
-            <label class="authoring-height">Door and Window Width (ft) <input type="number" min="0.1" step="0.1" data-door-window-width value="5"></label>
-            <label class="authoring-height">Door Initial State
-              <select data-door-state><option value="closed">Closed</option><option value="closed-locked">Closed and Locked</option><option value="open">Open</option></select>
-            </label>
-            <label class="authoring-height">Window initial state
-              <select data-window-state><option value="uninspected">Uninspected</option><option value="inspected">Inspected</option><option value="open">Open</option></select>
-            </label>
           </div>
         </details>
         <details class="authoring-tool-group" data-tool-category>
@@ -165,6 +194,6 @@
     </section>
   </main>
   <script src="map-package.js?v=1"></script>
-  <script src="map-authoring.js?v=72"></script>
+  <script src="map-authoring.js?v=79"></script>
 </body>
 </html>

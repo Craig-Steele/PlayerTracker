@@ -254,12 +254,13 @@ window.TacticalRender = (() => {
         context.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        // Emoji fonts often include extra vertical whitespace above the visible glyph.
+        context.translate(centerX, centerY);
+        context.rotate((sticker.rotationDegrees || 0) * Math.PI / 180);
+        context.scale(sticker.flipHorizontal ? -1 : 1, sticker.flipVertical ? -1 : 1);
         if (sticker.shape === 'rectangle' && width > 0 && height > 0) {
-          context.translate(centerX, centerY);
           context.scale(width * squareWidth * 0.9 / fontSize, height * squareHeight * 0.9 / fontSize);
           drawStickerSymbol(context, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
-        } else drawStickerSymbol(context, sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset, fontSize);
+        } else drawStickerSymbol(context, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
         context.restore();
       }
 
@@ -369,6 +370,7 @@ window.TacticalRender = (() => {
         context.lineWidth = Math.max(4 / view.scale, Math.min(squareWidth, squareHeight) * 0.085);
         context.lineCap = 'round';
         if (edge.type === 'wall') context.strokeStyle = '#28201d';
+        else if (edge.type === 'fence') context.strokeStyle = '#65574b';
         else if (edge.type === 'secretDoor') context.strokeStyle = viewerIsReferee ? '#ff00ff' : '#28201d';
         else if (edge.type === 'door') context.strokeStyle = edge.initialState === 'open' ? '#a37735' : '#6b3e22';
         else if (edge.type === 'doorway') {
@@ -384,6 +386,17 @@ window.TacticalRender = (() => {
         } else continue;
         context.stroke();
         context.setLineDash([]);
+        if (edge.type === 'fence') {
+          context.save();
+          context.translate(edge.axis === 'vertical' ? edgeX : edgeX + squareWidth / 2, edge.axis === 'vertical' ? edgeY - squareHeight / 2 : edgeY);
+          if (edge.axis === 'horizontal') context.rotate(Math.PI / 2);
+          const markSize = Math.min(squareWidth, squareHeight) * .58;
+          context.font = `bold ${markSize}px sans-serif`;
+          context.textAlign = 'center'; context.textBaseline = 'middle'; context.lineJoin = 'round';
+          context.lineWidth = markSize * .12; context.strokeStyle = '#f5f1e8';
+          context.strokeText('⦙', 0, 0); context.fillStyle = '#443a32'; context.fillText('⦙', 0, 0);
+          context.restore();
+        }
         if (edge.type === 'door') {
           context.fillStyle = '#f4dfb6';
           context.font = `bold ${Math.min(squareWidth, squareHeight) * 0.18}px sans-serif`;

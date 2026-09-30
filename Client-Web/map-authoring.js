@@ -33,11 +33,15 @@
   let imageBlob = null;
   let map = null;
   let mapImage = null;
+  let blankMapRaster = null;
+  let blankMapRasterGrid = null;
   let mapEdgeColor = '#f5f8fb';
   let tool = 'pan';
   let spacePan = false;
   let history = [];
   let strokeSnapshot = null;
+  let strokeImageBefore = null;
+  let strokeImageChanged = false;
   let lastPainted = '';
   let pointerMode = '';
   const activePointers = new Map();
@@ -82,6 +86,21 @@
   };
   const blankBackgroundPreset = $('[data-blank-background-preset]');
   const blankBackgroundColor = $('[data-blank-background-color]');
+  const blankMapPaintingSection = $('[data-blank-map-painting]');
+  const blankPaintColors = {
+    'blank-map-dirt': '#8b5a2b', 'blank-map-grass': '#74a94e', 'blank-map-stone': '#92979b',
+    'blank-map-water': '#4299d1', 'blank-map-swamp': '#697a43', 'blank-map-wood': '#c8a878'
+  };
+  const blankPaintColorInput = $('[data-blank-paint-color]');
+  blankPaintColorInput.addEventListener('input', () => {
+    $('[data-custom-paint-swatch]').style.setProperty('--blank-paint-color', blankPaintColorInput.value);
+  });
+
+  function syncBlankPaintingVisibility() {
+    const visible = Boolean(map?.mapPresentation?.blankBackgroundColor);
+    blankMapPaintingSection.hidden = !visible;
+    if (!visible && tool.startsWith('blank-map-')) $('[data-tool="pan"]').click();
+  }
 
   function blankPixelsPerSquare(columns, rows) {
     return Math.max(1, Math.min(64, Math.floor(2048 / Math.max(columns, rows))));
@@ -101,14 +120,38 @@
     const backgroundContext = background.getContext('2d');
     backgroundContext.fillStyle = color;
     backgroundContext.fillRect(0, 0, width, height);
+    const previousColor = targetMap?.mapPresentation?.blankBackgroundColor;
+    const previousRaster = blankMapRaster || mapImage;
+    if (previousRaster) {
+      const sourceColumns = blankMapRasterGrid?.columns || targetMap?.grid?.eastWestSquareCount || columns;
+      const sourceRows = blankMapRasterGrid?.rows || targetMap?.grid?.northSouthSquareCount || rows;
+      const preservedWidth = Math.min(width, Math.round(sourceColumns * pixelsPerSquare));
+      const preservedHeight = Math.min(height, Math.round(sourceRows * pixelsPerSquare));
+      backgroundContext.imageSmoothingEnabled = false;
+      backgroundContext.drawImage(previousRaster, 0, 0, preservedWidth, preservedHeight);
+      if (/^#[0-9a-f]{6}$/i.test(previousColor || '') && previousColor.toLowerCase() !== color.toLowerCase()) {
+        const pixels = backgroundContext.getImageData(0, 0, preservedWidth, preservedHeight);
+        const old = [1, 3, 5].map((index) => parseInt(previousColor.slice(index, index + 2), 16));
+        const next = [1, 3, 5].map((index) => parseInt(color.slice(index, index + 2), 16));
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          if (pixels.data[i] === old[0] && pixels.data[i + 1] === old[1] && pixels.data[i + 2] === old[2]) {
+            pixels.data[i] = next[0]; pixels.data[i + 1] = next[1]; pixels.data[i + 2] = next[2];
+          }
+        }
+        backgroundContext.putImageData(pixels, 0, 0);
+      }
+    }
     try {
       const blob = await new Promise((resolve, reject) => background.toBlob((result) => result ? resolve(result) : reject(new Error('Could not update the blank map image.')), 'image/png'));
       const image = await loadImage(blob);
       if (updateID !== blankImageUpdateID || map !== targetMap) return;
       imageBlob = blob;
       mapImage = image;
+      blankMapRaster = background;
+      blankMapRasterGrid = { columns, rows };
       mapEdgeColor = color;
       map.mapPresentation.blankBackgroundColor = color;
+      syncBlankPaintingVisibility();
       blankBackgroundColor.value = color;
       blankBackgroundPreset.value = [...blankBackgroundPreset.options].some((option) => option.value === color) ? color : 'custom';
       fitMap();
@@ -213,14 +256,36 @@
   const stickerOpacityOutput = $('[data-layer-opacity-value="stickers"]');
   const stickerEditState = $('[data-sticker-edit-state]');
   const stickerDeleteButton = $('[data-sticker-delete]');
+  const stickerRotationInput = $('[data-sticker-rotation]');
+  const stickerRotationOutput = $('[data-sticker-rotation-value]');
+  const stickerMirrorInputs = [...document.querySelectorAll('[data-sticker-mirror]')];
+  const newStickerMirrorModes = { horizontal: 'normal', vertical: 'normal' };
+  let stickerRotationBefore = null;
   function selectedSticker() {
     return Number.isInteger(selectedStickerIndex) ? map?.stickers?.[selectedStickerIndex] || null : null;
+  }
+  function syncStickerTransformControls() {
+    const sticker = selectedSticker();
+    const enabled = Boolean(tool === 'sticker-select' && sticker);
+    stickerRotationInput.disabled = !enabled;
+    stickerRotationInput.value = String(sticker?.rotationDegrees ?? 0);
+    stickerRotationOutput.value = `${stickerRotationInput.value}°`;
+    stickerRotationOutput.textContent = `${stickerRotationInput.value}°`;
+    stickerMirrorInputs.forEach((input) => {
+      const isHorizontal = input.dataset.axis === 'horizontal';
+      const mirrored = isHorizontal ? sticker?.flipHorizontal : sticker?.flipVertical;
+      input.checked = enabled
+        ? input.value === (mirrored ? 'mirror' : 'normal')
+        : input.value === newStickerMirrorModes[input.dataset.axis];
+      input.disabled = enabled && input.value === 'random';
+    });
   }
   function syncStickerEditor() {
     const sticker = selectedSticker();
     stickerDeleteButton.disabled = !sticker;
     const editingSelection = tool === 'sticker-select' && sticker;
     stickerEditState.textContent = editingSelection ? 'Editing selected sticker' : 'New sticker settings';
+    syncStickerTransformControls();
     if (!editingSelection) return;
     stickerEmojiInput.value = sticker.emoji;
     layerOpacity.stickers = sticker.opacityPercent ?? 100;
@@ -238,6 +303,7 @@
     if (!sticker) return;
     const previous = snapshot();
     Object.assign(sticker, patch);
+    syncStickerTransformControls();
     if (previous !== snapshot()) pushUndo(previous);
     draw();
     refreshValidation();
@@ -246,6 +312,40 @@
   stickerEmojiInput.addEventListener('input', () => {
     if (tool === 'sticker-select') editSelectedSticker({ emoji: stickerEmojiInput.value.trim() });
   });
+  stickerRotationInput.addEventListener('input', () => {
+    const degrees = Number(stickerRotationInput.value);
+    stickerRotationOutput.value = `${degrees}°`;
+    stickerRotationOutput.textContent = `${degrees}°`;
+    const sticker = tool === 'sticker-select' ? selectedSticker() : null;
+    if (!sticker) return;
+    if (stickerRotationBefore === null) stickerRotationBefore = snapshot();
+    sticker.rotationDegrees = degrees;
+    draw();
+    refreshValidation();
+  });
+  stickerRotationInput.addEventListener('change', () => {
+    if (stickerRotationBefore !== null) {
+      if (stickerRotationBefore !== snapshot()) pushUndo(stickerRotationBefore);
+      stickerRotationBefore = null;
+      scheduleSave();
+    }
+  });
+  stickerMirrorInputs.forEach((input) => input.addEventListener('change', () => {
+    const isHorizontal = input.dataset.axis === 'horizontal';
+    const property = isHorizontal ? 'flipHorizontal' : 'flipVertical';
+    if (tool === 'sticker-select' && selectedSticker()) {
+      if (input.value !== 'random') editSelectedSticker({ [property]: input.value === 'mirror' });
+      else syncStickerTransformControls();
+    } else newStickerMirrorModes[input.dataset.axis] = input.value;
+  }));
+  function stickerPlacementTransform() {
+    const transform = {};
+    Object.entries(newStickerMirrorModes).forEach(([axis, mode]) => {
+      const mirror = mode === 'mirror' || (mode === 'random' && Math.random() < 0.5);
+      if (mirror) transform[axis === 'horizontal' ? 'flipHorizontal' : 'flipVertical'] = true;
+    });
+    return transform;
+  }
   function deleteSelectedSticker() {
     if (!selectedSticker()) return;
     beginStroke();
@@ -285,6 +385,8 @@
       const backgroundColor = blankBackgroundColor.value;
       blankContext.fillStyle = backgroundColor;
       blankContext.fillRect(0, 0, blankCanvas.width, blankCanvas.height);
+      blankMapRaster = blankCanvas;
+      blankMapRasterGrid = { columns, rows };
       imageBlob = await new Promise((resolve, reject) => blankCanvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Could not create the blank map image.')), 'image/png'));
       mapImage = await loadImage(imageBlob);
       mapEdgeColor = backgroundColor;
@@ -310,6 +412,7 @@
       selectedStickerIndex = null;
       syncStickerEditor();
       syncGridControls();
+      syncBlankPaintingVisibility();
       mapViewport.hidden = false;
       history = [];
       undoButton.disabled = true;
@@ -438,6 +541,8 @@
     try {
       mapImage = await loadImage(file);
       imageBlob = file;
+      blankMapRaster = null;
+      blankMapRasterGrid = null;
       mapEdgeColor = averageImageEdgeColor(mapImage);
       const name = file.name.replace(/\.png$/i, '');
       $('[data-map-name]').value = name;
@@ -453,6 +558,7 @@
       selectedStickerIndex = null;
       syncStickerEditor();
       syncGridControls();
+      syncBlankPaintingVisibility();
       $('[data-grid-width]').value = 20;
       $('[data-grid-height]').value = 20;
       $('[data-square-size]').value = 5;
@@ -552,6 +658,14 @@
       selectedStickerIndex = null;
       imageBlob = loaded.imageBlob;
       mapImage = loaded.image;
+      blankMapRaster = null;
+      blankMapRasterGrid = null;
+      if (map.mapPresentation?.blankBackgroundColor) {
+        blankMapRaster = document.createElement('canvas');
+        blankMapRaster.width = mapImage.naturalWidth; blankMapRaster.height = mapImage.naturalHeight;
+        blankMapRaster.getContext('2d').drawImage(mapImage, 0, 0);
+        blankMapRasterGrid = { columns: map.grid.eastWestSquareCount, rows: map.grid.northSouthSquareCount };
+      }
       mapEdgeColor = averageImageEdgeColor(mapImage);
       $('[data-map-name]').value = loaded.name || file.name.replace(/\.(?:zmap|map\.zip)$/i, '');
       map.version ||= 1;
@@ -571,6 +685,7 @@
       delete map.grid.imageCalibration;
       syncGridControls();
       syncBlankBackgroundControls();
+      syncBlankPaintingVisibility();
       if (map.mapPresentation.blankBackgroundColor) mapEdgeColor = map.mapPresentation.blankBackgroundColor;
       $('[data-grid-width]').value = map.grid.eastWestSquareCount;
       $('[data-grid-height]').value = map.grid.northSouthSquareCount;
@@ -609,7 +724,9 @@
       exportButton.disabled = true;
       return;
     }
-    const dimensionsChanged = map.grid.eastWestSquareCount !== columns || map.grid.northSouthSquareCount !== rows;
+    const previousColumns = map.grid.eastWestSquareCount;
+    const previousRows = map.grid.northSouthSquareCount;
+    const dimensionsChanged = previousColumns !== columns || previousRows !== rows;
     map.grid.eastWestSquareCount = columns;
     map.grid.northSouthSquareCount = rows;
     map.grid.squareSizeFt = squareFt;
@@ -646,26 +763,34 @@
     return JSON.stringify({ blockedTiles: map.blockedTiles, stickers: map.stickers || [], terrain: map.terrain, elevation: map.elevation, edges: map.edges, boundaryBehavior: map.grid.boundaryBehavior, playerPlacement: map.playerPlacement || null });
   }
   function beginStroke() {
-    if (!strokeSnapshot) strokeSnapshot = snapshot();
+    if (!strokeSnapshot) {
+      strokeSnapshot = snapshot();
+      strokeImageBefore = null;
+      strokeImageChanged = false;
+      if (tool.startsWith('blank-map-') && blankMapRaster) strokeImageBefore = imageBlob;
+    }
   }
-  function pushUndo(state) {
+  function pushUndo(state, beforeImageBlob = null) {
     if (!state) return;
-    history.push(state);
+    history.push(beforeImageBlob ? { mapState: state, imageBlob: beforeImageBlob } : state);
     if (history.length > 50) history.shift();
     undoButton.disabled = false;
   }
   function endStroke() {
-    if (strokeSnapshot && strokeSnapshot !== snapshot()) {
-      pushUndo(strokeSnapshot);
+    if (strokeSnapshot && (strokeSnapshot !== snapshot() || strokeImageChanged)) {
+      pushUndo(strokeSnapshot, strokeImageChanged ? strokeImageBefore : null);
       scheduleSave();
       refreshValidation();
     }
     strokeSnapshot = null;
+    strokeImageBefore = null;
+    strokeImageChanged = false;
     lastPainted = '';
   }
-  undoButton.addEventListener('click', () => {
-    const state = history.pop();
-    if (!state) return;
+  undoButton.addEventListener('click', async () => {
+    const entry = history.pop();
+    if (!entry) return;
+    const state = typeof entry === 'string' ? entry : entry.mapState;
     const restored = JSON.parse(state);
     const { boundaryBehavior, ...restoredMapState } = restored;
     Object.assign(map, restoredMapState);
@@ -675,6 +800,14 @@
     $('[data-infinite-canvas]').checked = map.grid.boundaryBehavior === 'infinite';
     if (restored.playerPlacement) map.playerPlacement = restored.playerPlacement;
     else delete map.playerPlacement;
+    if (typeof entry !== 'string' && entry.imageBlob) {
+      imageBlob = entry.imageBlob;
+      mapImage = await loadImage(imageBlob);
+      blankMapRaster = document.createElement('canvas');
+      blankMapRaster.width = mapImage.naturalWidth; blankMapRaster.height = mapImage.naturalHeight;
+      blankMapRaster.getContext('2d').drawImage(mapImage, 0, 0);
+      blankMapRasterGrid = { columns: map.grid.eastWestSquareCount, rows: map.grid.northSouthSquareCount };
+    }
     if (!selectedSticker()) selectedStickerIndex = null;
     syncStickerEditor();
     undoButton.disabled = history.length === 0;
@@ -828,7 +961,16 @@
     const id = `${cell.x},${cell.y}`;
     if (id === lastPainted) return;
     lastPainted = id;
-    if (tool === 'obstacle') {
+    if (tool.startsWith('blank-map-') && blankMapRaster) {
+      const rasterContext = blankMapRaster.getContext('2d');
+      const { cellW, cellH } = gridMetrics();
+      const x = Math.round(cell.x * cellW); const y = Math.round(cell.row * cellH);
+      const right = Math.round((cell.x + 1) * cellW); const bottom = Math.round((cell.row + 1) * cellH);
+      rasterContext.fillStyle = tool === 'blank-map-erase' ? map.mapPresentation.blankBackgroundColor :
+        (tool === 'blank-map-custom' ? blankPaintColorInput.value : blankPaintColors[tool]);
+      rasterContext.fillRect(x, y, right - x, bottom - y);
+      strokeImageChanged = true;
+    } else if (tool === 'obstacle') {
       if (strokeClearing) {
         map.blockedTiles = map.blockedTiles.filter((tile) => tile.x !== cell.x || tile.y !== cell.y);
       } else {
@@ -1010,6 +1152,25 @@
       }
       return;
     }
+    if (tool === 'sticker-square') {
+      const cell = cellAt(event.clientX, event.clientY);
+      const emoji = stickerEmojiInput.value.trim();
+      if (!cell) return;
+      if (!emoji) {
+        setStatus('Enter a symbol before placing a sticker.', true);
+        return;
+      }
+      beginStroke();
+      map.stickers ||= [];
+      map.stickers.push({
+        x: cell.x + 0.5, y: cell.y + 0.5, sizePercent: 100,
+        emoji, opacityPercent: layerOpacity.stickers, ...stickerPlacementTransform()
+      });
+      selectSticker(map.stickers.length - 1);
+      pointerMode = 'sticker-object';
+      draw();
+      return;
+    }
     if (tool === 'sticker-circle' || tool === 'sticker-rectangle' || tool === 'erase-stickers') {
       const point = stickerPositionAt(event.clientX, event.clientY);
       const hitIndex = stickerAtPosition(point);
@@ -1031,7 +1192,7 @@
         }
         stickerDragStart = point;
         stickerDragEnd = point;
-        stickerDragOrigin = { emoji, opacityPercent: layerOpacity.stickers };
+        stickerDragOrigin = { emoji, opacityPercent: layerOpacity.stickers, ...stickerPlacementTransform() };
         pointerMode = tool === 'sticker-circle' ? 'sticker-place-circle' : 'sticker-place-rectangle';
         draw();
         return;
@@ -1046,7 +1207,7 @@
       beginStroke();
       pointerMode = 'zone'; placementDragStart = cell; placementDragEnd = cell; draw(); return;
     }
-    if (['wall', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool)) {
+    if (['wall', 'fence', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool)) {
       const edge = edgeAtPoint(event.clientX, event.clientY);
       if (!edge) return;
       pointerMode = 'edge';
@@ -1154,6 +1315,16 @@
       lastPointer = [...activePointers.values()][0];
       return;
     }
+    if (pointerMode === 'paint' && strokeImageChanged) {
+      try {
+        const blob = await new Promise((resolve, reject) => blankMapRaster.toBlob((result) => result ? resolve(result) : reject(new Error('Could not bake blank-map painting into its PNG.')), 'image/png'));
+        imageBlob = blob;
+        mapImage = await loadImage(blob);
+        draw();
+      } catch (error) {
+        setStatus(`Could not update the blank map PNG: ${error.message || error}`, true);
+      }
+    }
     if (pointerMode === 'paint' || pointerMode === 'edge' || pointerMode === 'sticker-object' || (pointerMode === 'sticker-select' && strokeSnapshot)) endStroke();
     if ((pointerMode === 'sticker-place-circle' || pointerMode === 'sticker-place-rectangle') && stickerDragStart && stickerDragEnd) {
       const start = stickerDragStart;
@@ -1163,8 +1334,8 @@
         beginStroke();
         map.stickers ||= [];
         const sticker = pointerMode === 'sticker-place-circle'
-          ? { shape: 'circle', x: start.x, y: start.y, radius: Math.hypot(end.x - start.x, end.y - start.y), emoji, opacityPercent: stickerDragOrigin.opacityPercent }
-          : { shape: 'rectangle', x1: start.x, y1: start.y, x2: end.x, y2: end.y, x: (start.x + end.x) / 2, y: (start.y + end.y) / 2, emoji, opacityPercent: stickerDragOrigin.opacityPercent };
+          ? { shape: 'circle', x: start.x, y: start.y, radius: Math.hypot(end.x - start.x, end.y - start.y), ...stickerDragOrigin }
+          : { shape: 'rectangle', x1: start.x, y1: start.y, x2: end.x, y2: end.y, x: (start.x + end.x) / 2, y: (start.y + end.y) / 2, ...stickerDragOrigin };
         map.stickers.push(sticker);
         selectSticker(map.stickers.length - 1);
         endStroke(); scheduleSave(); refreshValidation();
@@ -1244,7 +1415,8 @@
       ctx.fillStyle = mapEdgeColor;
       ctx.fillRect(left, top, right - left, bottom - top);
     }
-    ctx.drawImage(mapImage, 0, 0);
+    syncBlankPaintingVisibility();
+    ctx.drawImage(blankMapRaster || mapImage, 0, 0);
     const bounds = map.playerPlacement?.defaultBounds;
     const zone = placementDragStart && placementDragEnd ? {
       west: Math.min(placementDragStart.x, placementDragEnd.x), east: Math.max(placementDragStart.x, placementDragEnd.x),
@@ -1333,10 +1505,11 @@
       const y1 = offsetY + (map.grid.northSouthSquareCount - edge.y) * cellH;
       ctx.beginPath();
       const baseEdgeWidth = Math.max(4 / view.scale, Math.min(cellW, cellH) * .085);
-      const editingEdges = ['wall', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool);
+      const editingEdges = ['wall', 'fence', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool);
       ctx.lineWidth = baseEdgeWidth * (editingEdges ? 3 : 1);
       ctx.lineCap = 'round';
       if (edge.type === 'wall') ctx.strokeStyle = '#28201d';
+      else if (edge.type === 'fence') ctx.strokeStyle = '#65574b';
       else if (edge.type === 'secretDoor') ctx.strokeStyle = '#ff00ff';
       else if (edge.type === 'door') ctx.strokeStyle = edge.initialState === 'open' ? '#a37735' : '#6b3e22';
       else if (edge.type === 'window') ctx.strokeStyle = edge.initialState === 'open' ? '#24a148' : edge.initialState === 'inspected' ? '#2584c7' : '#d49b16';
@@ -1344,6 +1517,16 @@
       if (edge.axis === 'vertical') { ctx.moveTo(x1, y1 - cellH); ctx.lineTo(x1, y1); }
       else { ctx.moveTo(x1, y1); ctx.lineTo(x1 + cellW, y1); }
       ctx.stroke(); ctx.setLineDash([]);
+      if (edge.type === 'fence') {
+        ctx.save();
+        ctx.translate(edge.axis === 'vertical' ? x1 : x1 + cellW / 2, edge.axis === 'vertical' ? y1 - cellH / 2 : y1);
+        if (edge.axis === 'horizontal') ctx.rotate(Math.PI / 2);
+        const markSize = Math.min(cellW, cellH) * (editingEdges ? .82 : .58);
+        ctx.font = `bold ${markSize}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round'; ctx.lineWidth = markSize * .12; ctx.strokeStyle = '#f5f1e8';
+        ctx.strokeText('⦙', 0, 0); ctx.fillStyle = '#443a32'; ctx.fillText('⦙', 0, 0);
+        ctx.restore();
+      }
       if (edge.type === 'door') {
         ctx.fillStyle = '#f4dfb6'; ctx.font = `bold ${Math.min(cellW, cellH) * .18}px sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1371,20 +1554,23 @@
       ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      // Emoji fonts often include extra vertical whitespace above the visible glyph.
+      ctx.translate(centerX, centerY);
+      ctx.rotate((sticker.rotationDegrees || 0) * Math.PI / 180);
+      ctx.scale(sticker.flipHorizontal ? -1 : 1, sticker.flipVertical ? -1 : 1);
       if (sticker.shape === 'rectangle' && width > 0 && height > 0) {
         ctx.save();
-        ctx.translate(centerX, centerY);
         ctx.scale(width * cellW * .9 / fontSize, height * cellH * .9 / fontSize);
         drawStickerSymbol(ctx, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
         ctx.restore();
-      } else drawStickerSymbol(ctx, sticker.emoji, centerX, centerY + fontSize * emojiVerticalOffset, fontSize);
+      } else drawStickerSymbol(ctx, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
       if ((map.stickers || [])[selectedStickerIndex] === sticker) {
         ctx.globalAlpha = 1;
         ctx.strokeStyle = '#48a8ff';
         ctx.lineWidth = Math.max(2 / view.scale, Math.min(cellW, cellH) * .025);
         ctx.setLineDash([Math.max(3 / view.scale, 5), Math.max(2 / view.scale, 3)]);
-        ctx.strokeRect(centerX - (width ? width * cellW : fontSize * 1.1) / 2, centerY - (height ? height * cellH : fontSize * 1.1) / 2, width ? width * cellW : fontSize * 1.1, height ? height * cellH : fontSize * 1.1);
+        const boxWidth = width ? width * cellW : fontSize * 1.1;
+        const boxHeight = height ? height * cellH : fontSize * 1.1;
+        ctx.strokeRect(-boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight);
         ctx.setLineDash([]);
       }
       ctx.restore();
@@ -1401,13 +1587,15 @@
       const fontSize = Math.max(1, Math.min(rx * 2, ry * 2) * .9);
       ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.translate(cx, cy);
+      ctx.scale(stickerDragOrigin?.flipHorizontal ? -1 : 1, stickerDragOrigin?.flipVertical ? -1 : 1);
       if (!circle && fontSize > 0) {
-        ctx.save(); ctx.translate(cx, cy); ctx.scale(rx * 2 * .9 / fontSize, ry * 2 * .9 / fontSize);
+        ctx.save(); ctx.scale(rx * 2 * .9 / fontSize, ry * 2 * .9 / fontSize);
         drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', 0, fontSize * emojiVerticalOffset, fontSize); ctx.restore();
-      } else drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', cx, cy + fontSize * emojiVerticalOffset, fontSize);
+      } else drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', 0, fontSize * emojiVerticalOffset, fontSize);
       ctx.globalAlpha = .8; ctx.strokeStyle = '#48a8ff'; ctx.lineWidth = Math.max(2 / view.scale, 2);
-      if (circle) ctx.beginPath(), ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2), ctx.stroke();
-      else ctx.strokeRect(cx - rx, cy - ry, rx * 2, ry * 2);
+      if (circle) ctx.beginPath(), ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2), ctx.stroke();
+      else ctx.strokeRect(-rx, -ry, rx * 2, ry * 2);
       ctx.restore();
     }
     if (pointerMode === 'calibrate' && calibrationDragStart && calibrationDragEnd) {
@@ -1460,7 +1648,7 @@
     const seen = new Set();
     for (const edge of map.edges) {
       const validAxis = edge.axis === 'vertical' || edge.axis === 'horizontal';
-      const validType = ['wall', 'doorway', 'door', 'secretDoor', 'window'].includes(edge.type);
+      const validType = ['wall', 'fence', 'doorway', 'door', 'secretDoor', 'window'].includes(edge.type);
       const validPosition = edge.axis === 'vertical'
         ? edge.x >= 0 && edge.x <= cols && edge.y >= 0 && edge.y < rows
         : edge.x >= 0 && edge.x < cols && edge.y >= 0 && edge.y <= rows;
@@ -1481,6 +1669,7 @@
       const validShape = sticker.shape === 'circle' ? Number.isFinite(sticker.radius) && sticker.radius > 0 : sticker.shape === 'rectangle' ? Number.isFinite(sticker.x1) && Number.isFinite(sticker.y1) && Number.isFinite(sticker.x2) && Number.isFinite(sticker.y2) && sticker.x1 !== sticker.x2 && sticker.y1 !== sticker.y2 : Number.isInteger(sticker.sizePercent) && sticker.sizePercent >= 33 && sticker.sizePercent <= 500;
       if (!validShape) errors.push(`Sticker at ${sticker.x}, ${sticker.y} needs a valid placement shape.`);
       if (sticker.opacityPercent !== undefined && (!Number.isInteger(sticker.opacityPercent) || sticker.opacityPercent < 0 || sticker.opacityPercent > 100)) errors.push(`Sticker at ${sticker.x}, ${sticker.y} must have opacity from 0% to 100%.`);
+      if (sticker.rotationDegrees !== undefined && (!Number.isInteger(sticker.rotationDegrees) || sticker.rotationDegrees < 0 || sticker.rotationDegrees > 360)) errors.push(`Sticker at ${sticker.x}, ${sticker.y} must have rotation from 0° to 360°.`);
     }
     if (map.playerPlacement?.defaultBounds) {
       const b = map.playerPlacement.defaultBounds;
@@ -1627,9 +1816,19 @@
     map.edges ||= [];
     syncStickerEditor();
     $('[data-infinite-canvas]').checked = map.grid.boundaryBehavior === 'infinite';
+    syncBlankPaintingVisibility();
     mapImage = await loadImage(imageBlob);
+    blankMapRaster = null;
+    blankMapRasterGrid = null;
+    if (map.mapPresentation.blankBackgroundColor) {
+      blankMapRaster = document.createElement('canvas');
+      blankMapRaster.width = mapImage.naturalWidth; blankMapRaster.height = mapImage.naturalHeight;
+      blankMapRaster.getContext('2d').drawImage(mapImage, 0, 0);
+      blankMapRasterGrid = { columns: map.grid.eastWestSquareCount, rows: map.grid.northSouthSquareCount };
+    }
     mapEdgeColor = averageImageEdgeColor(mapImage);
     syncGridControls();
+    syncBlankPaintingVisibility();
     mapViewport.hidden = false;
     history = []; undoButton.disabled = true;
     fitMap(); refreshValidation();

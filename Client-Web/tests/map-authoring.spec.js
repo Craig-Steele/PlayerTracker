@@ -17,11 +17,11 @@ function readStoredZip(buffer) {
 }
 
 async function createBlankMap(page, presetColor = '#ffffff') {
-  await page.locator('[data-blank-background-preset]').selectOption(presetColor);
   await page.locator('[data-grid-width]').fill('8');
   await page.locator('[data-grid-height]').fill('8');
   await page.locator('[data-new-blank-map]').click();
   await expect(page.locator('[data-map-canvas]')).toBeVisible();
+  if (presetColor !== '#ffffff') await page.locator('[data-blank-background-preset]').selectOption(presetColor);
   await expect(page.locator('[data-export]')).toBeEnabled();
 }
 
@@ -142,6 +142,106 @@ test('blank-map grid counts resize the image proportionally and hide calibration
   expect(image.readUInt32BE(16) / image.readUInt32BE(20)).toBe(2);
 });
 
+test('blank-map dimension increases append default-colored cells without stretching the existing PNG', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('[data-tool="blank-map-water"]').click();
+  await clickGridCell(page, 7, 7);
+
+  await page.locator('[data-grid-width]').fill('10');
+  await page.locator('[data-grid-width]').press('Tab');
+  await page.locator('[data-grid-height]').fill('10');
+  await page.locator('[data-grid-height]').press('Tab');
+
+  const { entries } = await exportPackage(page, 'Expanded Blank.tttm');
+  const sidecar = await sidecarFrom(entries);
+  const pngBytes = entries.get(sidecar.imagePath);
+  expect(pngBytes.readUInt32BE(16)).toBe(640);
+  expect(pngBytes.readUInt32BE(20)).toBe(640);
+  const pixels = await page.evaluate(async (base64) => {
+    const image = new Image(); image.src = `data:image/png;base64,${base64}`; await image.decode();
+    const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+    const sample = (column, row) => [...context.getImageData(column * 64 + 32, row * 64 + 32, 1, 1).data];
+    return [sample(7, 7), sample(9, 7), sample(7, 9)];
+  }, pngBytes.toString('base64'));
+  expect(pixels).toEqual([[66, 153, 209, 255], [255, 255, 255, 255], [255, 255, 255, 255]]);
+});
+
+test('blank-map terrain brushes are baked into the exported PNG and undo restores the image', async ({ page }) => {
+  await expect(page.locator('[data-blank-map-painting]')).toBeHidden();
+  await createBlankMap(page);
+  await expect(page.locator('[data-blank-map-painting]')).toBeVisible();
+
+  await page.locator('[data-tool="blank-map-dirt"]').click();
+  await clickGridCell(page, 1, 1);
+  await page.locator('[data-tool="blank-map-swamp"]').click();
+  await clickGridCell(page, 2, 1);
+  await page.locator('[data-tool="blank-map-wood"]').click();
+  await clickGridCell(page, 3, 1);
+  await page.locator('[data-tool="blank-map-grass"]').click();
+  await clickGridCell(page, 4, 1);
+  await page.locator('[data-tool="blank-map-stone"]').click();
+  await clickGridCell(page, 5, 1);
+  await page.locator('[data-tool="blank-map-water"]').click();
+  await clickGridCell(page, 6, 1);
+  await page.locator('[data-blank-paint-color]').fill('#9b59b6');
+  await page.locator('[data-tool="blank-map-custom"]').click();
+  await clickGridCell(page, 7, 1);
+
+  const { entries } = await exportPackage(page, 'Painted Blank.tttm');
+  const sidecar = await sidecarFrom(entries);
+  const png = entries.get(sidecar.imagePath).toString('base64');
+  const pixels = await page.evaluate(async (base64) => {
+    const image = new Image();
+    image.src = `data:image/png;base64,${base64}`;
+    await image.decode();
+    const context = document.createElement('canvas').getContext('2d');
+    context.canvas.width = image.naturalWidth;
+    context.canvas.height = image.naturalHeight;
+    context.drawImage(image, 0, 0);
+    return [1, 2, 3, 4, 5, 6, 7].map((column) => [...context.getImageData(column * 64 + 32, 1 * 64 + 32, 1, 1).data]);
+  }, png);
+  expect(pixels).toEqual([
+    [139, 90, 43, 255], [105, 122, 67, 255], [200, 168, 120, 255],
+    [116, 169, 78, 255], [146, 151, 155, 255], [66, 153, 209, 255], [155, 89, 182, 255]
+  ]);
+  expect(sidecar.terrain.overrides).toEqual([]);
+
+  await page.locator('[data-undo]').click();
+  const afterUndo = await exportPackage(page, 'Paint Undo.tttm');
+  const undoneSidecar = await sidecarFrom(afterUndo.entries);
+  const undonePng = afterUndo.entries.get(undoneSidecar.imagePath).toString('base64');
+  const undonePixel = await page.evaluate(async (base64) => {
+    const image = new Image(); image.src = `data:image/png;base64,${base64}`; await image.decode();
+    const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+    return [...context.getImageData(7 * 64 + 32, 1 * 64 + 32, 1, 1).data];
+  }, undonePng);
+  expect(undonePixel).toEqual([255, 255, 255, 255]);
+});
+
+test('changing the blank-map default color preserves terrain colors already painted', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('[data-tool="blank-map-water"]').click();
+  await clickGridCell(page, 4, 2);
+  await page.locator('[data-blank-background-color]').fill('#d3d3d3');
+  await page.locator('[data-blank-background-color]').dispatchEvent('change');
+  await expect(page.locator('[data-blank-background-color]')).toHaveValue('#d3d3d3');
+  const { entries } = await exportPackage(page, 'Recolored Blank.tttm');
+  const sidecar = await sidecarFrom(entries);
+  const png = entries.get(sidecar.imagePath).toString('base64');
+  const colors = await page.evaluate(async (base64) => {
+    const image = new Image(); image.src = `data:image/png;base64,${base64}`; await image.decode();
+    const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+    return [
+      [...context.getImageData(4 * 64 + 32, 2 * 64 + 32, 1, 1).data],
+      [...context.getImageData(32, 32, 1, 1).data]
+    ];
+  }, png);
+  expect(colors).toEqual([[66, 153, 209, 255], [211, 211, 211, 255]]);
+});
+
 test('validation and authoring messages use the single lower status area', async ({ page }) => {
   await createBlankMap(page);
   await expect(page.locator('[data-map-validation]')).toHaveCount(0);
@@ -170,7 +270,7 @@ test('common sticker emoji pickers populate the emoji field', async ({ page }) =
 
 test('stickers can be placed at continuous coordinates, selected, dragged, and edited in place', async ({ page }) => {
   await createBlankMap(page);
-  await page.locator('[data-tool-category]').nth(5).locator('summary').click();
+  await page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) }).locator('summary').click();
   await page.locator('[data-sticker-emoji]').fill('🌳');
   await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {
     element.value = '75';
@@ -212,7 +312,7 @@ test('stickers can be placed at continuous coordinates, selected, dragged, and e
 
 test('sticker controls set placement defaults outside Select Sticker mode', async ({ page }) => {
   await createBlankMap(page);
-  await page.locator('[data-tool-category]').nth(5).locator('summary').click();
+  await page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) }).locator('summary').click();
   const start = await gridPointClientPosition(page, 1.5, 1.5);
   const edge = await gridPointClientPosition(page, 2, 1.5);
   await page.locator('[data-tool="sticker-circle"]').click();
@@ -232,6 +332,79 @@ test('sticker controls set placement defaults outside Select Sticker mode', asyn
   expect(sidecar.stickers).toHaveLength(2);
   expect(sidecar.stickers[0]).toMatchObject({ emoji: '✨', opacityPercent: 25 });
   expect(sidecar.stickers[1]).toMatchObject({ emoji: '🔥', opacityPercent: 75 });
+});
+
+test('Place in Square adds a centered sticker on a single click', async ({ page }) => {
+  await createBlankMap(page);
+  const stickersGroup = page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) });
+  await stickersGroup.locator('summary').click();
+  expect(await stickersGroup.locator('.authoring-tool-items button').allTextContents()).toEqual([
+    '↖ Select and Modify Sticker', '⌖ Place in Square', '◯ Center and Radius', '□ Rectangular Region', '🧽 Erase Stickers',
+    'Delete Selected Sticker'
+  ]);
+  await page.locator('[data-sticker-emoji]').fill('🌳');
+  await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {
+    element.value = '60'; element.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.locator('[data-tool="sticker-square"]').click();
+  await clickGridCell(page, 3, 4);
+
+  const { entries } = await exportPackage(page, 'Square Sticker.tttm');
+  const sidecar = await sidecarFrom(entries);
+  expect(sidecar.stickers).toEqual([{ x: 3.5, y: 3.5, sizePercent: 100, emoji: '🌳', opacityPercent: 60 }]);
+});
+
+test('selected stickers can be rotated and mirrored', async ({ page }) => {
+  await createBlankMap(page);
+  const stickersGroup = page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) });
+  await stickersGroup.locator('summary').click();
+  await page.locator('[data-sticker-emoji]').fill('🌳');
+  await page.locator('[data-tool="sticker-square"]').click();
+  await clickGridCell(page, 2, 2);
+
+  await page.locator('[data-tool="sticker-select"]').click();
+  await clickGridCell(page, 2, 2);
+  await expect(page.locator('[data-sticker-rotation]')).toBeEnabled();
+  await expect(page.locator('[data-sticker-mirror][value="random"]')).toHaveCount(2);
+  await expect(page.locator('[data-sticker-mirror][value="random"]').nth(0)).toBeDisabled();
+  await expect(page.locator('[data-sticker-mirror][value="random"]').nth(1)).toBeDisabled();
+  await page.locator('[data-sticker-rotation]').evaluate((element) => {
+    element.value = '135';
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+    element.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await page.locator('[data-sticker-mirror][data-axis="horizontal"][value="mirror"]').check();
+  await page.locator('[data-sticker-mirror][data-axis="vertical"][value="mirror"]').check();
+
+  const { entries } = await exportPackage(page, 'Transformed Sticker.tttm');
+  const sidecar = await sidecarFrom(entries);
+  expect(sidecar.stickers[0]).toMatchObject({ rotationDegrees: 135, flipHorizontal: true, flipVertical: true });
+});
+
+test('random sticker mirroring is resolved independently per axis during placement', async ({ page }) => {
+  await createBlankMap(page);
+  const stickersGroup = page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) });
+  await stickersGroup.locator('summary').click();
+  await page.locator('[data-sticker-emoji]').fill('🌳');
+  await page.locator('[data-sticker-mirror][data-axis="horizontal"][value="random"]').check();
+  await page.locator('[data-sticker-mirror][data-axis="vertical"][value="random"]').check();
+  await page.evaluate(() => {
+    const values = [0.1, 0.9]; let index = 0;
+    Math.random = () => values[index++ % values.length];
+  });
+  await page.locator('[data-tool="sticker-square"]').click();
+  await clickGridCell(page, 2, 2);
+  await page.locator('[data-tool="sticker-select"]').click();
+  await clickGridCell(page, 2, 2);
+  await expect(page.locator('[data-sticker-mirror][data-axis="horizontal"][value="mirror"]')).toBeChecked();
+  await expect(page.locator('[data-sticker-mirror][data-axis="vertical"][value="normal"]')).toBeChecked();
+  await expect(page.locator('[data-sticker-mirror][value="random"]').nth(0)).toBeDisabled();
+  await expect(page.locator('[data-sticker-mirror][value="random"]').nth(1)).toBeDisabled();
+
+  const { entries } = await exportPackage(page, 'Random Mirror Sticker.tttm');
+  const sticker = (await sidecarFrom(entries)).stickers[0];
+  expect(sticker.flipHorizontal).toBe(true);
+  expect(sticker.flipVertical).toBeUndefined();
 });
 
 test('Clear Zone is enabled only while a starting zone exists', async ({ page }) => {
@@ -368,7 +541,7 @@ test('tactical player placement blackout is opaque and only attached edges remai
 
 test('secret doors paint and export as secret wall edges', async ({ page }) => {
   await createBlankMap(page);
-  await page.locator('summary').filter({ hasText: 'Edges' }).click();
+  await page.locator('summary').filter({ hasText: 'Walls & Doors' }).click();
   await page.locator('[data-tool="secretDoor"]').click();
   await clickGridEdge(page, 3, 3);
 
@@ -377,9 +550,21 @@ test('secret doors paint and export as secret wall edges', async ({ page }) => {
   expect(sidecar.edges).toContainEqual({ axis: 'vertical', x: 3, y: 4, type: 'secretDoor' });
 });
 
+test('fence edges paint and export with the fence type', async ({ page }) => {
+  await createBlankMap(page);
+  await page.locator('summary').filter({ hasText: 'Walls & Doors' }).click();
+  await expect(page.locator('[data-tool="fence"]')).toContainText('⦙ Fence');
+  await page.locator('[data-tool="fence"]').click();
+  await clickGridEdge(page, 3, 3);
+
+  const exported = await exportPackage(page, 'Fence.tttm');
+  const sidecar = await sidecarFrom(exported.entries);
+  expect(sidecar.edges).toContainEqual({ axis: 'vertical', x: 3, y: 4, type: 'fence' });
+});
+
 test('window edges export all supported initial states', async ({ page }) => {
   await createBlankMap(page);
-  await page.locator('summary').filter({ hasText: 'Edges' }).click();
+  await page.locator('summary').filter({ hasText: 'Walls & Doors' }).click();
   const states = ['uninspected', 'inspected', 'open'];
   for (const [index, state] of states.entries()) {
     await page.locator('[data-window-state]').selectOption(state);
@@ -396,7 +581,7 @@ test('window edges export all supported initial states', async ({ page }) => {
 
 test('door and window width control exports widths and door state choices', async ({ page }) => {
   await createBlankMap(page);
-  await page.locator('summary').filter({ hasText: 'Edges' }).click();
+  await page.locator('summary').filter({ hasText: 'Walls & Doors' }).click();
   const width = page.locator('[data-door-window-width]');
   await expect(width).toHaveValue('5');
   await width.fill('3');
@@ -570,7 +755,7 @@ test('blank-map preset and custom colors survive draft restore and package expor
 
 test('terrain painting, erase, undo, and sticker erasing round-trip through export', async ({ page }) => {
   await createBlankMap(page);
-  const terrainGroup = page.locator('[data-tool-category]').nth(3);
+  const terrainGroup = page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Terrain' }) });
   await terrainGroup.locator('summary').click();
   const canvas = page.locator('[data-map-canvas]');
   const undo = page.locator('[data-undo]');
@@ -595,7 +780,7 @@ test('terrain painting, erase, undo, and sticker erasing round-trip through expo
   sidecar = await sidecarFrom(exported.entries);
   expect(sidecar.terrain.overrides).toEqual([]);
 
-  const stickersGroup = page.locator('[data-tool-category]').nth(5);
+  const stickersGroup = page.locator('[data-tool-category]').filter({ has: page.locator('summary', { hasText: 'Stickers' }) });
   await stickersGroup.locator('summary').click();
   await page.locator('[data-sticker-emoji]').fill('🟫');
   await page.locator('[data-layer-opacity="stickers"]').evaluate((element) => {
