@@ -1,21 +1,7 @@
 (() => {
   const $ = (selector) => document.querySelector(selector);
-  const userAgent = navigator.userAgent || '';
-  const emojiVerticalOffset = /iPhone|iPod/i.test(userAgent) && /Safari/i.test(userAgent) && !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent) ? 0 : 0.12;
-  function isPlainStickerText(symbol) {
-    const text = String(symbol).replace(/(?:[#*0-9]\uFE0F?\u20E3)/gu, '').replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\p{Cf}\uFE0E\uFE0F]/gu, '').trim();
-    return text.length > 0;
-  }
-  function drawStickerSymbol(context, symbol, x, y, fontSize) {
-    if (isPlainStickerText(symbol)) {
-      context.lineJoin = 'round';
-      context.lineWidth = Math.max(2, fontSize * 0.12);
-      context.strokeStyle = '#fff';
-      context.strokeText(symbol, x, y);
-      context.fillStyle = '#000';
-    }
-    context.fillText(symbol, x, y);
-  }
+  const mapLayers = window.TacticalMapLayers;
+  const emojiVerticalOffset = mapLayers.emojiVerticalOffset;
   const fileInput = $('[data-authoring-file]');
   const archiveInput = $('[data-authoring-archive]');
   const status = $('[data-authoring-status]');
@@ -71,19 +57,6 @@
       (spacePan || tool === 'pan' ? 'grab' : (tool === 'sticker-select' ? 'pointer' : 'crosshair'));
   }
 
-  const tileIcons = {
-    obstacle: '🪨',
-    difficult: '⚠️',
-    water: '💧',
-    lava: '♨️',
-    impassible: '❌'
-  };
-  const terrainTints = {
-    impassible: '#111111',
-    difficult: '#ffd400',
-    water: '#168bd2',
-    lava: '#e53935'
-  };
   const blankBackgroundPreset = $('[data-blank-background-preset]');
   const blankBackgroundColor = $('[data-blank-background-color]');
   const blankMapPaintingSection = $('[data-blank-map-painting]');
@@ -1431,65 +1404,20 @@
       ctx.fillStyle = '#1976d2'; ctx.fillRect(left, top, width, height);
       ctx.strokeStyle = '#1976d2'; ctx.lineWidth = Math.max(2 / view.scale, 1); ctx.strokeRect(left, top, width, height);
     }
-    ctx.globalAlpha = layerOpacity.terrain / 100;
-    const detailedTerrain = ['difficult', 'water', 'lava', 'impassible', 'erase-terrain'].includes(tool);
-    for (const tile of map.terrain.overrides) {
-      const icon = tileIcons[tile.type];
-      if (!icon) continue;
-      const row = map.grid.northSouthSquareCount - tile.y - tile.height;
-      if (detailedTerrain) {
-        ctx.fillStyle = terrainTints[tile.type];
-        ctx.fillRect(offsetX + tile.x * cellW, offsetY + row * cellH, tile.width * cellW, tile.height * cellH);
-      } else {
-        for (let dx = 0; dx < tile.width; dx += 1) for (let dy = 0; dy < tile.height; dy += 1) {
-          drawTileIcon(icon, offsetX + (tile.x + dx) * cellW, offsetY + (row + tile.height - dy - 1) * cellH, cellW, cellH);
-        }
-      }
-    }
-    ctx.globalAlpha = layerOpacity.elevation / 100;
-    const detailedElevation = tool === 'elevation' || tool === 'erase-elevation';
-    for (const tile of map.elevation.overrides) {
-      const row = map.grid.northSouthSquareCount - tile.y - tile.height;
-      for (let dx = 0; dx < tile.width; dx += 1) for (let dy = 0; dy < tile.height; dy += 1) {
-        const x = offsetX + (tile.x + dx) * cellW;
-        const y = offsetY + (row + tile.height - dy - 1) * cellH;
-        if (detailedElevation) {
-          ctx.fillStyle = '#9259be';
-          ctx.fillRect(x, y, cellW, cellH);
-          ctx.fillStyle = '#fff';
-          ctx.strokeStyle = 'rgba(24, 20, 29, .96)';
-          ctx.lineWidth = 2.5 / view.scale;
-          ctx.lineJoin = 'round';
-          ctx.font = `bold ${Math.min(cellW, cellH) * .27}px sans-serif`;
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.strokeText(`${tile.heightFt}′`, x + cellW / 2, y + cellH / 2);
-          ctx.fillText(`${tile.heightFt}′`, x + cellW / 2, y + cellH / 2);
-        } else {
-          ctx.save();
-          ctx.fillStyle = '#fff';
-          ctx.strokeStyle = 'rgba(24, 20, 29, .96)';
-          ctx.lineWidth = 2.5 / view.scale;
-          ctx.lineJoin = 'round';
-          ctx.font = `bold ${Math.min(cellW, cellH) * .17}px sans-serif`;
-          ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-          ctx.strokeText(`${tile.heightFt}′`, x + cellW * .06, y + cellH * .05);
-          ctx.fillText(`${tile.heightFt}′`, x + cellW * .06, y + cellH * .05);
-          ctx.restore();
-        }
-      }
-    }
-    ctx.globalAlpha = layerOpacity.obstacles / 100;
-    const detailedObstacles = tool === 'obstacle' || tool === 'erase-obstacles';
-    for (const tile of map.blockedTiles) {
-      const x = offsetX + tile.x * cellW;
-      const y = offsetY + (map.grid.northSouthSquareCount - 1 - tile.y) * cellH;
-      if (detailedObstacles) {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
-        ctx.fillRect(x, y, cellW, cellH);
-      } else {
-        drawTileIcon(tileIcons.obstacle, x, y, cellW, cellH);
-      }
-    }
+    const layerMetrics = { cellW, cellH, offsetX, offsetY, rows: map.grid.northSouthSquareCount };
+    mapLayers.drawTerrain(ctx, map, layerMetrics, {
+      opacity: layerOpacity.terrain / 100,
+      detailed: ['difficult', 'water', 'lava', 'impassible', 'erase-terrain'].includes(tool)
+    });
+    mapLayers.drawElevation(ctx, map, layerMetrics, {
+      opacity: layerOpacity.elevation / 100,
+      detailed: tool === 'elevation' || tool === 'erase-elevation',
+      viewScale: view.scale
+    });
+    mapLayers.drawObstacles(ctx, map, layerMetrics, {
+      opacity: layerOpacity.obstacles / 100,
+      detailed: tool === 'obstacle' || tool === 'erase-obstacles'
+    });
     ctx.globalAlpha = 1;
     ctx.globalAlpha = layerOpacity.grid / 100;
     ctx.strokeStyle = 'rgba(40, 112, 172, .7)';
@@ -1499,81 +1427,31 @@
     for (let row = 0; row <= map.grid.northSouthSquareCount; row += 1) { ctx.moveTo(offsetX, offsetY + row * cellH); ctx.lineTo(offsetX + map.grid.eastWestSquareCount * cellW, offsetY + row * cellH); }
     ctx.stroke();
     ctx.globalAlpha = 1;
-    ctx.globalAlpha = layerOpacity.edges / 100;
-    for (const edge of map.edges) {
-      const x1 = offsetX + edge.x * cellW;
-      const y1 = offsetY + (map.grid.northSouthSquareCount - edge.y) * cellH;
-      ctx.beginPath();
-      const baseEdgeWidth = Math.max(4 / view.scale, Math.min(cellW, cellH) * .085);
-      const editingEdges = ['wall', 'fence', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool);
-      ctx.lineWidth = baseEdgeWidth * (editingEdges ? 3 : 1);
-      ctx.lineCap = 'round';
-      if (edge.type === 'wall') ctx.strokeStyle = '#28201d';
-      else if (edge.type === 'fence') ctx.strokeStyle = '#65574b';
-      else if (edge.type === 'secretDoor') ctx.strokeStyle = '#ff00ff';
-      else if (edge.type === 'door') ctx.strokeStyle = edge.initialState === 'open' ? '#a37735' : '#6b3e22';
-      else if (edge.type === 'window') ctx.strokeStyle = edge.initialState === 'open' ? '#24a148' : edge.initialState === 'inspected' ? '#2584c7' : '#d49b16';
-      else { ctx.strokeStyle = '#34a0a4'; ctx.setLineDash([5 / view.scale, 4 / view.scale]); }
-      if (edge.axis === 'vertical') { ctx.moveTo(x1, y1 - cellH); ctx.lineTo(x1, y1); }
-      else { ctx.moveTo(x1, y1); ctx.lineTo(x1 + cellW, y1); }
-      ctx.stroke(); ctx.setLineDash([]);
-      if (edge.type === 'fence') {
-        ctx.save();
-        ctx.translate(edge.axis === 'vertical' ? x1 : x1 + cellW / 2, edge.axis === 'vertical' ? y1 - cellH / 2 : y1);
-        if (edge.axis === 'horizontal') ctx.rotate(Math.PI / 2);
-        const markSize = Math.min(cellW, cellH) * (editingEdges ? .82 : .58);
-        ctx.font = `bold ${markSize}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.lineJoin = 'round'; ctx.lineWidth = markSize * .12; ctx.strokeStyle = '#f5f1e8';
-        ctx.strokeText('⦙', 0, 0); ctx.fillStyle = '#443a32'; ctx.fillText('⦙', 0, 0);
-        ctx.restore();
-      }
-      if (edge.type === 'door') {
-        ctx.fillStyle = '#f4dfb6'; ctx.font = `bold ${Math.min(cellW, cellH) * .18}px sans-serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(edge.initialState === 'open' ? '↗' : edge.locked ? '🔒' : 'D', edge.axis === 'vertical' ? x1 : x1 + cellW / 2, edge.axis === 'vertical' ? y1 - cellH / 2 : y1);
-      }
-      if (edge.type === 'window') {
-        ctx.fillStyle = '#fff'; ctx.strokeStyle = '#222'; ctx.lineWidth = Math.max(2 / view.scale, cellW * .025);
-        ctx.font = `bold ${Math.min(cellW, cellH) * .16}px sans-serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        const label = edge.initialState === 'open' ? 'O' : edge.initialState === 'inspected' ? 'I' : '?';
-        const labelX = edge.axis === 'vertical' ? x1 : x1 + cellW / 2;
-        const labelY = edge.axis === 'vertical' ? y1 - cellH / 2 : y1;
-        ctx.strokeText(label, labelX, labelY); ctx.fillText(label, labelX, labelY);
-      }
-    }
+    const editingEdges = ['wall', 'fence', 'door', 'secretDoor', 'window', 'erase-edges'].includes(tool);
+    mapLayers.drawEdges(ctx, map, layerMetrics, {
+      opacity: layerOpacity.edges / 100,
+      viewScale: view.scale,
+      editing: editingEdges,
+      viewerIsReferee: true,
+      includeWindows: true
+    });
+    mapLayers.drawStickers(ctx, map, layerMetrics, { opacity: layerOpacity.stickers / 100 });
     for (const sticker of map.stickers || []) {
-      if (!sticker.emoji) continue;
-      ctx.save();
-      ctx.globalAlpha = (sticker.opacityPercent ?? 100) / 100;
+      if ((map.stickers || [])[selectedStickerIndex] !== sticker) continue;
+      const width = sticker.shape === 'circle' ? sticker.radius * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x)) : 0;
+      const height = sticker.shape === 'circle' ? sticker.radius * 2 : sticker.shape === 'rectangle' ? Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y)) : 0;
       const centerX = offsetX + sticker.x * cellW;
       const centerY = offsetY + (map.grid.northSouthSquareCount - sticker.y) * cellH;
-      const width = sticker.shape === 'circle' ? sticker.radius * 2 : Math.abs((sticker.x2 ?? sticker.x) - (sticker.x1 ?? sticker.x));
-      const height = sticker.shape === 'circle' ? sticker.radius * 2 : Math.abs((sticker.y2 ?? sticker.y) - (sticker.y1 ?? sticker.y));
       const fontSize = width && height ? Math.min(width * cellW, height * cellH) * .9 : Math.min(cellW, cellH) * .9 * (sticker.sizePercent ?? 100) / 100;
-      ctx.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+      ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate((sticker.rotationDegrees || 0) * Math.PI / 180);
       ctx.scale(sticker.flipHorizontal ? -1 : 1, sticker.flipVertical ? -1 : 1);
-      if (sticker.shape === 'rectangle' && width > 0 && height > 0) {
-        ctx.save();
-        ctx.scale(width * cellW * .9 / fontSize, height * cellH * .9 / fontSize);
-        drawStickerSymbol(ctx, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
-        ctx.restore();
-      } else drawStickerSymbol(ctx, sticker.emoji, 0, fontSize * emojiVerticalOffset, fontSize);
-      if ((map.stickers || [])[selectedStickerIndex] === sticker) {
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = '#48a8ff';
-        ctx.lineWidth = Math.max(2 / view.scale, Math.min(cellW, cellH) * .025);
-        ctx.setLineDash([Math.max(3 / view.scale, 5), Math.max(2 / view.scale, 3)]);
-        const boxWidth = width ? width * cellW : fontSize * 1.1;
-        const boxHeight = height ? height * cellH : fontSize * 1.1;
-        ctx.strokeRect(-boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight);
-        ctx.setLineDash([]);
-      }
-      ctx.restore();
+      ctx.globalAlpha = 1; ctx.strokeStyle = '#48a8ff';
+      ctx.lineWidth = Math.max(2 / view.scale, Math.min(cellW, cellH) * .025);
+      ctx.setLineDash([Math.max(3 / view.scale, 5), Math.max(2 / view.scale, 3)]);
+      ctx.strokeRect(-(width ? width * cellW : fontSize * 1.1) / 2, -(height ? height * cellH : fontSize * 1.1) / 2, width ? width * cellW : fontSize * 1.1, height ? height * cellH : fontSize * 1.1);
+      ctx.setLineDash([]); ctx.restore();
     }
     if ((pointerMode === 'sticker-place-circle' || pointerMode === 'sticker-place-rectangle') && stickerDragStart && stickerDragEnd) {
       const a = stickerDragStart, b = stickerDragEnd;
@@ -1591,8 +1469,8 @@
       ctx.scale(stickerDragOrigin?.flipHorizontal ? -1 : 1, stickerDragOrigin?.flipVertical ? -1 : 1);
       if (!circle && fontSize > 0) {
         ctx.save(); ctx.scale(rx * 2 * .9 / fontSize, ry * 2 * .9 / fontSize);
-        drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', 0, fontSize * emojiVerticalOffset, fontSize); ctx.restore();
-      } else drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', 0, fontSize * emojiVerticalOffset, fontSize);
+        mapLayers.drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', 0, fontSize * emojiVerticalOffset, fontSize); ctx.restore();
+      } else mapLayers.drawStickerSymbol(ctx, stickerDragOrigin?.emoji || '', 0, fontSize * emojiVerticalOffset, fontSize);
       ctx.globalAlpha = .8; ctx.strokeStyle = '#48a8ff'; ctx.lineWidth = Math.max(2 / view.scale, 2);
       if (circle) ctx.beginPath(), ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2), ctx.stroke();
       else ctx.strokeRect(-rx, -ry, rx * 2, ry * 2);
@@ -1617,28 +1495,6 @@
     ctx.restore();
   }
 
-  function drawTileIcon(icon, x, y, cellW, cellH) {
-    const size = Math.min(cellW, cellH);
-    const centered = icon === tileIcons.obstacle || icon === tileIcons.impassible;
-    const centerX = x + cellW * (centered ? 0.5 : 0.82);
-    const centerY = y + cellH * (centered ? 0.5 : 0.82);
-    ctx.save();
-    if (icon === tileIcons.obstacle) {
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, size * 0.235, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.62)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, .96)';
-      ctx.lineWidth = size * 0.035;
-      ctx.stroke();
-    }
-    ctx.font = `${size * 0.31}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(icon, centerX, centerY);
-    ctx.restore();
-  }
-
   function validateMap() {
     const errors = [];
     const cols = map.grid.eastWestSquareCount;
@@ -1648,7 +1504,7 @@
     const seen = new Set();
     for (const edge of map.edges) {
       const validAxis = edge.axis === 'vertical' || edge.axis === 'horizontal';
-      const validType = ['wall', 'fence', 'doorway', 'door', 'secretDoor', 'window'].includes(edge.type);
+      const validType = ['wall', 'fence', 'door', 'secretDoor', 'window'].includes(edge.type);
       const validPosition = edge.axis === 'vertical'
         ? edge.x >= 0 && edge.x <= cols && edge.y >= 0 && edge.y < rows
         : edge.x >= 0 && edge.x < cols && edge.y >= 0 && edge.y <= rows;

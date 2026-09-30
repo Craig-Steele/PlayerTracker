@@ -1232,7 +1232,7 @@ Planned behavior:
 - keep in-progress authoring work private to the author; use browser-local draft storage for the initial tool so drafts are not visible to other server users, and make clear that drafts do not sync across browsers or devices
 - import a PNG as the map background
 - load an imported image directly into grid calibration; drag a 5×5 or 10×10 grid patch over visible grid intersections and display the patch's internal grid while dragging
-- after calibration, expand the image to full grid boundaries using the infinite-fill color, derive square counts from the expanded raster, and serialize ordinary image-edge-aligned grid metadata without offsets
+- after calibration, pad the image to full grid boundaries using the infinite-fill color, derive square counts from the padded raster, and serialize ordinary image-edge-aligned grid metadata without offsets; calibration and padding replace any separate crop step
 - define east-west and north-south grid measurements, square size, and coordinate origin
 - paint obstacle squares that cannot be entered
 - paint terrain properties such as normal, difficult terrain, water, and lava, independently from impassable obstacles
@@ -1257,15 +1257,18 @@ Canonical edge representation:
 - keep a wall stroke on the horizontal or vertical lattice axis selected at pointer-down; snap near-edge pointer input to the nearest lattice edge
 - use `grid.boundaryBehavior` to distinguish bounded placement from infinite placement; boundary behavior does not create or remove edge features
 - use the southwest grid origin: a vertical segment lies on grid line `x` between `y` and `y + 1`; a horizontal segment lies on grid line `y` between `x` and `x + 1`
-- support `wall`, `fence`, `doorway`, `door`, `secretDoor`, and `window` edge types; fence is marked `⦙`, always permits visibility through, and blocks movement like a wall; a doorway records an intentional opening in a wall line, while a door records a closable feature in that opening
+- support `wall`, `fence`, `door`, `secretDoor`, and `window` edge types; fence is marked `⦙`, always permits visibility through, and blocks movement like a wall; a door records a closable feature in an opening
 - require doors and windows to specify a positive `widthFt`, authored through the shared “Door and Window Width” control
 - define the door initial-state choices as Closed, Closed and Locked, and Open, mapping to `initialState` and the existing `locked` metadata without adding a new field
-- store the map-authored initial door state in the sidecar; store door state changes made during play in encounter state
+- keep the exported `.tttm` package as the authored baseline; referee edits made in tactical mode are encounter-local and must not rewrite the package
+- store the map-authored initial door/window state in the sidecar; store referee door/window state changes made during play in encounter state
+- store referee sticker placement, removal, and edits made in tactical mode in encounter state; they must not rewrite the package's authored sticker metadata
+- persist those encounter-local sticker and door/window changes in durable encounter storage and restore them after server restart, client reconnect, or session break
 - require a window `initialState`: `uninspected` (no visibility into the area beyond; impassable), `inspected` (visibility into the area beyond; impassable), or `open` (visibility into the area beyond; passable); this milestone covers authoring, validation, and package serialization only, not tactical visibility/line-of-sight, movement enforcement, or runtime state transitions
 - permit no more than one edge feature at a given axis and coordinate, and validate edge coordinates against map bounds
-- treat an omitted edge feature as open; use doorway width metadata where a passage clearance narrower than one full grid segment needs to be represented
+- treat an omitted edge feature as open
 
-Squeezing is creature- and ruleset-dependent movement behavior, not a painted terrain or edge type. Map geometry, including edge features and optional doorway width, should provide inputs for later movement rules to determine whether a creature can squeeze through a passage.
+Squeezing is creature- and ruleset-dependent movement behavior, not a painted terrain or edge type. Map geometry, including edge features and optional door width, should provide inputs for later movement rules to determine whether a creature can squeeze through a passage.
 
 Acceptance:
 
@@ -1273,11 +1276,12 @@ Acceptance:
 - authoring drafts are private to the browser that created them and are not exposed to other server users
 - loading an imported PNG proceeds directly to grid calibration
 - a user can align a grid to the imported map image and confirm the internal calibration patch before the PNG is padded
-- calibration pads the image with the infinite-fill color so the saved PNG bounds align with the grid and no grid offset is needed by the file format or tactical renderer
+- calibration pads the image with the infinite-fill color so the saved PNG bounds align with the grid and no grid offset is needed by the file format or tactical renderer; no separate crop operation is required
 - a user can choose bounded or infinite map behavior; bounded maps restrict placement to map bounds without creating walls in `edges`
 - a user can create obstacle, terrain, edge-feature, and elevation metadata without editing JSON by hand
-- walls, fences, doorways, doors, secret doors, and windows export with unambiguous lattice-edge coordinates; window states are validated and invalid or duplicate edge records receive actionable validation errors
+- walls, fences, doors, secret doors, and windows export with unambiguous lattice-edge coordinates; window states are validated and invalid or duplicate edge records receive actionable validation errors
 - exported door records include initial state, and encounter-time door changes do not alter the map package
+- encounter-local sticker and door/window edits survive server restart, client reconnect, and session break without changing the `.tttm` package
 - the editor preview matches the tactical client’s coordinate convention
 - the preview and exported `.tttm` package use the padded image and matching image-aligned grid coordinates
 - exported `.tttm` packages can be imported by the referee map selector; legacy `.zmap` packages remain importable

@@ -73,11 +73,11 @@ enum TacticalMapValidator {
             default: validPosition = false
             }
             guard validPosition else { return "An edge feature is outside the map grid or has an invalid axis." }
-            guard ["wall", "fence", "doorway", "door", "secretDoor", "window"].contains(edge.type) else {
-                return "An edge feature must be a wall, fence, doorway, door, secret door, or window."
+            guard ["wall", "fence", "door", "secretDoor", "window"].contains(edge.type) else {
+                return "An edge feature must be a wall, fence, door, secret door, or window."
             }
             if let width = edge.widthFt, !width.isFinite || width <= 0 {
-                return "Door, doorway, and window widths must be positive."
+                return "Door and window widths must be positive."
             }
             if ["door", "window"].contains(edge.type), edge.widthFt == nil {
                 return "Each door or window must define its opening width."
