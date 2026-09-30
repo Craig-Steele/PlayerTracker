@@ -14,13 +14,61 @@ window.TacticalMapLayers = (() => {
   };
   const userAgent = navigator.userAgent || '';
   const emojiVerticalOffset = /iPhone|iPod/i.test(userAgent) && /Safari/i.test(userAgent) && !/(CriOS|FxiOS|EdgiOS|OPiOS)/i.test(userAgent) ? 0 : 0.12;
+  const stickerGlyphCache = new Map();
 
   function isPlainStickerText(symbol) {
     const text = String(symbol).replace(/(?:[#*0-9]\uFE0F?\u20E3)/gu, '').replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\p{Cf}\uFE0E\uFE0F]/gu, '').trim();
     return text.length > 0;
   }
 
+  function rasterStickerGlyph(context, symbol, fontSize) {
+    if (typeof document === 'undefined' || !symbol || !Number.isFinite(fontSize) || fontSize <= 0) return null;
+    const cacheKey = `${symbol}\u0000${Math.round(fontSize * 100)}`;
+    if (stickerGlyphCache.has(cacheKey)) return stickerGlyphCache.get(cacheKey);
+    const padding = Math.max(4, Math.ceil(fontSize * 0.35));
+    const size = Math.max(1, Math.ceil(fontSize + padding * 2));
+    const source = document.createElement('canvas');
+    source.width = size;
+    source.height = size;
+    const sourceContext = source.getContext('2d');
+    sourceContext.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
+    sourceContext.textAlign = 'left';
+    sourceContext.textBaseline = 'top';
+    if (isPlainStickerText(symbol)) {
+      sourceContext.lineJoin = 'round';
+      sourceContext.lineWidth = Math.max(2, fontSize * 0.12);
+      sourceContext.strokeStyle = '#fff';
+      sourceContext.strokeText(symbol, padding, padding);
+      sourceContext.fillStyle = '#000';
+    }
+    sourceContext.fillText(symbol, padding, padding);
+    let pixels;
+    try {
+      pixels = sourceContext.getImageData(0, 0, size, size).data;
+    } catch (_) {
+      return null;
+    }
+    let left = size; let top = size; let right = -1; let bottom = -1;
+    for (let y = 0; y < size; y += 1) for (let x = 0; x < size; x += 1) {
+      if (pixels[(y * size + x) * 4 + 3] === 0) continue;
+      left = Math.min(left, x); top = Math.min(top, y); right = Math.max(right, x); bottom = Math.max(bottom, y);
+    }
+    if (right < left || bottom < top) return null;
+    const glyph = document.createElement('canvas');
+    glyph.width = right - left + 1;
+    glyph.height = bottom - top + 1;
+    glyph.getContext('2d').putImageData(sourceContext.getImageData(left, top, glyph.width, glyph.height), 0, 0);
+    const result = { canvas: glyph, width: glyph.width, height: glyph.height };
+    stickerGlyphCache.set(cacheKey, result);
+    return result;
+  }
+
   function drawStickerSymbol(context, symbol, x, y, fontSize) {
+    const glyph = rasterStickerGlyph(context, symbol, fontSize);
+    if (glyph) {
+      context.drawImage(glyph.canvas, x - glyph.width / 2, y - glyph.height / 2);
+      return;
+    }
     if (isPlainStickerText(symbol)) {
       context.lineJoin = 'round';
       context.lineWidth = Math.max(2, fontSize * 0.12);
@@ -70,9 +118,15 @@ window.TacticalMapLayers = (() => {
     if (!sticker.shape) {
       context.save();
       context.font = `${fontSize}px "Apple Color Emoji", "Segoe UI Emoji", sans-serif`;
-      const measured = context.measureText(sticker.emoji || '');
-      selectionWidth = Math.max(fontSize * 1.1, measured.width + fontSize * 0.08);
-      selectionHeight = Math.max(fontSize * 1.1, (measured.actualBoundingBoxAscent || fontSize * 0.8) + (measured.actualBoundingBoxDescent || fontSize * 0.2) + fontSize * 0.08);
+      const glyph = rasterStickerGlyph(context, sticker.emoji || '', fontSize);
+      if (glyph) {
+        selectionWidth = glyph.width + fontSize * 0.08;
+        selectionHeight = glyph.height + fontSize * 0.08;
+      } else {
+        const measured = context.measureText(sticker.emoji || '');
+        selectionWidth = Math.max(fontSize * 1.1, measured.width + fontSize * 0.08);
+        selectionHeight = Math.max(fontSize * 1.1, (measured.actualBoundingBoxAscent || fontSize * 0.8) + (measured.actualBoundingBoxDescent || fontSize * 0.2) + fontSize * 0.08);
+      }
       context.restore();
     }
     return { width, height, fontSize, selectionWidth, selectionHeight };
