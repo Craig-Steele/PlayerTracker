@@ -4327,7 +4327,10 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       clearTimeout(perCharacterSaveTimers.get(timerKey));
     }
     const timer = setTimeout(() => {
-      saveCharacterEntry(character);
+      // The save publishes a campaign update. Let that stream event refresh
+      // state instead of issuing a second fetch when the POST completes.
+      skipRefresh = false;
+      saveCharacterEntry(character, { reloadState: false });
       perCharacterSaveTimers.delete(timerKey);
     }, AUTO_SAVE_DELAY_MS);
     perCharacterSaveTimers.set(timerKey, timer);
