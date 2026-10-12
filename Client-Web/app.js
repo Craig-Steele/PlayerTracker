@@ -474,6 +474,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const playerNameLogoutBtn = document.getElementById('player-name-logout');
   const playerNameNudge = document.getElementById('player-name-nudge');
   const nameInput = document.getElementById('name');
+  const tokenDescriptionInput = document.getElementById('token-description');
   const useAppInitiativeRollInput = document.getElementById('use-app-initiative-roll');
   const initiativeBonusInput = document.getElementById('initiative-bonus');
   const initiativeBonusWrap = document.getElementById('initiative-bonus-wrap');
@@ -1029,10 +1030,25 @@ window.addEventListener('DOMContentLoaded', () => {
   let inventoryAddFormOpen = false;
   let currentInventory = [];
   let currentCampaignId = '';
+  function shouldReloadCampaignMetadata(event) {
+    if (event?.type === 'state-updated') return false;
+    if (!event?.data) return true;
+    try {
+      const campaign = JSON.parse(event.data)?.snapshot?.campaign;
+      if (!campaign) return true;
+      return campaign.id !== currentCampaignId ||
+        campaign.name !== currentCampaignName ||
+        campaign.rulesetId !== currentRulesetId;
+    } catch (_) {
+      return true;
+    }
+  }
   const campaignLiveStream = window.PlayerTrackerLiveStream?.createCampaignLiveStream?.({
     getCampaignId: () => currentCampaignId,
-    refresh: async () => {
-      const hasActiveCampaign = await loadCampaign();
+    refresh: async (event) => {
+      const hasActiveCampaign = shouldReloadCampaignMetadata(event)
+        ? await loadCampaign()
+        : Boolean(currentCampaignId);
       if (hasActiveCampaign) {
         await loadState();
       }
@@ -1040,7 +1056,8 @@ window.addEventListener('DOMContentLoaded', () => {
     shouldSkipRefresh: () => skipRefresh,
     consumeSkipRefresh: () => {
       skipRefresh = false;
-    }
+    },
+    skipInitialSnapshot: true
   }) || {
     start() {},
     stop() {},
@@ -1350,6 +1367,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       return;
     }
     nameInput.value = current.name || '';
+    if (tokenDescriptionInput) tokenDescriptionInput.value = current.tokenDescription || '';
     if (revealStatsInput) {
       revealStatsInput.checked = Boolean(current.revealStats);
     }
@@ -4187,6 +4205,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     drafts[draftKey] = {
       id: selectedCharacterId,
       name: nameInput ? nameInput.value.trim() : '',
+      tokenDescription: tokenDescriptionInput ? tokenDescriptionInput.value.trim() : '',
       stats,
       revealStats: revealStatsInput ? revealStatsInput.checked : null,
       autoSkipTurn: autoSkipTurnInput ? autoSkipTurnInput.checked : null,
@@ -4207,6 +4226,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     if (!draft) return;
     if (draft.name && nameInput) {
       nameInput.value = draft.name;
+    }
+    if (tokenDescriptionInput && typeof draft.tokenDescription === 'string') {
+      tokenDescriptionInput.value = draft.tokenDescription;
     }
     if (draft.stats) {
       statInputs.forEach((entry, key) => {
@@ -4243,6 +4265,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       if (!draft) return;
       if (draft.name) {
         character.name = draft.name;
+      }
+      if (typeof draft.tokenDescription === 'string') {
+        character.tokenDescription = draft.tokenDescription;
       }
       if (draft.stats && Array.isArray(character.stats)) {
         character.stats = character.stats.map((stat) => {
@@ -4294,6 +4319,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
     drafts[draftKey] = {
       id: character.id,
       name: character.name,
+      tokenDescription: character.tokenDescription || '',
       stats,
       revealStats: typeof character.revealStats === 'boolean' ? character.revealStats : null,
       autoSkipTurn: typeof character.autoSkipTurn === 'boolean' ? character.autoSkipTurn : null,
@@ -4327,8 +4353,9 @@ const preferPlayerView = viewMode === 'player' || playerPath;
       clearTimeout(perCharacterSaveTimers.get(timerKey));
     }
     const timer = setTimeout(() => {
-      // The save publishes a campaign update. Let that stream event refresh
-      // state instead of issuing a second fetch when the POST completes.
+      // The save broadcasts state-updated. Let the live stream perform the
+      // authoritative state refresh so the posting client does not fetch the
+      // same state once locally and once again from its broadcast.
       skipRefresh = false;
       saveCharacterEntry(character, { reloadState: false });
       perCharacterSaveTimers.delete(timerKey);
@@ -4345,6 +4372,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
         id: character.id,
         ownerName: character.ownerName,
         name: character.name,
+        tokenDescription: character.tokenDescription || null,
         statBlockId: character.statBlockId || inferCharacterStatBlockIdFromStats(character.stats) || null,
         initiative: character.initiative,
         stats: Array.isArray(character.stats) ? character.stats : [],
@@ -5113,18 +5141,35 @@ function getOwnerName() {
 
   function renderEncounterRows(snapshot) {
     if (!playersBody || !snapshot) return;
-    const { players, currentTurnId, encounterState, currentTurnPlayer, round } = snapshot;
+    const rosterScroll = playersBody.closest('.character-list-scroll');
+    const preservedScrollTop = rosterScroll ? rosterScroll.scrollTop : 0;
+    const preservedScrollLeft = rosterScroll ? rosterScroll.scrollLeft : 0;
+    const preservedWindowScrollX = window.scrollX;
+    const preservedWindowScrollY = window.scrollY;
+    const activeElement = document.activeElement;
+    const activeRow = activeElement instanceof Element ? activeElement.closest('tr') : null;
+    const activeControl = activeElement instanceof HTMLElement && activeRow && playersBody.contains(activeElement)
+      ? {
+          playerId: activeRow.dataset.playerId || null,
+          tagName: activeElement.tagName,
+          className: activeElement.className,
+          ariaLabel: activeElement.getAttribute('aria-label') || null
+        }
+      : null;
+    const { players, currentTurnId, encounterState, currentTurnPlayer, round, isMineTurn } = snapshot;
     playersBody.innerHTML = '';
 
     if (players.length === 0) {
       const hasConditions = conditionLibrary.length > 0;
       playersBody.appendChild(createEmptyEncounterRow(hasConditions ? 4 : 3));
+      restoreEncounterViewport();
       return;
     }
 
     for (const p of players) {
       const tr = document.createElement('tr');
       tr.classList.add('player-row');
+      tr.dataset.playerId = p.id;
 
       const initTd = document.createElement('td');
       const nameTd = document.createElement('td');
@@ -5333,6 +5378,38 @@ function getOwnerName() {
       playersBody.appendChild(tr);
     }
     queueDisplayRosterLayoutUpdate();
+    restoreEncounterViewport();
+
+    function restoreEncounterViewport() {
+      if (rosterScroll) {
+        rosterScroll.scrollTop = preservedScrollTop;
+        rosterScroll.scrollLeft = preservedScrollLeft;
+      }
+      window.scrollTo(preservedWindowScrollX, preservedWindowScrollY);
+      if (activeControl?.playerId) {
+        const row = playersBody.querySelector(`tr[data-player-id="${activeControl.playerId}"]`);
+        const candidate = row && Array.from(row.querySelectorAll(activeControl.tagName.toLowerCase()))
+          .find((element) =>
+            element.className === activeControl.className &&
+            element.getAttribute('aria-label') === activeControl.ariaLabel
+          );
+        if (candidate instanceof HTMLElement) {
+          try {
+            candidate.focus({ preventScroll: true });
+          } catch (_) {
+            candidate.focus();
+          }
+        }
+      }
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => {
+          if (!rosterScroll?.isConnected) return;
+          rosterScroll.scrollTop = preservedScrollTop;
+          rosterScroll.scrollLeft = preservedScrollLeft;
+          window.scrollTo(preservedWindowScrollX, preservedWindowScrollY);
+        });
+      }
+    }
   }
 
   function selectCharacter(id) {
@@ -5351,6 +5428,7 @@ function getOwnerName() {
     selectedCharacterId = found.id;
     isCreatingCharacter = false;
     nameInput.value = found.name;
+    if (tokenDescriptionInput) tokenDescriptionInput.value = found.tokenDescription || '';
     if (Array.isArray(found.stats)) {
       const statsByKey = new Map(found.stats.map((stat) => [stat.key, stat]));
       statInputs.forEach((entry, key) => {
@@ -5392,6 +5470,7 @@ function getOwnerName() {
     setDetailsPanelOpen(false);
     setConditionsPanelOpen(false);
     nameInput.value = '';
+    if (tokenDescriptionInput) tokenDescriptionInput.value = '';
     statInputs.forEach((entry) => {
       if (entry.currentInput) entry.currentInput.value = '';
       if (entry.maxInput) entry.maxInput.value = '';
@@ -6691,6 +6770,7 @@ function getOwnerName() {
       id: selectedCharacterId,
       ownerName,
       name,
+      tokenDescription: tokenDescriptionInput ? tokenDescriptionInput.value.trim() || null : null,
       initiative,
       stats,
       currency: Array.isArray(selectedCharacter?.currency) ? selectedCharacter.currency : null,
@@ -6708,7 +6788,7 @@ function getOwnerName() {
     if (!savedCharacter) return false;
     upsertMyCharacter(savedCharacter);
     formDirty = false;
-    updateDraftFromForm();
+    updateDraftForCharacter(savedCharacter);
     return true;
   }
 

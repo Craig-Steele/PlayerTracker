@@ -7,7 +7,7 @@ Commercial launch shape:
 - paid server app
 - distributed through Apple and Microsoft app stores
 - licensed at a low annual price point, tentatively `$5/year`
-- free iOS and Android companion clients
+- free iOS companion client; native Android client deferred
 - the server remains the source of truth for encounter state
 
 ## Architecture Decision
@@ -265,7 +265,7 @@ Launch billing decision:
 
 - sell the server on a low-cost annual license, tentatively `$5/year`
 - distribute the paid server through Apple and Microsoft storefronts
-- keep iOS and Android clients free
+- keep the iOS client free; defer native Android client distribution
 - tie entitlement to the server installation or store purchaser, not to each player account
 - do not introduce launch caps on campaign count, archive count, or player count
 - if the license expires, preserve read/export access and block starting new hosted sessions until renewal
@@ -628,7 +628,9 @@ Constrained by:
 
 - `M7` Web migration
 - `M8` iOS migration
-- `M9` Android migration
+- `M9` Web-first 2D tactical map
+
+Native Android migration is deferred. Android phones remain supported through the responsive Web tactical client.
 
 Constrained by:
 
@@ -1091,43 +1093,255 @@ Acceptance:
 
 Status: complete
 
-### M9: Android Migration
+### M9: Web-First 2D Tactical Map
 
-Goal: convert Android from device identity to authenticated player-session identity, with parity to iOS.
+Goal: reach a usable map-based tactical system quickly through the existing responsive Web client, while keeping the server, protocol, and state model reusable by iOS, Android, and Unity later.
 
 Scope notes:
 
-- support phone and tablet form factors as first-class Android targets
-- do not add a TV target in M9, but avoid UI and architecture choices that would obviously block a future TV port
-- assume a clean launch slate, so no legacy-install migration path is required for existing `ownerId` data
-- target feature parity with the iOS client for player workflows
-- the Android client follows the server's active campaign and does not need a multi-campaign picker
-- display-only remains web-only for now
+- desktop browsers, iPhone browsers, and Android browsers are supported through one responsive tactical view
+- the server remains authoritative for encounter state, ownership, visibility, and movement legality
+- the first tactical renderer is 2D; Unity 3D remains deferred exploratory work
+- native Android development is deferred and is not required for this milestone
+- the map model is renderer-independent and does not require Unity world coordinates or 3D elevation
 
 Touchpoints:
 
-- `Client-Android/app/src/main/java/com/roll4initiative/android/ui/PlayerAppViewModel.kt`
-- `Client-Android/app/src/main/java/com/roll4initiative/android/api/ApiService.kt`
-- `Client-Android/app/src/main/java/com/roll4initiative/android/ui/SettingsScreen.kt`
+- `Server-Vapor/Tactical/`
+- `SharedProtocol/schema/`
+- `SharedProtocol/examples/`
+- `Client-Web/tactical/`
+- `Images/Arcane Library PZO30084E.png`
+- `Images/Arcane Library PZO30084E.map.json`
+- `Tests/PlayerTrackerTests/ServerRoutesTests.swift`
 
 Work:
 
-- keep the Android client on campaign-scoped player sessions rather than a separate admin login
-- replace `ownerId` persistence as primary identity
-- consume the server's active campaign and refresh when it changes
-- add SSE client handling for the active campaign updates
-- store session securely in encrypted Android storage
-- match the iOS client feature set for player interactions where practical
+- migrate the tactical map, encounter snapshot, command, and ownership contracts onto the production `main` foundation
+- reconcile tactical encounter state with existing campaign-scoped persistence before building client interaction
+- define the canonical 2D map model: grid dimensions, background image, cardinal impassable boundaries, blocked squares, token coordinates, teams, and visibility
+- build a responsive Web tactical view with graph-paper styling, map rendering, pan/zoom, token colors, and creature-information sheets
+- identify the player's controlled token through the authenticated player session
+- implement server-authoritative eight-direction movement with adjacency, boundary, blocked-square, occupancy, and diagonal corner-cutting validation
+- preserve typed tactical rejection responses containing `accepted`, `rejectionReason`, and the unchanged snapshot
+- connect tactical updates to the existing Server-Sent Events strategy, with reload/polling fallback where necessary
+- validate the same player workflow on desktop, iPhone, and Android browsers
+
+Overall M9 acceptance:
+
+- a referee can open an encounter in a desktop browser and see the 2D map
+- a player can open the same tactical view from an iPhone or Android browser
+- the player sees their own token, visible party tokens, and visible enemy tokens with the correct team presentation
+- tapping a token opens visibility-filtered creature information
+- a player can move one square in any of eight directions when the server permits it
+- illegal movement returns a client-readable rejection and does not alter the snapshot
+- accepted movement updates all connected tactical views through the existing live-update model
+- tactical state survives server restart through the existing campaign persistence boundary
+
+#### M9-02: Referee Map Selection
+
+Goal: let the referee choose the map during New Encounter setup before the encounter becomes active.
+
+Status: complete
+
+Implemented slice:
+
+- catalog bundled `.map.json` map packages from `Images/`
+- show the bundled map catalog in the referee view while the encounter is `new`
+- allow only an authenticated referee to select a map
+- validate the selected map JSON and referenced image before accepting it
+- import a PNG with optional sidecar JSON, or collect minimum grid metadata when no sidecar is provided
+- serve the selected map and image through the tactical routes
+- reject map changes after the encounter starts
+- import a single `.tttm` package containing the map JSON and image; continue accepting legacy `.zmap` packages
+- show a preview of the selected map during encounter setup
+- provide specific validation errors for malformed or incomplete map packages
+
+Next:
+
+- M9-02 is complete; proceed to M9-03 player starting-area restrictions.
+
+#### M9-03: Player Starting Area
+
+Goal: let the referee restrict player token placement to a rectangular area during encounter setup.
+
+Status: complete
+
+Implemented slice:
+
+- map JSON may define default player placement bounds
+- referee encounter overrides are persisted per campaign
+- referee can set bounds with cardinal coordinate fields or draw them on the tactical map
+- the server enforces bounds for player-owned characters
+- players see non-permitted areas blacked out
+- route tests cover map defaults, referee overrides, map-change reset, authorization, invalid rectangles, post-start immutability, and unchanged state after rejected placement
+
+Planned behavior:
+
+- the map JSON may provide optional default player placement bounds
+- the referee can adjust or remove those bounds during New Encounter setup
+- map defaults are copied into encounter setup when the map is selected
+- referee adjustments are stored with the campaign/encounter and do not modify the map package
+- when no default or override exists, players may place in any legal square
+- bounds use inclusive cardinal grid coordinates: `west`, `east`, `south`, and `north`
+- players may place or reposition tokens only inside the selected rectangle
+- the referee remains unrestricted when placing controlled creatures or characters
+- the server enforces the rectangle; clients use it for visual guidance only
+- non-permitted areas are blacked out on the player tactical view
+- show player-facing wall/door edges only when the edge borders at least one square in the player's permitted starting area; the referee continues to see every edge
+- the referee sees the entire map and is not affected by the blackout
+- changing maps clears the encounter override and applies the newly selected map's default bounds
+
+Map JSON shape:
+
+```json
+"playerPlacement": {
+  "defaultBounds": {
+    "west": 2,
+    "east": 8,
+    "south": 1,
+    "north": 6
+  }
+}
+```
 
 Acceptance:
 
-- user can join, rejoin, sign out, and restore a prior player session on a fresh app launch
-- user can recover the active campaign and owned characters after authentication
-- same user can use the active campaign on phone and tablet without a separate campaign-switching UI
-- player identity is server-authenticated rather than derived from a device-local `ownerId`
-- secure session material is stored in encrypted Android storage
-- live state updates for the selected campaign arrive via SSE in normal operation
-- reconnecting after a transient disconnect refreshes the selected campaign cleanly
+- a referee can draw and adjust a player placement rectangle during encounter setup
+- a map package can provide default player placement bounds
+- a player can place and reposition a token inside the rectangle
+- a player receives a typed rejection when attempting placement outside the rectangle
+- the referee can place tokens outside the rectangle
+- non-permitted areas are blacked out for players
+- player-facing edges are limited to edge segments adjacent to at least one permitted starting-area square
+- changing maps applies the new map's default bounds and removes the previous encounter override
+
+#### M9-04: Map Authoring and Package Export
+
+Goal: provide a map-authoring tool so a referee can create and correct the metadata required by a portable `.tttm` package.
+
+Tactical Table Top resource file extensions:
+
+- `.tttm` — Tactical Table Top Map
+- `.tttc` — Tactical Table Top Character (reserved; serialization is not implemented)
+- `.tttx` — Tactical Table Top aggregate/package for campaigns or collections (reserved; serialization is not implemented)
+
+Planned behavior:
+
+- make the map-authoring tool available to anyone without requiring campaign membership or referee privileges
+- keep in-progress authoring work private to the author; use browser-local draft storage for the initial tool so drafts are not visible to other server users, and make clear that drafts do not sync across browsers or devices
+- import a PNG as the map background
+- load an imported image directly into grid calibration; drag a 5×5 or 10×10 grid patch over visible grid intersections and display the patch's internal grid while dragging
+- after calibration, pad the image to full grid boundaries using the infinite-fill color, derive square counts from the padded raster, and serialize ordinary image-edge-aligned grid metadata without offsets; calibration and padding replace any separate crop step
+- define east-west and north-south grid measurements, square size, and coordinate origin
+- paint obstacle squares that cannot be entered
+- paint terrain properties such as normal, difficult terrain, water, and lava, independently from impassable obstacles
+- paint elevation heights independently from terrain and obstacle data
+- author walls, doors, secret doors, and windows on grid edges; window metadata supports uninspected, inspected, and open initial states
+- choose bounded or infinite map boundaries; bounded maps restrict placement to the map without adding wall data
+- provide eraser and undo controls
+- preview the final tactical rendering
+- validate the map before export
+- export a package containing the grid-aligned PNG and canonical map JSON
+
+Canonical data distinctions:
+
+- `blockedTiles` represent obstacle squares that cannot be entered
+- `terrain` represents movement or environmental properties of squares
+- `edges` represent wall, door, secret-door, and window features on grid-line segments; an edge with no feature is open
+- `elevation` represents height independently from terrain
+
+Canonical edge representation:
+
+- encode each featured edge segment once using `axis`, `x`, `y`, and `type`
+- keep a wall stroke on the horizontal or vertical lattice axis selected at pointer-down; snap near-edge pointer input to the nearest lattice edge
+- use `grid.boundaryBehavior` to distinguish bounded placement from infinite placement; boundary behavior does not create or remove edge features
+- use the southwest grid origin: a vertical segment lies on grid line `x` between `y` and `y + 1`; a horizontal segment lies on grid line `y` between `x` and `x + 1`
+- support `wall`, `fence`, `door`, `secretDoor`, and `window` edge types; fence is marked `⦙`, always permits visibility through, and blocks movement like a wall; a door records a closable feature in an opening
+- require doors and windows to specify a positive `widthFt`, authored through the shared “Door and Window Width” control
+- define the door initial-state choices as Closed, Closed and Locked, and Open, mapping to `initialState` and the existing `locked` metadata without adding a new field
+- keep the exported `.tttm` package as the authored baseline; referee edits made in tactical mode are encounter-local and must not rewrite the package
+- store the map-authored initial door/window state in the sidecar; store referee door/window state changes made during play in encounter state
+- store referee sticker placement, removal, and edits made in tactical mode in encounter state; they must not rewrite the package's authored sticker metadata
+- persist those encounter-local sticker and door/window changes in durable encounter storage and restore them after server restart, client reconnect, or session break
+- require a window `initialState`: `uninspected` (no visibility into the area beyond; impassable), `inspected` (visibility into the area beyond; impassable), or `open` (visibility into the area beyond; passable); this milestone covers authoring, validation, and package serialization only, not tactical visibility/line-of-sight, movement enforcement, or runtime state transitions
+- permit no more than one edge feature at a given axis and coordinate, and validate edge coordinates against map bounds
+- treat an omitted edge feature as open
+
+Squeezing is creature- and ruleset-dependent movement behavior, not a painted terrain or edge type. Map geometry, including edge features and optional door width, should provide inputs for later movement rules to determine whether a creature can squeeze through a passage.
+
+Acceptance:
+
+- any user can author a map without campaign membership or referee privileges
+- authoring drafts are private to the browser that created them and are not exposed to other server users
+- loading an imported PNG proceeds directly to grid calibration
+- a user can align a grid to the imported map image and confirm the internal calibration patch before the PNG is padded
+- calibration pads the image with the infinite-fill color so the saved PNG bounds align with the grid and no grid offset is needed by the file format or tactical renderer; no separate crop operation is required
+- a user can choose bounded or infinite map behavior; bounded maps restrict placement to map bounds without creating walls in `edges`
+- a user can create obstacle, terrain, edge-feature, and elevation metadata without editing JSON by hand
+- walls, fences, doors, secret doors, and windows export with unambiguous lattice-edge coordinates; window states are validated and invalid or duplicate edge records receive actionable validation errors
+- exported door records include initial state, and encounter-time door changes do not alter the map package
+- encounter-local sticker and door/window edits survive server restart, client reconnect, and session break without changing the `.tttm` package
+- the editor preview matches the tactical client’s coordinate convention
+- the preview and exported `.tttm` package use the padded image and matching image-aligned grid coordinates
+- exported `.tttm` packages can be imported by the referee map selector; legacy `.zmap` packages remain importable
+- malformed or incomplete map packages receive actionable validation errors
+
+#### M9-05: Creature Token Footprints
+
+Goal: support tokens that occupy more than one grid square while keeping footprint rules configurable by ruleset and usable for systems without a standard size taxonomy.
+
+Planned behavior:
+
+- represent token footprint as grid width and height, independently of the token's center/anchor coordinate
+- retain a 1×1 footprint for existing tactical tokens and for characters with no known size
+- allow rulesets to define mappings from creature size labels to grid footprints; do not assume that size labels have identical meanings across games
+- provide Pathfinder and D&D mappings for their supported size categories, including sizes that occupy multiple squares
+- use an explicit per-token footprint override when a ruleset mapping is unavailable or does not fit the creature
+- keep Traveller usable without inventing a universal Traveller size mapping; default to 1×1 and allow referee-selected footprints for large creatures, vehicles, groups, or other tokens
+- have the server use the full footprint for map-boundary, blocked-square, occupancy, and player-placement-area validation
+- render, select, and hit-test tokens across their full occupied footprint on every tactical client
+- persist footprint data and include it in tactical snapshots and live updates
+
+Acceptance:
+
+- Pathfinder and D&D creatures with supported size labels receive the configured default footprint
+- a referee can override a token's footprint, including for Traveller encounters
+- legacy persisted tokens without footprint data load and behave as 1×1
+- placement is rejected if any square in a token's footprint is out of bounds, blocked, occupied, or outside the applicable player placement area
+- valid multi-square tokens render and can be selected across their full footprint
+- footprint data survives server restart and is present in snapshots and live updates
+
+#### M9-06: Shared Tactical Zone Discovery
+
+Goal: reveal map areas to players as visibility paths through doors and windows become available, while retaining shared party exploration.
+
+Status: planned
+
+Planned behavior:
+
+- seed the initial revealed area from the player starting area, and expand it with a grid flood fill limited by edge visibility
+- treat walls and secret doors as visibility-blocking edges for players; fences always permit visibility while blocking movement; use current door/window encounter state to determine whether visibility can pass each edge
+- keep visibility separate from movement passability: an inspected but closed window permits visibility through it while remaining impassable; an open window permits both
+- keep fence visibility and movement semantics distinct: flood fill passes through fences, but movement remains blocked as by a wall
+- show the entire flood-filled area at full brightness while a visibility path from an active player remains open
+- retain discoveries for the encounter and share them across all players
+- shade previously discovered areas with a 50% black overlay when no active player has a visibility path to them; keep never-discovered areas fully blacked out
+- let opening a door or changing a window to a visibility-permitting state reveal the connected area, bounded by the next visibility-blocking edges
+- restore full visibility to a discovered area when a player regains a visibility path to it
+- persist discovery and runtime door/window states as encounter state, separate from map-authored initial states
+- preserve referee full-map visibility
+
+Acceptance:
+
+- players initially see only their starting area and edges attached to its squares
+- opening a door reveals the connected area up to visibility-blocking edges
+- inspected windows reveal areas beyond without permitting movement through them; open windows permit visibility and passage
+- players share discoveries, including discoveries made in separate player sessions
+- previously discovered areas without a current visibility path appear under a 50% black shadow; undiscovered areas remain fully black
+- closing a door or window shadows disconnected discovered areas without erasing their discovery
+- reopening a visibility path restores full brightness to the previously discovered area
+- referee view and existing player-placement enforcement remain unchanged
 
 ### M10: Legacy Anonymous Migration
 
@@ -1281,7 +1495,7 @@ The launch billing decision is already made:
 
 - sell the server app on an annual license, tentatively `$5/year`
 - distribute the paid server through Apple and Microsoft storefronts where they fit
-- keep iOS and Android player clients free
+- keep the iOS player client free; native Android remains deferred
 - validate store entitlement and exchange it for a signed local server license lease
 - do not introduce launch caps for campaign count or player count
 - on expiry, preserve read/export access and block new hosted sessions until renewal

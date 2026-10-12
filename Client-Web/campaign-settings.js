@@ -49,6 +49,14 @@
     return value === 'admin' ? 'admin' : 'referee';
   }
 
+  function shouldRedirectCampaignSettingsAuthFailure(source) {
+    return normalizeCampaignSettingsSource(source) === 'referee';
+  }
+
+  function shouldLoadCampaignLibraries(source) {
+    return normalizeCampaignSettingsSource(source) === 'referee';
+  }
+
   function buildCampaignSettingsPageUrl(campaignId, source = 'referee', mode = 'edit') {
     const params = new URLSearchParams();
     if (mode === 'new') {
@@ -97,6 +105,8 @@
     syncClaimTimeoutUi,
     populateRulesetSelect,
     normalizeCampaignSettingsSource,
+    shouldRedirectCampaignSettingsAuthFailure,
+    shouldLoadCampaignLibraries,
     buildCampaignSettingsPageUrl
   };
 

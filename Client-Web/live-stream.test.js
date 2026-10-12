@@ -22,10 +22,10 @@ function createFakeEventSourceFactory() {
       this.listeners.set(name, handler);
     }
 
-    emit(name) {
+    emit(name, data) {
       const handler = this.listeners.get(name);
       if (handler) {
-        handler({ type: name });
+        handler({ type: name, data });
       }
     }
 
@@ -45,13 +45,15 @@ test('opens a campaign event stream and refreshes on stream events', async () =>
   try {
     let refreshCount = 0;
     let encounterStartCount = 0;
+    const refreshEvents = [];
     const liveStream = createCampaignLiveStream({
       getCampaignId: () => 'campaign-a',
       onEncounterStart: () => {
         encounterStartCount += 1;
       },
-      refresh: async () => {
+      refresh: async (event) => {
         refreshCount += 1;
+        refreshEvents.push(event?.type);
       }
     });
 
@@ -80,6 +82,11 @@ test('opens a campaign event stream and refreshes on stream events', async () =>
     instances[0].emit('update');
     await flushMicrotasks();
     assert.equal(refreshCount, 5);
+
+    instances[0].emit('state-updated');
+    await flushMicrotasks();
+    assert.equal(refreshCount, 6);
+    assert.deepEqual(refreshEvents, ['snapshot', 'encounter-start', 'encounter-resume', 'turn-changed', 'update', 'state-updated']);
 
     liveStream.stop();
     assert.equal(instances[0].closed, true);
@@ -126,6 +133,32 @@ test('coalesces refreshes while one refresh is already in flight', async () => {
     assert.equal(refreshCount, 2);
 
     liveStream.stop();
+  } finally {
+    global.EventSource = previousEventSource;
+  }
+});
+
+test('ignores repeated stream events with the same snapshot payload', async () => {
+  const previousEventSource = global.EventSource;
+  const { FakeEventSource, instances } = createFakeEventSourceFactory();
+  global.EventSource = FakeEventSource;
+
+  try {
+    let refreshCount = 0;
+    const liveStream = createCampaignLiveStream({
+      getCampaignId: () => 'campaign-a',
+      refresh: async () => {
+        refreshCount += 1;
+      }
+    });
+
+    liveStream.start();
+    instances[0].emit('snapshot', '{"state":"same"}');
+    await flushMicrotasks();
+    instances[0].emit('state-updated', '{"state":"same"}');
+    await flushMicrotasks();
+
+    assert.equal(refreshCount, 1);
   } finally {
     global.EventSource = previousEventSource;
   }

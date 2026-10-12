@@ -248,6 +248,7 @@ struct CampaignState: Content {
     let enabledRulesetIds: [String]
     let partyTreasure: [InventoryEntry]
     let currency: [CurrencyAmount]
+    let selectedMapID: String?
 
     init(
         id: UUID,
@@ -260,7 +261,8 @@ struct CampaignState: Content {
         userdataFiles: [String],
         enabledRulesetIds: [String] = [],
         partyTreasure: [InventoryEntry],
-        currency: [CurrencyAmount]
+        currency: [CurrencyAmount],
+        selectedMapID: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -273,6 +275,7 @@ struct CampaignState: Content {
         self.enabledRulesetIds = enabledRulesetIds
         self.partyTreasure = partyTreasure
         self.currency = currency
+        self.selectedMapID = selectedMapID
     }
 }
 
@@ -402,6 +405,7 @@ struct CharacterState {
     var isReferee: Bool
     var isClaimable: Bool
     var characterName: String
+    var tokenDescription: String?
     var initiative: Double?
     var initiativeGroupId: UUID?
     var initiativeGroupIndex: Int?
@@ -429,6 +433,7 @@ struct PlayerView: Content {
     let claimedDisplayName: String?
     let claimedAt: Date?
     let name: String
+    let tokenDescription: String?
     let initiative: Double?
     let stats: [StatEntry]
     let currency: [CurrencyAmount]
@@ -494,6 +499,7 @@ struct CharacterInput: Content {
     let campaignName: String?
     let ownerName: String
     let name: String
+    let tokenDescription: String?
     let referenceUrl: String?
     let statBlockId: String?
     let initiative: Double?
@@ -515,6 +521,7 @@ struct CharacterInput: Content {
         campaignName: String? = nil,
         ownerName: String,
         name: String,
+        tokenDescription: String? = nil,
         referenceUrl: String? = nil,
         statBlockId: String? = nil,
         initiative: Double? = nil,
@@ -535,6 +542,7 @@ struct CharacterInput: Content {
         self.campaignName = campaignName
         self.ownerName = ownerName
         self.name = name
+        self.tokenDescription = tokenDescription
         self.referenceUrl = referenceUrl
         self.statBlockId = statBlockId
         self.initiative = initiative

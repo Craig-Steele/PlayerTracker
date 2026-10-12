@@ -26,8 +26,7 @@ struct AuthRoutesTests {
         let signupSession = try signupResponse.content.decode(AuthSessionResponse.self)
         #expect(signupSession.user.email == "owner@example.com")
         #expect(signupSession.user.isOwner)
-        let signupCookie = try #require(signupResponse.headers.first(name: .setCookie))
-        let signupToken = try #require(signupCookie.split(separator: ";").first?.split(separator: "=").last)
+        let signupToken = try #require(cookieValue(named: "roll4_session", from: signupResponse.headers))
 
         let sessionResponse = try await sendRequest(
             tester,
@@ -247,8 +246,7 @@ struct AuthRoutesTests {
             headers: ["Content-Type": "application/json"],
             body: ByteBuffer(data: try JSONEncoder().encode(signupPayload))
         )
-        let signupCookie = try #require(signupResponse.headers.first(name: .setCookie))
-        let signupToken = try #require(signupCookie.split(separator: ";").first?.split(separator: "=").last)
+        let signupToken = try #require(cookieValue(named: "roll4_session", from: signupResponse.headers))
 
         let logoutResponse = try await sendRequest(
             tester,

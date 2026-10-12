@@ -18,6 +18,7 @@ struct CampaignPersistenceState {
     let enabledRulesetIds: [String]
     let partyTreasure: [InventoryEntry]
     let currency: [CurrencyAmount]
+    let selectedMapID: String?
     let roundIndex: Int
     let turnIndex: Int
     let currentTurnID: UUID?
@@ -222,6 +223,9 @@ final class CampaignRow: Model, @unchecked Sendable {
     @OptionalField(key: "currency_json")
     var currencyJSON: String?
 
+    @OptionalField(key: "selected_map_id")
+    var selectedMapID: String?
+
     @OptionalField(key: "last_selected_at")
     var lastSelectedAt: Date?
 
@@ -243,6 +247,7 @@ final class CampaignRow: Model, @unchecked Sendable {
         userdataFilesJSON: String? = nil,
         partyTreasureJSON: String? = nil,
         currencyJSON: String? = nil,
+        selectedMapID: String? = nil,
         lastSelectedAt: Date? = nil
     ) {
         self.id = id
@@ -254,6 +259,7 @@ final class CampaignRow: Model, @unchecked Sendable {
         self.userdataFilesJSON = userdataFilesJSON
         self.partyTreasureJSON = partyTreasureJSON
         self.currencyJSON = currencyJSON
+        self.selectedMapID = selectedMapID
         self.lastSelectedAt = lastSelectedAt
     }
 }
@@ -436,6 +442,9 @@ final class CharacterRow: Model, @unchecked Sendable {
     @Field(key: "name")
     var name: String
 
+    @OptionalField(key: "token_description")
+    var tokenDescription: String?
+
     @OptionalField(key: "initiative")
     var initiative: Double?
 
@@ -486,6 +495,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         claimedDisplayName: String? = nil,
         claimedAt: Date? = nil,
         name: String,
+        tokenDescription: String? = nil,
         initiative: Double?,
         initiativeGroupId: UUID? = nil,
         initiativeGroupIndex: Int? = nil,
@@ -510,6 +520,7 @@ final class CharacterRow: Model, @unchecked Sendable {
         self.claimedDisplayName = claimedDisplayName
         self.claimedAt = claimedAt
         self.name = name
+        self.tokenDescription = tokenDescription
         self.initiative = initiative
         self.initiativeGroupId = initiativeGroupId
         self.initiativeGroupIndex = initiativeGroupIndex
@@ -771,6 +782,20 @@ enum DatabasePersistence {
             throw Abort(.notFound, reason: "Campaign not found.")
         }
         campaign.userdataFilesJSON = try encodeUserDataLibraries(files, enabledRulesetIds: enabledRulesetIds)
+        try await campaign.save(on: database)
+    }
+
+    static func updateCampaignSelectedMap(
+        campaignID: UUID,
+        mapID: String?,
+        on database: any Database
+    ) async throws {
+        guard let campaign = try await CampaignRow.query(on: database)
+            .filter(\.$id == campaignID)
+            .first() else {
+            throw Abort(.notFound, reason: "Campaign not found.")
+        }
+        campaign.selectedMapID = mapID
         try await campaign.save(on: database)
     }
 
@@ -1475,6 +1500,7 @@ enum DatabasePersistence {
             enabledRulesetIds: userdata.enabledRulesetIds,
             partyTreasure: partyTreasure,
             currency: currency,
+            selectedMapID: campaign.selectedMapID,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID,
@@ -1520,6 +1546,7 @@ enum DatabasePersistence {
             enabledRulesetIds: userdata.enabledRulesetIds,
             partyTreasure: partyTreasure,
             currency: currency,
+            selectedMapID: campaign.selectedMapID,
             roundIndex: roundIndex,
             turnIndex: turnIndex,
             currentTurnID: currentTurnID,
@@ -1558,6 +1585,7 @@ enum DatabasePersistence {
                 enabledRulesetIds: userdata.enabledRulesetIds,
                 partyTreasure: partyTreasure,
                 currency: currency,
+                selectedMapID: campaign.selectedMapID,
                 roundIndex: roundIndex,
                 turnIndex: turnIndex,
                 currentTurnID: currentTurnID,
@@ -1842,6 +1870,7 @@ enum DatabasePersistence {
                     isReferee: false,
                     isClaimable: row.isClaimable,
                     characterName: row.name,
+                    tokenDescription: row.tokenDescription,
                     initiative: row.initiative,
                     initiativeGroupId: row.initiativeGroupId,
                     initiativeGroupIndex: row.initiativeGroupIndex,
@@ -1885,6 +1914,7 @@ enum DatabasePersistence {
                 row.claimedDisplayName = state.claimedDisplayName
                 row.claimedAt = state.claimedAt
                 row.name = state.characterName
+                row.tokenDescription = state.tokenDescription
                 row.initiative = state.initiative
                 row.initiativeGroupId = state.initiativeGroupId
                 row.initiativeGroupIndex = state.initiativeGroupIndex
@@ -1915,6 +1945,7 @@ enum DatabasePersistence {
                     claimedDisplayName: state.claimedDisplayName,
                     claimedAt: state.claimedAt,
                     name: state.characterName,
+                    tokenDescription: state.tokenDescription,
                     initiative: state.initiative,
                     initiativeGroupId: state.initiativeGroupId,
                     initiativeGroupIndex: state.initiativeGroupIndex,

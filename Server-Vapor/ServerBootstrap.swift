@@ -132,6 +132,7 @@ enum ServerBootstrap {
             ServerDiagnostics.writeServingStaticFiles(sitesDir)
         }
 
+        app.middleware.use(ClientIdentityMiddleware(), at: .beginning)
         app.middleware.use(JoinPageRedirectMiddleware(campaignStore: campaignStore))
         app.middleware.use(FileMiddleware(publicDirectory: sitesDir))
         app.http.server.configuration.hostname = options.hostname
@@ -147,6 +148,7 @@ enum ServerBootstrap {
         try await DatabaseMigrations.verifyShape(on: app.db)
         let eventHub = CampaignEventHub()
         let activeCampaignEventHub = ActiveCampaignEventHub()
+        let tacticalEventHub = TacticalEventHub()
         try await campaignStore.configure(database: app.db)
         try await restoreActiveCampaignState(
             campaignStore: campaignStore,
@@ -165,7 +167,8 @@ enum ServerBootstrap {
             app,
             campaignStore: campaignStore,
             eventHub: eventHub,
-            activeCampaignEventHub: activeCampaignEventHub
+            activeCampaignEventHub: activeCampaignEventHub,
+            tacticalEventHub: tacticalEventHub
         )
 
         if options.launchBrowser {

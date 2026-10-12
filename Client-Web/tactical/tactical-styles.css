@@ -1,4 +1,106 @@
 .tactical-shell {
+  --tactical-grid: rgb(39, 109, 173);
+  --tactical-viewport: #f5f8fb;
+  --tactical-status: #425466;
+  --tactical-error: #a12622;
   display: grid;
   gap: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.tactical-toolbar {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.tactical-opacity-controls {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+}
+.tactical-opacity-control { display: grid; font-size: .8rem; gap: .1rem; white-space: nowrap; }
+.tactical-opacity-control span { align-items: center; display: flex; gap: .4rem; }
+.tactical-opacity-control input[type="range"] { margin: 0; width: 8rem; }
+.tactical-opacity-control output { font-variant-numeric: tabular-nums; min-width: 2.5rem; }
+
+.tactical-viewport {
+  background: var(--tactical-viewport);
+  border: 1px solid var(--border-default);
+  border-radius: 0.5rem;
+  height: min(78vh, 900px);
+  overflow: hidden;
+}
+
+.tactical-placement-form {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tactical-placement-form[hidden] {
+  display: none;
+}
+
+.tactical-placement-form label {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.tactical-placement-form input {
+  max-width: 4.5rem;
+}
+
+.tactical-canvas {
+  cursor: grab;
+  display: block;
+  height: 100%;
+  touch-action: none;
+  width: 100%;
+}
+
+.tactical-canvas:active {
+  cursor: grabbing;
+}
+
+.tactical-status {
+  color: var(--tactical-status);
+  font-size: 0.9rem;
+}
+
+.tactical-error {
+  color: var(--tactical-error);
+}
+
+.tactical-tooltip {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 0.35rem;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  max-width: 20rem;
+  padding: 0.45rem 0.6rem;
+  pointer-events: none;
+  position: fixed;
+  z-index: 10;
+}
+
+.tactical-tooltip [data-tactical-tooltip-conditions] {
+  color: var(--text-secondary);
+  margin-top: 0.2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tactical-shell {
+    --tactical-grid: rgb(104, 177, 232);
+    --tactical-viewport: #20252b;
+    --tactical-status: var(--text-secondary);
+    --tactical-error: var(--text-danger);
+  }
 }

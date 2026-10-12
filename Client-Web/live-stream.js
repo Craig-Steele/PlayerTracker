@@ -12,12 +12,15 @@
     refresh,
     onEncounterStart = () => {},
     shouldSkipRefresh = () => false,
-    consumeSkipRefresh = () => {}
+    consumeSkipRefresh = () => {},
+    skipInitialSnapshot = false
   }) {
     let eventSource = null;
     let eventSourceCampaignId = null;
     let refreshInFlight = false;
     let refreshQueued = false;
+    let lastEventData = null;
+    let hasOpenedEventStream = false;
 
     function closeEventStream() {
       if (eventSource) {
@@ -41,19 +44,34 @@
       const source = new EventSource(`/campaigns/${encodeURIComponent(campaignId)}/events`);
       eventSource = source;
       eventSourceCampaignId = campaignId;
+      const ignoreSnapshot = skipInitialSnapshot && !hasOpenedEventStream;
+      hasOpenedEventStream = true;
 
-      const requestRefresh = () => {
-        refreshNow();
+      const requestRefresh = (event) => {
+        // A stream connection can deliver its initial snapshot immediately
+        // before the update that caused the connection to be observed. If
+        // both events contain the same snapshot, one refresh is sufficient.
+        if (event?.data && event.data === lastEventData) {
+          return;
+        }
+        if (event?.data) {
+          lastEventData = event.data;
+        }
+        refreshNow(event);
       };
 
-      source.addEventListener('snapshot', requestRefresh);
+      source.addEventListener('snapshot', (event) => {
+        if (ignoreSnapshot) return;
+        requestRefresh(event);
+      });
       const handleEncounterStateChange = (event) => {
         onEncounterStart(event);
-        requestRefresh();
+        requestRefresh(event);
       };
       source.addEventListener('encounter-start', handleEncounterStateChange);
       source.addEventListener('encounter-resume', handleEncounterStateChange);
       source.addEventListener('campaign-updated', requestRefresh);
+      source.addEventListener('state-updated', requestRefresh);
       source.addEventListener('turn-changed', requestRefresh);
       source.addEventListener('update', requestRefresh);
       source.onerror = () => {
@@ -61,7 +79,7 @@
       };
     }
 
-    async function refreshNow() {
+    async function refreshNow(event) {
       if (shouldSkipRefresh()) {
         consumeSkipRefresh();
         return;
@@ -73,7 +91,7 @@
 
       refreshInFlight = true;
       try {
-        await refresh();
+        await refresh(event);
         syncEventStream();
       } finally {
         refreshInFlight = false;

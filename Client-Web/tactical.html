@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tactical Map</title>
+  <meta name="apple-mobile-web-app-title" content="Tactical Map">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=3">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="tactical/tactical-styles.css?v=7">
+</head>
+<body>
+  <main class="tactical-shell">
+    <div class="tactical-toolbar">
+      <div>
+        <h1>Tactical Map</h1>
+        <div class="tactical-status" data-tactical-status>Loading map…</div>
+      </div>
+      <label>
+        Character
+        <select data-tactical-character aria-label="Character to place"></select>
+      </label>
+      <div class="tactical-opacity-controls">
+        <label class="tactical-opacity-control">Indicator opacity
+          <span><input type="range" min="0" max="100" step="1" value="25" data-indicator-opacity><output data-indicator-opacity-value>25%</output></span>
+        </label>
+        <label class="tactical-opacity-control">Grid opacity
+          <span><input type="range" min="0" max="100" step="1" value="60" data-grid-opacity><output data-grid-opacity-value>60%</output></span>
+        </label>
+      </div>
+      <button type="button" data-tactical-reset>Reset view</button>
+      <button type="button" data-tactical-zoom>Zoom</button>
+    </div>
+    <form class="tactical-placement-form" data-tactical-placement-form hidden>
+      <span>Player placement area</span>
+      <label>West <input type="number" data-placement-west /></label>
+      <label>East <input type="number" data-placement-east /></label>
+      <label>South <input type="number" data-placement-south /></label>
+      <label>North <input type="number" data-placement-north /></label>
+      <button type="button" data-placement-draw>Draw on map</button>
+      <button type="submit">Apply</button>
+      <button type="button" data-placement-default>Use map default</button>
+    </form>
+    <div class="tactical-viewport">
+      <canvas class="tactical-canvas" data-tactical-canvas aria-label="Tactical map"></canvas>
+    </div>
+  </main>
+  <div class="tactical-tooltip" data-tactical-tooltip hidden role="status">
+    <div data-tactical-tooltip-character></div>
+    <div data-tactical-tooltip-conditions-section hidden>
+      <div data-tactical-tooltip-conditions></div>
+    </div>
+  </div>
+  <script src="tactical/tactical-state.js?v=2"></script>
+  <script src="tactical/tactical-client.js?v=4"></script>
+  <script src="tactical/tactical-map-layers.js?v=2"></script>
+  <script src="tactical/tactical-render.js?v=32"></script>
+  <script src="tactical/tactical-controls.js?v=2"></script>
+  <script src="tactical/tactical.js?v=8"></script>
+</body>
+</html>

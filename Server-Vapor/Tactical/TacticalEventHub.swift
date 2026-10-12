@@ -1,22 +1,51 @@
 import Foundation
-import Vapor
 
-final class TacticalEventHub {
-    private var listeners: [UUID: (TacticalEventEnvelope) -> Void] = [:]
+struct TacticalStreamMessage: Sendable {
+    let event: String
+    let payload: TacticalTokenUpdateEvent
+}
 
-    func addListener(_ listener: @escaping (TacticalEventEnvelope) -> Void) -> UUID {
-        let id = UUID()
-        listeners[id] = listener
-        return id
-    }
+actor TacticalEventHub {
+    private var subscribers: [UUID: AsyncStream<TacticalStreamMessage>.Continuation] = [:]
+    private var isShutdown = false
 
-    func removeListener(_ id: UUID) {
-        listeners[id] = nil
-    }
-
-    func broadcast(_ event: TacticalEventEnvelope) {
-        for listener in listeners.values {
-            listener(event)
+    func subscribe() -> AsyncStream<TacticalStreamMessage> {
+        let subscriberID = UUID()
+        let (stream, continuation) = AsyncStream<TacticalStreamMessage>.makeStream()
+        guard !isShutdown else {
+            continuation.finish()
+            return stream
         }
+        subscribers[subscriberID] = continuation
+        continuation.onTermination = { [subscriberID] _ in
+            Task { await self.removeSubscriber(subscriberID: subscriberID) }
+        }
+        return stream
+    }
+
+    func publish(token: TacticalTokenSnapshot) {
+        guard !isShutdown else { return }
+        let message = TacticalStreamMessage(
+            event: "token-updated",
+            payload: TacticalTokenUpdateEvent(token: token)
+        )
+        for continuation in subscribers.values {
+            continuation.yield(message)
+        }
+    }
+
+    func shutdown() {
+        guard !isShutdown else { return }
+        isShutdown = true
+        let currentSubscribers = subscribers
+        subscribers.removeAll()
+        for continuation in currentSubscribers.values {
+            continuation.finish()
+        }
+    }
+
+    private func removeSubscriber(subscriberID: UUID) {
+        guard !isShutdown else { return }
+        subscribers.removeValue(forKey: subscriberID)
     }
 }

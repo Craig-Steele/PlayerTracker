@@ -280,7 +280,7 @@ actor UserStore {
         }
     }
 
-    private func isRefereeSession(_ ownerId: UUID) -> Bool {
+    func isRefereeSession(_ ownerId: UUID) -> Bool {
         currentRefereeSessionIDs.contains(ownerId)
     }
 
@@ -304,6 +304,7 @@ actor UserStore {
         ownerId: UUID,
         ownerName: String,
         characterName: String,
+        tokenDescription: String? = nil,
         referenceUrl: String? = nil,
         statBlockId: String? = nil,
         initiative: Double?,
@@ -334,6 +335,7 @@ actor UserStore {
             isReferee: isRefereeSession(ownerId),
             isClaimable: false,
             characterName: characterName,
+            tokenDescription: tokenDescription,
             initiative: initiative,
             initiativeGroupId: initiativeGroupId,
             initiativeGroupIndex: initiativeGroupIndex,
@@ -359,6 +361,10 @@ actor UserStore {
             state.statBlockId = statBlockId
         }
         state.characterName = characterName
+        if let tokenDescription {
+            let trimmed = tokenDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+            state.tokenDescription = trimmed.isEmpty ? nil : trimmed
+        }
         state.initiative = initiative
         if let initiativeGroupId {
             state.initiativeGroupId = initiativeGroupId
@@ -993,6 +999,7 @@ actor UserStore {
             claimedDisplayName: state.claimedDisplayName,
             claimedAt: state.claimedAt,
             name: state.characterName,
+            tokenDescription: state.tokenDescription,
             initiative: state.initiative,
             stats: state.stats.values.sorted { $0.key < $1.key },
             currency: state.currency,

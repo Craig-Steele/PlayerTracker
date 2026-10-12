@@ -29,6 +29,8 @@
     },
     normalizeCampaignName: (value) => (value || '').trim(),
     normalizeCampaignSettingsSource: (value) => (value === 'admin' ? 'admin' : 'referee'),
+    shouldRedirectCampaignSettingsAuthFailure: (value) => value !== 'admin',
+    shouldLoadCampaignLibraries: (value) => value !== 'admin',
     populateRulesetSelect: (selectEl, rulesets, options = {}) => {
       if (!selectEl) return;
       const {
@@ -75,7 +77,8 @@
       credentials: 'same-origin',
       ...options
     }).then(async (res) => {
-      if (res.status === 401 || res.status === 403) {
+      if ((res.status === 401 || res.status === 403) &&
+          window.PlayerTrackerCampaignSettings?.shouldRedirectCampaignSettingsAuthFailure?.(campaignSource) !== false) {
         window.location.replace('/index.html');
         return null;
       }
@@ -119,6 +122,11 @@
     const campaignId = params.get('campaignId') || '';
     const isCreateMode = params.get('mode') === 'new';
     const campaignSource = normalizeCampaignSettingsSource(params.get('source'));
+    const libraryColumn = document.getElementById('campaign-settings-library-column');
+    const shouldLoadCampaignLibraries = window.PlayerTrackerCampaignSettings?.shouldLoadCampaignLibraries
+      ? window.PlayerTrackerCampaignSettings.shouldLoadCampaignLibraries(campaignSource)
+      : campaignSource !== 'admin';
+    libraryColumn?.classList.toggle('hidden', !shouldLoadCampaignLibraries);
     const backHref = campaignSource === 'admin' ? 'admin.html' : 'referee.html';
     let availableRulesets = [];
     let campaignSummaries = [];
@@ -216,6 +224,7 @@
     }
 
     async function loadCampaignLibraries() {
+      if (!shouldLoadCampaignLibraries) return;
       if (!currentCampaign) {
         enabledRulesetIds = new Set();
         libraryFiles = [];

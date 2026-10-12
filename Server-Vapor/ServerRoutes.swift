@@ -118,7 +118,7 @@ private func playerSessionResponse(
     )
 }
 
-private func isRefereeSession(
+func isRefereeSession(
     _ session: PlayerSessionPersistenceState,
     in campaignID: UUID,
     on database: any Database
@@ -154,7 +154,7 @@ private func requireActiveCampaignMemberSession(
     return (campaign, session)
 }
 
-private func requireActiveCampaignParticipantSession(
+func requireActiveCampaignParticipantSession(
     _ req: Request,
     campaignStore: CampaignStore
 ) async throws -> (campaign: CampaignState, session: PlayerSessionPersistenceState) {
@@ -535,7 +535,7 @@ private func activeCampaignStreamSnapshot(
     ActiveCampaignStreamSnapshot(campaign: await campaignStore.activeCampaign())
 }
 
-private func publishCampaignUpdate(
+func publishCampaignUpdate(
     campaign: CampaignState,
     userStore: UserStore,
     eventHub: CampaignEventHub,
@@ -583,11 +583,33 @@ func routes(
     _ app: Application,
     campaignStore: CampaignStore,
     eventHub: CampaignEventHub,
-    activeCampaignEventHub: ActiveCampaignEventHub
+    activeCampaignEventHub: ActiveCampaignEventHub,
+    tacticalEventHub: TacticalEventHub
 ) throws {
     let userStore = app.userStore
+    let tacticalPlacementStore = TacticalPlacementStore(
+        storageDirectory: AppPaths.appDataDirectory(application: app)
+            .appendingPathComponent("tactical-tokens", isDirectory: true)
+    )
+    let tacticalMapSelectionStore = TacticalMapSelectionStore(
+        storageDirectory: AppPaths.appDataDirectory(application: app)
+            .appendingPathComponent("tactical-maps", isDirectory: true)
+    )
+    let tacticalPlayerPlacementStore = TacticalPlayerPlacementStore(
+        storageDirectory: AppPaths.appDataDirectory(application: app)
+            .appendingPathComponent("tactical-placement", isDirectory: true)
+    )
 
-    app.registerTacticalRoutes()
+    app.registerTacticalRoutes(
+        campaignStore: campaignStore,
+        userStore: userStore,
+        campaignEventHub: eventHub,
+        tacticalMapStore: TacticalMapStore(),
+        tacticalMapSelectionStore: tacticalMapSelectionStore,
+        tacticalPlayerPlacementStore: tacticalPlayerPlacementStore,
+        tacticalPlacementStore: tacticalPlacementStore,
+        tacticalEventHub: tacticalEventHub
+    )
 
     app.post("auth", "signup") { req async throws -> Response in
         let input = try req.content.decode(AuthSignupInput.self)
@@ -756,9 +778,13 @@ func routes(
     app.post("admin", "shutdown") { req async throws -> HTTPStatus in
         let user = try await requireServerOwnerSession(req)
         logConnection(req, action: "shutdown", identifier: user.email)
-        Task {
+        Task.detached {
             await eventHub.shutdown()
             await activeCampaignEventHub.shutdown()
+            await tacticalEventHub.shutdown()
+            // Let the shutdown response leave the socket before closing the listener.
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            app.running?.stop()
             await app.server.shutdown()
         }
         return .ok
@@ -1185,6 +1211,8 @@ func routes(
         logConnection(req, action: "encounter-new")
         let (campaign, _) = try await requireRefereeSession(req, campaignStore: campaignStore)
         let campaignName = campaign.name
+        try await tacticalPlacementStore.clear(campaignID: campaign.id)
+        try await tacticalPlayerPlacementStore.clear(for: campaign.id)
         await userStore.resetForNewEncounter(campaignName: campaignName)
         _ = await campaignStore.setEncounterState(.new)
         let updatedCampaign = await campaignStore.activeCampaign() ?? campaign
@@ -1352,8 +1380,8 @@ func routes(
         }
         let input = try req.content.decode(CharacterInput.self)
         let existingCharacter: CharacterState?
-        if let id = input.id {
-            existingCharacter = await userStore.characterState(for: id)
+        if let characterID = input.id {
+            existingCharacter = await userStore.characterState(for: characterID)
         } else {
             existingCharacter = nil
         }
@@ -1372,6 +1400,7 @@ func routes(
             ownerId: resolvedOwnerId,
             ownerName: resolvedOwnerName,
             characterName: input.name,
+            tokenDescription: input.tokenDescription,
             referenceUrl: input.referenceUrl,
             statBlockId: input.statBlockId,
             initiative: input.initiative,
@@ -1397,7 +1426,12 @@ func routes(
             ) ?? created
         }
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
-        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
+        await publishCampaignUpdate(
+            campaign: campaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "state-updated"
+        )
         return responseCharacter
     }
 
@@ -1479,6 +1513,7 @@ func routes(
             ownerId: session.id,
             ownerName: session.displayName,
             characterName: input.name,
+            tokenDescription: input.tokenDescription,
             referenceUrl: input.referenceUrl,
             statBlockId: input.statBlockId,
             initiative: input.initiative,
@@ -1496,7 +1531,12 @@ func routes(
             conditions: input.conditions.map { Set($0) }
         )
         await refreshPlayerClaimActivity(campaign: campaign, session: session, userStore: userStore)
-        await publishCampaignUpdate(campaign: campaign, userStore: userStore, eventHub: eventHub)
+        await publishCampaignUpdate(
+            campaign: campaign,
+            userStore: userStore,
+            eventHub: eventHub,
+            event: "state-updated"
+        )
         return updated
     }
 
