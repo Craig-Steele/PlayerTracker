@@ -120,6 +120,7 @@ const refereeVisibilityHelpers = window.PlayerTrackerRefereeVisibility || {
   )
 };
 const PARTY_TREASURE_CATEGORY_FALLBACK_GLYPH = '❓';
+const HEALTH_SAVE_DELAY_MS = 600;
 const PARTY_TREASURE_CONTAINER_GLYPH =
   (window.PlayerTrackerPartyTreasure && window.PlayerTrackerPartyTreasure.CONTAINER_GLYPH) || '🧳';
 const inventoryView = window.PlayerTrackerInventoryView || {};
@@ -352,6 +353,7 @@ window.addEventListener('DOMContentLoaded', () => {
   let selectedCreatureLibrary = null;
   let creatureLibraryRequestController = null;
   let creatureLibrarySearchTimer = null;
+  const healthSaveTimers = new Map();
   let selectedConditions = new Set();
   let selectedCharacterId = null;
   let currentPlayers = [];
@@ -5237,6 +5239,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const stat = statsByKey.get(key) || { key, current: 0, max: 0 };
       const line = document.createElement('div');
       line.className = 'character-stat-line';
+      line.dataset.statKey = key;
       const label = document.createElement('span');
       label.className = 'character-stat-label';
       label.textContent = key;
@@ -5543,6 +5546,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const tr = document.createElement('tr');
       tr.classList.add('player-row');
       tr.classList.add('player-row-owned');
+      tr.dataset.playerId = p.id;
       if (p.isHidden) {
         tr.classList.add('hidden-character');
       }
@@ -5777,11 +5781,57 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
     }
-    // The save broadcasts state-updated. Let the live stream perform the
-    // authoritative refresh instead of fetching state here and again when
-    // the broadcast arrives.
-    skipRefresh = false;
-    saveCharacterEntry(player, { reloadState: false });
+    updateOptimisticHealthDisplay(player);
+    scheduleHealthSave(player);
+  }
+
+  function updateOptimisticHealthDisplay(player) {
+    if (!playersBody) return;
+    const row = Array.from(playersBody.querySelectorAll('tr[data-player-id]'))
+      .find((candidate) => candidate.dataset.playerId === player.id);
+    if (!row) return;
+
+    const stats = Array.isArray(player.stats) ? player.stats : [];
+    const statsText = row.querySelector('.stats-cell-text');
+    if (statsText) {
+      statsText.replaceChildren(...formatEncounterStatsItems(stats, statKeys).map((stat) => {
+        const line = document.createElement('div');
+        line.textContent = formatEncounterStatLine(stat);
+        return line;
+      }));
+    }
+
+    const healthCell = row.querySelector('.player-row-stats-cell');
+    if (healthCell) {
+      healthCell.classList.remove('hp-dead', 'hp-blue', 'hp-green', 'hp-yellow', 'hp-orange', 'hp-red');
+      const statusInfo = encounterStatusInfo(stats, statKeys);
+      if (statusInfo) applyEncounterHealthClasses(healthCell, statusInfo);
+    }
+
+    row.querySelectorAll('.character-stat-line').forEach((line) => {
+      const stat = stats.find((entry) => entry.key === line.dataset.statKey);
+      const value = line.querySelector('.character-hp-value');
+      if (!stat || !value) return;
+      value.textContent = stat.key === 'TempHP'
+        ? `${stat.current}`
+        : `${stat.current}/${stat.max}`;
+    });
+  }
+
+  function scheduleHealthSave(player) {
+    const timerKey = player.id || player.name;
+    if (!timerKey) return;
+    const previousTimer = healthSaveTimers.get(timerKey);
+    if (previousTimer) clearTimeout(previousTimer);
+
+    const timer = setTimeout(() => {
+      healthSaveTimers.delete(timerKey);
+      // The save broadcasts state-updated. Let the live stream perform the
+      // authoritative refresh after the final button press.
+      skipRefresh = false;
+      void saveCharacterEntry(player, { reloadState: false });
+    }, HEALTH_SAVE_DELAY_MS);
+    healthSaveTimers.set(timerKey, timer);
   }
 
   /**
