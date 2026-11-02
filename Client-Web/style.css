@@ -1944,6 +1944,7 @@ body.referee-page .referee-panel {
 }
 
 #inventory-panel .inventory-dialog {
+  height: min(80vh, 48rem);
   overflow: hidden;
 }
 
@@ -1951,6 +1952,7 @@ body.referee-page .referee-panel {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
 
