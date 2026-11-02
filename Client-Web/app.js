@@ -1552,7 +1552,7 @@ const preferPlayerView = viewMode === 'player' || playerPath;
   }
 
   function setInventoryTablesVisible(visible) {
-    const tableWrappers = inventoryPanel?.querySelectorAll('.inventory-scroll') || [];
+    const tableWrappers = inventoryPanel?.querySelectorAll('.inventory-table-wrap, .inventory-container-sections') || [];
     tableWrappers.forEach((wrap) => {
       wrap.classList.toggle('hidden', !visible);
       wrap.setAttribute('aria-hidden', (!visible).toString());
